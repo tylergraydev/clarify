@@ -1,6 +1,7 @@
 # Workflow Detail and Pipeline View Implementation Plan
 
 **Generated**: 2026-01-29
+**Verified**: 2026-01-29 (confirmed against current codebase)
 **Original Request**: Workflow Detail & Pipeline View - Build /workflows/[id] page with pipeline visualization, step progress indicators, expandable detail panels, and workflow controls
 **Refined Request**: The Workflow Detail and Pipeline View feature implements the /workflows/[id] dynamic route page to visualize workflow execution progress through the orchestration pipeline stages (Clarify, Refine, Discover, Plan). This page serves as the primary interface for monitoring and controlling active workflows after creation.
 
@@ -16,17 +17,19 @@
 1. `app/(app)/workflows/[id]/page.tsx` - Main page file, currently placeholder. Complete rewrite needed.
 2. `app/(app)/workflows/[id]/route-type.ts` - Route type definition for type-safe params.
 
-### High Priority (Likely Changes)
-1. `hooks/queries/use-workflows.ts` - Workflow query hooks
-2. `hooks/queries/use-steps.ts` - Step query hooks
+### High Priority (Reference - No Changes Needed)
+1. `hooks/queries/use-workflows.ts` - Workflow query hooks (all needed hooks exist: `useWorkflow`, `usePauseWorkflow`, `useResumeWorkflow`, `useCancelWorkflow`)
+2. `hooks/queries/use-steps.ts` - Step query hooks (has `useStepsByWorkflow`)
 3. `lib/queries/steps.ts` - Query key factory for steps
 4. `lib/queries/workflows.ts` - Query key factory for workflows
-5. `components/ui/badge.tsx` - Status variants
+5. `components/ui/badge.tsx` - Existing variants sufficient (use mapping pattern from `workflow-card.tsx`)
 
 ### Key Reference Files
 - `db/schema/workflow-steps.schema.ts` - Step statuses: pending, running, paused, editing, completed, failed, skipped
 - `db/schema/workflows.schema.ts` - Workflow statuses: created, running, paused, editing, completed, failed, cancelled
-- `app/(app)/projects/[id]/page.tsx` - Reference for dynamic route pattern
+- `app/(app)/projects/[id]/page.tsx` - Reference for dynamic route pattern (useRouteParams, skeleton, not-found components)
+- `app/(app)/workflows/page.tsx` - Reference for workflow list patterns (filtering, card/table views, mutations)
+- `components/workflows/workflow-card.tsx` - Reference for status-to-badge-variant mapping pattern
 - `components/ui/collapsible.tsx` - For expandable step panels
 
 ---
@@ -52,22 +55,31 @@ This plan implements the /workflows/[id] dynamic route page to visualize workflo
 
 ## Implementation Steps
 
-### Step 1: Add Step-Specific Badge Variants to Badge Component
+### Step 1: Create Step Status Badge Mapping Utility
 
-- **What**: Extend the badge component with step status variants (pending, running, paused, editing, completed, failed, skipped) for consistent visual treatment across the pipeline view.
-- **Why**: The existing badge variants do not cover all step statuses defined in `db/schema/workflow-steps.schema.ts`. Having dedicated variants ensures consistent styling and eliminates the need for inline status-to-variant mapping.
+- **What**: Create a status-to-variant mapping utility for step statuses, following the established pattern in `components/workflows/workflow-card.tsx`.
+- **Why**: The existing badge variants are sufficient when mapped appropriately. The `workflow-card.tsx` already demonstrates this pattern for workflow statuses. Reusing existing variants maintains consistency and avoids unnecessary additions to the badge component.
 - **Confidence**: High
 
-**Files to Modify:**
-- `components/ui/badge.tsx` - Add new step status variants
+**Files to Create:**
+- `app/(app)/workflows/[id]/_components/step-status-badge.tsx` - Step status badge with mapping
 
 **Changes:**
-- Add `pending` variant - neutral/gray styling for not-yet-started steps
-- Add `running` variant - blue/purple animated or pulsing styling to indicate active execution
-- Add `paused` variant - yellow/amber styling for paused steps
-- Add `editing` variant - can reuse existing `clarifying` or create new yellow-toned variant
-- Add `skipped` variant - muted/gray styling for skipped steps
-- Existing `completed` and `failed` variants can be reused
+- Create a `StepStatusBadge` component that wraps Badge with step-specific mapping
+- Implement status-to-variant mapping following `workflow-card.tsx` pattern:
+  ```typescript
+  const stepStatusVariantMap: Record<StepStatus, BadgeVariant> = {
+    pending: "default",      // neutral gray
+    running: "planning",     // purple (indicates active work)
+    paused: "draft",         // neutral gray
+    editing: "clarifying",   // yellow
+    completed: "completed",  // green
+    failed: "failed",        // red
+    skipped: "stale",        // amber/muted
+  };
+  ```
+- Export helper function `getStepStatusVariant(status: StepStatus): BadgeVariant`
+- Include formatted label display (capitalize first letter)
 
 **Validation Commands:**
 ```bash
@@ -75,9 +87,10 @@ pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
-- [ ] Badge component has variants for all step statuses: pending, running, paused, editing, completed, failed, skipped
+- [ ] StepStatusBadge component renders correct variant for each step status
+- [ ] Mapping covers all statuses: pending, running, paused, editing, completed, failed, skipped
 - [ ] All validation commands pass
-- [ ] No TypeScript errors in badge.tsx
+- [ ] No changes required to `components/ui/badge.tsx`
 
 ---
 
@@ -92,7 +105,7 @@ pnpm run lint && pnpm run typecheck
 
 **Changes:**
 - Create component accepting `WorkflowStep` data as props
-- Implement status badge using new badge variants from Step 1
+- Implement status badge using `StepStatusBadge` component from Step 1
 - Add step type icon mapping (clarification, refinement, discovery, planning, routing, implementation, quality_gate, gemini_review)
 - Use `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` from `components/ui/collapsible.tsx` for expand/collapse behavior
 - Include step number indicator and title display
@@ -252,6 +265,7 @@ pnpm run lint && pnpm run typecheck
 - `app/(app)/workflows/[id]/_components/index.ts` - Barrel export file
 
 **Changes:**
+- Export `StepStatusBadge` and `getStepStatusVariant` from step-status-badge.tsx
 - Export `PipelineStepNode` from pipeline-step-node.tsx
 - Export `StepDetailPanel` from step-detail-panel.tsx
 - Export `WorkflowControlBar` from workflow-control-bar.tsx
@@ -286,7 +300,9 @@ pnpm run lint && pnpm run typecheck
 - Import `useRouteParams` from next-typesafe-url/app and use with Route.routeParams
 - Import `useWorkflow`, `usePauseWorkflow`, `useResumeWorkflow`, `useCancelWorkflow` from use-workflows hook
 - Import `useStepsByWorkflow` from use-steps hook
-- Import `useProject` to display project name in header/breadcrumb
+- Import `useProject` from use-projects hook to display project name in header/breadcrumb
+  - Note: Fetch project conditionally using `useProject(workflow?.projectId ?? 0)` with `enabled: !!workflow?.projectId`
+  - This requires workflow data to load first before fetching project details
 - Implement route param validation with redirect to /workflows on invalid ID
 - Render `WorkflowDetailSkeleton` during loading states
 - Render `WorkflowNotFound` when workflow is not found
@@ -337,3 +353,18 @@ pnpm run lint && pnpm run typecheck
 - **Cache Invalidation**: The existing mutation hooks in `use-workflows.ts` and `use-steps.ts` already handle cache invalidation correctly. No additional cache management is needed.
 
 - **Accessibility**: Ensure all interactive elements have appropriate ARIA labels, especially for the collapsible step nodes and control buttons. Follow patterns established in existing components.
+
+---
+
+## Verification Notes (2026-01-29)
+
+Plan verified against current codebase state:
+
+- ✅ All critical files confirmed to exist in expected locations
+- ✅ Query hooks verified: `useWorkflow`, `usePauseWorkflow`, `useResumeWorkflow`, `useCancelWorkflow`, `useStepsByWorkflow` all exist and functional
+- ✅ Query key factories (`stepKeys`, `workflowKeys`) verified
+- ✅ `components/ui/collapsible.tsx` confirmed available
+- ✅ `projects/[id]/page.tsx` pattern confirmed as valid reference (uses useRouteParams, skeleton, not-found)
+- ✅ `workflows/page.tsx` and `workflow-card.tsx` added as additional reference files
+- 🔄 Step 1 updated: Changed from adding new badge variants to using mapping pattern (follows existing `workflow-card.tsx` convention)
+- 🔄 Step 8 updated: Clarified `useProject` usage with conditional fetching based on workflow.projectId
