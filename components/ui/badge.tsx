@@ -33,7 +33,15 @@ export const badgeVariants = cva(
           bg-sky-500/15 text-sky-700
           dark:bg-sky-500/20 dark:text-sky-400
         `,
+        backend: `
+          bg-violet-500/15 text-violet-700
+          dark:bg-violet-500/20 dark:text-violet-400
+        `,
         bedrock: `
+          bg-amber-500/15 text-amber-700
+          dark:bg-amber-500/20 dark:text-amber-400
+        `,
+        "category-builtin": `
           bg-amber-500/15 text-amber-700
           dark:bg-amber-500/20 dark:text-amber-400
         `,
@@ -53,6 +61,10 @@ export const badgeVariants = cva(
           bg-green-500/15 text-green-700
           dark:bg-green-500/20 dark:text-green-400
         `,
+        data: `
+          bg-emerald-500/15 text-emerald-700
+          dark:bg-emerald-500/20 dark:text-emerald-400
+        `,
         deepseek: `
           bg-indigo-500/15 text-indigo-700
           dark:bg-indigo-500/20 dark:text-indigo-400
@@ -65,6 +77,10 @@ export const badgeVariants = cva(
         draft: `
           bg-neutral-500/15 text-neutral-700
           dark:bg-neutral-500/20 dark:text-neutral-400
+        `,
+        electron: `
+          bg-sky-500/15 text-sky-700
+          dark:bg-sky-500/20 dark:text-sky-400
         `,
         environment: `
           bg-cyan-500/15 text-cyan-700
@@ -110,6 +126,10 @@ export const badgeVariants = cva(
           bg-yellow-500/15 text-yellow-700
           dark:bg-yellow-500/20 dark:text-yellow-400
         `,
+        security: `
+          bg-red-500/15 text-red-700
+          dark:bg-red-500/20 dark:text-red-400
+        `,
         specialist: `
           bg-blue-500/15 text-blue-700
           dark:bg-blue-500/20 dark:text-blue-400
@@ -121,6 +141,10 @@ export const badgeVariants = cva(
         togetherai: `
           bg-teal-500/15 text-teal-700
           dark:bg-teal-500/20 dark:text-teal-400
+        `,
+        ui: `
+          bg-blue-500/15 text-blue-700
+          dark:bg-blue-500/20 dark:text-blue-400
         `,
         user: `
           bg-violet-500/15 text-violet-700

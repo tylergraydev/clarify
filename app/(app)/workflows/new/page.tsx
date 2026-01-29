@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { $path } from "next-typesafe-url";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CreateWorkflowFormValues } from "@/lib/validations/workflow";
 
@@ -16,6 +16,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tooltip } from "@/components/ui/tooltip";
+import { TemplatePickerDialog } from "@/components/workflows/template-picker-dialog";
 import { pauseBehaviors, workflowTypes } from "@/db/schema/workflows.schema";
 import { useProjects } from "@/hooks/queries/use-projects";
 import { useActiveTemplates } from "@/hooks/queries/use-templates";
@@ -144,6 +146,19 @@ export default function NewWorkflowPage() {
     router.push($path({ route: "/workflows" }));
   };
 
+  // Handle template insertion from TemplatePicker dialog
+  const handleTemplateInsert = useCallback(
+    (content: string) => {
+      const currentValue = form.getFieldValue("featureRequest") ?? "";
+      // Append template content to existing content, with a newline separator if needed
+      const newValue = currentValue
+        ? `${currentValue}\n\n${content}`
+        : content;
+      form.setFieldValue("featureRequest", newValue);
+    },
+    [form]
+  );
+
   return (
     <div className={"space-y-6"}>
       {/* Page Header */}
@@ -220,19 +235,47 @@ export default function NewWorkflowPage() {
                 )}
               </form.AppField>
 
-              {/* Feature Request */}
-              <form.AppField name={"featureRequest"}>
-                {(field) => (
-                  <field.TextareaField
-                    description={
-                      "Describe the feature you want to build in detail"
+              {/* Feature Request with Template Picker */}
+              <div className={"flex flex-col gap-2"}>
+                {/* Insert Template Button Row */}
+                <div className={"flex justify-end"}>
+                  <Tooltip
+                    content={
+                      "Browse and insert pre-defined templates with customizable placeholders"
                     }
-                    label={"Feature Request"}
-                    placeholder={"Describe the feature you want to build..."}
-                    rows={6}
-                  />
-                )}
-              </form.AppField>
+                    side={"top"}
+                  >
+                    <TemplatePickerDialog
+                      onInsert={handleTemplateInsert}
+                      trigger={
+                        <Button
+                          className={"gap-1.5"}
+                          size={"sm"}
+                          type={"button"}
+                          variant={"outline"}
+                        >
+                          <FileText aria-hidden={"true"} className={"size-4"} />
+                          {"Insert Template"}
+                        </Button>
+                      }
+                    />
+                  </Tooltip>
+                </div>
+
+                {/* Feature Request Textarea */}
+                <form.AppField name={"featureRequest"}>
+                  {(field) => (
+                    <field.TextareaField
+                      description={
+                        "Describe the feature you want to build in detail"
+                      }
+                      label={"Feature Request"}
+                      placeholder={"Describe the feature you want to build..."}
+                      rows={6}
+                    />
+                  )}
+                </form.AppField>
+              </div>
 
               {/* Workflow Type */}
               <form.AppField name={"type"}>

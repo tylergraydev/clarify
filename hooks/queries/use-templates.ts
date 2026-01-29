@@ -2,11 +2,29 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { NewTemplate } from "@/types/electron";
+import type { NewTemplate, Template } from "@/types/electron";
 
 import { templateKeys } from "@/lib/queries/templates";
 
 import { useElectron } from "../use-electron";
+
+// ============================================================================
+// Types for Optimistic Update Contexts
+// ============================================================================
+
+interface CreateTemplateMutationContext {
+  previousListQueries: Array<[QueryKeyType, Array<Template> | undefined]>;
+}
+
+interface DeleteTemplateMutationContext {
+  previousQueries: Array<[QueryKeyType, Array<Template> | Template | undefined]>;
+}
+
+type QueryKeyType = ReadonlyArray<unknown>;
+
+interface UpdateTemplateMutationContext {
+  previousQueries: Array<[QueryKeyType, Array<Template> | Template | undefined]>;
+}
 
 // ============================================================================
 // Query Hooks
@@ -47,21 +65,79 @@ export function useBuiltInTemplates() {
 }
 
 /**
- * Create a new template
+ * Create a new template with optimistic updates.
+ * Adds the template to lists immediately, then reconciles with server response.
  */
 export function useCreateTemplate() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
 
-  return useMutation({
+  return useMutation<Template, Error, NewTemplate, CreateTemplateMutationContext>({
     mutationFn: (data: NewTemplate) => api!.template.create(data),
-    onSuccess: (template) => {
-      // Invalidate list queries
+    onError: (_error, _variables, context) => {
+      // Rollback optimistic updates on error
+      if (context?.previousListQueries) {
+        for (const [queryKey, data] of context.previousListQueries) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+    },
+    onMutate: async (newTemplate) => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: templateKeys.list._def });
+      await queryClient.cancelQueries({ queryKey: templateKeys.active.queryKey });
+
+      // Snapshot previous values for rollback
+      const previousListQueries: Array<[QueryKeyType, Array<Template> | undefined]> = [];
+
+      // Create an optimistic template with placeholder ID
+      const optimisticTemplate: Template = {
+        builtInAt: null,
+        category: newTemplate.category,
+        createdAt: new Date().toISOString(),
+        deactivatedAt: null,
+        description: newTemplate.description ?? null,
+        id: -Date.now(), // Temporary negative ID
+        name: newTemplate.name,
+        templateText: newTemplate.templateText,
+        updatedAt: new Date().toISOString(),
+        usageCount: 0,
+      };
+
+      // Get all list query keys and update them optimistically
+      const listQueryKey = templateKeys.list._def;
+      const activeQueryKey = templateKeys.active.queryKey;
+
+      // Update all matching list queries
+      queryClient.setQueriesData<Array<Template>>(
+        { queryKey: listQueryKey },
+        (old) => {
+          if (old) {
+            previousListQueries.push([listQueryKey, old]);
+            return [optimisticTemplate, ...old];
+          }
+          return [optimisticTemplate];
+        }
+      );
+
+      // Update active templates query
+      const previousActive = queryClient.getQueryData<Array<Template>>(activeQueryKey);
+      if (previousActive !== undefined) {
+        previousListQueries.push([activeQueryKey, previousActive]);
+        queryClient.setQueryData<Array<Template>>(
+          activeQueryKey,
+          [optimisticTemplate, ...previousActive]
+        );
+      }
+
+      return { previousListQueries };
+    },
+    onSettled: () => {
+      // Always refetch after mutation to ensure data consistency
       void queryClient.invalidateQueries({ queryKey: templateKeys.list._def });
-      // Invalidate active templates
-      void queryClient.invalidateQueries({
-        queryKey: templateKeys.active.queryKey,
-      });
+      void queryClient.invalidateQueries({ queryKey: templateKeys.active.queryKey });
+    },
+    onSuccess: (template) => {
       // Invalidate category-specific queries
       if (template.category) {
         void queryClient.invalidateQueries({
@@ -73,16 +149,76 @@ export function useCreateTemplate() {
 }
 
 /**
- * Delete a template
+ * Delete a template with optimistic updates.
+ * Removes the template from lists immediately, then confirms with server.
  */
 export function useDeleteTemplate() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
 
-  return useMutation({
+  return useMutation<boolean, Error, number, DeleteTemplateMutationContext>({
     mutationFn: (id: number) => api!.template.delete(id),
-    onSuccess: () => {
-      // Invalidate all template queries
+    onError: (_error, _id, context) => {
+      // Rollback optimistic updates on error
+      if (context?.previousQueries) {
+        for (const [queryKey, data] of context.previousQueries) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+    },
+    onMutate: async (templateId) => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: templateKeys._def });
+
+      // Snapshot previous values for rollback
+      const previousQueries: Array<[QueryKeyType, Array<Template> | Template | undefined]> = [];
+
+      // Remove from all list queries optimistically
+      queryClient.setQueriesData<Array<Template>>(
+        { queryKey: templateKeys.list._def },
+        (old) => {
+          if (old) {
+            previousQueries.push([templateKeys.list._def, old]);
+            return old.filter((t) => t.id !== templateId);
+          }
+          return old;
+        }
+      );
+
+      // Remove from active templates query
+      const activeQueryKey = templateKeys.active.queryKey;
+      const previousActive = queryClient.getQueryData<Array<Template>>(activeQueryKey);
+      if (previousActive) {
+        previousQueries.push([activeQueryKey, previousActive]);
+        queryClient.setQueryData<Array<Template>>(
+          activeQueryKey,
+          previousActive.filter((t) => t.id !== templateId)
+        );
+      }
+
+      // Remove from built-in templates query
+      const builtInQueryKey = templateKeys.builtIn.queryKey;
+      const previousBuiltIn = queryClient.getQueryData<Array<Template>>(builtInQueryKey);
+      if (previousBuiltIn) {
+        previousQueries.push([builtInQueryKey, previousBuiltIn]);
+        queryClient.setQueryData<Array<Template>>(
+          builtInQueryKey,
+          previousBuiltIn.filter((t) => t.id !== templateId)
+        );
+      }
+
+      // Remove the detail cache
+      const detailQueryKey = templateKeys.detail(templateId).queryKey;
+      const previousDetail = queryClient.getQueryData<Template>(detailQueryKey);
+      if (previousDetail) {
+        previousQueries.push([detailQueryKey, previousDetail]);
+        queryClient.removeQueries({ queryKey: detailQueryKey });
+      }
+
+      return { previousQueries };
+    },
+    onSettled: () => {
+      // Always refetch after mutation to ensure data consistency
       void queryClient.invalidateQueries({ queryKey: templateKeys._def });
     },
   });
@@ -180,30 +316,133 @@ export function useTemplatesByCategory(category: string) {
 }
 
 /**
- * Update a template
+ * Update a template with optimistic updates.
+ * Updates the template in place immediately, then confirms with server.
  */
 export function useUpdateTemplate() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
 
-  return useMutation({
-    mutationFn: ({ data, id }: { data: Partial<NewTemplate>; id: number }) =>
+  interface UpdateVariables { data: Partial<NewTemplate>; id: number }
+
+  return useMutation<Template | undefined, Error, UpdateVariables, UpdateTemplateMutationContext>({
+    mutationFn: ({ data, id }: UpdateVariables) =>
       api!.template.update(id, data),
+    onError: (_error, _variables, context) => {
+      // Rollback optimistic updates on error
+      if (context?.previousQueries) {
+        for (const [queryKey, data] of context.previousQueries) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+    },
+    onMutate: async ({ data: updateData, id: templateId }) => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: templateKeys._def });
+
+      // Snapshot previous values for rollback
+      const previousQueries: Array<[QueryKeyType, Array<Template> | Template | undefined]> = [];
+
+      // Get existing template from detail cache or find in lists
+      const detailQueryKey = templateKeys.detail(templateId).queryKey;
+      let existingTemplate = queryClient.getQueryData<Template>(detailQueryKey);
+
+      // If not in detail cache, try to find in list queries
+      if (!existingTemplate) {
+        const allLists = queryClient.getQueriesData<Array<Template>>({
+          queryKey: templateKeys.list._def,
+        });
+        for (const [, templates] of allLists) {
+          if (templates) {
+            const found = templates.find((t) => t.id === templateId);
+            if (found) {
+              existingTemplate = found;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!existingTemplate) {
+        // Can't do optimistic update without existing data
+        return { previousQueries };
+      }
+
+      // Create optimistically updated template
+      const optimisticTemplate: Template = {
+        ...existingTemplate,
+        ...updateData,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Update detail cache
+      const previousDetail = queryClient.getQueryData<Template>(detailQueryKey);
+      if (previousDetail) {
+        previousQueries.push([detailQueryKey, previousDetail]);
+      }
+      queryClient.setQueryData<Template>(detailQueryKey, optimisticTemplate);
+
+      // Update all list queries optimistically
+      queryClient.setQueriesData<Array<Template>>(
+        { queryKey: templateKeys.list._def },
+        (old) => {
+          if (old) {
+            previousQueries.push([templateKeys.list._def, old]);
+            return old.map((t) => (t.id === templateId ? optimisticTemplate : t));
+          }
+          return old;
+        }
+      );
+
+      // Update active templates query
+      const activeQueryKey = templateKeys.active.queryKey;
+      const previousActive = queryClient.getQueryData<Array<Template>>(activeQueryKey);
+      if (previousActive) {
+        previousQueries.push([activeQueryKey, previousActive]);
+        // Handle deactivation - remove from active list if deactivatedAt is set
+        if (updateData.deactivatedAt !== undefined) {
+          if (updateData.deactivatedAt === null) {
+            // Re-activating - add to list if not present
+            const isInList = previousActive.some((t) => t.id === templateId);
+            if (!isInList) {
+              queryClient.setQueryData<Array<Template>>(
+                activeQueryKey,
+                [optimisticTemplate, ...previousActive]
+              );
+            } else {
+              queryClient.setQueryData<Array<Template>>(
+                activeQueryKey,
+                previousActive.map((t) => (t.id === templateId ? optimisticTemplate : t))
+              );
+            }
+          } else {
+            // Deactivating - remove from active list
+            queryClient.setQueryData<Array<Template>>(
+              activeQueryKey,
+              previousActive.filter((t) => t.id !== templateId)
+            );
+          }
+        } else {
+          queryClient.setQueryData<Array<Template>>(
+            activeQueryKey,
+            previousActive.map((t) => (t.id === templateId ? optimisticTemplate : t))
+          );
+        }
+      }
+
+      return { previousQueries };
+    },
+    onSettled: () => {
+      // Always refetch after mutation to ensure data consistency
+      void queryClient.invalidateQueries({ queryKey: templateKeys._def });
+    },
     onSuccess: (template) => {
       if (template) {
-        // Update detail cache directly
+        // Update detail cache with actual server response
         queryClient.setQueryData(
           templateKeys.detail(template.id).queryKey,
           template
         );
-        // Invalidate list queries
-        void queryClient.invalidateQueries({
-          queryKey: templateKeys.list._def,
-        });
-        // Invalidate active templates
-        void queryClient.invalidateQueries({
-          queryKey: templateKeys.active.queryKey,
-        });
         // Invalidate category-specific queries
         if (template.category) {
           void queryClient.invalidateQueries({

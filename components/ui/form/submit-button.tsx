@@ -3,6 +3,7 @@
 import type { VariantProps } from "class-variance-authority";
 
 import { useStore } from "@tanstack/react-form";
+import { Loader2 } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useFormContext } from "@/lib/forms/form-hook";
@@ -32,6 +33,9 @@ export function SubmitButton({
       type={"submit"}
       variant={variant}
     >
+      {isSubmitting && (
+        <Loader2 aria-hidden={"true"} className={"size-4 animate-spin"} />
+      )}
       {children}
     </Button>
   );
