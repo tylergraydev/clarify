@@ -18,6 +18,9 @@ import { redirect } from "next/navigation";
 import { useEffect } from "react";
 
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
+import { RepositoriesTabContent } from "@/components/projects/repositories-tab-content";
+import { SettingsTabContent } from "@/components/projects/settings-tab-content";
+import { WorkflowsTabContent } from "@/components/projects/workflows-tab-content";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +36,8 @@ import {
   useProject,
   useUnarchiveProject,
 } from "@/hooks/queries/use-projects";
+import { useRepositoriesByProject } from "@/hooks/queries/use-repositories";
+import { useWorkflowsByProject } from "@/hooks/queries/use-workflows";
 import { useShellStore } from "@/lib/stores/shell-store";
 
 import { Route } from "./route-type";
@@ -154,6 +159,10 @@ export default function ProjectDetailPage() {
   // Fetch project data (only when we have a valid ID)
   const { data: project, isError, isLoading } = useProject(projectId ?? 0);
 
+  // Fetch repositories and workflows for counts
+  const { data: repositories } = useRepositoriesByProject(projectId ?? 0);
+  const { data: workflows } = useWorkflowsByProject(projectId ?? 0);
+
   // Mutations
   const archiveProjectMutation = useArchiveProject();
   const unarchiveProjectMutation = useUnarchiveProject();
@@ -196,6 +205,11 @@ export default function ProjectDetailPage() {
   const formattedArchivedDate = project.archivedAt
     ? format(new Date(project.archivedAt), "MMM d, yyyy")
     : null;
+
+  // Derived counts for overview cards
+  const repositoryCount = repositories?.length ?? 0;
+  const workflowCount = workflows?.length ?? 0;
+  const recentWorkflows = workflows?.slice(0, 3) ?? [];
 
   const handleArchive = () => {
     archiveProjectMutation.mutate(projectId);
@@ -339,26 +353,70 @@ export default function ProjectDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Placeholder cards for future content */}
+            {/* Repositories summary card */}
             <Card>
               <CardHeader>
                 <CardTitle className={"text-base"}>{"Repositories"}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className={"text-sm text-muted-foreground"}>
-                  {"No repositories added yet."}
-                </p>
+              <CardContent className={"space-y-3"}>
+                <div className={"flex items-center gap-2 text-sm"}>
+                  <FolderGit2
+                    aria-hidden={"true"}
+                    className={"size-4 text-muted-foreground"}
+                  />
+                  <span className={"text-muted-foreground"}>{"Total:"}</span>
+                  <span className={"font-medium"}>{repositoryCount}</span>
+                </div>
+                {repositoryCount === 0 ? (
+                  <p className={"text-sm text-muted-foreground"}>
+                    {"No repositories added yet."}
+                  </p>
+                ) : (
+                  <p className={"text-sm text-muted-foreground"}>
+                    {repositoryCount === 1
+                      ? "1 repository configured"
+                      : `${repositoryCount} repositories configured`}
+                  </p>
+                )}
               </CardContent>
             </Card>
 
+            {/* Recent Workflows summary card */}
             <Card>
               <CardHeader>
                 <CardTitle className={"text-base"}>{"Recent Workflows"}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className={"text-sm text-muted-foreground"}>
-                  {"No workflows created yet."}
-                </p>
+              <CardContent className={"space-y-3"}>
+                <div className={"flex items-center gap-2 text-sm"}>
+                  <Workflow
+                    aria-hidden={"true"}
+                    className={"size-4 text-muted-foreground"}
+                  />
+                  <span className={"text-muted-foreground"}>{"Total:"}</span>
+                  <span className={"font-medium"}>{workflowCount}</span>
+                </div>
+                {workflowCount === 0 ? (
+                  <p className={"text-sm text-muted-foreground"}>
+                    {"No workflows created yet."}
+                  </p>
+                ) : (
+                  <div className={"space-y-1"}>
+                    {recentWorkflows.map((workflow) => (
+                      <p
+                        className={"truncate text-sm text-muted-foreground"}
+                        key={workflow.id}
+                        title={workflow.featureName}
+                      >
+                        {workflow.featureName}
+                      </p>
+                    ))}
+                    {workflowCount > 3 && (
+                      <p className={"text-sm text-muted-foreground"}>
+                        {`+${workflowCount - 3} more`}
+                      </p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -366,62 +424,17 @@ export default function ProjectDetailPage() {
 
         {/* Repositories Tab */}
         <TabsPanel value={"repositories"}>
-          <div className={"rounded-lg border border-dashed p-8 text-center"}>
-            <div
-              className={
-                "mx-auto flex size-12 items-center justify-center rounded-full bg-muted"
-              }
-            >
-              <FolderGit2
-                aria-hidden={"true"}
-                className={"size-6 text-muted-foreground"}
-              />
-            </div>
-            <h3 className={"mt-4 font-medium"}>{"Repositories"}</h3>
-            <p className={"mt-1 text-sm text-muted-foreground"}>
-              {"Repository management will be available here."}
-            </p>
-          </div>
+          <RepositoriesTabContent projectId={projectId} />
         </TabsPanel>
 
         {/* Workflows Tab */}
         <TabsPanel value={"workflows"}>
-          <div className={"rounded-lg border border-dashed p-8 text-center"}>
-            <div
-              className={
-                "mx-auto flex size-12 items-center justify-center rounded-full bg-muted"
-              }
-            >
-              <Workflow
-                aria-hidden={"true"}
-                className={"size-6 text-muted-foreground"}
-              />
-            </div>
-            <h3 className={"mt-4 font-medium"}>{"Workflows"}</h3>
-            <p className={"mt-1 text-sm text-muted-foreground"}>
-              {"Project workflow management will be available here."}
-            </p>
-          </div>
+          <WorkflowsTabContent projectId={projectId} projectName={project.name} />
         </TabsPanel>
 
         {/* Settings Tab */}
         <TabsPanel value={"settings"}>
-          <div className={"rounded-lg border border-dashed p-8 text-center"}>
-            <div
-              className={
-                "mx-auto flex size-12 items-center justify-center rounded-full bg-muted"
-              }
-            >
-              <Settings
-                aria-hidden={"true"}
-                className={"size-6 text-muted-foreground"}
-              />
-            </div>
-            <h3 className={"mt-4 font-medium"}>{"Project Settings"}</h3>
-            <p className={"mt-1 text-sm text-muted-foreground"}>
-              {"Project configuration options will be available here."}
-            </p>
-          </div>
+          <SettingsTabContent projectId={projectId} />
         </TabsPanel>
       </TabsRoot>
     </div>
