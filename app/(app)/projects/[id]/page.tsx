@@ -12,8 +12,9 @@ import {
   Settings,
   Workflow,
 } from "lucide-react";
+import { useRouteParams } from "next-typesafe-url/app";
 import Link from "next/link";
-import { redirect, useParams } from "next/navigation";
+import { redirect } from "next/navigation";
 import { useEffect } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,8 @@ import {
   useUnarchiveProject,
 } from "@/hooks/queries/use-projects";
 import { useShellStore } from "@/lib/stores/shell-store";
+
+import { Route } from "./route-type";
 
 /**
  * Loading skeleton for the project detail page
@@ -138,14 +141,17 @@ const ProjectNotFound = () => {
  * - Updates shell store with selected project ID
  */
 export default function ProjectDetailPage() {
-  const params = useParams<{ id: string }>();
-  const projectId = parseInt(params.id, 10);
+  // Type-safe route params validation
+  const routeParams = useRouteParams(Route.routeParams);
 
   // Shell store to track selected project
   const setSelectedProject = useShellStore((state) => state.setSelectedProject);
 
-  // Fetch project data
-  const { data: project, isError, isLoading } = useProject(projectId);
+  // Get validated project ID (safe to access after loading/error checks)
+  const projectId = routeParams.data?.id;
+
+  // Fetch project data (only when we have a valid ID)
+  const { data: project, isError, isLoading } = useProject(projectId ?? 0);
 
   // Mutations
   const archiveProjectMutation = useArchiveProject();
@@ -163,12 +169,17 @@ export default function ProjectDetailPage() {
     };
   }, [project, setSelectedProject]);
 
-  // Redirect if ID is invalid
-  if (isNaN(projectId) || projectId <= 0) {
+  // Handle route params loading state
+  if (routeParams.isLoading) {
+    return <ProjectDetailSkeleton />;
+  }
+
+  // Redirect if ID is invalid (Zod validation failed)
+  if (routeParams.isError || !projectId) {
     redirect("/projects");
   }
 
-  // Loading state
+  // Loading state for project data
   if (isLoading) {
     return <ProjectDetailSkeleton />;
   }

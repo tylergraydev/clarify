@@ -70,8 +70,9 @@ export const ProjectSelector = ({
   const { selectedProjectId, setSelectedProject } = useShellStore();
 
   // Use explicit value prop if provided, otherwise fall back to shell store
+  // Use null (not undefined) when no project is selected to keep Select in controlled mode
   const controlledValue =
-    value ?? (selectedProjectId !== null ? String(selectedProjectId) : undefined);
+    value ?? (selectedProjectId !== null ? String(selectedProjectId) : null);
 
   const handleValueChange = (newValue: null | string) => {
     if (newValue !== null) {

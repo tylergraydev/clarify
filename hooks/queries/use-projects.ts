@@ -82,7 +82,12 @@ export function useCreateProject() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: (data: NewProject) => api!.project.create(data),
+    mutationFn: async (data: NewProject) => {
+      if (!api) {
+        throw new Error("Electron API not available. Please run in Electron.");
+      }
+      return api.project.create(data);
+    },
     onSuccess: () => {
       // Invalidate list queries to show the new project
       void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });

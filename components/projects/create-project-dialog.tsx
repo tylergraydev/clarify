@@ -47,8 +47,13 @@ export const CreateProjectDialog = ({
         });
         handleClose();
         onSuccess?.();
-      } catch {
-        throw new Error("Failed to create project. Please try again.");
+      } catch (error) {
+        // Re-throw with original message or a fallback
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to create project. Please try again.";
+        throw new Error(message);
       }
     },
     validators: {
@@ -80,7 +85,9 @@ export const CreateProjectDialog = ({
           {/* Header */}
           <DialogTitle>{"Create Project"}</DialogTitle>
           <DialogDescription>
-            {"Create a new project to organize your workflows and repositories."}
+            {
+              "Create a new project to organize your workflows and repositories."
+            }
           </DialogDescription>
 
           {/* Form */}
@@ -93,11 +100,6 @@ export const CreateProjectDialog = ({
             }}
           >
             <div className={"flex flex-col gap-4"}>
-              {/* Form Error */}
-              <form.AppForm>
-                <form.FormError />
-              </form.AppForm>
-
               {/* Name Field */}
               <form.AppField name={"name"}>
                 {(field) => (

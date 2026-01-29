@@ -1,6 +1,8 @@
 "use client";
 
 import { FolderOpen, Grid3X3, List, Plus } from "lucide-react";
+import { $path } from "next-typesafe-url";
+import { withParamValidation } from "next-typesafe-url/app/hoc";
 import { useRouter } from "next/navigation";
 import { parseAsBoolean, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useMemo } from "react";
@@ -20,6 +22,8 @@ import {
   useUnarchiveProject,
 } from "@/hooks/queries/use-projects";
 import { cn } from "@/lib/utils";
+
+import { Route } from "./route-type";
 
 const VIEW_OPTIONS = ["card", "table"] as const;
 type ViewOption = (typeof VIEW_OPTIONS)[number];
@@ -50,18 +54,26 @@ const ProjectCardSkeleton = () => {
  */
 const ProjectTableSkeleton = () => {
   return (
-    <div className={"animate-pulse overflow-x-auto rounded-lg border border-border"}>
+    <div
+      className={
+        "animate-pulse overflow-x-auto rounded-lg border border-border"
+      }
+    >
       <table className={"w-full border-collapse text-sm"}>
         <thead className={"border-b border-border bg-muted/50"}>
           <tr>
-            {["Name", "Description", "Created", "Status", "Actions"].map((header) => (
-              <th
-                className={"px-4 py-3 text-left font-medium text-muted-foreground"}
-                key={header}
-              >
-                {header}
-              </th>
-            ))}
+            {["Name", "Description", "Created", "Status", "Actions"].map(
+              (header) => (
+                <th
+                  className={
+                    "px-4 py-3 text-left font-medium text-muted-foreground"
+                  }
+                  key={header}
+                >
+                  {header}
+                </th>
+              )
+            )}
           </tr>
         </thead>
         <tbody className={"divide-y divide-border"}>
@@ -103,7 +115,7 @@ const ProjectTableSkeleton = () => {
  * - Archive/unarchive project actions
  * - Empty state when no projects exist
  */
-export default function ProjectsPage() {
+function ProjectsPageContent() {
   const router = useRouter();
 
   // URL state management with nuqs
@@ -151,7 +163,7 @@ export default function ProjectsPage() {
   };
 
   const handleViewDetails = (projectId: number) => {
-    router.push(`/projects/${projectId}`);
+    router.push($path({ route: "/projects/[id]", routeParams: { id: projectId } }));
   };
 
   // Check if there are no projects at all (not just filtered)
@@ -260,7 +272,10 @@ export default function ProjectsPage() {
           // Empty state when filters hide all projects
           <EmptyState
             action={
-              <Button onClick={() => handleShowArchivedChange(true)} variant={"outline"}>
+              <Button
+                onClick={() => handleShowArchivedChange(true)}
+                variant={"outline"}
+              >
                 {"Show archived projects"}
               </Button>
             }
@@ -297,3 +312,5 @@ export default function ProjectsPage() {
     </div>
   );
 }
+
+export default withParamValidation(ProjectsPageContent, Route);
