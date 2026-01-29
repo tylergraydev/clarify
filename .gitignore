@@ -43,3 +43,6 @@ next-env.d.ts
 # electron
 /electron-dist/
 /dist/
+
+clarify-dev.db-shm
+clarify-dev.db-wal
