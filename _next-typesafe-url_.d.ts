@@ -15,6 +15,8 @@ declare module "@@@next-typesafe-url" {
   interface StaticRouter {
     "/agents": StaticRoute;
     "/dashboard": StaticRoute;
+    "/projects": StaticRoute;
+    "/projects/[id]": StaticRoute;
     "/settings": StaticRoute;
     "/templates": StaticRoute;
     "/workflows/active": StaticRoute;

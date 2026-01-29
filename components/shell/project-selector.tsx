@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useProjects } from "@/hooks/queries/use-projects";
+import { useShellStore } from "@/lib/stores/shell-store";
 import { cn } from "@/lib/utils";
 
 export const projectSelectorTriggerVariants = cva(
@@ -66,14 +67,24 @@ export const ProjectSelector = ({
   ...props
 }: ProjectSelectorProps) => {
   const { data: projects, isLoading: isProjectsLoading } = useProjects();
+  const { selectedProjectId, setSelectedProject } = useShellStore();
+
+  // Use explicit value prop if provided, otherwise fall back to shell store
+  const controlledValue =
+    value ?? (selectedProjectId !== null ? String(selectedProjectId) : undefined);
 
   const handleValueChange = (newValue: null | string) => {
     if (newValue !== null) {
+      // Update shell store
+      setSelectedProject(Number(newValue));
+      // Call optional callback
       onProjectChange?.(newValue);
     }
   };
 
-  const selectedProject = projects?.find((p) => String(p.id) === value);
+  const selectedProject = projects?.find(
+    (p) => String(p.id) === controlledValue
+  );
   const hasProjects = projects && projects.length > 0;
 
   // Loading state
@@ -148,7 +159,7 @@ export const ProjectSelector = ({
         side={"right"}
       >
         <div ref={ref} {...props}>
-          <SelectRoot onValueChange={handleValueChange} value={value}>
+          <SelectRoot onValueChange={handleValueChange} value={controlledValue}>
             <SelectTrigger
               className={cn(
                 projectSelectorTriggerVariants({ size }),
@@ -183,7 +194,7 @@ export const ProjectSelector = ({
   // Default expanded state
   return (
     <div ref={ref} {...props}>
-      <SelectRoot onValueChange={handleValueChange} value={value}>
+      <SelectRoot onValueChange={handleValueChange} value={controlledValue}>
         <SelectTrigger
           className={cn(projectSelectorTriggerVariants({ size }), className)}
         >

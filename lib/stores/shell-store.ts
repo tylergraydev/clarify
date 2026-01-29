@@ -6,6 +6,8 @@ import { create } from "zustand";
 export interface ShellActions {
   /** Set the currently active navigation item */
   setActiveNavItem: (item: null | string) => void;
+  /** Set the currently selected project */
+  setSelectedProject: (id: null | number) => void;
   /** Explicitly set sidebar collapsed state */
   setSidebarCollapsed: (collapsed: boolean) => void;
   /** Toggle sidebar between collapsed and expanded states */
@@ -24,6 +26,8 @@ export interface ShellState {
   isSidebarCollapsed: boolean;
   /** Timestamp of the last data sync operation */
   lastSyncTimestamp: Date | null;
+  /** Currently selected project ID */
+  selectedProjectId: null | number;
 }
 
 /**
@@ -52,9 +56,14 @@ export const useShellStore = create<ShellStore>()((set) => ({
   // Initial state
   isSidebarCollapsed: false,
   lastSyncTimestamp: null,
+  selectedProjectId: null,
 
   setActiveNavItem: (item: null | string) => {
     set({ activeNavItem: item });
+  },
+
+  setSelectedProject: (id: null | number) => {
+    set({ selectedProjectId: id });
   },
 
   setSidebarCollapsed: (collapsed: boolean) => {

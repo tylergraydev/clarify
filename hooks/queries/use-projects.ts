@@ -47,6 +47,34 @@ export function useAddRepositoryToProject() {
 }
 
 /**
+ * Archive a project by setting archivedAt to current timestamp
+ */
+export function useArchiveProject() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+
+  return useMutation({
+    mutationFn: (id: number) =>
+      api!.project.update(id, { archivedAt: new Date().toISOString() }),
+    onSuccess: (project) => {
+      if (project) {
+        // Update detail cache directly
+        queryClient.setQueryData(
+          projectKeys.detail(project.id).queryKey,
+          project
+        );
+        // Invalidate list queries
+        void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
+      }
+    },
+  });
+}
+
+// ============================================================================
+// Mutation Hooks
+// ============================================================================
+
+/**
  * Create a new project
  */
 export function useCreateProject() {
@@ -61,10 +89,6 @@ export function useCreateProject() {
     },
   });
 }
-
-// ============================================================================
-// Mutation Hooks
-// ============================================================================
 
 /**
  * Delete a project
@@ -107,6 +131,29 @@ export function useProjects() {
     ...projectKeys.list(),
     enabled: isElectron,
     queryFn: () => api!.project.list(),
+  });
+}
+
+/**
+ * Unarchive a project by clearing the archivedAt timestamp
+ */
+export function useUnarchiveProject() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+
+  return useMutation({
+    mutationFn: (id: number) => api!.project.update(id, { archivedAt: null }),
+    onSuccess: (project) => {
+      if (project) {
+        // Update detail cache directly
+        queryClient.setQueryData(
+          projectKeys.detail(project.id).queryKey,
+          project
+        );
+        // Invalidate list queries
+        void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
+      }
+    },
   });
 }
 

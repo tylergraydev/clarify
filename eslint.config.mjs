@@ -19,6 +19,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Electron build output:
     "electron-dist/**",
+    // Git worktrees for parallel implementations:
+    ".worktrees/**",
   ]),
   // TypeScript ESLint recommended and stylistic rules.
   tseslint.configs.recommended,

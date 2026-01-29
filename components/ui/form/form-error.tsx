@@ -36,9 +36,12 @@ export function FormError({ className }: FormErrorProps) {
             `}
             />
             <div className={"flex flex-col gap-1"}>
-              {errors.map((error, index) => (
-                <p key={index}>{error}</p>
-              ))}
+              {errors.map((error, index) => {
+                // Handle both string and object error formats from TanStack Form/Zod
+                const message =
+                  typeof error === "string" ? error : error?.message;
+                return message ? <p key={index}>{message}</p> : null;
+              })}
             </div>
           </div>
         );

@@ -3,6 +3,7 @@
 import {
   Bot,
   FileText,
+  FolderKanban,
   History,
   LayoutDashboard,
   Play,
@@ -101,6 +102,15 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             isActive={isPathActive($path({ route: "/dashboard" }))}
             isCollapsed={isSidebarCollapsed}
             label={"Dashboard"}
+          />
+
+          {/* Projects */}
+          <NavItem
+            href={$path({ route: "/projects" })}
+            icon={FolderKanban}
+            isActive={isPathActive($path({ route: "/projects" }))}
+            isCollapsed={isSidebarCollapsed}
+            label={"Projects"}
           />
         </div>
 

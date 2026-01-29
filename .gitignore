@@ -46,3 +46,5 @@ next-env.d.ts
 
 clarify-dev.db-shm
 clarify-dev.db-wal
+
+.worktrees
