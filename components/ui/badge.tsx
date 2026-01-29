@@ -106,6 +106,14 @@ export const badgeVariants = cva(
           bg-blue-500/15 text-blue-700
           dark:bg-blue-500/20 dark:text-blue-400
         `,
+        review: `
+          bg-yellow-500/15 text-yellow-700
+          dark:bg-yellow-500/20 dark:text-yellow-400
+        `,
+        specialist: `
+          bg-blue-500/15 text-blue-700
+          dark:bg-blue-500/20 dark:text-blue-400
+        `,
         stale: `
           bg-amber-500/15 text-amber-700
           dark:bg-amber-500/20 dark:text-amber-400

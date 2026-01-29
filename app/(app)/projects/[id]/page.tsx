@@ -17,6 +17,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
 
+import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -239,10 +240,15 @@ export default function ProjectDetailPage() {
 
         {/* Action buttons */}
         <div className={"flex gap-2"}>
-          <Button size={"sm"} variant={"outline"}>
-            <Pencil aria-hidden={"true"} className={"size-4"} />
-            {"Edit"}
-          </Button>
+          <EditProjectDialog
+            project={project}
+            trigger={
+              <Button size={"sm"} variant={"outline"}>
+                <Pencil aria-hidden={"true"} className={"size-4"} />
+                {"Edit"}
+              </Button>
+            }
+          />
           {isArchived ? (
             <Button
               disabled={unarchiveProjectMutation.isPending}
