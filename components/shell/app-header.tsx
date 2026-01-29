@@ -68,7 +68,7 @@ export const AppHeader = ({
         {/* App Logo/Title */}
         <div className={"flex items-center gap-2"} style={noDragStyle}>
           <span className={"text-sm font-semibold text-foreground"}>
-            {"Claude Orchestrator"}
+            {"Clarify Orchestrator"}
           </span>
         </div>
 
