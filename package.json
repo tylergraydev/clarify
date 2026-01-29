@@ -2,7 +2,7 @@
   "name": "clarify",
   "version": "0.1.0",
   "private": true,
-  "main": "electron-dist/main.js",
+  "main": "electron-dist/electron/main.js",
   "scripts": {
     "build": "next build",
     "db:generate": "drizzle-kit generate",
