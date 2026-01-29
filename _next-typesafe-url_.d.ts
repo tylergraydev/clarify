@@ -9,16 +9,18 @@ declare module "@@@next-typesafe-url" {
   import type { InferRoute, StaticRoute } from "next-typesafe-url";
 
   interface DynamicRouter {
-  
+    "/workflows/[id]": InferRoute<import("./app/(app)/workflows/[id]/route-type").RouteType>;
   }
 
   interface StaticRouter {
     "/agents": StaticRoute;
     "/dashboard": StaticRoute;
+    "/projects/new": StaticRoute;
     "/settings": StaticRoute;
     "/templates": StaticRoute;
     "/workflows/active": StaticRoute;
     "/workflows/history": StaticRoute;
+    "/workflows/new": StaticRoute;
     "/workflows": StaticRoute;
     "/": StaticRoute;
   }

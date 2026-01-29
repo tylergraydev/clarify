@@ -2,6 +2,7 @@
 
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { CheckCircle, Clock, History, Plus, XCircle } from 'lucide-react';
+import { $path } from 'next-typesafe-url';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type KeyboardEvent, useMemo } from 'react';
@@ -250,7 +251,7 @@ const RecentWorkflowsContent = () => {
    * Note: Requires /workflows/[id] route to be implemented
    */
   const handleWorkflowClick = (workflowId: number) => {
-    router.push(`/workflows/${workflowId}`);
+    router.push($path({ route: '/workflows/[id]', routeParams: { id: String(workflowId) } }));
   };
 
   const hasRecentWorkflows = recentWorkflows.length > 0;
@@ -267,7 +268,7 @@ const RecentWorkflowsContent = () => {
         action={
           <Link
             className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
-            href={'/workflows/new'}
+            href={$path({ route: '/workflows/new' })}
           >
             <Plus aria-hidden={'true'} className={'size-4'} />
             Start Workflow

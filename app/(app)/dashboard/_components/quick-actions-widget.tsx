@@ -1,6 +1,7 @@
 'use client';
 
 import { FolderPlus, Play, Zap } from 'lucide-react';
+import { $path } from 'next-typesafe-url';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -27,11 +28,11 @@ export const QuickActionsWidget = ({ className }: QuickActionsWidgetProps) => {
   const router = useRouter();
 
   const handleNewWorkflowClick = () => {
-    router.push('/workflows/new');
+    router.push($path({ route: '/workflows/new' }));
   };
 
   const handleNewProjectClick = () => {
-    router.push('/projects/new');
+    router.push($path({ route: '/projects/new' }));
   };
 
   return (

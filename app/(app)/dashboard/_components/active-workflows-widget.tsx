@@ -2,6 +2,7 @@
 
 import { differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
 import { Activity, Clock, Play, Plus } from 'lucide-react';
+import { $path } from 'next-typesafe-url';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type KeyboardEvent, useMemo } from 'react';
@@ -290,7 +291,7 @@ const ActiveWorkflowsContent = () => {
    * Note: Requires /workflows/[id] route to be implemented
    */
   const handleWorkflowClick = (workflowId: number) => {
-    router.push(`/workflows/${workflowId}`);
+    router.push($path({ route: '/workflows/[id]', routeParams: { id: String(workflowId) } }));
   };
 
   const hasActiveWorkflows = activeWorkflows.length > 0;
@@ -307,7 +308,7 @@ const ActiveWorkflowsContent = () => {
         action={
           <Link
             className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
-            href={'/workflows/new'}
+            href={$path({ route: '/workflows/new' })}
           >
             <Plus aria-hidden={'true'} className={'size-4'} />
             Start Workflow
