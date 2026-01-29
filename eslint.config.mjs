@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Electron build output:
+    "electron-dist/**",
   ]),
   // TypeScript ESLint recommended and stylistic rules.
   tseslint.configs.recommended,
@@ -38,16 +40,12 @@ const eslintConfig = defineConfig([
   },
   {
     rules: {
+      "@typescript-eslint/array-type": "off",
+      "better-tailwindcss/enforce-consistent-line-wrapping": "off",
       eqeqeq: "error",
       "react-snob/no-inline-styles": "off",
-      "react-snob/require-boolean-prefix-is": [
-        "error",
-        {
-          allowedPrefixes: ["as", "can", "has", "is", "should", "was", "will"],
-        },
-      ],
+      "react-snob/require-boolean-prefix-is": "off",
       "react-snob/require-derived-conditional-prefix": "off",
-      "@typescript-eslint/array-type": "off"
     },
   },
   // Prettier config must be the last to override conflicting rules.

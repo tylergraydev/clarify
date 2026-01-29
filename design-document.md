@@ -44,26 +44,31 @@ The app solves a specific developer pain point: translating informal feature req
 ### 2.1 Technology Decisions
 
 **Frontend**: Next.js + React
+
 - Server-side rendering for performance
 - File system access via Electron IPC
 - Component-based architecture for complex workflows
 
 **Desktop**: Electron
+
 - Direct file system access (repo scanning, plan export)
 - Native OS integrations (file dialogs, notifications)
 - Local data persistence
 
 **AI Integration**: Vercel AI SDK
+
 - Unified interface across AI models
 - Streaming support for real-time feedback
 - Token usage tracking for cost awareness
 
 **Data Layer**: Local storage + File system
+
 - SQLite storage for metadata (projects, feature requests, orchestration logs)
 - Plans and logs stored as Markdown files (human-readable, version-control friendly)
 - No cloud sync by default (users can implement via Git/Sync tools if desired)
 
 **State Management**: Zustand
+
 - Manage multi-step workflow state
 - Handle model/prompt configuration
 - Track active project and feature request
@@ -71,17 +76,20 @@ The app solves a specific developer pain point: translating informal feature req
 ### 2.3 Electron-Specific Considerations
 
 **Main Process Responsibilities**:
+
 - File system operations (read repo files, write plans, manage project directories)
 - Repo analysis (file discovery, codebase scanning)
 - IPC bridging to AI operations
 - Dialog management (file pickers, confirmations)
 
 **Preload Security**:
+
 - Limited IPC channels for specific operations
 - No direct `require()` in renderer
 - Validate all file paths to prevent directory traversal
 
 **Renderer Process Responsibilities**:
+
 - UI rendering and state management
 - Workflow orchestration logic
 - Model/prompt configuration
@@ -94,11 +102,13 @@ The app solves a specific developer pain point: translating informal feature req
 ### 3.1 Main Navigation Structure
 
 **Sidebar Navigation**:
+
 - Projects (list view)
 - Settings
 - Help/Documentation
 
 **Primary Sections**:
+
 1. **Projects Dashboard**
    - List of all projects
    - Quick stats per project (# of feature requests, latest plan generated)
@@ -132,6 +142,7 @@ The app solves a specific developer pain point: translating informal feature req
 User initiates workflow by selecting "New Feature Request" from a project.
 
 **Screen: Feature Request Entry**
+
 - Text input field for feature description
 - Optional rich text editor or markdown support
 - Character counter and preview pane
@@ -145,7 +156,8 @@ User initiates workflow by selecting "New Feature Request" from a project.
 
 **Screen: Feature Refinement**
 
-*Layout*:
+_Layout_:
+
 - Left panel: Original request (read-only)
 - Center panel: Model/prompt customization
   - Model selector dropdown (with info on token costs, response time)
@@ -156,7 +168,8 @@ User initiates workflow by selecting "New Feature Request" from a project.
 - Right panel: Live preview of refined request (updates as you type the prompt)
 - Bottom: Action buttons
 
-*Behavior*:
+_Behavior_:
+
 - Auto-saves prompt customizations to orchestration history
 - "Generate Refinement" button triggers Step 1 execution
 - Real-time streaming of response in preview pane
@@ -165,7 +178,8 @@ User initiates workflow by selecting "New Feature Request" from a project.
 - Visual indicator of token usage and cost for this step
 - Can go back to edit original request
 
-*Advanced Features*:
+_Advanced Features_:
+
 - "Compare" mode: side-by-side view of previous refinements
 - "Rollback" option: restore previously accepted refinement
 - Refinement history tab with all previous attempts for this request
@@ -176,7 +190,8 @@ User initiates workflow by selecting "New Feature Request" from a project.
 
 **Screen: File Discovery**
 
-*Layout*:
+_Layout_:
+
 - Top: Indicates "analyzing repositories..." with progress bar
 - Left panel: Research customization
   - Model selector (can differ from Step 1)
@@ -199,7 +214,8 @@ User initiates workflow by selecting "New Feature Request" from a project.
   - Analysis metrics (files analyzed, coverage %, discovery confidence)
   - Codebase structure summary
 
-*Behavior*:
+_Behavior_:
+
 - Auto-saves repository configuration and file discovery results
 - "Analyze Files" button triggers Step 2 execution
 - Files appear dynamically as AI analyzes (streaming)
@@ -209,7 +225,8 @@ User initiates workflow by selecting "New Feature Request" from a project.
   - Adjust discovery depth and re-run
 - Visual diff between previous file discoveries if regenerating
 
-*Advanced Features*:
+_Advanced Features_:
+
 - File preview with syntax highlighting
 - Codebase structure visualization (tree view)
 - Search/filter across discovered files
@@ -221,7 +238,8 @@ User initiates workflow by selecting "New Feature Request" from a project.
 
 **Screen: Plan Generation**
 
-*Layout*:
+_Layout_:
+
 - Left panel: Plan customization
   - Model selector
   - Prompt template selector
@@ -239,7 +257,8 @@ User initiates workflow by selecting "New Feature Request" from a project.
   - Estimated implementation time (if AI provides it)
   - Plan export options (see below)
 
-*Behavior*:
+_Behavior_:
+
 - "Generate Plan" button triggers Step 3
 - Real-time streaming of plan into preview (satisfying UX)
 - After completion, four key buttons appear:
@@ -249,7 +268,8 @@ User initiates workflow by selecting "New Feature Request" from a project.
   - **Export** (multiple formats, see below)
   - **Save Plan** (confirm and save to project)
 
-*Plan Editing*:
+_Plan Editing_:
+
 - Toggle between preview and edit modes
 - Markdown syntax highlighting
 - Undo/redo support
@@ -263,7 +283,8 @@ User initiates workflow by selecting "New Feature Request" from a project.
 
 After generating (or editing) a plan:
 
-*Adjustments & Regeneration*:
+_Adjustments & Regeneration_:
+
 - "Adjust" buttons allow jumping back to previous steps
   - Adjust refinement → modify refined request → regenerate all downstream steps
   - Adjust file discovery → add/remove files → regenerate plan only
@@ -271,7 +292,8 @@ After generating (or editing) a plan:
 - Changes are tracked and versioned
 - Option to auto-regenerate downstream steps or skip
 
-*Export Options*:
+_Export Options_:
+
 - **Markdown export** (for team docs, version control)
 - **PDF export** (for sharing, printing, archival)
 - **JSON export** (structured data with metadata)
@@ -279,7 +301,8 @@ After generating (or editing) a plan:
 - **Export orchestration logs** (full audit trail of steps and decisions)
 - Custom export templates (user-definable format)
 
-*Plan Archival*:
+_Plan Archival_:
+
 - Save to project
 - Archive old plans
 - Mark as "implemented" with completion notes
@@ -322,6 +345,7 @@ Archived
 ### 3.4 Project & Repository Management
 
 **Create New Project**:
+
 1. Modal dialog with:
    - Project name (required)
    - Description (optional)
@@ -336,6 +360,7 @@ Archived
 3. User redirected to project view
 
 **Manage Repositories**:
+
 - Add repository: File picker, auto-detects if it's a Git repo
 - Remove repository: Confirm (does not delete local files)
 - Rescan repository: Re-index files (useful if repo has changed)
@@ -350,18 +375,21 @@ Archived
 The app strictly follows the 3-step process from your Claude Code workflow:
 
 **Step 1: Feature Refinement**
+
 - Input: User's feature request + project context
 - Process: Enhance request with technical details from repo context
 - Output: Refined, contextual feature description (single paragraph, 200-500 words)
 - Model: Configurable (default: Claude 4.5 Sonnet)
 
 **Step 2: File Discovery / Research**
+
 - Input: Refined feature request + all repo files
 - Process: Intelligent file analysis to find relevant files for implementation
 - Output: Categorized list of relevant files with reasoning
 - Model: Configurable (default: Claude 4.5 Sonnet)
 
 **Step 3: Implementation Planning**
+
 - Input: Refined request + discovered files (with content)
 - Process: Generate step-by-step implementation plan
 - Output: Markdown implementation plan (no code examples, just instructions)
@@ -370,16 +398,19 @@ The app strictly follows the 3-step process from your Claude Code workflow:
 ### 4.2 Prompt Management
 
 **Default Prompts**:
+
 - App ships with battle-tested default prompts for each step
 - Prompts are based on your existing Claude Code workflow
 
 **Prompt Customization**:
+
 - Users can create custom prompt templates per step
 - Template variables available: `{{refinedRequest}}`, `{{projectContext}}`, `{{discoveredFiles}}`, etc.
 - Prompt editor with syntax highlighting and variable hints
 - Save custom templates for reuse across projects
 
 **Prompt Versioning**:
+
 - Track which prompt template was used for each step
 - Compare outputs from different prompts (A/B testing)
 - Rollback to previous prompt if needed
@@ -387,6 +418,7 @@ The app strictly follows the 3-step process from your Claude Code workflow:
 ### 4.3 Model Management
 
 **Supported Models**:
+
 - Claude 3.5 Sonnet (recommended default)
 - Claude 3.5 Haiku (for quick iterations, lower cost)
 - Claude 3 Opus (for complex analysis, higher token limit)
@@ -394,11 +426,13 @@ The app strictly follows the 3-step process from your Claude Code workflow:
 - Future: Support for other providers (OpenAI, etc.) via Vercel AI SDK
 
 **Model Selection**:
+
 - Per-step model selection (Step 1 might use Haiku, Step 3 uses Sonnet)
 - Model info card showing: costs, token limits, response time estimates
 - Preset configurations (e.g., "budget mode" uses Haiku, "quality mode" uses Sonnet)
 
 **Token Usage Tracking**:
+
 - Real-time token count during generation
 - Historical cost analysis per project
 - Estimated costs before generation
@@ -407,12 +441,14 @@ The app strictly follows the 3-step process from your Claude Code workflow:
 ### 4.4 Error Handling & Fallbacks
 
 **Failure Scenarios**:
+
 - API rate limits → Queue request with exponential backoff
 - Token limits exceeded → Suggest switching to longer-context model
 - Malformed response → Retry with clearer prompt
 - Network timeout → Retry logic with user notification
 
 **Logging**:
+
 - Every API call logged with timestamp, model, tokens, duration
 - Error logs saved for debugging
 - User can view detailed logs for any step
@@ -431,7 +467,8 @@ Users should never feel locked into their choices. At any step:
 3. **Regenerate**: Re-run current step with same or modified settings
 4. **Adjust Scope**: From Step 3, directly adjust file selection in Step 2, then regenerate plan
 
-*UX Implementation*:
+_UX Implementation_:
+
 - "Back" button always available (with confirmation if there are unsaved changes)
 - Breadcrumb trail at top showing: Request > Refine > Research > Plan
 - Toast notifications indicating "regenerating downstream steps..."
@@ -442,6 +479,7 @@ Users should never feel locked into their choices. At any step:
 Every feature request maintains a complete history:
 
 **Orchestration Log** includes:
+
 - Original request
 - Each step's input/output
 - Model and prompt used for each step
@@ -451,11 +489,13 @@ Every feature request maintains a complete history:
 - Final plan and any manual edits
 
 **View Options**:
+
 - **Timeline view**: Visual timeline of all steps and modifications
 - **Raw logs**: JSON export of complete orchestration data
 - **Comparison view**: Side-by-side comparison of different plan versions
 
 **Use Cases**:
+
 - Debugging why plan looks a certain way
 - Audit trail for team reviews
 - Reproducibility (can re-run with same settings)
@@ -466,28 +506,33 @@ Every feature request maintains a complete history:
 Multiple export formats for different use cases:
 
 **Markdown Export**:
+
 - Plain markdown file
 - Suitable for committing to repo or sharing
 - Includes metadata header (request, date, model used)
 
 **PDF Export**:
+
 - Professional formatting
 - Includes table of contents
 - Embeds request and refinement for context
 - Suitable for client sharing or archival
 
 **JSON Export**:
+
 - Structured data format
 - Includes all metadata (model, tokens, timestamps)
 - Suitable for integration with other tools
 - Can be parsed by scripts
 
 **Markdown with Orchestration Logs**:
+
 - Plan + all step logs in single document
 - Shows complete decision trail
 - Useful for internal reviews
 
 **Email Export** (future enhancement):
+
 - Generate shareable link (if deployed with backend)
 - Email plan to team members
 
@@ -496,16 +541,19 @@ Multiple export formats for different use cases:
 Some projects span multiple repositories. The app supports:
 
 **Repository Selection per Feature Request**:
+
 - When creating a feature request, optionally scope to specific repo(s)
 - If not specified, analysis includes all project repos
 - File discovery can prioritize specific repos
 
 **Repo-Aware Analysis**:
+
 - Step 2 (Research) can indicate which repo each file belongs to
 - Plan can be organized by repo if multiple are involved
 - Filters to view files by repo
 
 **Use Case Examples**:
+
 - Monorepo with frontend/backend/shared
 - Microservices where one feature touches multiple repos
 - Plugin architecture with separate plugin repos
@@ -517,16 +565,19 @@ Some projects span multiple repositories. The app supports:
 ### 6.1 Global Settings
 
 **API Configuration**:
+
 - API key input (masked for security)
 - Option to load from environment variable `ANTHROPIC_API_KEY`
 - Connection test button
 - Warning if API key not set
 
 **Default Model**:
+
 - Dropdown selector
 - "Best for speed" vs "best for quality" preset suggestions
 
 **UI Preferences**:
+
 - Theme (light/dark)
 - Auto-save interval
 - Default export format
@@ -535,12 +586,14 @@ Some projects span multiple repositories. The app supports:
 ### 6.2 Project-Specific Settings
 
 **Project Defaults**:
+
 - Override global default model per project
 - Project-specific API key (optional, for multi-account users)
 - Custom prompt templates for this project
 - Preferred file discovery depth (shallow/medium/deep)
 
 **Repository Configuration**:
+
 - Rescan frequency (manual or automatic)
 - Exclude patterns (directories or files to ignore during analysis)
 - File size limits (skip very large files)
@@ -548,17 +601,20 @@ Some projects span multiple repositories. The app supports:
 ### 6.3 Prompt Template Management
 
 **Built-In Templates**:
+
 - Feature Refinement (standard)
 - File Discovery (standard)
 - Implementation Planning (standard)
 
 **Custom Templates**:
+
 - Create new templates with template variable support
 - Organize into categories
 - Mark as "public" (available to all projects) or "private" (project-specific)
 - Clone and modify existing templates
 
 **Template Editor**:
+
 - Syntax-highlighted markdown editor
 - Variable hints dropdown
 - Test prompt with sample data
@@ -633,16 +689,19 @@ Some projects span multiple repositories. The app supports:
 ### 9.2 Interaction Patterns
 
 **Progressive Disclosure**:
+
 - Simple path: Just generate a plan with defaults
 - Advanced path: Customize every aspect (model, prompt, file discovery depth)
 - Expert mode: Deep configuration options, API inspection, logging
 
 **Real-Time Feedback**:
+
 - Streaming plan generation (user sees content appear live)
 - Token count updates in real-time
 - Progress indicators for file scanning
 
 **Safe Defaults**:
+
 - Recommend best practices (e.g., Sonnet for accuracy, Haiku for speed)
 - Pre-filled templates based on common use cases
 - Auto-save everything to prevent data loss
@@ -656,6 +715,7 @@ Some projects span multiple repositories. The app supports:
 **Challenge**: Scanning large repos (50k+ files) without freezing UI
 
 **Solutions**:
+
 - Worker threads for file system operations
 - Chunked processing (scan 1000 files at a time)
 - Debounced UI updates
@@ -667,6 +727,7 @@ Some projects span multiple repositories. The app supports:
 **Challenge**: Repos with large binary files, node_modules, etc.
 
 **Solutions**:
+
 - Default file size limit (skip files >1MB)
 - Exclude patterns configured during repo setup
 - User can manually adjust limits
@@ -675,6 +736,7 @@ Some projects span multiple repositories. The app supports:
 ### 10.3 Streaming & Real-Time Updates
 
 **Implementation**:
+
 - Use Vercel AI SDK's streaming support
 - Stream plan directly to renderer for real-time preview
 - Update preview as chunks arrive
@@ -683,16 +745,19 @@ Some projects span multiple repositories. The app supports:
 ### 10.4 Electron-Specific Challenges
 
 **File Access**:
+
 - Main process handles all file I/O
 - IPC for safe communication between renderer and main
 - Validate all file paths (prevent directory traversal)
 
 **Updater**:
+
 - Electron-updater for app updates
 - Auto-update checking (optional, user can disable)
 - Safe update rollback
 
 **Platform Differences**:
+
 - Handle path separators (Windows vs Unix)
 - File dialog APIs vary by OS
 - Native notifications via native-notify or similar
@@ -729,6 +794,7 @@ Some projects span multiple repositories. The app supports:
 ### 12.1 MVP (Minimum Viable Product)
 
 **Core Features**:
+
 1. Single project with single repo
 2. Linear workflow (no going back)
 3. Basic 3-step orchestration
@@ -737,6 +803,7 @@ Some projects span multiple repositories. The app supports:
 6. Simple UI (functional, not polished)
 
 **Omit for MVP**:
+
 - Multi-repo projects
 - Prompt customization
 - Advanced exports (PDF, JSON)
@@ -746,6 +813,7 @@ Some projects span multiple repositories. The app supports:
 ### 12.2 Phase 1 (Post-MVP)
 
 **Features to Add**:
+
 1. Non-linear workflow (go back, adjust, regenerate)
 2. Prompt customization per step
 3. Model selection per step
@@ -756,6 +824,7 @@ Some projects span multiple repositories. The app supports:
 ### 12.3 Phase 2 (Scale)
 
 **Features to Add**:
+
 1. Multi-repo projects
 2. Team collaboration (comments, sharing)
 3. Git integration
@@ -808,6 +877,7 @@ Some projects span multiple repositories. The app supports:
 This desktop app transforms your Claude Code feature planning workflow into an interactive, user-controlled tool that maintains the rigor of the original process while adding flexibility, transparency, and local-first security. The three-step orchestration remains the heart of the system, but wrapped in an intuitive UI that guides users from request entry through plan generation and beyond.
 
 **Key Advantages Over Current Workflow**:
+
 1. Persistent, non-linear workflow (users don't lose work)
 2. Configurable models and prompts per step
 3. Multi-repo support in a single project
@@ -816,6 +886,7 @@ This desktop app transforms your Claude Code feature planning workflow into an i
 6. Reproducible planning (same settings = same results)
 
 **Next Steps**:
+
 1. Clarify open questions (Section 13.1)
 2. Confirm design decisions (Section 13.2)
 3. Create wireframes/prototypes for main screens

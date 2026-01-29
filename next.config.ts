@@ -1,4 +1,3 @@
-/* eslint-disable react-snob/require-boolean-prefix-is */
 import type { NextConfig } from "next";
 
 const isElectronBuild = process.env.BUILD_TARGET === "electron";

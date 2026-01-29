@@ -1,23 +1,191 @@
 @import "tailwindcss";
-@import 'tw-animate-css';
+@import "tw-animate-css";
+@source "../node_modules/streamdown/dist/*.js";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Sidebar dimensions (theme-independent) */
+  --sidebar-width-expanded: 256px;
+  --sidebar-width-collapsed: 64px;
+
+  /* Scrollbar dimensions */
+  --scrollbar-width: 8px;
+
+  /* Stepper dimensions (desktop defaults) */
+  --stepper-width: 220px;
+  --stepper-gap: 24px;
+  --stepper-connector-height: 32px;
+
+  /* Workflow component dimensions */
+  --workflow-panel-min-width: 300px;
+  --workflow-panel-max-width: 800px;
+  --workflow-header-height: 64px;
+
+  /* Responsive gap values */
+  --gap-xs: 8px;
+  --gap-sm: 12px;
+  --gap-md: 16px;
+  --gap-lg: 24px;
+  --gap-xl: 32px;
+
+  /* Responsive padding values */
+  --padding-content-x: 24px;
+  --padding-content-y: 24px;
+
+  /*
+   * Responsive Breakpoints Reference (Tailwind defaults):
+   * - sm: 640px  (mobile landscape)
+   * - md: 768px  (tablet portrait)
+   * - lg: 1024px (tablet landscape / small desktop)
+   * - xl: 1280px (desktop)
+   * - 2xl: 1536px (large desktop)
+   */
+}
+
+/* Mobile breakpoint overrides (< 768px) */
+@media (max-width: 767px) {
+  :root {
+    /* Stepper goes horizontal on mobile */
+    --stepper-width: 100%;
+    --stepper-gap: 16px;
+    --stepper-connector-height: 24px;
+
+    /* Smaller gaps on mobile */
+    --gap-sm: 8px;
+    --gap-md: 12px;
+    --gap-lg: 16px;
+    --gap-xl: 24px;
+
+    /* Reduced padding on mobile */
+    --padding-content-x: 16px;
+    --padding-content-y: 16px;
+
+    /* Workflow adjustments */
+    --workflow-panel-min-width: 100%;
+    --workflow-header-height: 56px;
+  }
+}
+
+/* Small screens (640px - 767px) */
+@media (min-width: 640px) and (max-width: 767px) {
+  :root {
+    --stepper-gap: 20px;
+    --padding-content-x: 20px;
+  }
+}
+
+/* Tablet breakpoint (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --stepper-width: 180px;
+    --stepper-gap: 20px;
+    --padding-content-x: 20px;
+  }
+}
+
+/* Light mode colors - Baltimore Orioles inspired */
+:root,
+.light {
+  --background: #fefefe;
+  --foreground: #1a1a1a;
+
+  --sidebar-bg: #f8f5f2;
+  --sidebar-border: #e8e0d8;
+
+  --accent: #df4601;
+  --accent-foreground: #ffffff;
+  --accent-hover: #c73d00;
+
+  --muted: #f5f2ef;
+  --muted-foreground: #5c5550;
+
+  --card: #ffffff;
+  --card-border: #e8e0d8;
+
+  --border: #e0d8d0;
+
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+
+  --scrollbar-track: #f5f2ef;
+  --scrollbar-thumb: #d0c8c0;
+  --scrollbar-thumb-hover: #b8b0a8;
+}
+
+/* Dark mode via explicit class - Baltimore Orioles inspired */
+.dark {
+  --background: #0c0c0c;
+  --foreground: #f5f5f5;
+
+  --sidebar-bg: #111111;
+  --sidebar-border: #2a2520;
+
+  --accent: #f56a1a;
+  --accent-foreground: #0c0c0c;
+  --accent-hover: #ff8540;
+
+  --muted: #1a1816;
+  --muted-foreground: #a89f96;
+
+  --card: #141210;
+  --card-border: #2a2520;
+
+  --border: #2a2520;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --scrollbar-track: #1a1816;
+  --scrollbar-thumb: #3a3530;
+  --scrollbar-thumb-hover: #4a4540;
+}
+
+/* System mode: apply dark colors only when no explicit class is set - Baltimore Orioles inspired */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    --background: #0c0c0c;
+    --foreground: #f5f5f5;
+
+    --sidebar-bg: #111111;
+    --sidebar-border: #2a2520;
+
+    --accent: #f56a1a;
+    --accent-foreground: #0c0c0c;
+    --accent-hover: #ff8540;
+
+    --muted: #1a1816;
+    --muted-foreground: #a89f96;
+
+    --card: #141210;
+    --card-border: #2a2520;
+
+    --border: #2a2520;
+
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    --scrollbar-track: #1a1816;
+    --scrollbar-thumb: #3a3530;
+    --scrollbar-thumb-hover: #4a4540;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-hover: var(--accent-hover);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 @layer base {
@@ -32,7 +200,7 @@
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
     position: relative;
     @apply bg-background text-foreground;
   }
@@ -40,4 +208,55 @@
 
 .root {
   isolation: isolate;
+}
+
+/* Electron window drag region */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Custom scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+}
+
+/* Shimmer animation for text */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 50%;
+  }
+  100% {
+    background-position: -200% 50%;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
 }

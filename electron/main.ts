@@ -205,7 +205,7 @@ ipcMain.handle("dialog:openDirectory", async (): Promise<null | string> => {
   if (result.canceled || result.filePaths.length === 0) {
     return null;
   }
-  return result.filePaths[0];
+  return result.filePaths[0] ?? null;
 });
 
 ipcMain.handle(
@@ -222,7 +222,7 @@ ipcMain.handle(
     if (result.canceled || result.filePaths.length === 0) {
       return null;
     }
-    return result.filePaths[0];
+    return result.filePaths[0] ?? null;
   }
 );
 

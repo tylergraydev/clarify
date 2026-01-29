@@ -29,12 +29,11 @@ export interface ElectronAPI {
     readDirectory(path: string): Promise<{
       entries?: Array<{ isDirectory: boolean; isFile: boolean; name: string }>;
       error?: string;
-      // eslint-disable-next-line react-snob/require-boolean-prefix-is
+
       success: boolean;
     }>;
     readFile(
       path: string
-      // eslint-disable-next-line react-snob/require-boolean-prefix-is
     ): Promise<{ content?: string; error?: string; success: boolean }>;
     stat(path: string): Promise<{
       error?: string;
@@ -45,13 +44,12 @@ export interface ElectronAPI {
         mtime: string;
         size: number;
       };
-      // eslint-disable-next-line react-snob/require-boolean-prefix-is
+
       success: boolean;
     }>;
     writeFile(
       path: string,
       content: string
-      // eslint-disable-next-line react-snob/require-boolean-prefix-is
     ): Promise<{ error?: string; success: boolean }>;
   };
   store: {
