@@ -220,3 +220,29 @@ export function useWorkflowsByProject(projectId: number) {
     },
   });
 }
+
+/**
+ * Active workflow statuses for filtering
+ */
+const ACTIVE_STATUSES = ["running", "paused", "editing"] as const;
+
+/**
+ * Fetch active workflows (running, paused, editing) with automatic polling
+ * @param options.enabled - Optional flag to pause polling when not needed (defaults to true)
+ */
+export function useActiveWorkflows(options?: { enabled?: boolean }) {
+  const { api, isElectron } = useElectron();
+  const enabledOption = options?.enabled ?? true;
+
+  return useQuery({
+    ...workflowKeys.running,
+    enabled: isElectron && enabledOption,
+    queryFn: async () => {
+      const workflows = await api!.workflow.list();
+      return workflows.filter((w) =>
+        ACTIVE_STATUSES.includes(w.status as (typeof ACTIVE_STATUSES)[number])
+      );
+    },
+    refetchInterval: 5000,
+  });
+}
