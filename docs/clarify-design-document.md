@@ -104,7 +104,6 @@ A **Project** groups related repositories and workflows.
 | `tanstack-form-base`        | Form field components          |
 | `ipc-handler`               | Electron IPC handlers          |
 | `frontend-component`        | React components               |
-| `gemini-review`             | AI code review                 |
 | `general-purpose`           | Everything else                |
 
 ---
