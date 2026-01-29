@@ -5,8 +5,8 @@
   "main": "electron-dist/main.js",
   "scripts": {
     "build": "next build",
-    "db:generate": "npx drizzle-kit generate",
-    "db:migrate": "npx drizzle-kit migrate",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "dev": "next dev",
     "electron:compile": "tsc -p electron/tsconfig.json",
     "electron:dev": "concurrently -k \"cross-env NODE_ENV=development pnpm dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",

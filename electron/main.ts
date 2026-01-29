@@ -1,3 +1,4 @@
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import {
   app,
   BrowserWindow,
@@ -12,6 +13,9 @@ import Store from "electron-store";
 import * as fs from "fs/promises";
 import * as path from "path";
 
+import { closeDatabase, DrizzleDatabase } from "../db";
+import { initializeDatabase } from "../db";
+
 const isDev = process.env.NODE_ENV === "development";
 const loadURL = isDev ? null : serve({ directory: "out" });
 
@@ -21,6 +25,8 @@ interface StoreType {
   set(key: string, value: unknown): void;
 }
 const store = new Store() as unknown as StoreType;
+
+let db: DrizzleDatabase;
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -55,6 +61,18 @@ async function createWindow(): Promise<void> {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+}
+
+// Initialize database and run migrations
+function initializeDb(): void {
+  const dbPath = isDev ? path.join(process.cwd(), 'clarify-dev.db') : path.join(app.getPath('userData'), 'clarify.db');
+
+  db = initializeDatabase(dbPath);
+
+  // Run migrations
+  const migrationsFolder = isDev ? path.join(process.cwd(), 'drizzle') : path.join(process.resourcesPath, 'drizzle');
+
+  migrate(db, { migrationsFolder });
 }
 
 // Path validation to prevent directory traversal attacks
@@ -299,8 +317,10 @@ ipcMain.handle(
   }
 );
 
-// App lifecycle
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+   initializeDb();
+   await createWindow();
+ });
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
@@ -313,3 +333,8 @@ app.on("activate", () => {
     createWindow();
   }
 });
+
+app.on("before-quit", () => {
+  closeDatabase();
+});
+
