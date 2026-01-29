@@ -3,9 +3,12 @@
 @source "../node_modules/streamdown/dist/*.js";
 
 :root {
-  /* Sidebar dimensions (theme-independent) */
+  /* Shell layout dimensions (theme-independent) */
+  --header-height: 48px;
+  --status-bar-height: 32px;
   --sidebar-width-expanded: 256px;
   --sidebar-width-collapsed: 64px;
+  --sidebar-transition-duration: 200ms;
 
   /* Scrollbar dimensions */
   --scrollbar-width: 8px;
@@ -44,6 +47,10 @@
 /* Mobile breakpoint overrides (< 768px) */
 @media (max-width: 767px) {
   :root {
+    /* Shell layout adjustments for mobile */
+    --header-height: 44px;
+    --status-bar-height: 28px;
+
     /* Stepper goes horizontal on mobile */
     --stepper-width: 100%;
     --stepper-gap: 16px;
