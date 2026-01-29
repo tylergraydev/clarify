@@ -11,15 +11,18 @@ declare module "@@@next-typesafe-url" {
   interface DynamicRouter {
     "/projects": InferRoute<import("./app/(app)/projects/route-type").RouteType>;
     "/projects/[id]": InferRoute<import("./app/(app)/projects/[id]/route-type").RouteType>;
+    "/workflows/[id]": InferRoute<import("./app/(app)/workflows/[id]/route-type").RouteType>;
   }
 
   interface StaticRouter {
     "/agents": StaticRoute;
     "/dashboard": StaticRoute;
+    "/projects/new": StaticRoute;
     "/settings": StaticRoute;
     "/templates": StaticRoute;
     "/workflows/active": StaticRoute;
     "/workflows/history": StaticRoute;
+    "/workflows/new": StaticRoute;
     "/workflows": StaticRoute;
     "/": StaticRoute;
   }
