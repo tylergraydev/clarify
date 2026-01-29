@@ -167,7 +167,7 @@ export default function NewWorkflowPage() {
           className={
             "inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           }
-          href={"/workflows"}
+          href={$path({ route: "/workflows" })}
         >
           <ArrowLeft aria-hidden={"true"} className={"size-4"} />
           {"Back to Workflows"}

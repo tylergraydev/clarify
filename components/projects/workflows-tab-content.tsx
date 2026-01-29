@@ -65,7 +65,12 @@ export const WorkflowsTabContent = ({
   };
 
   const handleCreateWorkflow = () => {
-    router.push(`/workflows/new?projectId=${projectId}`);
+    router.push(
+      $path({
+        route: "/workflows/new",
+        searchParams: { projectId },
+      })
+    );
   };
 
   // Build project map for WorkflowTable

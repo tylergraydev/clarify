@@ -11,6 +11,7 @@ declare module "@@@next-typesafe-url" {
   interface DynamicRouter {
     "/projects": InferRoute<import("./app/(app)/projects/route-type").RouteType>;
     "/projects/[id]": InferRoute<import("./app/(app)/projects/[id]/route-type").RouteType>;
+    "/workflows/new": InferRoute<import("./app/(app)/workflows/new/route-type").RouteType>;
     "/workflows": InferRoute<import("./app/(app)/workflows/route-type").RouteType>;
     "/workflows/[id]": InferRoute<import("./app/(app)/workflows/[id]/route-type").RouteType>;
   }
@@ -22,7 +23,6 @@ declare module "@@@next-typesafe-url" {
     "/templates": StaticRoute;
     "/workflows/active": StaticRoute;
     "/workflows/history": StaticRoute;
-    "/workflows/new": StaticRoute;
     "/": StaticRoute;
   }
 }

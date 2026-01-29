@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronRight, Workflow } from "lucide-react";
+import { $path } from "next-typesafe-url";
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -20,7 +21,7 @@ export const WorkflowNotFound = () => {
           className={
             "text-sm text-muted-foreground transition-colors hover:text-foreground"
           }
-          href={"/workflows"}
+          href={$path({ route: "/workflows" })}
         >
           {"Workflows"}
         </Link>
@@ -41,7 +42,7 @@ export const WorkflowNotFound = () => {
           action={
             <Link
               className={buttonVariants({ variant: "outline" })}
-              href={"/workflows"}
+              href={$path({ route: "/workflows" })}
             >
               {"Back to Workflows"}
             </Link>
