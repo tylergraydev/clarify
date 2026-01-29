@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "base-ui": {
+      "type": "http",
+      "url": "https://base-ui-mcp.polv.workers.dev/mcp"
+    }
+  }
+}

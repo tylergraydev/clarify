@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 
-import { useElectronStore } from "@/hooks/useElectron";
+import { useElectronStore } from "@/hooks/use-electron";
 import {
   DEFAULT_THEME,
   type Theme,
