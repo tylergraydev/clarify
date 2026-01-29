@@ -36,7 +36,7 @@ Analyze the design document and current codebase implementation to recommend the
 
 ### Phase 1: Parse Design Document
 
-1. Read the design document at `docs/design-document.md`
+1. Read the design document at `docs/clarify-design-document.md`
 2. Extract all feature areas and their descriptions, organized by:
    - Core features (MVP requirements)
    - Phase 1 features (post-MVP)
@@ -54,7 +54,8 @@ Use the Explore agent to thoroughly scan the codebase:
    - Check `db/schema/` for database tables
    - Check `db/repositories/` for data access layers
    - Check `electron/ipc/` for IPC handlers
-   - Check `stores/` for state management
+   - Check `lib/stores/` for state management
+   - Check `hooks/` for custom hooks
 
 2. **Feature-Specific Checks:**
    - Projects: CRUD operations, list view, detail view
