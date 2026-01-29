@@ -1,27 +1,38 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
-import { $path } from "next-typesafe-url";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
+
 import { useEffect, useRef, useState } from "react";
 
 import type { CreateWorkflowFormValues } from "@/lib/validations/workflow";
 
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { pauseBehaviors, workflowTypes } from "@/db/schema/workflows.schema";
+  DialogBackdrop,
+  DialogClose,
+  DialogDescription,
+  DialogPopup,
+  DialogPortal,
+  DialogRoot,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  pauseBehaviors,
+  workflowTypes,
+} from "@/db/schema/workflows.schema";
 import { useProjects } from "@/hooks/queries/use-projects";
 import { useActiveTemplates } from "@/hooks/queries/use-templates";
 import { useCreateWorkflow } from "@/hooks/queries/use-workflows";
 import { useAppForm } from "@/lib/forms/form-hook";
 import { createWorkflowSchema } from "@/lib/validations/workflow";
+
+interface CreateWorkflowDialogProps {
+  /** Callback when workflow is successfully created */
+  onSuccess?: () => void;
+  /** The trigger element that opens the dialog */
+  trigger: ReactNode;
+}
 
 const workflowTypeOptions = workflowTypes.map((type) => ({
   label: type === "planning" ? "Planning" : "Implementation",
@@ -47,8 +58,11 @@ const defaultValues: CreateWorkflowFormValues = {
   type: "planning",
 };
 
-export default function NewWorkflowPage() {
-  const router = useRouter();
+export const CreateWorkflowDialog = ({
+  onSuccess,
+  trigger,
+}: CreateWorkflowDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const previousTemplateIdRef = useRef<string>("");
 
@@ -75,20 +89,15 @@ export default function NewWorkflowPage() {
     defaultValues,
     onSubmit: async ({ value }) => {
       try {
-        const workflow = await createWorkflowMutation.mutateAsync({
+        await createWorkflowMutation.mutateAsync({
           featureName: value.featureName,
           featureRequest: value.featureRequest,
           pauseBehavior: value.pauseBehavior,
           projectId: Number(value.projectId),
           type: value.type,
         });
-        // Redirect to workflow detail page if it exists, otherwise to workflows list
-        router.push(
-          $path({
-            route: "/workflows/[id]",
-            routeParams: { id: String(workflow.id) },
-          })
-        );
+        handleClose();
+        onSuccess?.();
       } catch (error) {
         const message =
           error instanceof Error
@@ -140,43 +149,42 @@ export default function NewWorkflowPage() {
     }
   }, [selectedTemplateId, templates, form]);
 
-  const handleCancel = () => {
-    router.push($path({ route: "/workflows" }));
+  const handleClose = () => {
+    setIsOpen(false);
+    form.reset();
+    setSelectedTemplateId("");
+    previousTemplateIdRef.current = "";
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      form.reset();
+      setSelectedTemplateId("");
+      previousTemplateIdRef.current = "";
+    }
   };
 
   return (
-    <div className={"space-y-6"}>
-      {/* Page Header */}
-      <header className={"space-y-1"}>
-        <Link
-          className={
-            "inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-          }
-          href={"/workflows"}
-        >
-          <ArrowLeft aria-hidden={"true"} className={"size-4"} />
-          {"Back to Workflows"}
-        </Link>
-        <h1 className={"text-2xl font-semibold tracking-tight"}>
-          {"Create New Workflow"}
-        </h1>
-        <p className={"text-muted-foreground"}>
-          {
-            "Create a new workflow to plan or implement a feature. Select a project and describe what you want to build."
-          }
-        </p>
-      </header>
+    <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
+      {/* Trigger */}
+      <DialogTrigger>{trigger}</DialogTrigger>
 
-      {/* Form Card */}
-      <Card className={"max-w-2xl"}>
-        <CardHeader>
-          <CardTitle>{"Workflow Details"}</CardTitle>
-          <CardDescription>
-            {"Fill in the details below to create your workflow."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* Portal */}
+      <DialogPortal>
+        <DialogBackdrop />
+        <DialogPopup className={"max-w-lg"}>
+          {/* Header */}
+          <DialogTitle>{"Create Workflow"}</DialogTitle>
+          <DialogDescription>
+            {
+              "Create a new workflow to plan or implement a feature. Select a project and describe what you want to build."
+            }
+          </DialogDescription>
+
+          {/* Form */}
           <form
+            className={"mt-6"}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -210,9 +218,7 @@ export default function NewWorkflowPage() {
               <form.AppField name={"templateId"}>
                 {(field) => (
                   <field.SelectField
-                    description={
-                      "Select a template to pre-fill the feature request"
-                    }
+                    description={"Select a template to pre-fill the feature request"}
                     label={"Template"}
                     options={templateOptions}
                     placeholder={"Select a template (optional)"}
@@ -263,15 +269,16 @@ export default function NewWorkflowPage() {
               </form.AppField>
 
               {/* Action Buttons */}
-              <div className={"mt-4 flex justify-end gap-3"}>
-                <Button
-                  disabled={isSubmitting}
-                  onClick={handleCancel}
-                  type={"button"}
-                  variant={"outline"}
-                >
-                  {"Cancel"}
-                </Button>
+              <div className={"mt-2 flex justify-end gap-3"}>
+                <DialogClose>
+                  <Button
+                    disabled={isSubmitting}
+                    type={"button"}
+                    variant={"outline"}
+                  >
+                    {"Cancel"}
+                  </Button>
+                </DialogClose>
                 <form.AppForm>
                   <form.SubmitButton>
                     {isSubmitting ? "Creating..." : "Create Workflow"}
@@ -280,8 +287,8 @@ export default function NewWorkflowPage() {
               </div>
             </div>
           </form>
-        </CardContent>
-      </Card>
-    </div>
+        </DialogPopup>
+      </DialogPortal>
+    </DialogRoot>
   );
-}
+};
