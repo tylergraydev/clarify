@@ -246,17 +246,3 @@
 *::-webkit-scrollbar-corner {
   background: var(--scrollbar-track);
 }
-
-/* Shimmer animation for text */
-@keyframes shimmer {
-  0% {
-    background-position: 200% 50%;
-  }
-  100% {
-    background-position: -200% 50%;
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 1.5s ease-in-out infinite;
-}
