@@ -13,27 +13,29 @@ Refined Request: Implement the IPC (Inter-Process Communication) handlers that e
 ## File Discovery Results
 
 ### Critical Priority (8 files)
-| File | Action | Description |
-|------|--------|-------------|
-| `electron/main.ts` | modify | Add IPC handler registrations |
-| `electron/preload.ts` | modify | Extend ElectronAPI interface |
-| `types/electron.d.ts` | modify | Update type definitions |
-| `hooks/use-electron.ts` | modify | Add domain-specific hooks |
-| `electron/ipc/channels.ts` | create | Define IPC channel constants |
-| `electron/ipc/index.ts` | create | Central handler registration |
-| `electron/ipc/workflows.handlers.ts` | create | Workflow IPC handlers |
-| `electron/ipc/steps.handlers.ts` | create | Step management handlers |
+
+| File                                 | Action | Description                   |
+| ------------------------------------ | ------ | ----------------------------- |
+| `electron/main.ts`                   | modify | Add IPC handler registrations |
+| `electron/preload.ts`                | modify | Extend ElectronAPI interface  |
+| `types/electron.d.ts`                | modify | Update type definitions       |
+| `hooks/use-electron.ts`              | modify | Add domain-specific hooks     |
+| `electron/ipc/channels.ts`           | create | Define IPC channel constants  |
+| `electron/ipc/index.ts`              | create | Central handler registration  |
+| `electron/ipc/workflows.handlers.ts` | create | Workflow IPC handlers         |
+| `electron/ipc/steps.handlers.ts`     | create | Step management handlers      |
 
 ### High Priority (12 files)
-| File | Action | Description |
-|------|--------|-------------|
-| `electron/ipc/agents.handlers.ts` | create | Agent handlers |
-| `electron/ipc/templates.handlers.ts` | create | Template handlers |
-| `electron/ipc/projects.handlers.ts` | create | Project handlers |
-| `electron/ipc/discovery.handlers.ts` | create | Discovery handlers |
-| `electron/ipc/audit.handlers.ts` | create | Audit export handler |
-| `lib/queries/*.ts` | create | Query key definitions |
-| `hooks/queries/use-*.ts` | create | TanStack Query hooks |
+
+| File                                 | Action | Description           |
+| ------------------------------------ | ------ | --------------------- |
+| `electron/ipc/agents.handlers.ts`    | create | Agent handlers        |
+| `electron/ipc/templates.handlers.ts` | create | Template handlers     |
+| `electron/ipc/projects.handlers.ts`  | create | Project handlers      |
+| `electron/ipc/discovery.handlers.ts` | create | Discovery handlers    |
+| `electron/ipc/audit.handlers.ts`     | create | Audit export handler  |
+| `lib/queries/*.ts`                   | create | Query key definitions |
+| `hooks/queries/use-*.ts`             | create | TanStack Query hooks  |
 
 ---
 
@@ -66,9 +68,11 @@ This plan implements the complete IPC (Inter-Process Communication) layer that e
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/channels.ts` - Central channel constant definitions
 
 **Changes:**
+
 - Define `IpcChannels` object with nested structure for all domains:
   - `workflow` (create, start, pause, resume, cancel, get, list)
   - `step` (edit, regenerate)
@@ -82,11 +86,13 @@ This plan implements the complete IPC (Inter-Process Communication) layer that e
 - Export as `const` for type inference
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] `IpcChannels` object exports all channel constants
 - [ ] Channel names follow `domain:subdomain:action` pattern
 - [ ] TypeScript infers channel string literal types
@@ -101,9 +107,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/index.ts` - Central handler registration with repository factory
 
 **Changes:**
+
 - Create `registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => BrowserWindow | null)` function
 - Import all domain handler registration functions
 - Instantiate repositories using factory functions from `db/repositories`
@@ -112,11 +120,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Organize registrations with comments by category (stateless first, then with dependencies)
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] `registerAllHandlers` function accepts database and window getter
 - [ ] All domain handler functions are imported and called
 - [ ] Repository instances created once and passed to handlers
@@ -131,9 +141,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/workflows.handlers.ts` - Workflow management handlers
 
 **Changes:**
+
 - Create `registerWorkflowsHandlers(workflowsRepository: WorkflowsRepository)` function
 - Implement handlers for all workflow channels:
   - `workflow:create` - Create new workflow with config
@@ -147,11 +159,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Delegate all operations to the repository
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All workflow handlers registered with correct channel names
 - [ ] Handlers properly typed with `IpcMainInvokeEvent`
 - [ ] Repository methods called correctly
@@ -166,9 +180,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/steps.handlers.ts` - Step management handlers
 
 **Changes:**
+
 - Create `registerStepsHandlers(workflowStepsRepository: WorkflowStepsRepository)` function
 - Implement handlers:
   - `step:edit` - Edit step output text (calls `markEdited`)
@@ -180,11 +196,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Follow IPC handler conventions with proper typing
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All step handlers registered with correct channel names
 - [ ] Edit handler calls `markEdited` repository method
 - [ ] Status update handlers work correctly
@@ -199,9 +217,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/discovery.handlers.ts` - File discovery handlers
 
 **Changes:**
+
 - Create `registerDiscoveryHandlers(discoveredFilesRepository: DiscoveredFilesRepository)` function
 - Implement handlers:
   - `discovery:update` - Batch update discovered files for a workflow step
@@ -213,11 +233,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Handle array inputs for batch operations
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All discovery handlers registered
 - [ ] Batch update handles array of files correctly
 - [ ] Include/exclude toggle file inclusion status
@@ -232,9 +254,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/agents.handlers.ts` - Agent management handlers
 
 **Changes:**
+
 - Create `registerAgentsHandlers(agentsRepository: AgentsRepository)` function
 - Implement handlers:
   - `agent:list` - List all active agents with optional filters
@@ -246,11 +270,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Handle async repository methods (agents repository uses async/await)
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All agent handlers registered
 - [ ] Handlers properly await async repository calls
 - [ ] Reset functionality restores built-in defaults
@@ -265,9 +291,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/templates.handlers.ts` - Template management handlers
 
 **Changes:**
+
 - Create `registerTemplatesHandlers(templatesRepository: TemplatesRepository)` function
 - Implement handlers:
   - `template:list` - List templates with optional category filter
@@ -278,11 +306,13 @@ pnpm run lint:fix && pnpm run typecheck
   - `template:incrementUsage` - Track template usage
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All template handlers registered
 - [ ] Category filtering works correctly
 - [ ] Usage count increments on use
@@ -297,9 +327,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/projects.handlers.ts` - Project management handlers
 
 **Changes:**
+
 - Create `registerProjectsHandlers(projectsRepository: ProjectsRepository, repositoriesRepository: RepositoriesRepository)` function
 - Implement handlers:
   - `project:create` - Create new project
@@ -311,11 +343,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Handle async repository methods
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All project handlers registered
 - [ ] `addRepo` creates repository linked to project
 - [ ] Delete archives rather than hard deletes
@@ -330,9 +364,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/repositories.handlers.ts` - Repository management handlers
 
 **Changes:**
+
 - Create `registerRepositoriesHandlers(repositoriesRepository: RepositoriesRepository)` function
 - Implement handlers:
   - `repository:create` - Create new repository
@@ -345,11 +381,13 @@ pnpm run lint:fix && pnpm run typecheck
   - `repository:findByProject` - Find all repositories for a project
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All repository handlers registered
 - [ ] Path-based lookup works correctly
 - [ ] Default repository setting works
@@ -364,9 +402,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/audit.handlers.ts` - Audit log handlers
 
 **Changes:**
+
 - Create `registerAuditHandlers(auditLogsRepository: AuditLogsRepository)` function
 - Implement handlers:
   - `audit:export` - Export audit logs for workflow as markdown or JSON
@@ -377,11 +417,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Implement export format generation (markdown and JSON)
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All audit handlers registered
 - [ ] Export generates valid markdown and JSON formats
 - [ ] Workflow filtering returns ordered results
@@ -396,9 +438,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `electron/main.ts` - Main process entry point
 
 **Changes:**
+
 - Import `registerAllHandlers` from `./ipc`
 - Remove all inline `ipcMain.handle` calls for fs, dialog, store, and app handlers
 - Move fs, dialog, store, and app handlers to their respective handler files in `electron/ipc/`
@@ -407,11 +451,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Keep window creation and app lifecycle logic in main.ts
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All inline handlers removed from main.ts
 - [ ] `registerAllHandlers` called with correct parameters
 - [ ] Existing functionality preserved
@@ -426,9 +472,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `electron/preload.ts` - Preload script with ElectronAPI
 
 **Changes:**
+
 - Import `IpcChannels` from `./ipc`
 - Import necessary types from `../db/schema` for type annotations
 - Extend `ElectronAPI` interface to include all new domains:
@@ -444,11 +492,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Maintain alphabetical ordering within each domain object
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] `ElectronAPI` interface includes all new domains
 - [ ] All methods return Promises with correct types
 - [ ] Uses `IpcChannels` constants for channel names
@@ -463,9 +513,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `types/electron.d.ts` - ElectronAPI type definitions
 
 **Changes:**
+
 - Re-export all necessary types from `../db/schema` for renderer use
 - Mirror the `ElectronAPI` interface from preload.ts exactly
 - Add type definitions for all new domain objects:
@@ -475,11 +527,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Export empty object at end to make it a module
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Types match preload.ts implementation exactly
 - [ ] All schema types re-exported for renderer use
 - [ ] Window interface properly augmented
@@ -494,6 +548,7 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `lib/queries/index.ts` - Merged query keys export
 - `lib/queries/workflows.ts` - Workflow query keys
 - `lib/queries/steps.ts` - Step query keys
@@ -505,6 +560,7 @@ pnpm run lint:fix && pnpm run typecheck
 - `lib/queries/discovered-files.ts` - Discovered files query keys
 
 **Changes:**
+
 - Create query key definitions using `createQueryKeys` for each entity
 - Define `list` queries with optional filter parameters
 - Define `detail` queries with entity ID
@@ -513,11 +569,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Export merged `queries` object and `QueryKeys` type
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All entity query keys defined with proper structure
 - [ ] Keys merged and exported from index.ts
 - [ ] `QueryKeys` type inferred correctly
@@ -532,9 +590,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `hooks/queries/use-workflows.ts` - Workflow query hooks
 
 **Changes:**
+
 - Create `useWorkflows()` hook for listing workflows
 - Create `useWorkflow(id)` hook for single workflow
 - Create `useWorkflowsByProject(projectId)` hook for filtered list
@@ -547,11 +607,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Mutations invalidate appropriate query keys on success
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All workflow query hooks use correct query keys
 - [ ] Mutations invalidate correct queries
 - [ ] `enabled: isElectron` on all queries
@@ -566,9 +628,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `hooks/queries/use-steps.ts` - Step query hooks
 
 **Changes:**
+
 - Create `useStep(id)` hook for single step
 - Create `useStepsByWorkflow(workflowId)` hook for steps in a workflow
 - Create `useEditStep()` mutation hook
@@ -578,11 +642,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Invalidate both step and workflow queries on mutations
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All step query hooks implemented
 - [ ] Edit mutation updates cache correctly
 - [ ] Workflow queries invalidated on step changes
@@ -597,10 +663,12 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `hooks/queries/use-agents.ts` - Agent query hooks
 - `hooks/queries/use-templates.ts` - Template query hooks
 
 **Changes:**
+
 - Create agent hooks: `useAgents()`, `useAgent(id)`, `useUpdateAgent()`, `useResetAgent()`
 - Create template hooks: `useTemplates()`, `useTemplate(id)`, `useCreateTemplate()`, `useUpdateTemplate()`
 - Add category filtering for templates
@@ -608,11 +676,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Handle activation/deactivation mutations
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All agent hooks use async pattern (repository is async)
 - [ ] Template hooks support category filtering
 - [ ] Reset agent invalidates all agent queries
@@ -627,20 +697,24 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `hooks/queries/use-projects.ts` - Project query hooks
 - `hooks/queries/use-repositories.ts` - Repository query hooks
 
 **Changes:**
+
 - Create project hooks: `useProjects()`, `useProject(id)`, `useCreateProject()`, `useUpdateProject()`, `useDeleteProject()`, `useAddRepositoryToProject()`
 - Create repository hooks: `useRepositories()`, `useRepository(id)`, `useRepositoriesByProject(projectId)`, `useCreateRepository()`, `useUpdateRepository()`, `useDeleteRepository()`, `useSetDefaultRepository()`
 - Handle cascading invalidations (project changes may affect repository queries)
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All project hooks handle async repository
 - [ ] Repository hooks support project filtering
 - [ ] Add repo mutation invalidates both project and repository caches
@@ -655,20 +729,24 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `hooks/queries/use-audit-logs.ts` - Audit log query hooks
 - `hooks/queries/use-discovered-files.ts` - Discovered files query hooks
 
 **Changes:**
+
 - Create audit hooks: `useAuditLogs()`, `useAuditLogsByWorkflow(workflowId)`, `useExportAuditLog()`
 - Create discovery hooks: `useDiscoveredFiles(stepId)`, `useIncludedFiles(stepId)`, `useUpdateDiscoveredFiles()`, `useIncludeFile()`, `useExcludeFile()`, `useAddDiscoveredFile()`
 - Export mutation returns data for download (audit export)
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Audit export returns formatted string
 - [ ] Discovery hooks handle batch operations
 - [ ] Include/exclude mutations update cache
@@ -683,9 +761,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `hooks/use-electron.ts` - Base electron hooks
 
 **Changes:**
+
 - Create `useElectronDb()` hook that provides access to all database domains
 - Add domain accessors: `workflows`, `steps`, `discovery`, `agents`, `templates`, `projects`, `repositories`, `audit`
 - Each accessor mirrors the ElectronAPI structure
@@ -693,11 +773,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Use `useMemo` for method objects to maintain referential stability
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] `useElectronDb()` provides all domain accessors
 - [ ] Write operations throw errors when API unavailable
 - [ ] Read operations return safe defaults
@@ -712,19 +794,23 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `hooks/queries/index.ts` - Query hooks barrel export
 
 **Changes:**
+
 - Export all hooks from each query hook file
 - Organize exports alphabetically by domain
 - Include re-export of query keys from `lib/queries`
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All query hooks exportable from single path
 - [ ] Query keys accessible from hooks/queries
 - [ ] All validation commands pass
@@ -738,12 +824,14 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `electron/ipc/fs.handlers.ts` - File system handlers
 - `electron/ipc/dialog.handlers.ts` - Dialog handlers
 - `electron/ipc/store.handlers.ts` - Store handlers
 - `electron/ipc/app.handlers.ts` - App info handlers
 
 **Changes:**
+
 - Move `fs:readFile`, `fs:writeFile`, `fs:readDirectory`, `fs:exists`, `fs:stat` handlers to fs.handlers.ts
 - Move `dialog:openDirectory`, `dialog:openFile`, `dialog:saveFile` handlers to dialog.handlers.ts
 - Move `store:get`, `store:set`, `store:delete` handlers to store.handlers.ts
@@ -752,11 +840,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Include `isValidPath` helper in fs.handlers.ts
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All existing handlers moved to separate files
 - [ ] Registration functions follow established pattern
 - [ ] Path validation preserved in fs handlers
@@ -771,20 +861,24 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - None (validation only)
 
 **Changes:**
+
 - Run full type checking across the project
 - Verify all imports resolve correctly
 - Ensure no circular dependencies exist
 - Validate that the Electron build process completes
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck && pnpm run build
 ```
 
 **Success Criteria:**
+
 - [ ] No TypeScript errors in any file
 - [ ] No ESLint errors or warnings
 - [ ] Build completes successfully

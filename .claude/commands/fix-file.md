@@ -1,6 +1,6 @@
 ---
 allowed-tools: Task(subagent_type:*), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
-argument-hint: 'path/to/file.ts [--reference=path/to/reference.ts] [--dry-run]'
+argument-hint: "path/to/file.ts [--reference=path/to/reference.ts] [--dry-run]"
 description: Fix a file to follow project patterns using specialist agents with automatic review and iteration
 ---
 

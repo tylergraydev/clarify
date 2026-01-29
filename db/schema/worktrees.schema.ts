@@ -9,14 +9,18 @@ export const worktrees = sqliteTable(
   "worktrees",
   {
     branchName: text("branch_name").notNull(),
-    createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+    createdAt: text("created_at")
+      .default(sql`(CURRENT_TIMESTAMP)`)
+      .notNull(),
     id: integer("id").primaryKey({ autoIncrement: true }),
     path: text("path").notNull().unique(),
     repositoryId: integer("repository_id")
       .notNull()
       .references(() => repositories.id, { onDelete: "cascade" }),
     status: text("status").notNull().default("active"),
-    updatedAt: text("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+    updatedAt: text("updated_at")
+      .default(sql`(CURRENT_TIMESTAMP)`)
+      .notNull(),
     workflowId: integer("workflow_id").unique(), // No foreign key due to circular dependency with workflows
   },
   (table) => [

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { NewProject, NewRepository } from '@/types/electron';
+import type { NewProject, NewRepository } from "@/types/electron";
 
-import { projectKeys } from '@/lib/queries/projects';
-import { repositoryKeys } from '@/lib/queries/repositories';
+import { projectKeys } from "@/lib/queries/projects";
+import { repositoryKeys } from "@/lib/queries/repositories";
 
-import { useElectron } from '../use-electron';
+import { useElectron } from "../use-electron";
 
 // ============================================================================
 // Query Hooks
@@ -118,17 +118,15 @@ export function useUpdateProject() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: ({
-      data,
-      id,
-    }: {
-      data: Partial<NewProject>;
-      id: number;
-    }) => api!.project.update(id, data),
+    mutationFn: ({ data, id }: { data: Partial<NewProject>; id: number }) =>
+      api!.project.update(id, data),
     onSuccess: (project) => {
       if (project) {
         // Update detail cache directly
-        queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
+        queryClient.setQueryData(
+          projectKeys.detail(project.id).queryKey,
+          project
+        );
         // Invalidate list queries
         void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
       }

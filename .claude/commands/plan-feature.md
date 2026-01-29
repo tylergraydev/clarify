@@ -1,6 +1,6 @@
 ---
 allowed-tools: Task(subagent_type:clarification-agent), Task(subagent_type:implementation_planner), Task(subagent_type:file-discovery-agent), Bash(mkdir:*), Bash(echo:*), Write(*), Read(*), Glob(*), Grep(*), AskUserQuestion(*)
-argument-hint: 'feature description'
+argument-hint: "feature description"
 description: Generate detailed implementation plans through automated 3-4 step orchestration with optional clarification
 ---
 

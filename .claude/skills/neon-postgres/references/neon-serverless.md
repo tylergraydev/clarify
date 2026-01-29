@@ -147,7 +147,7 @@ const [newUser, newProfile] = await sql.transaction(
   {
     isolationLevel: "ReadCommitted",
     readOnly: false,
-  },
+  }
 );
 ```
 

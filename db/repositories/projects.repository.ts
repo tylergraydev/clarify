@@ -11,10 +11,15 @@ export interface ProjectsRepository {
   findAll(options?: { includeArchived?: boolean }): Promise<Array<Project>>;
   findById(id: number): Promise<Project | undefined>;
   unarchive(id: number): Promise<Project | undefined>;
-  update(id: number, data: Partial<Omit<NewProject, "createdAt" | "id">>): Promise<Project | undefined>;
+  update(
+    id: number,
+    data: Partial<Omit<NewProject, "createdAt" | "id">>
+  ): Promise<Project | undefined>;
 }
 
-export function createProjectsRepository(db: DrizzleDatabase): ProjectsRepository {
+export function createProjectsRepository(
+  db: DrizzleDatabase
+): ProjectsRepository {
   return {
     async archive(id: number): Promise<Project | undefined> {
       const now = new Date().toISOString();
@@ -38,7 +43,9 @@ export function createProjectsRepository(db: DrizzleDatabase): ProjectsRepositor
       await db.delete(projects).where(eq(projects.id, id));
     },
 
-    async findAll(options?: { includeArchived?: boolean }): Promise<Array<Project>> {
+    async findAll(options?: {
+      includeArchived?: boolean;
+    }): Promise<Array<Project>> {
       if (options?.includeArchived) {
         return db.select().from(projects);
       }
@@ -46,7 +53,10 @@ export function createProjectsRepository(db: DrizzleDatabase): ProjectsRepositor
     },
 
     async findById(id: number): Promise<Project | undefined> {
-      const result = await db.select().from(projects).where(eq(projects.id, id));
+      const result = await db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, id));
       return result[0];
     },
 

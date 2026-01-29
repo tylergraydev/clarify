@@ -20,7 +20,10 @@ export interface AgentsRepository {
   findByName(name: string): Promise<Agent | undefined>;
   findByProjectId(projectId: number): Promise<Array<Agent>>;
   findByType(type: string): Promise<Array<Agent>>;
-  update(id: number, data: Partial<Omit<NewAgent, "createdAt" | "id">>): Promise<Agent | undefined>;
+  update(
+    id: number,
+    data: Partial<Omit<NewAgent, "createdAt" | "id">>
+  ): Promise<Agent | undefined>;
 }
 
 export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
@@ -62,7 +65,9 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
         return db
           .select()
           .from(agents)
-          .where(and(isNull(agents.deactivatedAt), eq(agents.projectId, projectId)));
+          .where(
+            and(isNull(agents.deactivatedAt), eq(agents.projectId, projectId))
+          );
       }
       return db.select().from(agents).where(isNull(agents.deactivatedAt));
     },
@@ -106,7 +111,10 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
     },
 
     async findByName(name: string): Promise<Agent | undefined> {
-      const result = await db.select().from(agents).where(eq(agents.name, name));
+      const result = await db
+        .select()
+        .from(agents)
+        .where(eq(agents.name, name));
       return result[0];
     },
 

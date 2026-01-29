@@ -27,20 +27,20 @@ A standalone Electron desktop application that:
 
 ### Key Design Decisions
 
-| Decision                  | Choice                                                     |
-| ------------------------- | ---------------------------------------------------------- |
-| App Type                  | Standalone Electron app (not extending Clarify AI)         |
-| CLI Integration           | Spawn Claude Code CLI as child processes                   |
-| Real-time Visibility      | Progress updates at milestones (not full streaming)        |
-| Concurrent Workflows      | Multiple supported via auto-managed git worktrees          |
-| Intervention Mode         | Configurable (auto-pause vs continuous with manual stop)   |
-| Audit Trail               | SQLite database + exportable log files                     |
-| Agent/Command Storage     | Bundled with visual editor customization                   |
-| Repository Management     | Multi-repo projects                                        |
-| Intermediate Editing      | Inline editing in pipeline view                            |
-| Authentication            | Use existing Claude Code CLI credentials                   |
-| UI Paradigm               | Pipeline view with expandable step details                 |
-| Templates                 | Included template library for common patterns              |
+| Decision              | Choice                                                   |
+| --------------------- | -------------------------------------------------------- |
+| App Type              | Standalone Electron app (not extending Clarify AI)       |
+| CLI Integration       | Spawn Claude Code CLI as child processes                 |
+| Real-time Visibility  | Progress updates at milestones (not full streaming)      |
+| Concurrent Workflows  | Multiple supported via auto-managed git worktrees        |
+| Intervention Mode     | Configurable (auto-pause vs continuous with manual stop) |
+| Audit Trail           | SQLite database + exportable log files                   |
+| Agent/Command Storage | Bundled with visual editor customization                 |
+| Repository Management | Multi-repo projects                                      |
+| Intermediate Editing  | Inline editing in pipeline view                          |
+| Authentication        | Use existing Claude Code CLI credentials                 |
+| UI Paradigm           | Pipeline view with expandable step details               |
+| Templates             | Included template library for common patterns            |
 
 ---
 
@@ -93,18 +93,18 @@ A **Project** groups related repositories and workflows.
 
 **Agents** are the specialist subagents that handle specific implementation domains.
 
-| Agent                       | Domain                         |
-| --------------------------- | ------------------------------ |
-| `clarification-agent`       | Feature request clarity        |
-| `file-discovery-agent`      | Codebase file discovery        |
-| `implementation-planner`    | Implementation plan generation |
-| `database-schema`           | Drizzle ORM schemas            |
-| `tanstack-query`            | TanStack Query hooks           |
-| `tanstack-form`             | TanStack Form implementations  |
-| `tanstack-form-base`        | Form field components          |
-| `ipc-handler`               | Electron IPC handlers          |
-| `frontend-component`        | React components               |
-| `general-purpose`           | Everything else                |
+| Agent                    | Domain                         |
+| ------------------------ | ------------------------------ |
+| `clarification-agent`    | Feature request clarity        |
+| `file-discovery-agent`   | Codebase file discovery        |
+| `implementation-planner` | Implementation plan generation |
+| `database-schema`        | Drizzle ORM schemas            |
+| `tanstack-query`         | TanStack Query hooks           |
+| `tanstack-form`          | TanStack Form implementations  |
+| `tanstack-form-base`     | Form field components          |
+| `ipc-handler`            | Electron IPC handlers          |
+| `frontend-component`     | React components               |
+| `general-purpose`        | Everything else                |
 
 ---
 
@@ -150,18 +150,18 @@ A **Project** groups related repositories and workflows.
 
 ### 3.2 Tech Stack
 
-| Layer              | Technology                                           |
-| ------------------ | ---------------------------------------------------- |
-| Framework          | Electron + Next.js (static export)                   |
-| UI Library         | React 19                                             |
-| Styling            | Tailwind CSS v4                                      |
-| Components         | Base UI + CVA patterns                               |
-| State Management   | TanStack Query + Zustand (for workflow state)        |
-| Forms              | TanStack Form                                        |
-| Database           | SQLite + Drizzle ORM                                 |
-| Process Management | Node.js child_process (spawn)                        |
-| Code Editor        | Monaco Editor (for advanced agent editing)           |
-| CLI Integration    | Claude Code CLI via spawn with JSON output parsing   |
+| Layer              | Technology                                         |
+| ------------------ | -------------------------------------------------- |
+| Framework          | Electron + Next.js (static export)                 |
+| UI Library         | React 19                                           |
+| Styling            | Tailwind CSS v4                                    |
+| Components         | Base UI + CVA patterns                             |
+| State Management   | TanStack Query + Zustand (for workflow state)      |
+| Forms              | TanStack Form                                      |
+| Database           | SQLite + Drizzle ORM                               |
+| Process Management | Node.js child_process (spawn)                      |
+| Code Editor        | Monaco Editor (for advanced agent editing)         |
+| CLI Integration    | Claude Code CLI via spawn with JSON output parsing |
 
 ### 3.3 Database Schema
 
@@ -217,22 +217,29 @@ The app spawns Claude Code CLI processes with specific flags:
 
 ```typescript
 interface CLISpawnOptions {
-  cwd: string;                    // Repository or worktree path
-  command: string;                // e.g., '/plan-feature', '/implement-plan'
-  args: string[];                 // Command arguments
-  timeout?: number;               // Per-step timeout
+  cwd: string; // Repository or worktree path
+  command: string; // e.g., '/plan-feature', '/implement-plan'
+  args: string[]; // Command arguments
+  timeout?: number; // Per-step timeout
   onProgress?: (event: ProgressEvent) => void;
   onComplete?: (result: CLIResult) => void;
   onError?: (error: CLIError) => void;
 }
 
 // Example: Spawning clarification step
-spawn('claude', [
-  '--print',                      // Output mode
-  '--output-format', 'json',      // Structured output
-  '--cwd', '/path/to/repo',
-  '--prompt', 'Use clarification-agent to assess: "Add user auth"'
-], options);
+spawn(
+  "claude",
+  [
+    "--print", // Output mode
+    "--output-format",
+    "json", // Structured output
+    "--cwd",
+    "/path/to/repo",
+    "--prompt",
+    'Use clarification-agent to assess: "Add user auth"',
+  ],
+  options
+);
 ```
 
 **Progress Detection Strategy:**
@@ -639,7 +646,7 @@ CREATED → CLARIFYING → REFINING → DISCOVERING → PLANNING → COMPLETED
 ```typescript
 interface DiscoveredFile {
   path: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: "high" | "medium" | "low";
   description: string;
   included: boolean;
   userAdded: boolean;
@@ -649,6 +656,7 @@ interface DiscoveredFile {
 ### 5.4 Implementation Workflow
 
 **Entry Point:**
+
 - From completed planning workflow → "Implement" button
 - From saved plan file → Import
 
@@ -704,15 +712,15 @@ interface DiscoveredFile {
 
 **Built-in Templates:**
 
-| Template              | Category   | Description                                    |
-| --------------------- | ---------- | ---------------------------------------------- |
-| CRUD Feature          | Data       | Database table + repository + UI               |
-| Form Component        | UI         | TanStack Form with validation                  |
-| API Integration       | Backend    | External API with query hooks                  |
-| Auth Flow             | Security   | Login/logout with session management           |
-| Dashboard Widget      | UI         | Card component with data display               |
-| IPC Channel           | Electron   | Main/renderer communication                    |
-| Settings Page         | UI         | User preferences with persistence              |
+| Template         | Category | Description                          |
+| ---------------- | -------- | ------------------------------------ |
+| CRUD Feature     | Data     | Database table + repository + UI     |
+| Form Component   | UI       | TanStack Form with validation        |
+| API Integration  | Backend  | External API with query hooks        |
+| Auth Flow        | Security | Login/logout with session management |
+| Dashboard Widget | UI       | Card component with data display     |
+| IPC Channel      | Electron | Main/renderer communication          |
+| Settings Page    | UI       | User preferences with persistence    |
 
 **Template Structure:**
 
@@ -722,7 +730,7 @@ interface Template {
   name: string;
   category: string;
   description: string;
-  template: string;        // Feature request template with placeholders
+  template: string; // Feature request template with placeholders
   placeholders: {
     name: string;
     description: string;
@@ -735,22 +743,22 @@ interface Template {
 
 **Captured Events:**
 
-| Event Type         | Data Captured                                          |
-| ------------------ | ------------------------------------------------------ |
-| WORKFLOW_CREATED   | Initial config, repository, feature request            |
-| STEP_STARTED       | Step type, agent, input                                |
-| STEP_COMPLETED     | Output, duration, files affected                       |
-| STEP_FAILED        | Error message, CLI output                              |
-| STEP_PAUSED        | Reason (auto/manual/error)                             |
-| STEP_RESUMED       | Who resumed, any modifications                         |
-| OUTPUT_EDITED      | Before/after, user                                     |
-| STEP_REGENERATED   | Modified prompt, new output                            |
-| FILE_ADDED         | Path, priority, user-added flag                        |
-| FILE_REMOVED       | Path, reason                                           |
-| WORKTREE_CREATED   | Path, branch name                                      |
-| WORKTREE_CLEANED   | Path, files committed                                  |
-| QUALITY_GATE       | Pass/fail, output                                      |
-| WORKFLOW_COMPLETED | Final status, duration, files changed                  |
+| Event Type         | Data Captured                               |
+| ------------------ | ------------------------------------------- |
+| WORKFLOW_CREATED   | Initial config, repository, feature request |
+| STEP_STARTED       | Step type, agent, input                     |
+| STEP_COMPLETED     | Output, duration, files affected            |
+| STEP_FAILED        | Error message, CLI output                   |
+| STEP_PAUSED        | Reason (auto/manual/error)                  |
+| STEP_RESUMED       | Who resumed, any modifications              |
+| OUTPUT_EDITED      | Before/after, user                          |
+| STEP_REGENERATED   | Modified prompt, new output                 |
+| FILE_ADDED         | Path, priority, user-added flag             |
+| FILE_REMOVED       | Path, reason                                |
+| WORKTREE_CREATED   | Path, branch name                           |
+| WORKTREE_CLEANED   | Path, files committed                       |
+| QUALITY_GATE       | Pass/fail, output                           |
+| WORKFLOW_COMPLETED | Final status, duration, files changed       |
 
 **Export Format:**
 
@@ -767,14 +775,17 @@ interface Template {
 ## Timeline
 
 ### 10:30:00 - Workflow Created
+
 - Feature Request: "Add user authentication with OAuth"
 - Pause Mode: auto-pause
 
 ### 10:30:05 - Clarification Started
+
 - Agent: clarification-agent
 - Input: "Add user authentication with OAuth"
 
 ### 10:30:42 - Clarification Completed
+
 - Result: SKIP (Score 4/5)
 - Reason: Request included specific technical details
 - Duration: 37s
@@ -795,20 +806,23 @@ class CLISpawner {
   private processes: Map<string, ChildProcess> = new Map();
 
   async spawn(workflowId: string, options: SpawnOptions): Promise<void> {
-    const proc = spawn('claude', [
-      '--print',
-      '--output-format', 'json',
-      '--cwd', options.cwd,
-      '--prompt', options.prompt
+    const proc = spawn("claude", [
+      "--print",
+      "--output-format",
+      "json",
+      "--cwd",
+      options.cwd,
+      "--prompt",
+      options.prompt,
     ]);
 
     this.processes.set(workflowId, proc);
 
-    proc.stdout.on('data', (data) => {
+    proc.stdout.on("data", (data) => {
       this.parseProgress(workflowId, data);
     });
 
-    proc.on('exit', (code) => {
+    proc.on("exit", (code) => {
       this.handleCompletion(workflowId, code);
     });
   }
@@ -832,11 +846,11 @@ class CLISpawner {
 ```typescript
 class WorktreeManager {
   async create(repoPath: string, featureSlug: string): Promise<WorktreeInfo> {
-    const worktreePath = path.join(repoPath, '.worktrees', featureSlug);
+    const worktreePath = path.join(repoPath, ".worktrees", featureSlug);
     const branchName = `feat/${featureSlug}`;
 
     await exec(`git worktree add -b ${branchName} ${worktreePath}`);
-    await exec('pnpm install', { cwd: worktreePath });
+    await exec("pnpm install", { cwd: worktreePath });
 
     return { path: worktreePath, branch: branchName };
   }
@@ -855,14 +869,14 @@ class WorktreeManager {
 
 **Milestone Detection:**
 
-```typescript
+````typescript
 const MILESTONES = {
-  'MILESTONE:STEP_0A_COMPLETE': 'clarification_complete',
-  'MILESTONE:STEP_0A_SKIPPED': 'clarification_skipped',
-  'MILESTONE:STEP_1_COMPLETE': 'refinement_complete',
-  'MILESTONE:STEP_2_COMPLETE': 'discovery_complete',
-  'MILESTONE:STEP_3_COMPLETE': 'planning_complete',
-  'MILESTONE:PLAN_FEATURE_SUCCESS': 'workflow_complete'
+  "MILESTONE:STEP_0A_COMPLETE": "clarification_complete",
+  "MILESTONE:STEP_0A_SKIPPED": "clarification_skipped",
+  "MILESTONE:STEP_1_COMPLETE": "refinement_complete",
+  "MILESTONE:STEP_2_COMPLETE": "discovery_complete",
+  "MILESTONE:STEP_3_COMPLETE": "planning_complete",
+  "MILESTONE:PLAN_FEATURE_SUCCESS": "workflow_complete",
 };
 
 function parseProgress(output: string): ProgressEvent | null {
@@ -875,12 +889,12 @@ function parseProgress(output: string): ProgressEvent | null {
   // Parse JSON blocks for structured data
   const jsonMatch = output.match(/```json\n([\s\S]*?)\n```/);
   if (jsonMatch) {
-    return { type: 'structured_output', data: JSON.parse(jsonMatch[1]) };
+    return { type: "structured_output", data: JSON.parse(jsonMatch[1]) };
   }
 
   return null;
 }
-```
+````
 
 ### 6.4 IPC Channels
 
@@ -1102,14 +1116,14 @@ bundled-agents/
 
 ## 10. Success Metrics
 
-| Metric                        | Target                                  |
-| ----------------------------- | --------------------------------------- |
-| Time from request to plan     | < 10 minutes (vs 15+ with CLI)          |
-| User interventions per plan   | Trackable (currently unmeasured)        |
-| Implementation success rate   | > 90% of steps pass validation          |
-| Workflow completion rate      | > 85% of started workflows complete     |
-| Audit log completeness        | 100% of events captured                 |
-| Concurrent workflow capacity  | 3+ simultaneous implementations         |
+| Metric                       | Target                              |
+| ---------------------------- | ----------------------------------- |
+| Time from request to plan    | < 10 minutes (vs 15+ with CLI)      |
+| User interventions per plan  | Trackable (currently unmeasured)    |
+| Implementation success rate  | > 90% of steps pass validation      |
+| Workflow completion rate     | > 85% of started workflows complete |
+| Audit log completeness       | 100% of events captured             |
+| Concurrent workflow capacity | 3+ simultaneous implementations     |
 
 ---
 
@@ -1194,6 +1208,6 @@ claude --print --cwd .worktrees/oauth --prompt "Use Task tool with tanstack-quer
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: 2025-01-28*
-*Author: Design Session with Claude*
+_Document Version: 1.0_
+_Last Updated: 2025-01-28_
+_Author: Design Session with Claude_

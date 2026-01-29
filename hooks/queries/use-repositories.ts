@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { NewRepository } from '@/types/electron';
+import type { NewRepository } from "@/types/electron";
 
-import { projectKeys } from '@/lib/queries/projects';
-import { repositoryKeys } from '@/lib/queries/repositories';
+import { projectKeys } from "@/lib/queries/projects";
+import { repositoryKeys } from "@/lib/queries/repositories";
 
-import { useElectron } from '../use-electron';
+import { useElectron } from "../use-electron";
 
 // ============================================================================
 // Query Hooks
@@ -24,7 +24,9 @@ export function useCreateRepository() {
     mutationFn: (data: NewRepository) => api!.repository.create(data),
     onSuccess: (repository) => {
       // Invalidate list queries
-      void queryClient.invalidateQueries({ queryKey: repositoryKeys.list._def });
+      void queryClient.invalidateQueries({
+        queryKey: repositoryKeys.list._def,
+      });
       // Invalidate project-specific repository queries
       void queryClient.invalidateQueries({
         queryKey: repositoryKeys.byProject(repository.projectId).queryKey,
@@ -110,9 +112,14 @@ export function useSetDefaultRepository() {
     onSuccess: (repository) => {
       if (repository) {
         // Update detail cache directly
-        queryClient.setQueryData(repositoryKeys.detail(repository.id).queryKey, repository);
+        queryClient.setQueryData(
+          repositoryKeys.detail(repository.id).queryKey,
+          repository
+        );
         // Invalidate list queries
-        void queryClient.invalidateQueries({ queryKey: repositoryKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: repositoryKeys.list._def,
+        });
         // Invalidate project-specific queries (other repos in project may have changed)
         void queryClient.invalidateQueries({
           queryKey: repositoryKeys.byProject(repository.projectId).queryKey,
@@ -138,19 +145,19 @@ export function useUpdateRepository() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: ({
-      data,
-      id,
-    }: {
-      data: Partial<NewRepository>;
-      id: number;
-    }) => api!.repository.update(id, data),
+    mutationFn: ({ data, id }: { data: Partial<NewRepository>; id: number }) =>
+      api!.repository.update(id, data),
     onSuccess: (repository) => {
       if (repository) {
         // Update detail cache directly
-        queryClient.setQueryData(repositoryKeys.detail(repository.id).queryKey, repository);
+        queryClient.setQueryData(
+          repositoryKeys.detail(repository.id).queryKey,
+          repository
+        );
         // Invalidate list queries
-        void queryClient.invalidateQueries({ queryKey: repositoryKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: repositoryKeys.list._def,
+        });
         // Invalidate project-specific queries
         void queryClient.invalidateQueries({
           queryKey: repositoryKeys.byProject(repository.projectId).queryKey,

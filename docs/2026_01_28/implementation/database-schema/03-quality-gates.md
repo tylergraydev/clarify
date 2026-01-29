@@ -5,15 +5,19 @@
 ## Validation Commands
 
 ### Lint
+
 ```bash
 pnpm lint
 ```
+
 **Result**: ✅ PASSED
 
 ### TypeCheck
+
 ```bash
 pnpm typecheck
 ```
+
 **Result**: ✅ PASSED
 
 ## Summary

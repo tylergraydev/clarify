@@ -66,12 +66,12 @@ Create or update the validation schema at `lib/validations/{entity}.ts`:
 **File Structure**:
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 export const createEntitySchema = z.object({
   // Fields in alphabetical order
   description: z.string(),
-  name: z.string().min(1, 'Name is required').max(255, 'Name is too long'),
+  name: z.string().min(1, "Name is required").max(255, "Name is too long"),
 });
 
 export type CreateEntityFormValues = z.infer<typeof createEntitySchema>;

@@ -7,12 +7,20 @@
  * - Archiving (soft delete) projects
  * - Adding repositories to projects
  */
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { ProjectsRepository, RepositoriesRepository } from '../../db/repositories';
-import type { NewProject, NewRepository, Project, Repository } from '../../db/schema';
+import type {
+  ProjectsRepository,
+  RepositoriesRepository,
+} from "../../db/repositories";
+import type {
+  NewProject,
+  NewRepository,
+  Project,
+  Repository,
+} from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 /**
  * Data required to add a repository to a project
@@ -52,7 +60,10 @@ export function registerProjectHandlers(
   // Get a project by ID
   ipcMain.handle(
     IpcChannels.project.get,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Project | undefined> => {
+    async (
+      _event: IpcMainInvokeEvent,
+      id: number
+    ): Promise<Project | undefined> => {
       return projectsRepository.findById(id);
     }
   );
@@ -60,7 +71,10 @@ export function registerProjectHandlers(
   // List all projects with optional archive inclusion
   ipcMain.handle(
     IpcChannels.project.list,
-    async (_event: IpcMainInvokeEvent, options?: ProjectListOptions): Promise<Array<Project>> => {
+    async (
+      _event: IpcMainInvokeEvent,
+      options?: ProjectListOptions
+    ): Promise<Array<Project>> => {
       return projectsRepository.findAll(options);
     }
   );
@@ -71,7 +85,7 @@ export function registerProjectHandlers(
     async (
       _event: IpcMainInvokeEvent,
       id: number,
-      data: Partial<Omit<NewProject, 'createdAt' | 'id'>>
+      data: Partial<Omit<NewProject, "createdAt" | "id">>
     ): Promise<Project | undefined> => {
       return projectsRepository.update(id, data);
     }
@@ -80,7 +94,10 @@ export function registerProjectHandlers(
   // Archive (soft delete) a project
   ipcMain.handle(
     IpcChannels.project.delete,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Project | undefined> => {
+    async (
+      _event: IpcMainInvokeEvent,
+      id: number
+    ): Promise<Project | undefined> => {
       return projectsRepository.archive(id);
     }
   );
@@ -88,10 +105,14 @@ export function registerProjectHandlers(
   // Add a repository to a project
   ipcMain.handle(
     IpcChannels.project.addRepo,
-    async (_event: IpcMainInvokeEvent, projectId: number, repoData: AddRepoData): Promise<Repository> => {
+    async (
+      _event: IpcMainInvokeEvent,
+      projectId: number,
+      repoData: AddRepoData
+    ): Promise<Repository> => {
       // Build the new repository data with project association
       const newRepo: NewRepository = {
-        defaultBranch: repoData.defaultBranch ?? 'main',
+        defaultBranch: repoData.defaultBranch ?? "main",
         name: repoData.name,
         path: repoData.path,
         projectId,

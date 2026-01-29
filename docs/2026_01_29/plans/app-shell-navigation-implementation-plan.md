@@ -23,6 +23,7 @@ This plan implements the Claude Orchestrator application shell with a four-regio
 ## File Discovery Results
 
 ### Critical (Create)
+
 - `app/(app)/layout.tsx` - Route group layout
 - `components/shell/AppSidebar.tsx` - Collapsible sidebar
 - `components/shell/AppHeader.tsx` - Fixed header
@@ -32,6 +33,7 @@ This plan implements the Claude Orchestrator application shell with a four-regio
 - `lib/stores/shell-store.ts` - Zustand store
 
 ### High (Reference)
+
 - `docs/clarify-design-document.md` - Layout specification
 - `app/layout.tsx` - Root providers
 - `components/ui/collapsible.tsx` - Collapsible pattern

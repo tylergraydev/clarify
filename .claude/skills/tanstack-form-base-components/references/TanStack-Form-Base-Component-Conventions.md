@@ -81,21 +81,26 @@ Form components are form-level components that access overall form state. They:
 ### Required Imports
 
 ```typescript
-'use client';
+"use client";
 
-import type { ComponentProps } from 'react'; // If needed for icon wrappers
+import type { ComponentProps } from "react"; // If needed for icon wrappers
 
-import { SomeBaseUIComponent } from '@base-ui/react/component';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { SomeIcon } from 'lucide-react';
-import { useId } from 'react';
+import { SomeBaseUIComponent } from "@base-ui/react/component";
+import { cva, type VariantProps } from "class-variance-authority";
+import { SomeIcon } from "lucide-react";
+import { useId } from "react";
 
-import { useFieldContext } from '@/lib/forms/form-hook';
-import { cn } from '@/lib/utils';
+import { useFieldContext } from "@/lib/forms/form-hook";
+import { cn } from "@/lib/utils";
 
-import { FieldWrapper, getAriaDescribedBy } from './field-wrapper';
+import { FieldWrapper, getAriaDescribedBy } from "./field-wrapper";
 // OR for custom layouts:
-import { descriptionVariants, errorVariants, getAriaDescribedBy, labelVariants } from './field-wrapper';
+import {
+  descriptionVariants,
+  errorVariants,
+  getAriaDescribedBy,
+  labelVariants,
+} from "./field-wrapper";
 ```
 
 ### CVA Variant Definition
@@ -113,13 +118,13 @@ export const myFieldVariants = cva(
   `,
   {
     defaultVariants: {
-      size: 'default',
+      size: "default",
     },
     variants: {
       size: {
-        default: 'h-9 px-3 text-sm',
-        lg: 'h-10 px-4 text-base',
-        sm: 'h-8 px-2 text-xs',
+        default: "h-9 px-3 text-sm",
+        lg: "h-10 px-4 text-base",
+        sm: "h-8 px-2 text-xs",
       },
     },
   }
@@ -547,26 +552,26 @@ Use Base UI primitives when:
 
 ```typescript
 // Checkbox
-import { Checkbox } from '@base-ui/react/checkbox';
+import { Checkbox } from "@base-ui/react/checkbox";
 // <Checkbox.Root>, <Checkbox.Indicator>
 
 // Switch
-import { Switch } from '@base-ui/react/switch';
+import { Switch } from "@base-ui/react/switch";
 // <Switch.Root>, <Switch.Thumb>
 
 // Select
-import { Select } from '@base-ui/react/select';
+import { Select } from "@base-ui/react/select";
 // <Select.Root>, <Select.Trigger>, <Select.Value>, <Select.Icon>
 // <Select.Portal>, <Select.Positioner>, <Select.Popup>
 // <Select.Item>, <Select.ItemIndicator>, <Select.ItemText>
 
 // NumberField
-import { NumberField } from '@base-ui/react/number-field';
+import { NumberField } from "@base-ui/react/number-field";
 // <NumberField.Root>, <NumberField.Group>
 // <NumberField.Decrement>, <NumberField.Input>, <NumberField.Increment>
 
 // Input (for simple text inputs)
-import { Input } from '@base-ui/react/input';
+import { Input } from "@base-ui/react/input";
 ```
 
 ### Base UI Data Attributes
@@ -604,7 +609,7 @@ data-ending-style:opacity-0
 Add field components to `fieldComponents` in `lib/forms/form-hook.ts`:
 
 ```typescript
-import { MyField } from '@/components/ui/form/my-field';
+import { MyField } from "@/components/ui/form/my-field";
 
 export const { useAppForm, withForm } = createFormHook({
   fieldComponents: {
@@ -658,10 +663,10 @@ Export all new components and their variants from `components/ui/form/index.ts`:
 
 ```typescript
 // Export component and variants
-export { MyField, myFieldVariants } from './my-field';
+export { MyField, myFieldVariants } from "./my-field";
 
 // For components with multiple variants
-export { MyField, myFieldIndicatorVariants, myFieldVariants } from './my-field';
+export { MyField, myFieldIndicatorVariants, myFieldVariants } from "./my-field";
 ```
 
 ### Export Order

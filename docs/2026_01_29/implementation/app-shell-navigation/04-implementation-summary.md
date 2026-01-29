@@ -13,9 +13,11 @@
 ## Files Created
 
 ### State Management
+
 - `lib/stores/shell-store.ts` - Zustand store for sidebar state & sync tracking
 
 ### Shell Components
+
 - `components/shell/index.ts` - Barrel exports
 - `components/shell/nav-item.tsx` - Navigation item with CVA variants
 - `components/shell/project-selector.tsx` - Project dropdown selector
@@ -24,9 +26,11 @@
 - `components/shell/app-sidebar.tsx` - Collapsible sidebar with navigation
 
 ### Route Group Layout
+
 - `app/(app)/layout.tsx` - Four-region shell layout
 
 ### Placeholder Pages
+
 - `app/(app)/dashboard/page.tsx`
 - `app/(app)/workflows/page.tsx`
 - `app/(app)/workflows/active/page.tsx`

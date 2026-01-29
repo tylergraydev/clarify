@@ -10,13 +10,13 @@ A comprehensive guide for consistent, maintainable React development patterns an
 
 ```tsx
 // ✅ Correct
-import { Component } from 'react';
-const message = 'Hello world';
-<Button className={'btn-primary'} />;
+import { Component } from "react";
+const message = "Hello world";
+<Button className={"btn-primary"} />;
 
 // ❌ Incorrect
-import { Component } from 'react';
-const message = 'Hello world';
+import { Component } from "react";
+const message = "Hello world";
 <Button className="btn-primary" />;
 ```
 
@@ -67,7 +67,12 @@ interface ComponentProps {
   onSubmit?: (data: FormData) => void;
 }
 
-export const ComponentName = ({ title, isDisabled = false, onSubmit, ...props }: ComponentProps) => {
+export const ComponentName = ({
+  title,
+  isDisabled = false,
+  onSubmit,
+  ...props
+}: ComponentProps) => {
   // component logic
 };
 ```
@@ -77,7 +82,10 @@ export const ComponentName = ({ title, isDisabled = false, onSubmit, ...props }:
 Organize component internals in this exact order:
 
 ```tsx
-export const ExampleComponent = ({ onSubmit, isDisabled = false }: ExampleProps) => {
+export const ExampleComponent = ({
+  onSubmit,
+  isDisabled = false,
+}: ExampleProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<FormData | null>(null);
 
@@ -178,14 +186,14 @@ export const Component = ({ onSubmit, onInputChange }: ComponentProps) => {
 ### Type Imports
 
 ```tsx
-import type { ComponentPropsWithRef, ChangeEvent } from 'react';
+import type { ComponentPropsWithRef, ChangeEvent } from "react";
 ```
 
 ### Props Interfaces
 
 ```tsx
-interface ComponentNameProps extends ComponentPropsWithRef<'div'> {
-  variant?: 'primary' | 'secondary' | 'destructive';
+interface ComponentNameProps extends ComponentPropsWithRef<"div"> {
+  variant?: "primary" | "secondary" | "destructive";
   isDisabled?: boolean;
   onAction?: (id: string) => void;
 }
@@ -224,7 +232,10 @@ Extract logic into custom hooks when:
 - State management patterns are reusable
 
 ```tsx
-export const useToggle = (initialState = false, onChange?: (state: boolean) => void) => {
+export const useToggle = (
+  initialState = false,
+  onChange?: (state: boolean) => void
+) => {
   const [state, setState] = useState(initialState);
 
   const toggle = useCallback(() => {
@@ -295,7 +306,7 @@ export const Form = ({ onSubmit }: FormProps) => {
 ```tsx
 // ✅ Use ternary for simple cases
 {
-  isLoading ? 'Loading...' : 'Ready';
+  isLoading ? "Loading..." : "Ready";
 }
 {
   isLoading ? <LoadingSpinner /> : <Content />;
@@ -356,7 +367,9 @@ Standardize error messages for context validation:
 export const useFormField = () => {
   const context = use(formFieldContext);
   if (!context) {
-    throw new Error('useFormField can only be called from within a <FormField>');
+    throw new Error(
+      "useFormField can only be called from within a <FormField>"
+    );
   }
   return context;
 };
@@ -394,8 +407,12 @@ const handleItemClick = useCallback(
 - Provide screen reader support
 
 ```tsx
-<button onClick={handleClick} aria-label={isExpanded ? 'Collapse menu' : 'Expand menu'} aria-expanded={isExpanded}>
-  {isExpanded ? 'Close' : 'Menu'}
+<button
+  onClick={handleClick}
+  aria-label={isExpanded ? "Collapse menu" : "Expand menu"}
+  aria-expanded={isExpanded}
+>
+  {isExpanded ? "Close" : "Menu"}
 </button>
 ```
 
@@ -409,15 +426,15 @@ const handleItemClick = useCallback(
 return (
   <div>
     {/* User Information Section */}
-    <section className={'user-info'}>
+    <section className={"user-info"}>
       <h2>{user.name}</h2>
       <p>{user.email}</p>
     </section>
 
     {/* Action Controls */}
-    <div className={'actions'}>
+    <div className={"actions"}>
       <Button onClick={handleEdit}>Edit</Button>
-      <Button onClick={handleDelete} variant={'destructive'}>
+      <Button onClick={handleDelete} variant={"destructive"}>
         Delete
       </Button>
     </div>

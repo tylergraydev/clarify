@@ -9,9 +9,9 @@
  * 2. Window-dependent handlers (dialog)
  * 3. Database handlers (project, repository, workflow, etc.)
  */
-import type { BrowserWindow } from 'electron';
+import type { BrowserWindow } from "electron";
 
-import type { DrizzleDatabase } from '../../db';
+import type { DrizzleDatabase } from "../../db";
 
 import {
   createAgentsRepository,
@@ -22,23 +22,23 @@ import {
   createTemplatesRepository,
   createWorkflowsRepository,
   createWorkflowStepsRepository,
-} from '../../db/repositories';
+} from "../../db/repositories";
 // Handler registration imports (to be implemented in Steps 3-10)
-import { registerAgentHandlers } from './agent.handlers';
-import { registerAppHandlers } from './app.handlers';
-import { registerAuditHandlers } from './audit.handlers';
-import { registerDialogHandlers } from './dialog.handlers';
-import { registerDiscoveryHandlers } from './discovery.handlers';
-import { registerFsHandlers } from './fs.handlers';
-import { registerProjectHandlers } from './project.handlers';
-import { registerRepositoryHandlers } from './repository.handlers';
-import { registerStepHandlers } from './step.handlers';
-import { registerStoreHandlers } from './store.handlers';
-import { registerTemplateHandlers } from './template.handlers';
-import { registerWorkflowHandlers } from './workflow.handlers';
+import { registerAgentHandlers } from "./agent.handlers";
+import { registerAppHandlers } from "./app.handlers";
+import { registerAuditHandlers } from "./audit.handlers";
+import { registerDialogHandlers } from "./dialog.handlers";
+import { registerDiscoveryHandlers } from "./discovery.handlers";
+import { registerFsHandlers } from "./fs.handlers";
+import { registerProjectHandlers } from "./project.handlers";
+import { registerRepositoryHandlers } from "./repository.handlers";
+import { registerStepHandlers } from "./step.handlers";
+import { registerStoreHandlers } from "./store.handlers";
+import { registerTemplateHandlers } from "./template.handlers";
+import { registerWorkflowHandlers } from "./workflow.handlers";
 
 // Re-export channels for external use
-export { IpcChannels } from './channels';
+export { IpcChannels } from "./channels";
 
 /**
  * Register all IPC handlers with their dependencies.
@@ -46,7 +46,10 @@ export { IpcChannels } from './channels';
  * @param db - The Drizzle database instance for repository creation
  * @param getMainWindow - Function to get the main BrowserWindow (may be null during startup)
  */
-export function registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => BrowserWindow | null): void {
+export function registerAllHandlers(
+  db: DrizzleDatabase,
+  getMainWindow: () => BrowserWindow | null
+): void {
   // ============================================
   // Stateless handlers (no dependencies)
   // ============================================

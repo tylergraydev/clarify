@@ -6,12 +6,12 @@
  * - Lifecycle management (start, pause, resume, cancel)
  * - Querying workflows by ID or with filters
  */
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { WorkflowsRepository } from '../../db/repositories';
-import type { NewWorkflow, Workflow } from '../../db/schema';
+import type { WorkflowsRepository } from "../../db/repositories";
+import type { NewWorkflow, Workflow } from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 /**
  * Filter options for listing workflows
@@ -27,7 +27,9 @@ interface WorkflowListFilters {
  *
  * @param workflowsRepository - The workflows repository for database operations
  */
-export function registerWorkflowHandlers(workflowsRepository: WorkflowsRepository): void {
+export function registerWorkflowHandlers(
+  workflowsRepository: WorkflowsRepository
+): void {
   // Create a new workflow
   ipcMain.handle(
     IpcChannels.workflow.create,
@@ -48,7 +50,7 @@ export function registerWorkflowHandlers(workflowsRepository: WorkflowsRepositor
   ipcMain.handle(
     IpcChannels.workflow.pause,
     (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
-      return workflowsRepository.updateStatus(id, 'paused');
+      return workflowsRepository.updateStatus(id, "paused");
     }
   );
 
@@ -56,7 +58,7 @@ export function registerWorkflowHandlers(workflowsRepository: WorkflowsRepositor
   ipcMain.handle(
     IpcChannels.workflow.resume,
     (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
-      return workflowsRepository.updateStatus(id, 'running');
+      return workflowsRepository.updateStatus(id, "running");
     }
   );
 
@@ -64,7 +66,7 @@ export function registerWorkflowHandlers(workflowsRepository: WorkflowsRepositor
   ipcMain.handle(
     IpcChannels.workflow.cancel,
     (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
-      return workflowsRepository.updateStatus(id, 'cancelled');
+      return workflowsRepository.updateStatus(id, "cancelled");
     }
   );
 
@@ -79,7 +81,10 @@ export function registerWorkflowHandlers(workflowsRepository: WorkflowsRepositor
   // List workflows with optional filters
   ipcMain.handle(
     IpcChannels.workflow.list,
-    (_event: IpcMainInvokeEvent, filters?: WorkflowListFilters): Array<Workflow> => {
+    (
+      _event: IpcMainInvokeEvent,
+      filters?: WorkflowListFilters
+    ): Array<Workflow> => {
       return workflowsRepository.findAll(filters);
     }
   );

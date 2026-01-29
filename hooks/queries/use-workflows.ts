@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { NewWorkflow } from '@/types/electron';
+import type { NewWorkflow } from "@/types/electron";
 
-import { workflowKeys } from '@/lib/queries/workflows';
+import { workflowKeys } from "@/lib/queries/workflows";
 
-import { useElectron } from '../use-electron';
+import { useElectron } from "../use-electron";
 
 // ============================================================================
 // Query Hooks
@@ -24,11 +24,18 @@ export function useCancelWorkflow() {
     onSuccess: (workflow) => {
       if (workflow) {
         // Update detail cache directly
-        queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);
+        queryClient.setQueryData(
+          workflowKeys.detail(workflow.id).queryKey,
+          workflow
+        );
         // Invalidate list queries
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
         // Invalidate running workflows query
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.running.queryKey });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.running.queryKey,
+        });
         // Invalidate project-specific queries
         if (workflow.projectId) {
           void queryClient.invalidateQueries({
@@ -74,11 +81,18 @@ export function usePauseWorkflow() {
     onSuccess: (workflow) => {
       if (workflow) {
         // Update detail cache directly
-        queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);
+        queryClient.setQueryData(
+          workflowKeys.detail(workflow.id).queryKey,
+          workflow
+        );
         // Invalidate list queries
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
         // Invalidate running workflows query
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.running.queryKey });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.running.queryKey,
+        });
         // Invalidate project-specific queries
         if (workflow.projectId) {
           void queryClient.invalidateQueries({
@@ -106,11 +120,18 @@ export function useResumeWorkflow() {
     onSuccess: (workflow) => {
       if (workflow) {
         // Update detail cache directly
-        queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);
+        queryClient.setQueryData(
+          workflowKeys.detail(workflow.id).queryKey,
+          workflow
+        );
         // Invalidate list queries
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
         // Invalidate running workflows query
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.running.queryKey });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.running.queryKey,
+        });
         // Invalidate project-specific queries
         if (workflow.projectId) {
           void queryClient.invalidateQueries({
@@ -134,11 +155,18 @@ export function useStartWorkflow() {
     onSuccess: (workflow) => {
       if (workflow) {
         // Update detail cache directly
-        queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);
+        queryClient.setQueryData(
+          workflowKeys.detail(workflow.id).queryKey,
+          workflow
+        );
         // Invalidate list queries
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
         // Invalidate running workflows query
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.running.queryKey });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.running.queryKey,
+        });
         // Invalidate project-specific queries
         if (workflow.projectId) {
           void queryClient.invalidateQueries({

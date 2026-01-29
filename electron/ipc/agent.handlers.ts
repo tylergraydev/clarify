@@ -8,12 +8,12 @@
  * - Activating and deactivating agents
  * - Resetting agents to built-in defaults
  */
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { AgentsRepository } from '../../db/repositories';
-import type { Agent, NewAgent } from '../../db/schema';
+import type { AgentsRepository } from "../../db/repositories";
+import type { Agent, NewAgent } from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 /**
  * Filter options for listing agents
@@ -29,11 +29,16 @@ interface AgentListFilters {
  *
  * @param agentsRepository - The agents repository for database operations
  */
-export function registerAgentHandlers(agentsRepository: AgentsRepository): void {
+export function registerAgentHandlers(
+  agentsRepository: AgentsRepository
+): void {
   // List agents with optional filters
   ipcMain.handle(
     IpcChannels.agent.list,
-    async (_event: IpcMainInvokeEvent, filters?: AgentListFilters): Promise<Array<Agent>> => {
+    async (
+      _event: IpcMainInvokeEvent,
+      filters?: AgentListFilters
+    ): Promise<Array<Agent>> => {
       return agentsRepository.findAll(filters);
     }
   );
@@ -41,7 +46,10 @@ export function registerAgentHandlers(agentsRepository: AgentsRepository): void 
   // Get an agent by ID
   ipcMain.handle(
     IpcChannels.agent.get,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
+    async (
+      _event: IpcMainInvokeEvent,
+      id: number
+    ): Promise<Agent | undefined> => {
       return agentsRepository.findById(id);
     }
   );
@@ -52,7 +60,7 @@ export function registerAgentHandlers(agentsRepository: AgentsRepository): void 
     async (
       _event: IpcMainInvokeEvent,
       id: number,
-      data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>
+      data: Partial<Omit<NewAgent, "createdAt" | "id">>
     ): Promise<Agent | undefined> => {
       return agentsRepository.update(id, data);
     }
@@ -62,7 +70,10 @@ export function registerAgentHandlers(agentsRepository: AgentsRepository): void 
   // This deactivates any custom agent and activates the built-in version
   ipcMain.handle(
     IpcChannels.agent.reset,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
+    async (
+      _event: IpcMainInvokeEvent,
+      id: number
+    ): Promise<Agent | undefined> => {
       // Get the current agent to find its parent (built-in version)
       const agent = await agentsRepository.findById(id);
       if (!agent) {
@@ -85,7 +96,10 @@ export function registerAgentHandlers(agentsRepository: AgentsRepository): void 
   // Activate an agent
   ipcMain.handle(
     IpcChannels.agent.activate,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
+    async (
+      _event: IpcMainInvokeEvent,
+      id: number
+    ): Promise<Agent | undefined> => {
       return agentsRepository.activate(id);
     }
   );
@@ -93,7 +107,10 @@ export function registerAgentHandlers(agentsRepository: AgentsRepository): void 
   // Deactivate an agent
   ipcMain.handle(
     IpcChannels.agent.deactivate,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
+    async (
+      _event: IpcMainInvokeEvent,
+      id: number
+    ): Promise<Agent | undefined> => {
       return agentsRepository.deactivate(id);
     }
   );

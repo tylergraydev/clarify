@@ -1,6 +1,6 @@
 ---
 allowed-tools: Task(subagent_type:database-schema), Read(*), Glob(*), Grep(*)
-argument-hint: 'natural language description of the schema'
+argument-hint: "natural language description of the schema"
 description: Create or modify database schemas using natural language descriptions
 ---
 

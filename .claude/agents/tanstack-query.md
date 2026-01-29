@@ -58,9 +58,9 @@ Create the query key file at `lib/queries/{entity}.ts` following ALL conventions
 **File Structure**:
 
 ```typescript
-import { createQueryKeys } from '@lukemorales/query-key-factory';
+import { createQueryKeys } from "@lukemorales/query-key-factory";
 
-export const entityKeys = createQueryKeys('entities', {
+export const entityKeys = createQueryKeys("entities", {
   detail: (id: number) => [id],
   list: (filters?: { key?: value }) => [{ filters }],
   // Add nested queries as needed
@@ -81,9 +81,9 @@ export const entityKeys = createQueryKeys('entities', {
 Add the new query keys to `lib/queries/index.ts`:
 
 ```typescript
-import { mergeQueryKeys } from '@lukemorales/query-key-factory';
+import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 
-import { entityKeys } from './entity';
+import { entityKeys } from "./entity";
 // ... other imports
 
 export const queries = mergeQueryKeys(
@@ -99,13 +99,13 @@ Create `hooks/queries/use-{entity}.ts` with:
 **File Structure**:
 
 ```typescript
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
-import { entityKeys } from '@/lib/queries/entity';
+import { entityKeys } from "@/lib/queries/entity";
 
-import { useElectronDb } from '../useElectron';
+import { useElectronDb } from "../useElectron";
 
 export function useEntity(id: number) {
   const { isElectron, entities } = useElectronDb();
@@ -141,14 +141,15 @@ export function useEntities() {
 Add mutation hooks to the same file:
 
 ```typescript
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useCreateEntity() {
   const queryClient = useQueryClient();
   const { entities } = useElectronDb();
 
   return useMutation({
-    mutationFn: (data: Parameters<typeof entities.create>[0]) => entities.create(data),
+    mutationFn: (data: Parameters<typeof entities.create>[0]) =>
+      entities.create(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: entityKeys.list._def });
     },
@@ -160,8 +161,13 @@ export function useUpdateEntity() {
   const { entities } = useElectronDb();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Parameters<typeof entities.update>[1]; id: number }) =>
-      entities.update(id, data),
+    mutationFn: ({
+      data,
+      id,
+    }: {
+      data: Parameters<typeof entities.update>[1];
+      id: number;
+    }) => entities.update(id, data),
     onSuccess: (entity) => {
       if (entity) {
         queryClient.setQueryData(entityKeys.detail(entity.id).queryKey, entity);

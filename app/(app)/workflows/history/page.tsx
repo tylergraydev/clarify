@@ -6,20 +6,20 @@
  */
 export default function WorkflowHistoryPage() {
   return (
-    <div className={'space-y-6'}>
+    <div className={"space-y-6"}>
       {/* Page heading */}
-      <div className={'space-y-1'}>
-        <h1 className={'text-2xl font-semibold tracking-tight'}>
+      <div className={"space-y-1"}>
+        <h1 className={"text-2xl font-semibold tracking-tight"}>
           Workflow History
         </h1>
-        <p className={'text-muted-foreground'}>
+        <p className={"text-muted-foreground"}>
           Browse completed and archived workflow runs.
         </p>
       </div>
 
       {/* Placeholder content */}
-      <div className={'rounded-lg border border-dashed p-8 text-center'}>
-        <p className={'text-sm text-muted-foreground'}>
+      <div className={"rounded-lg border border-dashed p-8 text-center"}>
+        <p className={"text-sm text-muted-foreground"}>
           Workflow history and logs will be implemented here.
         </p>
       </div>

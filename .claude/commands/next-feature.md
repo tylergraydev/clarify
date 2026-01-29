@@ -1,6 +1,6 @@
 ---
 allowed-tools: Read(*), Glob(*), Grep(*), Task(subagent_type:Explore), AskUserQuestion(*)
-argument-hint: '[--list|--interactive]'
+argument-hint: "[--list|--interactive]"
 description: Identify the next logical feature area to work on based on design document and codebase analysis
 ---
 
@@ -38,9 +38,9 @@ Analyze the design document and current codebase implementation to recommend the
 
 1. Read the design document at `docs/design-document.md`
 2. Extract all feature areas and their descriptions, organized by:
-    - Core features (MVP requirements)
-    - Phase 1 features (post-MVP)
-    - Phase 2+ features (future roadmap)
+   - Core features (MVP requirements)
+   - Phase 1 features (post-MVP)
+   - Phase 2+ features (future roadmap)
 3. Identify dependencies between features (what must exist before something else can work)
 4. Note the logical progression implied in the document
 
@@ -49,56 +49,56 @@ Analyze the design document and current codebase implementation to recommend the
 Use the Explore agent to thoroughly scan the codebase:
 
 1. **Project Infrastructure:**
-    - Check `app/` for existing pages and routes
-    - Check `components/` for implemented UI components
-    - Check `db/schema/` for database tables
-    - Check `db/repositories/` for data access layers
-    - Check `electron/ipc/` for IPC handlers
-    - Check `stores/` for state management
+   - Check `app/` for existing pages and routes
+   - Check `components/` for implemented UI components
+   - Check `db/schema/` for database tables
+   - Check `db/repositories/` for data access layers
+   - Check `electron/ipc/` for IPC handlers
+   - Check `stores/` for state management
 
 2. **Feature-Specific Checks:**
-    - Projects: CRUD operations, list view, detail view
-    - Repositories: Add/remove, scanning, file indexing
-    - Feature Requests: Entry, workflow steps, lifecycle states
-    - AI Integration: API key management, model selection, streaming
-    - Orchestration: 3-step workflow (Refine → Research → Plan)
-    - Settings: Global and project-specific configuration
-    - Export: Markdown, PDF, JSON export capabilities
+   - Projects: CRUD operations, list view, detail view
+   - Repositories: Add/remove, scanning, file indexing
+   - Feature Requests: Entry, workflow steps, lifecycle states
+   - AI Integration: API key management, model selection, streaming
+   - Orchestration: 3-step workflow (Refine → Research → Plan)
+   - Settings: Global and project-specific configuration
+   - Export: Markdown, PDF, JSON export capabilities
 
 3. **Create Implementation Status Map:**
    For each major feature area, determine:
-    - **Fully Implemented**: All functionality working
-    - **Partially Implemented**: Some functionality exists
-    - **Not Started**: No implementation exists
-    - **Infrastructure Only**: Schema/routes exist but no UI/logic
+   - **Fully Implemented**: All functionality working
+   - **Partially Implemented**: Some functionality exists
+   - **Not Started**: No implementation exists
+   - **Infrastructure Only**: Schema/routes exist but no UI/logic
 
 ### Phase 3: Gap Analysis
 
 1. Compare design document requirements against implementation status
 2. Identify features that are:
-    - Completely missing
-    - Partially implemented (good candidates for completion)
-    - Blocked by missing dependencies
-    - Ready to implement (all dependencies satisfied)
+   - Completely missing
+   - Partially implemented (good candidates for completion)
+   - Blocked by missing dependencies
+   - Ready to implement (all dependencies satisfied)
 
 ### Phase 4: Prioritization
 
 Score each gap/incomplete feature based on:
 
 1. **Dependency Satisfaction** (highest weight):
-    - Does this feature have all prerequisites implemented?
-    - Will implementing this unblock other features?
+   - Does this feature have all prerequisites implemented?
+   - Will implementing this unblock other features?
 
 2. **Logical Progression**:
-    - Does this fit naturally with what's already built?
-    - Is this the next step in the user journey?
+   - Does this fit naturally with what's already built?
+   - Is this the next step in the user journey?
 
 3. **Bite-Size Scope**:
-    - Can this be implemented in a focused session?
-    - Is the scope well-defined and bounded?
+   - Can this be implemented in a focused session?
+   - Is the scope well-defined and bounded?
 
 4. **MVP Priority**:
-    - Is this core functionality or nice-to-have?
+   - Is this core functionality or nice-to-have?
 
 ### Phase 5: Output
 

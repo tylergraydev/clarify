@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { NewDiscoveredFile } from '@/types/electron';
+import type { NewDiscoveredFile } from "@/types/electron";
 
-import { discoveredFileKeys } from '@/lib/queries/discovered-files';
+import { discoveredFileKeys } from "@/lib/queries/discovered-files";
 
-import { useElectron } from '../use-electron';
+import { useElectron } from "../use-electron";
 
 // ============================================================================
 // Query Hooks
@@ -20,19 +20,27 @@ export function useAddDiscoveredFile() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: ({ data, stepId }: { data: NewDiscoveredFile; stepId: number }) =>
-      api!.discovery.add(stepId, data),
+    mutationFn: ({
+      data,
+      stepId,
+    }: {
+      data: NewDiscoveredFile;
+      stepId: number;
+    }) => api!.discovery.add(stepId, data),
     onSuccess: (file) => {
       // Invalidate step-specific queries
       void queryClient.invalidateQueries({
-        queryKey: discoveredFileKeys.byWorkflowStep(file.workflowStepId).queryKey,
+        queryKey: discoveredFileKeys.byWorkflowStep(file.workflowStepId)
+          .queryKey,
       });
       // Invalidate included files query
       void queryClient.invalidateQueries({
         queryKey: discoveredFileKeys.included(file.workflowStepId).queryKey,
       });
       // Invalidate general list queries
-      void queryClient.invalidateQueries({ queryKey: discoveredFileKeys.list._def });
+      void queryClient.invalidateQueries({
+        queryKey: discoveredFileKeys.list._def,
+      });
     },
   });
 }
@@ -66,10 +74,14 @@ export function useExcludeFile() {
     onSuccess: (file) => {
       if (file) {
         // Update detail cache directly
-        queryClient.setQueryData(discoveredFileKeys.detail(file.id).queryKey, file);
+        queryClient.setQueryData(
+          discoveredFileKeys.detail(file.id).queryKey,
+          file
+        );
         // Invalidate step-specific queries
         void queryClient.invalidateQueries({
-          queryKey: discoveredFileKeys.byWorkflowStep(file.workflowStepId).queryKey,
+          queryKey: discoveredFileKeys.byWorkflowStep(file.workflowStepId)
+            .queryKey,
         });
         // Invalidate included files query
         void queryClient.invalidateQueries({
@@ -109,10 +121,14 @@ export function useIncludeFile() {
     onSuccess: (file) => {
       if (file) {
         // Update detail cache directly
-        queryClient.setQueryData(discoveredFileKeys.detail(file.id).queryKey, file);
+        queryClient.setQueryData(
+          discoveredFileKeys.detail(file.id).queryKey,
+          file
+        );
         // Invalidate step-specific queries
         void queryClient.invalidateQueries({
-          queryKey: discoveredFileKeys.byWorkflowStep(file.workflowStepId).queryKey,
+          queryKey: discoveredFileKeys.byWorkflowStep(file.workflowStepId)
+            .queryKey,
         });
         // Invalidate included files query
         void queryClient.invalidateQueries({
@@ -141,17 +157,23 @@ export function useUpdateDiscoveredFile() {
     onSuccess: (file) => {
       if (file) {
         // Update detail cache directly
-        queryClient.setQueryData(discoveredFileKeys.detail(file.id).queryKey, file);
+        queryClient.setQueryData(
+          discoveredFileKeys.detail(file.id).queryKey,
+          file
+        );
         // Invalidate step-specific queries
         void queryClient.invalidateQueries({
-          queryKey: discoveredFileKeys.byWorkflowStep(file.workflowStepId).queryKey,
+          queryKey: discoveredFileKeys.byWorkflowStep(file.workflowStepId)
+            .queryKey,
         });
         // Invalidate included files query
         void queryClient.invalidateQueries({
           queryKey: discoveredFileKeys.included(file.workflowStepId).queryKey,
         });
         // Invalidate general list queries
-        void queryClient.invalidateQueries({ queryKey: discoveredFileKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: discoveredFileKeys.list._def,
+        });
       }
     },
   });

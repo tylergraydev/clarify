@@ -8,9 +8,11 @@
 ## Inputs
 
 ### Refined Request
+
 Implement the IPC (Inter-Process Communication) handlers that establish bidirectional communication between the Electron main process and the Next.js renderer process...
 
 ### File Discovery Summary
+
 - **Critical files**: 8
 - **High priority files**: 12
 - **Medium priority files**: 10
@@ -20,6 +22,7 @@ Implement the IPC (Inter-Process Communication) handlers that establish bidirect
 ## Agent Prompt
 
 Generated implementation plan with:
+
 - 23 implementation steps
 - Quality gates at each step
 - Validation commands for all TypeScript files
@@ -35,25 +38,25 @@ Generated implementation plan with:
 
 ## Implementation Plan Summary
 
-| Metric | Value |
-|--------|-------|
-| Total Steps | 23 |
+| Metric             | Value    |
+| ------------------ | -------- |
+| Total Steps        | 23       |
 | Estimated Duration | 3-4 days |
-| Complexity | High |
-| Risk Level | Medium |
-| Files to Create | 28 |
-| Files to Modify | 5 |
+| Complexity         | High     |
+| Risk Level         | Medium   |
+| Files to Create    | 28       |
+| Files to Modify    | 5        |
 
 ### Step Breakdown by Category
 
-| Category | Steps | Description |
-|----------|-------|-------------|
-| IPC Foundation | 1-2 | Channels and registration index |
-| Domain Handlers | 3-10 | Workflows, steps, discovery, agents, templates, projects, repos, audit |
-| Main Process Refactor | 11, 22 | Refactor main.ts, extract existing handlers |
-| Preload & Types | 12-13 | Extend ElectronAPI, update type definitions |
-| Query Layer | 14-21 | Query keys, TanStack Query hooks for all domains |
-| Validation | 23 | Integration testing and final validation |
+| Category              | Steps  | Description                                                            |
+| --------------------- | ------ | ---------------------------------------------------------------------- |
+| IPC Foundation        | 1-2    | Channels and registration index                                        |
+| Domain Handlers       | 3-10   | Workflows, steps, discovery, agents, templates, projects, repos, audit |
+| Main Process Refactor | 11, 22 | Refactor main.ts, extract existing handlers                            |
+| Preload & Types       | 12-13  | Extend ElectronAPI, update type definitions                            |
+| Query Layer           | 14-21  | Query keys, TanStack Query hooks for all domains                       |
+| Validation            | 23     | Integration testing and final validation                               |
 
 ## Quality Gates
 

@@ -11,21 +11,34 @@ A comprehensive guide for creating consistent, accessible React components using
 Every component must wrap a Base UI primitive from `@base-ui/react`:
 
 ```tsx
-'use client';
+"use client";
 
-import type { ComponentPropsWithRef } from 'react';
+import type { ComponentPropsWithRef } from "react";
 
-import { Button as BaseButton } from '@base-ui/react/button';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { Button as BaseButton } from "@base-ui/react/button";
+import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(/* ... */);
 
-type ButtonProps = ComponentPropsWithRef<typeof BaseButton> & VariantProps<typeof buttonVariants>;
+type ButtonProps = ComponentPropsWithRef<typeof BaseButton> &
+  VariantProps<typeof buttonVariants>;
 
-export const Button = ({ className, ref, size, variant, ...props }: ButtonProps) => {
-  return <BaseButton className={cn(buttonVariants({ className, size, variant }))} ref={ref} {...props} />;
+export const Button = ({
+  className,
+  ref,
+  size,
+  variant,
+  ...props
+}: ButtonProps) => {
+  return (
+    <BaseButton
+      className={cn(buttonVariants({ className, size, variant }))}
+      ref={ref}
+      {...props}
+    />
+  );
 };
 ```
 
@@ -34,7 +47,7 @@ export const Button = ({ className, ref, size, variant, ...props }: ButtonProps)
 For compound components (Dialog, Menu, etc.), re-export sub-components directly:
 
 ```tsx
-import { Dialog as BaseDialog } from '@base-ui/react/dialog';
+import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 
 // Re-export unchanged sub-components
 export const DialogRoot = BaseDialog.Root;
@@ -43,8 +56,18 @@ export const DialogPortal = BaseDialog.Portal;
 export const DialogClose = BaseDialog.Close;
 
 // Custom styled sub-components
-export const DialogBackdrop = ({ className, ref, ...props }: DialogBackdropProps) => {
-  return <BaseDialog.Backdrop className={cn(dialogBackdropVariants(), className)} ref={ref} {...props} />;
+export const DialogBackdrop = ({
+  className,
+  ref,
+  ...props
+}: DialogBackdropProps) => {
+  return (
+    <BaseDialog.Backdrop
+      className={cn(dialogBackdropVariants(), className)}
+      ref={ref}
+      {...props}
+    />
+  );
 };
 ```
 
@@ -75,23 +98,25 @@ export const buttonVariants = cva(
   {
     // Default variant values
     defaultVariants: {
-      size: 'default',
-      variant: 'default',
+      size: "default",
+      variant: "default",
     },
     // Variant definitions
     variants: {
       size: {
-        default: 'h-9 px-4 py-2',
-        icon: 'size-9',
-        lg: 'h-10 px-6',
-        sm: 'h-8 px-3 text-xs',
+        default: "h-9 px-4 py-2",
+        icon: "size-9",
+        lg: "h-10 px-6",
+        sm: "h-8 px-3 text-xs",
       },
       variant: {
-        default: 'bg-accent text-accent-foreground hover:bg-accent-hover',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        ghost: 'hover:bg-muted hover:text-foreground',
-        outline: 'border border-border bg-transparent hover:bg-muted hover:text-foreground',
-        secondary: 'bg-muted text-foreground hover:bg-muted/80',
+        default: "bg-accent text-accent-foreground hover:bg-accent-hover",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        ghost: "hover:bg-muted hover:text-foreground",
+        outline:
+          "border border-border bg-transparent hover:bg-muted hover:text-foreground",
+        secondary: "bg-muted text-foreground hover:bg-muted/80",
       },
     },
   }
@@ -128,7 +153,8 @@ Skip CVA when:
 ### Basic Pattern with Variants
 
 ```tsx
-type ButtonProps = ComponentPropsWithRef<typeof BaseButton> & VariantProps<typeof buttonVariants>;
+type ButtonProps = ComponentPropsWithRef<typeof BaseButton> &
+  VariantProps<typeof buttonVariants>;
 ```
 
 ### Pattern without Variants
@@ -141,7 +167,9 @@ type DialogTitleProps = ComponentPropsWithRef<typeof BaseDialog.Title>;
 
 ```tsx
 interface TooltipContentProps
-  extends ComponentPropsWithRef<typeof BaseTooltip.Popup>, VariantProps<typeof tooltipVariants> {
+  extends
+    ComponentPropsWithRef<typeof BaseTooltip.Popup>,
+    VariantProps<typeof tooltipVariants> {
   sideOffset?: number;
 }
 ```
@@ -161,8 +189,20 @@ interface TooltipContentProps
 ### Standard Pattern
 
 ```tsx
-export const Button = ({ className, ref, size, variant, ...props }: ButtonProps) => {
-  return <BaseButton className={cn(buttonVariants({ className, size, variant }))} ref={ref} {...props} />;
+export const Button = ({
+  className,
+  ref,
+  size,
+  variant,
+  ...props
+}: ButtonProps) => {
+  return (
+    <BaseButton
+      className={cn(buttonVariants({ className, size, variant }))}
+      ref={ref}
+      {...props}
+    />
+  );
 };
 ```
 
@@ -182,19 +222,19 @@ export const Button = ({ className, ref, size, variant, ...props }: ButtonProps)
 ### Import Order
 
 ```tsx
-'use client';
+"use client";
 
 // 1. Type imports
-import type { ComponentPropsWithRef } from 'react';
+import type { ComponentPropsWithRef } from "react";
 
 // 2. Base UI imports
-import { Button as BaseButton } from '@base-ui/react/button';
+import { Button as BaseButton } from "@base-ui/react/button";
 
 // 3. CVA imports
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva, type VariantProps } from "class-variance-authority";
 
 // 4. Internal utility imports
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 ```
 
 ### Export Order
@@ -245,13 +285,13 @@ Use CSS custom properties defined in `globals.css`:
 
 ```tsx
 // ✅ Correct - Using CSS variable tokens
-'bg-accent text-accent-foreground';
-'border-border bg-background';
-'text-muted-foreground';
+"bg-accent text-accent-foreground";
+"border-border bg-background";
+"text-muted-foreground";
 
 // ❌ Incorrect - Hardcoded colors
-'bg-blue-500 text-white';
-'border-gray-200 bg-white';
+"bg-blue-500 text-white";
+"border-gray-200 bg-white";
 ```
 
 ### Common CSS Variable Tokens
@@ -273,13 +313,13 @@ Use Base UI's data attributes for state styling:
 
 ```tsx
 // Disabled state
-'data-disabled:pointer-events-none data-disabled:opacity-50';
+"data-disabled:pointer-events-none data-disabled:opacity-50";
 
 // Open/closed state
-'data-open:rotate-180';
+"data-open:rotate-180";
 
 // Starting/ending animation states
-'data-starting-style:opacity-0 data-ending-style:opacity-0';
+"data-starting-style:opacity-0 data-ending-style:opacity-0";
 ```
 
 ---
@@ -298,8 +338,19 @@ export const dialogBackdropVariants = cva(/* ... */);
 type DialogBackdropProps = ComponentPropsWithRef<typeof BaseDialog.Backdrop> &
   VariantProps<typeof dialogBackdropVariants>;
 
-export const DialogBackdrop = ({ blur, className, ref, ...props }: DialogBackdropProps) => {
-  return <BaseDialog.Backdrop className={cn(dialogBackdropVariants({ blur }), className)} ref={ref} {...props} />;
+export const DialogBackdrop = ({
+  blur,
+  className,
+  ref,
+  ...props
+}: DialogBackdropProps) => {
+  return (
+    <BaseDialog.Backdrop
+      className={cn(dialogBackdropVariants({ blur }), className)}
+      ref={ref}
+      {...props}
+    />
+  );
 };
 ```
 
@@ -319,7 +370,7 @@ export const DialogBackdrop = ({ blur, className, ref, ...props }: DialogBackdro
 Always include focus-visible styles:
 
 ```tsx
-'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0 focus-visible:outline-none';
+"focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0 focus-visible:outline-none";
 ```
 
 ### Disabled States
@@ -327,7 +378,7 @@ Always include focus-visible styles:
 Use Base UI's data-disabled attribute:
 
 ```tsx
-'data-disabled:pointer-events-none data-disabled:opacity-50';
+"data-disabled:pointer-events-none data-disabled:opacity-50";
 ```
 
 ### ARIA Attributes

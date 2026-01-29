@@ -94,17 +94,20 @@ Create `electron/ipc/{domain}.handlers.ts`:
 **File Structure**:
 
 ```typescript
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { SomeRepository } from '../../db/repositories';
-import type { NewEntity, Entity } from '../../db/schema';
+import type { SomeRepository } from "../../db/repositories";
+import type { NewEntity, Entity } from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 export function registerDomainHandlers(repository: SomeRepository): void {
-  ipcMain.handle(IpcChannels.domain.action, (_event: IpcMainInvokeEvent, arg: ArgType): ReturnType => {
-    return repository.method(arg);
-  });
+  ipcMain.handle(
+    IpcChannels.domain.action,
+    (_event: IpcMainInvokeEvent, arg: ArgType): ReturnType => {
+      return repository.method(arg);
+    }
+  );
 }
 ```
 
@@ -121,9 +124,12 @@ export function registerDomainHandlers(repository: SomeRepository): void {
 Add registration to `electron/ipc/index.ts`:
 
 ```typescript
-import { registerDomainHandlers } from './domain.handlers';
+import { registerDomainHandlers } from "./domain.handlers";
 
-export function registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => BrowserWindow | null): void {
+export function registerAllHandlers(
+  db: DrizzleDatabase,
+  getMainWindow: () => BrowserWindow | null
+): void {
   // ... existing registrations
 
   // New handlers
@@ -218,8 +224,10 @@ export function useElectronDb() {
 
   const entities = useMemo(
     () => ({
-      create: (data: Parameters<NonNullable<typeof api>['db']['entities']['create']>[0]) => {
-        if (!api) throw new Error('Electron API not available');
+      create: (
+        data: Parameters<NonNullable<typeof api>["db"]["entities"]["create"]>[0]
+      ) => {
+        if (!api) throw new Error("Electron API not available");
         return api.db.entities.create(data);
       },
       getAll: () => api?.db.entities.getAll() ?? Promise.resolve([]),

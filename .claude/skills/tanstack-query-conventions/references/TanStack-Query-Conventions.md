@@ -51,9 +51,9 @@ Use `@lukemorales/query-key-factory` for all query key definitions:
 
 ```typescript
 // lib/queries/projects.ts
-import { createQueryKeys } from '@lukemorales/query-key-factory';
+import { createQueryKeys } from "@lukemorales/query-key-factory";
 
-export const projectKeys = createQueryKeys('projects', {
+export const projectKeys = createQueryKeys("projects", {
   detail: (id: number) => [id],
   list: (filters?: string) => [{ filters }],
 });
@@ -68,14 +68,14 @@ export const projectKeys = createQueryKeys('projects', {
 
 ```typescript
 // Correct patterns
-export const featureKeys = createQueryKeys('features', {
+export const featureKeys = createQueryKeys("features", {
   byProject: (projectId: number) => [projectId],
   detail: (id: number) => [id],
   list: (filters?: { projectId?: number; status?: string }) => [{ filters }],
 });
 
 // For child entities
-export const planKeys = createQueryKeys('plans', {
+export const planKeys = createQueryKeys("plans", {
   byFeature: (featureId: number) => [featureId],
   detail: (id: number) => [id],
 });
@@ -87,10 +87,13 @@ All query keys must be merged and exported from the index file:
 
 ```typescript
 // lib/queries/index.ts
-import { inferQueryKeyStore, mergeQueryKeys } from '@lukemorales/query-key-factory';
+import {
+  inferQueryKeyStore,
+  mergeQueryKeys,
+} from "@lukemorales/query-key-factory";
 
-import { featureKeys } from './features';
-import { projectKeys } from './projects';
+import { featureKeys } from "./features";
+import { projectKeys } from "./projects";
 
 export const queries = mergeQueryKeys(projectKeys, featureKeys);
 export type QueryKeys = inferQueryKeyStore<typeof queries>;
@@ -104,13 +107,13 @@ export type QueryKeys = inferQueryKeyStore<typeof queries>;
 
 ```typescript
 // hooks/queries/use-projects.ts
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
-import { projectKeys } from '@/lib/queries/projects';
+import { projectKeys } from "@/lib/queries/projects";
 
-import { useElectronDb } from '../useElectron';
+import { useElectronDb } from "../useElectron";
 
 export function useProjects() {
   const { isElectron, projects } = useElectronDb();
@@ -167,7 +170,7 @@ return useQuery({
 return useQuery({
   enabled: isElectron,
   queryFn: () => projects.getById(id),
-  queryKey: ['projects', 'detail', id],
+  queryKey: ["projects", "detail", id],
 });
 ```
 
@@ -183,7 +186,8 @@ export function useCreateProject() {
   const { projects } = useElectronDb();
 
   return useMutation({
-    mutationFn: (data: Parameters<typeof projects.create>[0]) => projects.create(data),
+    mutationFn: (data: Parameters<typeof projects.create>[0]) =>
+      projects.create(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
     },
@@ -227,12 +231,20 @@ export function useUpdateProject() {
   const { projects } = useElectronDb();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Parameters<typeof projects.update>[1]; id: number }) =>
-      projects.update(id, data),
+    mutationFn: ({
+      data,
+      id,
+    }: {
+      data: Parameters<typeof projects.update>[1];
+      id: number;
+    }) => projects.update(id, data),
     onSuccess: (project) => {
       if (project) {
         // Update the detail cache directly
-        queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
+        queryClient.setQueryData(
+          projectKeys.detail(project.id).queryKey,
+          project
+        );
         // Invalidate list to refetch
         void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
       }
@@ -268,13 +280,13 @@ Prefetch critical data at the layout level for faster page loads:
 
 ```typescript
 // app/(app)/layout.tsx
-'use client';
+"use client";
 
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
-import { useElectronDb } from '@/hooks/useElectron';
-import { projectKeys } from '@/lib/queries/projects';
+import { useElectronDb } from "@/hooks/useElectron";
+import { projectKeys } from "@/lib/queries/projects";
 
 function PrefetchCriticalData() {
   const queryClient = useQueryClient();
@@ -369,7 +381,8 @@ export function useCreateProject() {
 
   return useMutation({
     // Infer the parameter type from the repository method
-    mutationFn: (data: Parameters<typeof projects.create>[0]) => projects.create(data),
+    mutationFn: (data: Parameters<typeof projects.create>[0]) =>
+      projects.create(data),
   });
 }
 ```
@@ -383,8 +396,13 @@ export function useUpdateProject() {
   const { projects } = useElectronDb();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Parameters<typeof projects.update>[1]; id: number }) =>
-      projects.update(id, data),
+    mutationFn: ({
+      data,
+      id,
+    }: {
+      data: Parameters<typeof projects.update>[1];
+      id: number;
+    }) => projects.update(id, data),
   });
 }
 ```
@@ -442,20 +460,21 @@ enabled: isElectron && Boolean(projectId),
 
 ```typescript
 // hooks/queries/use-projects.ts
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { projectKeys } from '@/lib/queries/projects';
+import { projectKeys } from "@/lib/queries/projects";
 
-import { useElectronDb } from '../useElectron';
+import { useElectronDb } from "../useElectron";
 
 export function useCreateProject() {
   const queryClient = useQueryClient();
   const { projects } = useElectronDb();
 
   return useMutation({
-    mutationFn: (data: Parameters<typeof projects.create>[0]) => projects.create(data),
+    mutationFn: (data: Parameters<typeof projects.create>[0]) =>
+      projects.create(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
     },
@@ -499,11 +518,19 @@ export function useUpdateProject() {
   const { projects } = useElectronDb();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Parameters<typeof projects.update>[1]; id: number }) =>
-      projects.update(id, data),
+    mutationFn: ({
+      data,
+      id,
+    }: {
+      data: Parameters<typeof projects.update>[1];
+      id: number;
+    }) => projects.update(id, data),
     onSuccess: (project) => {
       if (project) {
-        queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
+        queryClient.setQueryData(
+          projectKeys.detail(project.id).queryKey,
+          project
+        );
         void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
       }
     },

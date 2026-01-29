@@ -46,7 +46,7 @@ const response = await apiClient.createProject({
 });
 console.log(
   "Connection URI:",
-  response.data.connection_uris[0]?.connection_uri,
+  response.data.connection_uris[0]?.connection_uri
 );
 ```
 
@@ -138,7 +138,7 @@ await apiClient.createProjectBranchDatabase("your-project-id", "br-xxx", {
 ```typescript
 const response = await apiClient.listProjectBranchDatabases(
   "your-project-id",
-  "br-xxx",
+  "br-xxx"
 );
 ```
 
@@ -148,7 +148,7 @@ const response = await apiClient.listProjectBranchDatabases(
 await apiClient.deleteProjectBranchDatabase(
   "your-project-id",
   "br-xxx",
-  "my-app-db",
+  "my-app-db"
 );
 ```
 
@@ -162,7 +162,7 @@ const response = await apiClient.createProjectBranchRole(
   "br-xxx",
   {
     role: { name: "app_user" },
-  },
+  }
 );
 console.log("Password:", response.data.role.password);
 ```
@@ -172,7 +172,7 @@ console.log("Password:", response.data.role.password);
 ```typescript
 const response = await apiClient.listProjectBranchRoles(
   "your-project-id",
-  "br-xxx",
+  "br-xxx"
 );
 ```
 
@@ -182,7 +182,7 @@ const response = await apiClient.listProjectBranchRoles(
 await apiClient.deleteProjectBranchRole(
   "your-project-id",
   "br-xxx",
-  "app_user",
+  "app_user"
 );
 ```
 
@@ -267,7 +267,7 @@ const response = await apiClient.listProjectOperations({
 ```typescript
 const response = await apiClient.getProjectOperation(
   "your-project-id",
-  "op-xxx",
+  "op-xxx"
 );
 ```
 

@@ -61,13 +61,16 @@ components/
 Use the custom `useAppForm` hook for all forms:
 
 ```typescript
-import { useAppForm } from '@/lib/forms';
-import { type CreateProjectFormValues, createProjectSchema } from '@/lib/validations/project';
+import { useAppForm } from "@/lib/forms";
+import {
+  type CreateProjectFormValues,
+  createProjectSchema,
+} from "@/lib/validations/project";
 
 const form = useAppForm({
   defaultValues: {
-    description: '',
-    name: '',
+    description: "",
+    name: "",
   },
   onSubmit: async ({ value }) => {
     await onSubmit(value);
@@ -296,11 +299,14 @@ Define Zod schemas in `lib/validations/{entity}.ts`:
 
 ```typescript
 // lib/validations/project.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 export const createProjectSchema = z.object({
   description: z.string(),
-  name: z.string().min(1, 'Project name is required').max(255, 'Project name is too long'),
+  name: z
+    .string()
+    .min(1, "Project name is required")
+    .max(255, "Project name is too long"),
 });
 
 export type CreateProjectFormValues = z.infer<typeof createProjectSchema>;
@@ -317,19 +323,21 @@ export type CreateProjectFormValues = z.infer<typeof createProjectSchema>;
 
 ```typescript
 // Required string
-name: z.string().min(1, 'Name is required');
+name: z.string().min(1, "Name is required");
 
 // Optional string (empty string allowed)
 description: z.string();
 
 // Required email
-email: z.string().min(1, 'Email is required').email('Invalid email address');
+email: z.string().min(1, "Email is required").email("Invalid email address");
 
 // Required URL
-url: z.string().min(1, 'URL is required').url('Invalid URL');
+url: z.string().min(1, "URL is required").url("Invalid URL");
 
 // Required number with range
-priority: z.number().min(1, 'Minimum priority is 1').max(10, 'Maximum priority is 10');
+priority: z.number()
+  .min(1, "Minimum priority is 1")
+  .max(10, "Maximum priority is 10");
 
 // Optional number (nullable)
 count: z.number().nullable();
@@ -338,7 +346,7 @@ count: z.number().nullable();
 isEnabled: z.boolean();
 
 // Required select (non-empty string)
-category: z.string().min(1, 'Please select a category');
+category: z.string().min(1, "Please select a category");
 ```
 
 ---
@@ -525,7 +533,7 @@ const form = useAppForm({
       await onSubmit(value);
     } catch (error) {
       // This will display in FormError component
-      throw new Error('Failed to create project. Please try again.');
+      throw new Error("Failed to create project. Please try again.");
     }
   },
 });
@@ -673,11 +681,14 @@ export function CreateProjectForm({
 
 ```typescript
 // lib/validations/project.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 export const createProjectSchema = z.object({
   description: z.string(),
-  name: z.string().min(1, 'Project name is required').max(255, 'Project name is too long'),
+  name: z
+    .string()
+    .min(1, "Project name is required")
+    .max(255, "Project name is too long"),
 });
 
 export type CreateProjectFormValues = z.infer<typeof createProjectSchema>;

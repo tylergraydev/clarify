@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { stepKeys } from '@/lib/queries/steps';
-import { workflowKeys } from '@/lib/queries/workflows';
+import { stepKeys } from "@/lib/queries/steps";
+import { workflowKeys } from "@/lib/queries/workflows";
 
-import { useElectron } from '../use-electron';
+import { useElectron } from "../use-electron";
 
 // ============================================================================
 // Query Hooks
@@ -19,7 +19,8 @@ export function useCompleteStep() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: ({ id, output }: { id: number; output?: string }) => api!.step.complete(id, output),
+    mutationFn: ({ id, output }: { id: number; output?: string }) =>
+      api!.step.complete(id, output),
     onSuccess: (step) => {
       if (step) {
         // Update detail cache directly
@@ -31,9 +32,15 @@ export function useCompleteStep() {
           queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
         });
         // Invalidate workflow queries since step completion affects workflow state
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.detail(step.workflowId).queryKey });
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.list._def });
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.running.queryKey });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.detail(step.workflowId).queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.running.queryKey,
+        });
       }
     },
   });
@@ -60,7 +67,9 @@ export function useEditStep() {
           queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
         });
         // Invalidate workflow queries since edited steps may affect workflow
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.detail(step.workflowId).queryKey });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.detail(step.workflowId).queryKey,
+        });
       }
     },
   });
@@ -91,9 +100,15 @@ export function useFailStep() {
           queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
         });
         // Invalidate workflow queries since step failure affects workflow state
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.detail(step.workflowId).queryKey });
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.list._def });
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.running.queryKey });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.detail(step.workflowId).queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.running.queryKey,
+        });
       }
     },
   });
@@ -119,8 +134,12 @@ export function useRegenerateStep() {
           queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
         });
         // Invalidate workflow queries since regeneration may affect workflow state
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.detail(step.workflowId).queryKey });
-        void queryClient.invalidateQueries({ queryKey: workflowKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.detail(step.workflowId).queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
       }
     },
   });

@@ -1,23 +1,36 @@
-'use client';
+"use client";
 
-import { useEffect, useState, type ComponentPropsWithRef } from 'react';
-
-import { Bot, FileText, History, LayoutDashboard, Play, Settings, Workflow } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import {
+  Bot,
+  FileText,
+  History,
+  LayoutDashboard,
+  Play,
+  Settings,
+  Workflow,
+} from "lucide-react";
+import { $path } from "next-typesafe-url";
+import { usePathname } from "next/navigation";
+import {
+  type ComponentPropsWithRef,
+  useEffect,
+  useEffectEvent,
+  useState,
+} from "react";
 
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Separator } from '@/components/ui/separator';
-import { Tooltip } from '@/components/ui/tooltip';
-import { useShellStore } from '@/lib/stores/shell-store';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip } from "@/components/ui/tooltip";
+import { useShellStore } from "@/lib/stores/shell-store";
+import { cn } from "@/lib/utils";
 
-import { NavItem } from './nav-item';
+import { NavItem } from "./nav-item";
 
-type AppSidebarProps = ComponentPropsWithRef<'aside'>;
+type AppSidebarProps = ComponentPropsWithRef<"aside">;
 
 export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
   const { isSidebarCollapsed } = useShellStore();
@@ -27,8 +40,8 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
    * Check if a path is currently active
    */
   const isPathActive = (href: string) => {
-    if (href === '/dashboard') {
-      return pathname === href || pathname === '/';
+    if (href === $path({ route: "/dashboard" })) {
+      return pathname === href || pathname === "/";
     }
     return pathname.startsWith(href);
   };
@@ -36,17 +49,24 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
   /**
    * Check if any child path is active (for expandable sections)
    */
-  const isWorkflowsSectionActive = pathname.startsWith('/workflows');
+  const isWorkflowsSectionActive = pathname.startsWith(
+    $path({ route: "/workflows" })
+  );
 
   /**
    * Controlled state for Workflows collapsible section.
    * Auto-expands when navigating to workflow routes.
    */
-  const [isWorkflowsOpen, setIsWorkflowsOpen] = useState(isWorkflowsSectionActive);
+  const [isWorkflowsOpen, setIsWorkflowsOpen] = useState(
+    isWorkflowsSectionActive
+  );
+  const updateIsWorkflowsOpen = useEffectEvent((isOpen: boolean) => {
+    setIsWorkflowsOpen(isOpen);
+  });
 
   useEffect(() => {
     if (isWorkflowsSectionActive) {
-      setIsWorkflowsOpen(true);
+      updateIsWorkflowsOpen(true);
     }
   }, [isWorkflowsSectionActive]);
 
@@ -59,8 +79,8 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
           transition-[width] duration-200 ease-out
         `,
         isSidebarCollapsed
-          ? 'w-(--sidebar-width-collapsed)'
-          : 'w-(--sidebar-width-expanded)',
+          ? "w-(--sidebar-width-collapsed)"
+          : "w-(--sidebar-width-expanded)",
         className
       )}
       data-collapsed={isSidebarCollapsed}
@@ -69,69 +89,78 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
     >
       {/* Navigation Content */}
       <nav
-        aria-label={'Main navigation'}
-        className={'flex h-full flex-col overflow-x-hidden overflow-y-auto p-2'}
+        aria-label={"Main navigation"}
+        className={"flex h-full flex-col overflow-x-hidden overflow-y-auto p-2"}
       >
         {/* Primary Navigation */}
-        <div className={'flex flex-col gap-1'}>
+        <div className={"flex flex-col gap-1"}>
           {/* Dashboard */}
           <NavItem
-            href={'/dashboard'}
+            href={$path({ route: "/dashboard" })}
             icon={LayoutDashboard}
-            isActive={isPathActive('/dashboard')}
+            isActive={isPathActive($path({ route: "/dashboard" }))}
             isCollapsed={isSidebarCollapsed}
-            label={'Dashboard'}
+            label={"Dashboard"}
           />
         </div>
 
         {/* Separator */}
-        <Separator className={'my-2'} />
+        <Separator className={"my-2"} />
 
         {/* Workflows Section */}
-        <div className={'flex flex-col gap-1'}>
+        <div className={"flex flex-col gap-1"}>
           {isSidebarCollapsed ? (
             /* Collapsed: Show icon-only with tooltip */
-            <Tooltip content={'Workflows'} side={'right'}>
+            <Tooltip content={"Workflows"} side={"right"}>
               <NavItem
-                href={'/workflows/active'}
+                href={$path({ route: "/workflows/active" })}
                 icon={Workflow}
                 isActive={isWorkflowsSectionActive}
                 isCollapsed={isSidebarCollapsed}
-                label={'Workflows'}
+                label={"Workflows"}
               />
             </Tooltip>
           ) : (
             /* Expanded: Show collapsible section */
-            <Collapsible open={isWorkflowsOpen} onOpenChange={setIsWorkflowsOpen}>
+            <Collapsible
+              onOpenChange={setIsWorkflowsOpen}
+              open={isWorkflowsOpen}
+            >
               <CollapsibleTrigger
                 className={cn(
-                  'h-10 w-full px-3 py-2 text-muted-foreground',
-                  isWorkflowsSectionActive && 'text-foreground'
+                  "h-10 w-full px-3 py-2 text-muted-foreground",
+                  isWorkflowsSectionActive && "text-foreground"
                 )}
               >
-                <Workflow aria-hidden={'true'} className={'size-4 shrink-0'} />
-                <span className={'flex-1 truncate text-left text-sm font-medium'}>
-                  {'Workflows'}
+                <Workflow aria-hidden={"true"} className={"size-4 shrink-0"} />
+                <span
+                  className={"flex-1 truncate text-left text-sm font-medium"}
+                >
+                  {"Workflows"}
                 </span>
               </CollapsibleTrigger>
 
               <CollapsibleContent>
-                <div className={'flex flex-col gap-1 py-1'}>
+                <div className={"flex flex-col gap-1 py-1"}>
                   <NavItem
-                    href={'/workflows/active'}
+                    href={$path({ route: "/workflows/active" })}
                     icon={Play}
-                    isActive={isPathActive('/workflows/active')}
+                    isActive={isPathActive(
+                      $path({ route: "/workflows/active" })
+                    )}
                     isCollapsed={isSidebarCollapsed}
                     isNested={true}
-                    label={'Active'}
+                    label={"Active"}
                   />
                   <NavItem
-                    href={'/workflows/history'}
+                    href={$path({ route: "/workflows/history" })}
                     icon={History}
-                    isActive={isPathActive('/workflows/history')}
+                    isActive={isPathActive(
+                      $path({ route: "/workflows/history" })
+                    )}
                     isCollapsed={isSidebarCollapsed}
                     isNested={true}
-                    label={'History'}
+                    label={"History"}
                   />
                 </div>
               </CollapsibleContent>
@@ -140,40 +169,40 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
 
           {/* Templates */}
           <NavItem
-            href={'/templates'}
+            href={$path({ route: "/templates" })}
             icon={FileText}
-            isActive={isPathActive('/templates')}
+            isActive={isPathActive($path({ route: "/templates" }))}
             isCollapsed={isSidebarCollapsed}
-            label={'Templates'}
+            label={"Templates"}
           />
         </div>
 
         {/* Separator */}
-        <Separator className={'my-2'} />
+        <Separator className={"my-2"} />
 
         {/* Secondary Navigation */}
-        <div className={'flex flex-col gap-1'}>
+        <div className={"flex flex-col gap-1"}>
           {/* Agents */}
           <NavItem
-            href={'/agents'}
+            href={$path({ route: "/agents" })}
             icon={Bot}
-            isActive={isPathActive('/agents')}
+            isActive={isPathActive($path({ route: "/agents" }))}
             isCollapsed={isSidebarCollapsed}
-            label={'Agents'}
+            label={"Agents"}
           />
 
           {/* Settings */}
           <NavItem
-            href={'/settings'}
+            href={$path({ route: "/settings" })}
             icon={Settings}
-            isActive={isPathActive('/settings')}
+            isActive={isPathActive($path({ route: "/settings" }))}
             isCollapsed={isSidebarCollapsed}
-            label={'Settings'}
+            label={"Settings"}
           />
         </div>
 
         {/* Spacer to push content up */}
-        <div className={'flex-1'} />
+        <div className={"flex-1"} />
       </nav>
     </aside>
   );

@@ -5,11 +5,15 @@ export const projects = sqliteTable(
   "projects",
   {
     archivedAt: text("archived_at"), // null = active, datetime = archived
-    createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+    createdAt: text("created_at")
+      .default(sql`(CURRENT_TIMESTAMP)`)
+      .notNull(),
     description: text("description"),
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
-    updatedAt: text("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+    updatedAt: text("updated_at")
+      .default(sql`(CURRENT_TIMESTAMP)`)
+      .notNull(),
   },
   (table) => [
     index("projects_archived_at_idx").on(table.archivedAt),

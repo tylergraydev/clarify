@@ -56,14 +56,14 @@ Create the schema file at `db/schema/{entity-name}.schema.ts` following ALL conv
 **File Structure**:
 
 ```typescript
-import { sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sql } from "drizzle-orm";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 // Import related schemas if needed for foreign keys
 // import { relatedTable } from "./related.schema";
 
 export const entityNames = sqliteTable(
-  'entity_names',
+  "entity_names",
   {
     // Columns in ALPHABETICAL order
     // Always include: id, createdAt, updatedAt
@@ -91,7 +91,7 @@ export type EntityName = typeof entityNames.$inferSelect;
 Add the new schema to `db/schema/index.ts`:
 
 ```typescript
-export * from './{entity-name}.schema';
+export * from "./{entity-name}.schema";
 ```
 
 ### Step 6: Create Repository (if requested or appropriate)

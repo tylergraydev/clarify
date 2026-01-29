@@ -1,6 +1,6 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory';
+import { createQueryKeys } from "@lukemorales/query-key-factory";
 
-export const projectKeys = createQueryKeys('projects', {
+export const projectKeys = createQueryKeys("projects", {
   detail: (id: number) => [id],
   list: (filters?: { includeArchived?: boolean }) => [{ filters }],
 });

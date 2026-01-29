@@ -285,7 +285,7 @@ Add the component to `lib/forms/form-hook.ts`:
 **For Field Components**:
 
 ```typescript
-import { MyField } from '@/components/ui/form/my-field';
+import { MyField } from "@/components/ui/form/my-field";
 
 export const { useAppForm, withForm } = createFormHook({
   fieldComponents: {
@@ -302,7 +302,7 @@ export const { useAppForm, withForm } = createFormHook({
 **For Form Components**:
 
 ```typescript
-import { MyFormComponent } from '@/components/ui/form/my-form-component';
+import { MyFormComponent } from "@/components/ui/form/my-form-component";
 
 export const { useAppForm, withForm } = createFormHook({
   // ...
@@ -320,7 +320,7 @@ export const { useAppForm, withForm } = createFormHook({
 Add exports to `components/ui/form/index.ts`:
 
 ```typescript
-export { MyField, myFieldVariants } from './my-field';
+export { MyField, myFieldVariants } from "./my-field";
 ```
 
 Keep exports in alphabetical order.

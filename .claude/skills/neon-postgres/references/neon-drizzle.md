@@ -194,7 +194,7 @@ export async function createUserWithPosts(user: NewUser, posts: NewPost[]) {
         posts.map((post) => ({
           ...post,
           userId: newUser.id,
-        })),
+        }))
       );
     }
 
@@ -224,7 +224,7 @@ export const db = drizzle({ client: sql });
 
 ```typescript
 export async function safeNeonOperation<T>(
-  operation: () => Promise<T>,
+  operation: () => Promise<T>
 ): Promise<T> {
   try {
     return await operation();

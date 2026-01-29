@@ -18,6 +18,7 @@
 ## Implementation Scope
 
 17 schema tables to create:
+
 1. projects
 2. repositories
 3. worktrees

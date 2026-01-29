@@ -7,12 +7,12 @@
  * - Project-based filtering
  * - Default repository management for projects
  */
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { RepositoriesRepository } from '../../db/repositories';
-import type { NewRepository, Repository } from '../../db/schema';
+import type { RepositoriesRepository } from "../../db/repositories";
+import type { NewRepository, Repository } from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 /**
  * Filter options for listing repositories
@@ -26,7 +26,9 @@ interface RepositoryListFilters {
  *
  * @param repositoriesRepository - The repositories repository for database operations
  */
-export function registerRepositoryHandlers(repositoriesRepository: RepositoriesRepository): void {
+export function registerRepositoryHandlers(
+  repositoriesRepository: RepositoriesRepository
+): void {
   // Create a new repository
   ipcMain.handle(
     IpcChannels.repository.create,
@@ -46,7 +48,10 @@ export function registerRepositoryHandlers(repositoriesRepository: RepositoriesR
   // List repositories with optional project filter
   ipcMain.handle(
     IpcChannels.repository.list,
-    (_event: IpcMainInvokeEvent, filters?: RepositoryListFilters): Array<Repository> => {
+    (
+      _event: IpcMainInvokeEvent,
+      filters?: RepositoryListFilters
+    ): Array<Repository> => {
       return repositoriesRepository.findAll(filters);
     }
   );
@@ -54,7 +59,11 @@ export function registerRepositoryHandlers(repositoriesRepository: RepositoriesR
   // Update a repository
   ipcMain.handle(
     IpcChannels.repository.update,
-    (_event: IpcMainInvokeEvent, id: number, data: Partial<NewRepository>): Repository | undefined => {
+    (
+      _event: IpcMainInvokeEvent,
+      id: number,
+      data: Partial<NewRepository>
+    ): Repository | undefined => {
       return repositoriesRepository.update(id, data);
     }
   );

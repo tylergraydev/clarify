@@ -6,12 +6,12 @@
  * - Querying logs by workflow, step, or filters
  * - Exporting audit logs as markdown or JSON
  */
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { AuditLogsRepository } from '../../db/repositories';
-import type { AuditLog, NewAuditLog } from '../../db/schema';
+import type { AuditLogsRepository } from "../../db/repositories";
+import type { AuditLog, NewAuditLog } from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 /**
  * Filter options for listing audit logs
@@ -26,7 +26,7 @@ interface AuditListFilters {
 /**
  * Export format options
  */
-type ExportFormat = 'json' | 'markdown';
+type ExportFormat = "json" | "markdown";
 
 /**
  * Export options for audit logs
@@ -49,11 +49,16 @@ interface ExportResult {
  *
  * @param auditLogsRepository - The audit logs repository for database operations
  */
-export function registerAuditHandlers(auditLogsRepository: AuditLogsRepository): void {
+export function registerAuditHandlers(
+  auditLogsRepository: AuditLogsRepository
+): void {
   // Create a new audit log entry
-  ipcMain.handle(IpcChannels.audit.create, (_event: IpcMainInvokeEvent, data: NewAuditLog): AuditLog => {
-    return auditLogsRepository.create(data);
-  });
+  ipcMain.handle(
+    IpcChannels.audit.create,
+    (_event: IpcMainInvokeEvent, data: NewAuditLog): AuditLog => {
+      return auditLogsRepository.create(data);
+    }
+  );
 
   // Export audit logs for a workflow as markdown or JSON
   ipcMain.handle(
@@ -62,7 +67,7 @@ export function registerAuditHandlers(auditLogsRepository: AuditLogsRepository):
       const logs = auditLogsRepository.findByWorkflowId(options.workflowId);
 
       let content: string;
-      if (options.format === 'markdown') {
+      if (options.format === "markdown") {
         content = exportAsMarkdown(logs, options.workflowId);
       } else {
         content = exportAsJson(logs, options.workflowId);
@@ -78,7 +83,10 @@ export function registerAuditHandlers(auditLogsRepository: AuditLogsRepository):
   // List audit logs with optional filters
   ipcMain.handle(
     IpcChannels.audit.list,
-    (_event: IpcMainInvokeEvent, filters?: AuditListFilters): Array<AuditLog> => {
+    (
+      _event: IpcMainInvokeEvent,
+      filters?: AuditListFilters
+    ): Array<AuditLog> => {
       return auditLogsRepository.findAll(filters);
     }
   );
@@ -121,22 +129,22 @@ function exportAsMarkdown(logs: Array<AuditLog>, workflowId: number): string {
   const lines: Array<string> = [];
 
   lines.push(`# Audit Log Export - Workflow #${workflowId}`);
-  lines.push('');
+  lines.push("");
   lines.push(`**Generated:** ${new Date().toISOString()}`);
   lines.push(`**Total Entries:** ${logs.length}`);
-  lines.push('');
-  lines.push('---');
-  lines.push('');
+  lines.push("");
+  lines.push("---");
+  lines.push("");
 
   if (logs.length === 0) {
-    lines.push('*No audit log entries found for this workflow.*');
+    lines.push("*No audit log entries found for this workflow.*");
   } else {
     for (const log of logs) {
       lines.push(formatLogAsMarkdown(log));
     }
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -148,7 +156,7 @@ function formatLogAsMarkdown(log: AuditLog): string {
   const lines: Array<string> = [];
 
   lines.push(`### ${severityIcon} ${log.eventType}`);
-  lines.push('');
+  lines.push("");
   lines.push(`**Time:** ${timestamp}`);
   lines.push(`**Category:** ${log.eventCategory}`);
   lines.push(`**Severity:** ${log.severity}`);
@@ -158,43 +166,43 @@ function formatLogAsMarkdown(log: AuditLog): string {
     lines.push(`**Step ID:** ${log.workflowStepId}`);
   }
 
-  lines.push('');
+  lines.push("");
   lines.push(`**Message:** ${log.message}`);
 
   if (log.eventData) {
-    lines.push('');
-    lines.push('**Event Data:**');
-    lines.push('```json');
+    lines.push("");
+    lines.push("**Event Data:**");
+    lines.push("```json");
     lines.push(JSON.stringify(log.eventData, null, 2));
-    lines.push('```');
+    lines.push("```");
   }
 
   if (log.beforeState || log.afterState) {
-    lines.push('');
-    lines.push('**State Changes:**');
+    lines.push("");
+    lines.push("**State Changes:**");
 
     if (log.beforeState) {
-      lines.push('');
-      lines.push('*Before:*');
-      lines.push('```json');
+      lines.push("");
+      lines.push("*Before:*");
+      lines.push("```json");
       lines.push(JSON.stringify(log.beforeState, null, 2));
-      lines.push('```');
+      lines.push("```");
     }
 
     if (log.afterState) {
-      lines.push('');
-      lines.push('*After:*');
-      lines.push('```json');
+      lines.push("");
+      lines.push("*After:*");
+      lines.push("```json");
       lines.push(JSON.stringify(log.afterState, null, 2));
-      lines.push('```');
+      lines.push("```");
     }
   }
 
-  lines.push('');
-  lines.push('---');
-  lines.push('');
+  lines.push("");
+  lines.push("---");
+  lines.push("");
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -202,15 +210,15 @@ function formatLogAsMarkdown(log: AuditLog): string {
  */
 function getSeverityIcon(severity: string): string {
   switch (severity) {
-    case 'debug':
-      return '[DEBUG]';
-    case 'error':
-      return '[ERROR]';
-    case 'info':
-      return '[INFO]';
-    case 'warning':
-      return '[WARN]';
+    case "debug":
+      return "[DEBUG]";
+    case "error":
+      return "[ERROR]";
+    case "info":
+      return "[INFO]";
+    case "warning":
+      return "[WARN]";
     default:
-      return '[LOG]';
+      return "[LOG]";
   }
 }

@@ -81,19 +81,19 @@ export const componentVariants = cva(
   `,
   {
     defaultVariants: {
-      size: 'default',
-      variant: 'default',
+      size: "default",
+      variant: "default",
     },
     variants: {
       size: {
-        default: 'h-9 px-4 py-2',
-        lg: 'h-10 px-6',
-        sm: 'h-8 px-3 text-xs',
+        default: "h-9 px-4 py-2",
+        lg: "h-10 px-6",
+        sm: "h-8 px-3 text-xs",
       },
       variant: {
-        default: 'bg-accent text-accent-foreground hover:bg-accent-hover',
-        outline: 'border border-border bg-transparent hover:bg-muted',
-        ghost: 'hover:bg-muted hover:text-foreground',
+        default: "bg-accent text-accent-foreground hover:bg-accent-hover",
+        outline: "border border-border bg-transparent hover:bg-muted",
+        ghost: "hover:bg-muted hover:text-foreground",
       },
     },
   }

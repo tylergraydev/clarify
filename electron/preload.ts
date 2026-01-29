@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer } from "electron";
 
 import type {
   Agent,
@@ -16,9 +16,9 @@ import type {
   Template,
   Workflow,
   WorkflowStep,
-} from '../db/schema';
+} from "../db/schema";
 
-import { IpcChannels } from './ipc';
+import { IpcChannels } from "./ipc";
 
 export interface ElectronAPI {
   agent: {
@@ -32,19 +32,21 @@ export interface ElectronAPI {
   app: {
     getPath(
       name:
-        | 'appData'
-        | 'desktop'
-        | 'documents'
-        | 'downloads'
-        | 'home'
-        | 'temp'
-        | 'userData'
+        | "appData"
+        | "desktop"
+        | "documents"
+        | "downloads"
+        | "home"
+        | "temp"
+        | "userData"
     ): Promise<string>;
     getVersion(): Promise<string>;
   };
   audit: {
     create(data: NewAuditLog): Promise<AuditLog>;
-    export(workflowId: number): Promise<{ content?: string; error?: string; success: boolean }>;
+    export(
+      workflowId: number
+    ): Promise<{ content?: string; error?: string; success: boolean }>;
     findByStep(stepId: number): Promise<Array<AuditLog>>;
     findByWorkflow(workflowId: number): Promise<Array<AuditLog>>;
     list(): Promise<Array<AuditLog>>;
@@ -64,8 +66,14 @@ export interface ElectronAPI {
     exclude(id: number): Promise<DiscoveredFile | undefined>;
     include(id: number): Promise<DiscoveredFile | undefined>;
     list(stepId: number): Promise<Array<DiscoveredFile>>;
-    update(id: number, data: Partial<NewDiscoveredFile>): Promise<DiscoveredFile | undefined>;
-    updatePriority(id: number, priority: string): Promise<DiscoveredFile | undefined>;
+    update(
+      id: number,
+      data: Partial<NewDiscoveredFile>
+    ): Promise<DiscoveredFile | undefined>;
+    updatePriority(
+      id: number,
+      priority: string
+    ): Promise<DiscoveredFile | undefined>;
   };
   fs: {
     exists(path: string): Promise<boolean>;
@@ -109,7 +117,10 @@ export interface ElectronAPI {
     get(id: number): Promise<Repository | undefined>;
     list(): Promise<Array<Repository>>;
     setDefault(id: number): Promise<Repository | undefined>;
-    update(id: number, data: Partial<NewRepository>): Promise<Repository | undefined>;
+    update(
+      id: number,
+      data: Partial<NewRepository>
+    ): Promise<Repository | undefined>;
   };
   step: {
     complete(id: number, output?: string): Promise<undefined | WorkflowStep>;
@@ -130,7 +141,10 @@ export interface ElectronAPI {
     get(id: number): Promise<Template | undefined>;
     incrementUsage(id: number): Promise<Template | undefined>;
     list(): Promise<Array<Template>>;
-    update(id: number, data: Partial<NewTemplate>): Promise<Template | undefined>;
+    update(
+      id: number,
+      data: Partial<NewTemplate>
+    ): Promise<Template | undefined>;
   };
   workflow: {
     cancel(id: number): Promise<undefined | Workflow>;
@@ -150,7 +164,8 @@ const electronAPI: ElectronAPI = {
     get: (id) => ipcRenderer.invoke(IpcChannels.agent.get, id),
     list: () => ipcRenderer.invoke(IpcChannels.agent.list),
     reset: (id) => ipcRenderer.invoke(IpcChannels.agent.reset, id),
-    update: (id, data) => ipcRenderer.invoke(IpcChannels.agent.update, id, data),
+    update: (id, data) =>
+      ipcRenderer.invoke(IpcChannels.agent.update, id, data),
   },
   app: {
     getPath: (name) => ipcRenderer.invoke(IpcChannels.app.getPath, name),
@@ -158,55 +173,72 @@ const electronAPI: ElectronAPI = {
   },
   audit: {
     create: (data) => ipcRenderer.invoke(IpcChannels.audit.create, data),
-    export: (workflowId) => ipcRenderer.invoke(IpcChannels.audit.export, workflowId),
-    findByStep: (stepId) => ipcRenderer.invoke(IpcChannels.audit.findByStep, stepId),
-    findByWorkflow: (workflowId) => ipcRenderer.invoke(IpcChannels.audit.findByWorkflow, workflowId),
+    export: (workflowId) =>
+      ipcRenderer.invoke(IpcChannels.audit.export, workflowId),
+    findByStep: (stepId) =>
+      ipcRenderer.invoke(IpcChannels.audit.findByStep, stepId),
+    findByWorkflow: (workflowId) =>
+      ipcRenderer.invoke(IpcChannels.audit.findByWorkflow, workflowId),
     list: () => ipcRenderer.invoke(IpcChannels.audit.list),
   },
   dialog: {
     openDirectory: () => ipcRenderer.invoke(IpcChannels.dialog.openDirectory),
-    openFile: (filters) => ipcRenderer.invoke(IpcChannels.dialog.openFile, filters),
+    openFile: (filters) =>
+      ipcRenderer.invoke(IpcChannels.dialog.openFile, filters),
     saveFile: (defaultPath, filters) =>
       ipcRenderer.invoke(IpcChannels.dialog.saveFile, defaultPath, filters),
   },
   discovery: {
-    add: (stepId, data) => ipcRenderer.invoke(IpcChannels.discovery.add, stepId, data),
+    add: (stepId, data) =>
+      ipcRenderer.invoke(IpcChannels.discovery.add, stepId, data),
     exclude: (id) => ipcRenderer.invoke(IpcChannels.discovery.exclude, id),
     include: (id) => ipcRenderer.invoke(IpcChannels.discovery.include, id),
     list: (stepId) => ipcRenderer.invoke(IpcChannels.discovery.list, stepId),
-    update: (id, data) => ipcRenderer.invoke(IpcChannels.discovery.update, id, data),
-    updatePriority: (id, priority) => ipcRenderer.invoke(IpcChannels.discovery.updatePriority, id, priority),
+    update: (id, data) =>
+      ipcRenderer.invoke(IpcChannels.discovery.update, id, data),
+    updatePriority: (id, priority) =>
+      ipcRenderer.invoke(IpcChannels.discovery.updatePriority, id, priority),
   },
   fs: {
     exists: (path) => ipcRenderer.invoke(IpcChannels.fs.exists, path),
-    readDirectory: (path) => ipcRenderer.invoke(IpcChannels.fs.readDirectory, path),
+    readDirectory: (path) =>
+      ipcRenderer.invoke(IpcChannels.fs.readDirectory, path),
     readFile: (path) => ipcRenderer.invoke(IpcChannels.fs.readFile, path),
     stat: (path) => ipcRenderer.invoke(IpcChannels.fs.stat, path),
     writeFile: (path, content) =>
       ipcRenderer.invoke(IpcChannels.fs.writeFile, path, content),
   },
   project: {
-    addRepo: (projectId, repoData) => ipcRenderer.invoke(IpcChannels.project.addRepo, projectId, repoData),
+    addRepo: (projectId, repoData) =>
+      ipcRenderer.invoke(IpcChannels.project.addRepo, projectId, repoData),
     create: (data) => ipcRenderer.invoke(IpcChannels.project.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.project.delete, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.project.get, id),
     list: () => ipcRenderer.invoke(IpcChannels.project.list),
-    update: (id, data) => ipcRenderer.invoke(IpcChannels.project.update, id, data),
+    update: (id, data) =>
+      ipcRenderer.invoke(IpcChannels.project.update, id, data),
   },
   repository: {
     create: (data) => ipcRenderer.invoke(IpcChannels.repository.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.repository.delete, id),
-    findByPath: (path) => ipcRenderer.invoke(IpcChannels.repository.findByPath, path),
-    findByProject: (projectId) => ipcRenderer.invoke(IpcChannels.repository.findByProject, projectId),
+    findByPath: (path) =>
+      ipcRenderer.invoke(IpcChannels.repository.findByPath, path),
+    findByProject: (projectId) =>
+      ipcRenderer.invoke(IpcChannels.repository.findByProject, projectId),
     get: (id) => ipcRenderer.invoke(IpcChannels.repository.get, id),
     list: () => ipcRenderer.invoke(IpcChannels.repository.list),
-    setDefault: (id) => ipcRenderer.invoke(IpcChannels.repository.setDefault, id),
-    update: (id, data) => ipcRenderer.invoke(IpcChannels.repository.update, id, data),
+    setDefault: (id) =>
+      ipcRenderer.invoke(IpcChannels.repository.setDefault, id),
+    update: (id, data) =>
+      ipcRenderer.invoke(IpcChannels.repository.update, id, data),
   },
   step: {
-    complete: (id, output) => ipcRenderer.invoke(IpcChannels.step.complete, id, output),
-    edit: (id, editedOutput) => ipcRenderer.invoke(IpcChannels.step.edit, id, editedOutput),
-    fail: (id, errorMessage) => ipcRenderer.invoke(IpcChannels.step.fail, id, errorMessage),
+    complete: (id, output) =>
+      ipcRenderer.invoke(IpcChannels.step.complete, id, output),
+    edit: (id, editedOutput) =>
+      ipcRenderer.invoke(IpcChannels.step.edit, id, editedOutput),
+    fail: (id, errorMessage) =>
+      ipcRenderer.invoke(IpcChannels.step.fail, id, errorMessage),
     get: (id) => ipcRenderer.invoke(IpcChannels.step.get, id),
     list: (workflowId) => ipcRenderer.invoke(IpcChannels.step.list, workflowId),
     regenerate: (id) => ipcRenderer.invoke(IpcChannels.step.regenerate, id),
@@ -221,9 +253,11 @@ const electronAPI: ElectronAPI = {
     create: (data) => ipcRenderer.invoke(IpcChannels.template.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.template.delete, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.template.get, id),
-    incrementUsage: (id) => ipcRenderer.invoke(IpcChannels.template.incrementUsage, id),
+    incrementUsage: (id) =>
+      ipcRenderer.invoke(IpcChannels.template.incrementUsage, id),
     list: () => ipcRenderer.invoke(IpcChannels.template.list),
-    update: (id, data) => ipcRenderer.invoke(IpcChannels.template.update, id, data),
+    update: (id, data) =>
+      ipcRenderer.invoke(IpcChannels.template.update, id, data),
   },
   workflow: {
     cancel: (id) => ipcRenderer.invoke(IpcChannels.workflow.cancel, id),
@@ -236,4 +270,4 @@ const electronAPI: ElectronAPI = {
   },
 };
 
-contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+contextBridge.exposeInMainWorld("electronAPI", electronAPI);

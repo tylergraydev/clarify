@@ -6,7 +6,9 @@ import { projects } from "./projects.schema";
 export const repositories = sqliteTable(
   "repositories",
   {
-    createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+    createdAt: text("created_at")
+      .default(sql`(CURRENT_TIMESTAMP)`)
+      .notNull(),
     defaultBranch: text("default_branch").notNull().default("main"),
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(), // Display name
@@ -16,7 +18,9 @@ export const repositories = sqliteTable(
       .references(() => projects.id, { onDelete: "cascade" }),
     remoteUrl: text("remote_url"), // Git remote URL
     setAsDefaultAt: text("set_as_default_at"), // null = not default, datetime = when set as default
-    updatedAt: text("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+    updatedAt: text("updated_at")
+      .default(sql`(CURRENT_TIMESTAMP)`)
+      .notNull(),
   },
   (table) => [
     index("repositories_path_idx").on(table.path),

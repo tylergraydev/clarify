@@ -9,7 +9,10 @@ export interface WorktreesRepository {
   create(data: NewWorktree): Worktree;
   delete(id: number): boolean;
   findActive(repositoryId: number): Array<Worktree>;
-  findAll(options?: { repositoryId?: number; status?: string }): Array<Worktree>;
+  findAll(options?: {
+    repositoryId?: number;
+    status?: string;
+  }): Array<Worktree>;
   findById(id: number): undefined | Worktree;
   findByPath(path: string): undefined | Worktree;
   findByRepositoryId(repositoryId: number): Array<Worktree>;

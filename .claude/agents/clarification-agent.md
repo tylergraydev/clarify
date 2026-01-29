@@ -76,9 +76,18 @@ Return your assessment followed by a `QUESTIONS_FOR_USER` section with structure
       "question": "How should this feature store data?",
       "header": "Storage",
       "options": [
-        { "label": "SQLite database", "description": "Use Drizzle ORM like existing projects/repositories features" },
-        { "label": "Electron Store", "description": "Use key-value storage like app settings" },
-        { "label": "In-memory only", "description": "No persistence, data resets on app restart" }
+        {
+          "label": "SQLite database",
+          "description": "Use Drizzle ORM like existing projects/repositories features"
+        },
+        {
+          "label": "Electron Store",
+          "description": "Use key-value storage like app settings"
+        },
+        {
+          "label": "In-memory only",
+          "description": "No persistence, data resets on app restart"
+        }
       ]
     },
     {
@@ -87,7 +96,10 @@ Return your assessment followed by a `QUESTIONS_FOR_USER` section with structure
       "options": [
         { "label": "Minimal", "description": "Core functionality only" },
         { "label": "Standard", "description": "Core plus common use cases" },
-        { "label": "Comprehensive", "description": "Full-featured with edge cases" }
+        {
+          "label": "Comprehensive",
+          "description": "Full-featured with edge cases"
+        }
       ]
     }
   ]

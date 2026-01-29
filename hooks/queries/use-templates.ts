@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { NewTemplate } from '@/types/electron';
+import type { NewTemplate } from "@/types/electron";
 
-import { templateKeys } from '@/lib/queries/templates';
+import { templateKeys } from "@/lib/queries/templates";
 
-import { useElectron } from '../use-electron';
+import { useElectron } from "../use-electron";
 
 // ============================================================================
 // Query Hooks
@@ -59,7 +59,9 @@ export function useCreateTemplate() {
       // Invalidate list queries
       void queryClient.invalidateQueries({ queryKey: templateKeys.list._def });
       // Invalidate active templates
-      void queryClient.invalidateQueries({ queryKey: templateKeys.active.queryKey });
+      void queryClient.invalidateQueries({
+        queryKey: templateKeys.active.queryKey,
+      });
       // Invalidate category-specific queries
       if (template.category) {
         void queryClient.invalidateQueries({
@@ -98,9 +100,14 @@ export function useIncrementTemplateUsage() {
     onSuccess: (template) => {
       if (template) {
         // Update detail cache directly
-        queryClient.setQueryData(templateKeys.detail(template.id).queryKey, template);
+        queryClient.setQueryData(
+          templateKeys.detail(template.id).queryKey,
+          template
+        );
         // Invalidate list queries to update usage counts in lists
-        void queryClient.invalidateQueries({ queryKey: templateKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: templateKeys.list._def,
+        });
       }
     },
   });
@@ -126,7 +133,10 @@ export function useTemplate(id: number) {
 /**
  * Fetch all templates
  */
-export function useTemplates(filters?: { category?: string; includeDeactivated?: boolean }) {
+export function useTemplates(filters?: {
+  category?: string;
+  includeDeactivated?: boolean;
+}) {
   const { api, isElectron } = useElectron();
 
   return useQuery({
@@ -161,7 +171,10 @@ export function useTemplatesByCategory(category: string) {
     queryFn: async () => {
       const templates = await api!.template.list();
       // Template is active if deactivatedAt is null
-      return templates.filter((template) => template.category === category && template.deactivatedAt === null);
+      return templates.filter(
+        (template) =>
+          template.category === category && template.deactivatedAt === null
+      );
     },
   });
 }
@@ -179,11 +192,18 @@ export function useUpdateTemplate() {
     onSuccess: (template) => {
       if (template) {
         // Update detail cache directly
-        queryClient.setQueryData(templateKeys.detail(template.id).queryKey, template);
+        queryClient.setQueryData(
+          templateKeys.detail(template.id).queryKey,
+          template
+        );
         // Invalidate list queries
-        void queryClient.invalidateQueries({ queryKey: templateKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: templateKeys.list._def,
+        });
         // Invalidate active templates
-        void queryClient.invalidateQueries({ queryKey: templateKeys.active.queryKey });
+        void queryClient.invalidateQueries({
+          queryKey: templateKeys.active.queryKey,
+        });
         // Invalidate category-specific queries
         if (template.category) {
           void queryClient.invalidateQueries({

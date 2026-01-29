@@ -9,12 +9,12 @@
  * - Failing steps with error messages
  * - Marking steps for regeneration
  */
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { WorkflowStepsRepository } from '../../db/repositories';
-import type { WorkflowStep } from '../../db/schema';
+import type { WorkflowStepsRepository } from "../../db/repositories";
+import type { WorkflowStep } from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 /**
  * Filter options for listing steps
@@ -29,7 +29,9 @@ interface StepListFilters {
  *
  * @param workflowStepsRepository - The workflow steps repository for database operations
  */
-export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepository): void {
+export function registerStepHandlers(
+  workflowStepsRepository: WorkflowStepsRepository
+): void {
   // Get a step by ID
   ipcMain.handle(
     IpcChannels.step.get,
@@ -41,7 +43,10 @@ export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepos
   // List steps with optional filters (workflowId, status)
   ipcMain.handle(
     IpcChannels.step.list,
-    (_event: IpcMainInvokeEvent, filters?: StepListFilters): Array<WorkflowStep> => {
+    (
+      _event: IpcMainInvokeEvent,
+      filters?: StepListFilters
+    ): Array<WorkflowStep> => {
       return workflowStepsRepository.findAll(filters);
     }
   );
@@ -49,7 +54,11 @@ export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepos
   // Edit step output text (marks as edited with timestamp)
   ipcMain.handle(
     IpcChannels.step.edit,
-    (_event: IpcMainInvokeEvent, id: number, outputText: string): undefined | WorkflowStep => {
+    (
+      _event: IpcMainInvokeEvent,
+      id: number,
+      outputText: string
+    ): undefined | WorkflowStep => {
       return workflowStepsRepository.markEdited(id, outputText);
     }
   );
@@ -57,7 +66,12 @@ export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepos
   // Complete a step with output text and duration
   ipcMain.handle(
     IpcChannels.step.complete,
-    (_event: IpcMainInvokeEvent, id: number, outputText: string, durationMs: number): undefined | WorkflowStep => {
+    (
+      _event: IpcMainInvokeEvent,
+      id: number,
+      outputText: string,
+      durationMs: number
+    ): undefined | WorkflowStep => {
       return workflowStepsRepository.complete(id, outputText, durationMs);
     }
   );
@@ -65,7 +79,11 @@ export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepos
   // Fail a step with an error message
   ipcMain.handle(
     IpcChannels.step.fail,
-    (_event: IpcMainInvokeEvent, id: number, errorMessage: string): undefined | WorkflowStep => {
+    (
+      _event: IpcMainInvokeEvent,
+      id: number,
+      errorMessage: string
+    ): undefined | WorkflowStep => {
       return workflowStepsRepository.fail(id, errorMessage);
     }
   );
@@ -74,7 +92,7 @@ export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepos
   ipcMain.handle(
     IpcChannels.step.regenerate,
     (_event: IpcMainInvokeEvent, id: number): undefined | WorkflowStep => {
-      return workflowStepsRepository.updateStatus(id, 'pending');
+      return workflowStepsRepository.updateStatus(id, "pending");
     }
   );
 }

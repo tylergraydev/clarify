@@ -6,12 +6,12 @@
  * - CRUD operations for templates
  * - Usage tracking for templates
  */
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { TemplatesRepository } from '../../db/repositories';
-import type { NewTemplate, Template, TemplateCategory } from '../../db/schema';
+import type { TemplatesRepository } from "../../db/repositories";
+import type { NewTemplate, Template, TemplateCategory } from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 /**
  * Filter options for listing templates
@@ -26,11 +26,16 @@ interface TemplateListFilters {
  *
  * @param templatesRepository - The templates repository for database operations
  */
-export function registerTemplateHandlers(templatesRepository: TemplatesRepository): void {
+export function registerTemplateHandlers(
+  templatesRepository: TemplatesRepository
+): void {
   // List templates with optional category filter
   ipcMain.handle(
     IpcChannels.template.list,
-    (_event: IpcMainInvokeEvent, filters?: TemplateListFilters): Array<Template> => {
+    (
+      _event: IpcMainInvokeEvent,
+      filters?: TemplateListFilters
+    ): Array<Template> => {
       return templatesRepository.findAll(filters);
     }
   );
@@ -54,7 +59,11 @@ export function registerTemplateHandlers(templatesRepository: TemplatesRepositor
   // Update an existing template
   ipcMain.handle(
     IpcChannels.template.update,
-    (_event: IpcMainInvokeEvent, id: number, data: Partial<NewTemplate>): Template | undefined => {
+    (
+      _event: IpcMainInvokeEvent,
+      id: number,
+      data: Partial<NewTemplate>
+    ): Template | undefined => {
       return templatesRepository.update(id, data);
     }
   );

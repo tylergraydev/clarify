@@ -39,14 +39,14 @@ db/
 
 ```typescript
 // db/schema/index.ts
-export * from './users.schema';
-export * from './projects.schema';
-export * from './feature-requests.schema';
+export * from "./users.schema";
+export * from "./projects.schema";
+export * from "./feature-requests.schema";
 
 // db/repositories/index.ts
-export * from './users.repository';
-export * from './projects.repository';
-export * from './feature-requests.repository';
+export * from "./users.repository";
+export * from "./projects.repository";
+export * from "./feature-requests.repository";
 ```
 
 ---
@@ -56,23 +56,26 @@ export * from './feature-requests.repository';
 ### Basic Table Structure
 
 ```typescript
-import { sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sql } from "drizzle-orm";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable(
-  'users',
+  "users",
   {
-    createdAt: text('created_at')
+    createdAt: text("created_at")
       .default(sql`(CURRENT_TIMESTAMP)`)
       .notNull(),
-    email: text('email').notNull().unique(),
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    name: text('name').notNull(),
-    updatedAt: text('updated_at')
+    email: text("email").notNull().unique(),
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    updatedAt: text("updated_at")
       .default(sql`(CURRENT_TIMESTAMP)`)
       .notNull(),
   },
-  (table) => [index('users_email_idx').on(table.email), index('users_created_at_idx').on(table.createdAt)]
+  (table) => [
+    index("users_email_idx").on(table.email),
+    index("users_created_at_idx").on(table.createdAt),
+  ]
 );
 
 export type NewUser = typeof users.$inferInsert;
@@ -155,9 +158,9 @@ Pattern: `{tablename}_{columnname}_idx`
 
 ```typescript
 (table) => [
-  index('users_email_idx').on(table.email),
-  index('users_created_at_idx').on(table.createdAt),
-  index('feature_requests_project_id_idx').on(table.projectId),
+  index("users_email_idx").on(table.email),
+  index("users_created_at_idx").on(table.createdAt),
+  index("feature_requests_project_id_idx").on(table.projectId),
 ];
 ```
 
@@ -182,35 +185,35 @@ export type FeatureRequest = typeof featureRequests.$inferSelect;
 
 ```typescript
 // Primary key (always auto-increment integer)
-id: integer('id').primaryKey({ autoIncrement: true });
+id: integer("id").primaryKey({ autoIncrement: true });
 
 // Required text
-name: text('name').notNull();
+name: text("name").notNull();
 
 // Optional text
-description: text('description');
+description: text("description");
 
 // Text with default
-status: text('status').notNull().default('pending');
+status: text("status").notNull().default("pending");
 
 // Unique constraint
-email: text('email').notNull().unique();
+email: text("email").notNull().unique();
 
 // Foreign key
-projectId: integer('project_id')
+projectId: integer("project_id")
   .notNull()
-  .references(() => projects.id, { onDelete: 'cascade' });
+  .references(() => projects.id, { onDelete: "cascade" });
 
 // Timestamps (always text for SQLite compatibility)
-createdAt: text('created_at')
+createdAt: text("created_at")
   .default(sql`(CURRENT_TIMESTAMP)`)
   .notNull();
 
 // Boolean (stored as integer in SQLite)
-isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true);
+isActive: integer("is_active", { mode: "boolean" }).notNull().default(true);
 
 // JSON data (stored as text)
-metadata: text('metadata', { mode: 'json' }).$type<MetadataType>();
+metadata: text("metadata", { mode: "json" }).$type<MetadataType>();
 ```
 
 ### Enum-like Columns
@@ -219,10 +222,10 @@ Use text with union types:
 
 ```typescript
 // In schema
-status: text('status').notNull().default('draft');
+status: text("status").notNull().default("draft");
 
 // In TypeScript types (use the inferred type, or define explicitly if needed)
-type Status = 'draft' | 'pending' | 'approved' | 'rejected';
+type Status = "draft" | "pending" | "approved" | "rejected";
 ```
 
 ---
@@ -233,14 +236,14 @@ type Status = 'draft' | 'pending' | 'approved' | 'rejected';
 
 ```typescript
 export const featureRequests = sqliteTable(
-  'feature_requests',
+  "feature_requests",
   {
     // ... other columns
-    projectId: integer('project_id')
+    projectId: integer("project_id")
       .notNull()
-      .references(() => projects.id, { onDelete: 'cascade' }),
+      .references(() => projects.id, { onDelete: "cascade" }),
   },
-  (table) => [index('feature_requests_project_id_idx').on(table.projectId)]
+  (table) => [index("feature_requests_project_id_idx").on(table.projectId)]
 );
 ```
 
@@ -268,8 +271,8 @@ export const featureRequests = sqliteTable(
 ### Repository Interface
 
 ```typescript
-import type { DrizzleDatabase } from '../index';
-import type { NewUser, User } from '../schema';
+import type { DrizzleDatabase } from "../index";
+import type { NewUser, User } from "../schema";
 
 export interface UsersRepository {
   create(data: NewUser): User;
@@ -283,12 +286,12 @@ export interface UsersRepository {
 ### Repository Factory Function
 
 ```typescript
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql } from "drizzle-orm";
 
-import type { DrizzleDatabase } from '../index';
-import type { NewUser, User } from '../schema';
+import type { DrizzleDatabase } from "../index";
+import type { NewUser, User } from "../schema";
 
-import { users } from '../schema';
+import { users } from "../schema";
 
 export function createUsersRepository(db: DrizzleDatabase): UsersRepository {
   return {
@@ -413,7 +416,7 @@ db.select().from(users).where(eq(users.id, id)).get();
 // With conditions
 db.select()
   .from(users)
-  .where(and(eq(users.status, 'active'), gt(users.createdAt, date)))
+  .where(and(eq(users.status, "active"), gt(users.createdAt, date)))
   .all();
 ```
 

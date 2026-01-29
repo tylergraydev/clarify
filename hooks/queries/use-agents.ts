@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { NewAgent } from '@/types/electron';
+import type { NewAgent } from "@/types/electron";
 
-import { agentKeys } from '@/lib/queries/agents';
+import { agentKeys } from "@/lib/queries/agents";
 
-import { useElectron } from '../use-electron';
+import { useElectron } from "../use-electron";
 
 // ============================================================================
 // Query Hooks
@@ -69,7 +69,11 @@ export function useAgent(id: number) {
 /**
  * Fetch all agents
  */
-export function useAgents(filters?: { includeDeactivated?: boolean; projectId?: number; type?: string }) {
+export function useAgents(filters?: {
+  includeDeactivated?: boolean;
+  projectId?: number;
+  type?: string;
+}) {
   const { api, isElectron } = useElectron();
 
   return useQuery({

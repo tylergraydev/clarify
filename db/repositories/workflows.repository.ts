@@ -1,16 +1,20 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from "drizzle-orm";
 
-import type { DrizzleDatabase } from '../index';
-import type { NewWorkflow, Workflow } from '../schema';
+import type { DrizzleDatabase } from "../index";
+import type { NewWorkflow, Workflow } from "../schema";
 
-import { workflows } from '../schema';
+import { workflows } from "../schema";
 
 export interface WorkflowsRepository {
   complete(id: number, durationMs: number): undefined | Workflow;
   create(data: NewWorkflow): Workflow;
   delete(id: number): boolean;
   fail(id: number, errorMessage: string): undefined | Workflow;
-  findAll(options?: { projectId?: number; status?: string; type?: string }): Array<Workflow>;
+  findAll(options?: {
+    projectId?: number;
+    status?: string;
+    type?: string;
+  }): Array<Workflow>;
   findById(id: number): undefined | Workflow;
   findByProjectId(projectId: number): Array<Workflow>;
   findByStatus(status: string): Array<Workflow>;
@@ -18,10 +22,16 @@ export interface WorkflowsRepository {
   findRunning(): Array<Workflow>;
   start(id: number): undefined | Workflow;
   update(id: number, data: Partial<NewWorkflow>): undefined | Workflow;
-  updateStatus(id: number, status: string, errorMessage?: string): undefined | Workflow;
+  updateStatus(
+    id: number,
+    status: string,
+    errorMessage?: string
+  ): undefined | Workflow;
 }
 
-export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsRepository {
+export function createWorkflowsRepository(
+  db: DrizzleDatabase
+): WorkflowsRepository {
   return {
     complete(id: number, durationMs: number): undefined | Workflow {
       return db
@@ -29,7 +39,7 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         .set({
           completedAt: sql`(CURRENT_TIMESTAMP)`,
           durationMs,
-          status: 'completed',
+          status: "completed",
           updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
         .where(eq(workflows.id, id))
@@ -51,7 +61,7 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         .update(workflows)
         .set({
           errorMessage,
-          status: 'failed',
+          status: "failed",
           updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
         .where(eq(workflows.id, id))
@@ -59,7 +69,11 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         .get();
     },
 
-    findAll(options?: { projectId?: number; status?: string; type?: string }): Array<Workflow> {
+    findAll(options?: {
+      projectId?: number;
+      status?: string;
+      type?: string;
+    }): Array<Workflow> {
       const conditions = [];
 
       if (options?.projectId !== undefined) {
@@ -88,11 +102,19 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
     },
 
     findByProjectId(projectId: number): Array<Workflow> {
-      return db.select().from(workflows).where(eq(workflows.projectId, projectId)).all();
+      return db
+        .select()
+        .from(workflows)
+        .where(eq(workflows.projectId, projectId))
+        .all();
     },
 
     findByStatus(status: string): Array<Workflow> {
-      return db.select().from(workflows).where(eq(workflows.status, status)).all();
+      return db
+        .select()
+        .from(workflows)
+        .where(eq(workflows.status, status))
+        .all();
     },
 
     findByType(type: string): Array<Workflow> {
@@ -100,7 +122,11 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
     },
 
     findRunning(): Array<Workflow> {
-      return db.select().from(workflows).where(eq(workflows.status, 'running')).all();
+      return db
+        .select()
+        .from(workflows)
+        .where(eq(workflows.status, "running"))
+        .all();
     },
 
     start(id: number): undefined | Workflow {
@@ -108,7 +134,7 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         .update(workflows)
         .set({
           startedAt: sql`(CURRENT_TIMESTAMP)`,
-          status: 'running',
+          status: "running",
           updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
         .where(eq(workflows.id, id))
@@ -125,7 +151,11 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         .get();
     },
 
-    updateStatus(id: number, status: string, errorMessage?: string): undefined | Workflow {
+    updateStatus(
+      id: number,
+      status: string,
+      errorMessage?: string
+    ): undefined | Workflow {
       const updateData: Record<string, unknown> = {
         status,
         updatedAt: sql`(CURRENT_TIMESTAMP)`,
@@ -135,7 +165,12 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         updateData.errorMessage = errorMessage;
       }
 
-      return db.update(workflows).set(updateData).where(eq(workflows.id, id)).returning().get();
+      return db
+        .update(workflows)
+        .set(updateData)
+        .where(eq(workflows.id, id))
+        .returning()
+        .get();
     },
   };
 }

@@ -8,12 +8,12 @@
  * - Adding user files to discovery
  * - Updating file priorities
  */
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { DiscoveredFilesRepository } from '../../db/repositories';
-import type { DiscoveredFile, NewDiscoveredFile } from '../../db/schema';
+import type { DiscoveredFilesRepository } from "../../db/repositories";
+import type { DiscoveredFile, NewDiscoveredFile } from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 /**
  * Input for batch update operation
@@ -28,7 +28,9 @@ interface BatchUpdateInput {
  *
  * @param discoveredFilesRepository - The discovered files repository for database operations
  */
-export function registerDiscoveryHandlers(discoveredFilesRepository: DiscoveredFilesRepository): void {
+export function registerDiscoveryHandlers(
+  discoveredFilesRepository: DiscoveredFilesRepository
+): void {
   // List discovered files by workflow step
   ipcMain.handle(
     IpcChannels.discovery.list,
@@ -47,8 +49,13 @@ export function registerDiscoveryHandlers(discoveredFilesRepository: DiscoveredF
   // Batch update discovered files for a workflow step
   ipcMain.handle(
     IpcChannels.discovery.update,
-    (_event: IpcMainInvokeEvent, updates: Array<BatchUpdateInput>): Array<DiscoveredFile | undefined> => {
-      return updates.map((update) => discoveredFilesRepository.update(update.id, update.data));
+    (
+      _event: IpcMainInvokeEvent,
+      updates: Array<BatchUpdateInput>
+    ): Array<DiscoveredFile | undefined> => {
+      return updates.map((update) =>
+        discoveredFilesRepository.update(update.id, update.data)
+      );
     }
   );
 
@@ -81,7 +88,11 @@ export function registerDiscoveryHandlers(discoveredFilesRepository: DiscoveredF
   // Update file priority
   ipcMain.handle(
     IpcChannels.discovery.updatePriority,
-    (_event: IpcMainInvokeEvent, id: number, priority: string): DiscoveredFile | undefined => {
+    (
+      _event: IpcMainInvokeEvent,
+      id: number,
+      priority: string
+    ): DiscoveredFile | undefined => {
       return discoveredFilesRepository.updatePriority(id, priority);
     }
   );

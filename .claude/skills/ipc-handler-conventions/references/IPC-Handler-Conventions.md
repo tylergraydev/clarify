@@ -83,41 +83,41 @@ hooks/
 // electron/ipc/channels.ts
 export const IpcChannels = {
   app: {
-    getPath: 'app:getPath',
-    getVersion: 'app:getVersion',
+    getPath: "app:getPath",
+    getVersion: "app:getVersion",
   },
   db: {
     projects: {
-      create: 'db:projects:create',
-      delete: 'db:projects:delete',
-      getAll: 'db:projects:getAll',
-      getById: 'db:projects:getById',
-      update: 'db:projects:update',
+      create: "db:projects:create",
+      delete: "db:projects:delete",
+      getAll: "db:projects:getAll",
+      getById: "db:projects:getById",
+      update: "db:projects:update",
     },
     repositories: {
-      create: 'db:repositories:create',
-      delete: 'db:repositories:delete',
-      getById: 'db:repositories:getById',
-      getByProjectId: 'db:repositories:getByProjectId',
-      update: 'db:repositories:update',
+      create: "db:repositories:create",
+      delete: "db:repositories:delete",
+      getById: "db:repositories:getById",
+      getByProjectId: "db:repositories:getByProjectId",
+      update: "db:repositories:update",
     },
   },
   dialog: {
-    openDirectory: 'dialog:openDirectory',
-    openFile: 'dialog:openFile',
-    saveFile: 'dialog:saveFile',
+    openDirectory: "dialog:openDirectory",
+    openFile: "dialog:openFile",
+    saveFile: "dialog:saveFile",
   },
   fs: {
-    exists: 'fs:exists',
-    readDirectory: 'fs:readDirectory',
-    readFile: 'fs:readFile',
-    stat: 'fs:stat',
-    writeFile: 'fs:writeFile',
+    exists: "fs:exists",
+    readDirectory: "fs:readDirectory",
+    readFile: "fs:readFile",
+    stat: "fs:stat",
+    writeFile: "fs:writeFile",
   },
   store: {
-    delete: 'store:delete',
-    get: 'store:get',
-    set: 'store:set',
+    delete: "store:delete",
+    get: "store:get",
+    set: "store:set",
   },
 } as const;
 ```
@@ -144,17 +144,20 @@ export const IpcChannels = {
 
 ```typescript
 // electron/ipc/{domain}.handlers.ts
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { SomeRepository } from '../../db/repositories';
-import type { NewEntity, Entity } from '../../db/schema';
+import type { SomeRepository } from "../../db/repositories";
+import type { NewEntity, Entity } from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 export function registerDomainHandlers(repository: SomeRepository): void {
-  ipcMain.handle(IpcChannels.domain.action, (_event: IpcMainInvokeEvent, arg: ArgType): ReturnType => {
-    return repository.method(arg);
-  });
+  ipcMain.handle(
+    IpcChannels.domain.action,
+    (_event: IpcMainInvokeEvent, arg: ArgType): ReturnType => {
+      return repository.method(arg);
+    }
+  );
 
   // Additional handlers...
 }
@@ -166,36 +169,51 @@ export function registerDomainHandlers(repository: SomeRepository): void {
 
 ```typescript
 // electron/ipc/projects.handlers.ts
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { ProjectsRepository } from '../../db/repositories';
-import type { NewProject, Project } from '../../db/schema';
+import type { ProjectsRepository } from "../../db/repositories";
+import type { NewProject, Project } from "../../db/schema";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
-export function registerProjectsHandlers(projectsRepository: ProjectsRepository): void {
+export function registerProjectsHandlers(
+  projectsRepository: ProjectsRepository
+): void {
   ipcMain.handle(IpcChannels.db.projects.getAll, (): Array<Project> => {
     return projectsRepository.getAll();
   });
 
-  ipcMain.handle(IpcChannels.db.projects.getById, (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
-    return projectsRepository.getById(id);
-  });
+  ipcMain.handle(
+    IpcChannels.db.projects.getById,
+    (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
+      return projectsRepository.getById(id);
+    }
+  );
 
-  ipcMain.handle(IpcChannels.db.projects.create, (_event: IpcMainInvokeEvent, data: NewProject): Project => {
-    return projectsRepository.create(data);
-  });
+  ipcMain.handle(
+    IpcChannels.db.projects.create,
+    (_event: IpcMainInvokeEvent, data: NewProject): Project => {
+      return projectsRepository.create(data);
+    }
+  );
 
   ipcMain.handle(
     IpcChannels.db.projects.update,
-    (_event: IpcMainInvokeEvent, id: number, data: Partial<NewProject>): Project | undefined => {
+    (
+      _event: IpcMainInvokeEvent,
+      id: number,
+      data: Partial<NewProject>
+    ): Project | undefined => {
       return projectsRepository.update(id, data);
     }
   );
 
-  ipcMain.handle(IpcChannels.db.projects.delete, (_event: IpcMainInvokeEvent, id: number): boolean => {
-    return projectsRepository.delete(id);
-  });
+  ipcMain.handle(
+    IpcChannels.db.projects.delete,
+    (_event: IpcMainInvokeEvent, id: number): boolean => {
+      return projectsRepository.delete(id);
+    }
+  );
 }
 ```
 
@@ -210,24 +228,29 @@ import {
   type IpcMainInvokeEvent,
   type OpenDialogOptions,
   type SaveDialogOptions,
-} from 'electron';
+} from "electron";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
-export function registerDialogHandlers(getMainWindow: () => BrowserWindow | null): void {
-  ipcMain.handle(IpcChannels.dialog.openDirectory, async (): Promise<null | string> => {
-    const mainWindow = getMainWindow();
-    if (!mainWindow) return null;
+export function registerDialogHandlers(
+  getMainWindow: () => BrowserWindow | null
+): void {
+  ipcMain.handle(
+    IpcChannels.dialog.openDirectory,
+    async (): Promise<null | string> => {
+      const mainWindow = getMainWindow();
+      if (!mainWindow) return null;
 
-    const options: OpenDialogOptions = {
-      properties: ['openDirectory'],
-    };
-    const result = await dialog.showOpenDialog(mainWindow, options);
-    if (result.canceled || result.filePaths.length === 0) {
-      return null;
+      const options: OpenDialogOptions = {
+        properties: ["openDirectory"],
+      };
+      const result = await dialog.showOpenDialog(mainWindow, options);
+      if (result.canceled || result.filePaths.length === 0) {
+        return null;
+      }
+      return result.filePaths[0] ?? null;
     }
-    return result.filePaths[0] ?? null;
-  });
+  );
 
   // Additional dialog handlers...
 }
@@ -237,11 +260,11 @@ export function registerDialogHandlers(getMainWindow: () => BrowserWindow | null
 
 ```typescript
 // electron/ipc/fs.handlers.ts
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
+import * as fs from "fs/promises";
+import * as path from "path";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 export function registerFsHandlers(): void {
   ipcMain.handle(
@@ -251,14 +274,14 @@ export function registerFsHandlers(): void {
       filePath: string
     ): Promise<{ content?: string; error?: string; success: boolean }> => {
       if (!isValidPath(filePath)) {
-        return { error: 'Invalid file path', success: false };
+        return { error: "Invalid file path", success: false };
       }
       try {
-        const content = await fs.readFile(filePath, 'utf-8');
+        const content = await fs.readFile(filePath, "utf-8");
         return { content, success: true };
       } catch (error) {
         return {
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : "Unknown error",
           success: false,
         };
       }
@@ -271,7 +294,7 @@ export function registerFsHandlers(): void {
 // Path validation to prevent directory traversal attacks
 function isValidPath(filePath: string): boolean {
   const normalizedPath = path.normalize(filePath);
-  return !normalizedPath.includes('..');
+  return !normalizedPath.includes("..");
 }
 ```
 
@@ -279,10 +302,10 @@ function isValidPath(filePath: string): boolean {
 
 ```typescript
 // electron/ipc/store.handlers.ts
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
-import Store from 'electron-store';
+import { ipcMain, type IpcMainInvokeEvent } from "electron";
+import Store from "electron-store";
 
-import { IpcChannels } from './channels';
+import { IpcChannels } from "./channels";
 
 interface StoreType {
   delete(key: string): void;
@@ -293,27 +316,36 @@ interface StoreType {
 const store = new Store() as unknown as StoreType;
 
 export function registerStoreHandlers(): void {
-  ipcMain.handle(IpcChannels.store.get, (_event: IpcMainInvokeEvent, key: string): unknown => {
-    return store.get(key);
-  });
-
-  ipcMain.handle(IpcChannels.store.set, (_event: IpcMainInvokeEvent, key: string, value: unknown): boolean => {
-    try {
-      store.set(key, value);
-      return true;
-    } catch {
-      return false;
+  ipcMain.handle(
+    IpcChannels.store.get,
+    (_event: IpcMainInvokeEvent, key: string): unknown => {
+      return store.get(key);
     }
-  });
+  );
 
-  ipcMain.handle(IpcChannels.store.delete, (_event: IpcMainInvokeEvent, key: string): boolean => {
-    try {
-      store.delete(key);
-      return true;
-    } catch {
-      return false;
+  ipcMain.handle(
+    IpcChannels.store.set,
+    (_event: IpcMainInvokeEvent, key: string, value: unknown): boolean => {
+      try {
+        store.set(key, value);
+        return true;
+      } catch {
+        return false;
+      }
     }
-  });
+  );
+
+  ipcMain.handle(
+    IpcChannels.store.delete,
+    (_event: IpcMainInvokeEvent, key: string): boolean => {
+      try {
+        store.delete(key);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  );
 }
 ```
 
@@ -331,21 +363,27 @@ export function registerStoreHandlers(): void {
 
 ```typescript
 // electron/ipc/index.ts
-import type { BrowserWindow } from 'electron';
+import type { BrowserWindow } from "electron";
 
-import type { DrizzleDatabase } from '../../db';
+import type { DrizzleDatabase } from "../../db";
 
-import { createProjectsRepository, createRepositoriesRepository } from '../../db/repositories';
-import { registerAppHandlers } from './app.handlers';
-import { registerDialogHandlers } from './dialog.handlers';
-import { registerFsHandlers } from './fs.handlers';
-import { registerProjectsHandlers } from './projects.handlers';
-import { registerRepositoriesHandlers } from './repositories.handlers';
-import { registerStoreHandlers } from './store.handlers';
+import {
+  createProjectsRepository,
+  createRepositoriesRepository,
+} from "../../db/repositories";
+import { registerAppHandlers } from "./app.handlers";
+import { registerDialogHandlers } from "./dialog.handlers";
+import { registerFsHandlers } from "./fs.handlers";
+import { registerProjectsHandlers } from "./projects.handlers";
+import { registerRepositoriesHandlers } from "./repositories.handlers";
+import { registerStoreHandlers } from "./store.handlers";
 
-export { IpcChannels } from './channels';
+export { IpcChannels } from "./channels";
 
-export function registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => BrowserWindow | null): void {
+export function registerAllHandlers(
+  db: DrizzleDatabase,
+  getMainWindow: () => BrowserWindow | null
+): void {
   // File system handlers
   registerFsHandlers();
 
@@ -384,15 +422,24 @@ export function registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => Br
 
 ```typescript
 // electron/preload.ts
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer } from "electron";
 
-import type { NewProject, Project } from '../db/schema';
+import type { NewProject, Project } from "../db/schema";
 
-import { IpcChannels } from './ipc';
+import { IpcChannels } from "./ipc";
 
 export interface ElectronAPI {
   app: {
-    getPath(name: 'appData' | 'desktop' | 'documents' | 'downloads' | 'home' | 'temp' | 'userData'): Promise<string>;
+    getPath(
+      name:
+        | "appData"
+        | "desktop"
+        | "documents"
+        | "downloads"
+        | "home"
+        | "temp"
+        | "userData"
+    ): Promise<string>;
     getVersion(): Promise<string>;
   };
   db: {
@@ -401,12 +448,17 @@ export interface ElectronAPI {
       delete(id: number): Promise<boolean>;
       getAll(): Promise<Array<Project>>;
       getById(id: number): Promise<Project | undefined>;
-      update(id: number, data: Partial<NewProject>): Promise<Project | undefined>;
+      update(
+        id: number,
+        data: Partial<NewProject>
+      ): Promise<Project | undefined>;
     };
   };
   dialog: {
     openDirectory(): Promise<null | string>;
-    openFile(filters?: Array<{ extensions: Array<string>; name: string }>): Promise<null | string>;
+    openFile(
+      filters?: Array<{ extensions: Array<string>; name: string }>
+    ): Promise<null | string>;
     saveFile(
       defaultPath?: string,
       filters?: Array<{ extensions: Array<string>; name: string }>
@@ -419,7 +471,9 @@ export interface ElectronAPI {
       error?: string;
       success: boolean;
     }>;
-    readFile(path: string): Promise<{ content?: string; error?: string; success: boolean }>;
+    readFile(
+      path: string
+    ): Promise<{ content?: string; error?: string; success: boolean }>;
     stat(path: string): Promise<{
       error?: string;
       stats?: {
@@ -431,7 +485,10 @@ export interface ElectronAPI {
       };
       success: boolean;
     }>;
-    writeFile(path: string, content: string): Promise<{ error?: string; success: boolean }>;
+    writeFile(
+      path: string,
+      content: string
+    ): Promise<{ error?: string; success: boolean }>;
   };
   store: {
     delete(key: string): Promise<boolean>;
@@ -447,33 +504,40 @@ const electronAPI: ElectronAPI = {
   },
   db: {
     projects: {
-      create: (data) => ipcRenderer.invoke(IpcChannels.db.projects.create, data),
+      create: (data) =>
+        ipcRenderer.invoke(IpcChannels.db.projects.create, data),
       delete: (id) => ipcRenderer.invoke(IpcChannels.db.projects.delete, id),
       getAll: () => ipcRenderer.invoke(IpcChannels.db.projects.getAll),
       getById: (id) => ipcRenderer.invoke(IpcChannels.db.projects.getById, id),
-      update: (id, data) => ipcRenderer.invoke(IpcChannels.db.projects.update, id, data),
+      update: (id, data) =>
+        ipcRenderer.invoke(IpcChannels.db.projects.update, id, data),
     },
   },
   dialog: {
     openDirectory: () => ipcRenderer.invoke(IpcChannels.dialog.openDirectory),
-    openFile: (filters) => ipcRenderer.invoke(IpcChannels.dialog.openFile, filters),
-    saveFile: (defaultPath, filters) => ipcRenderer.invoke(IpcChannels.dialog.saveFile, defaultPath, filters),
+    openFile: (filters) =>
+      ipcRenderer.invoke(IpcChannels.dialog.openFile, filters),
+    saveFile: (defaultPath, filters) =>
+      ipcRenderer.invoke(IpcChannels.dialog.saveFile, defaultPath, filters),
   },
   fs: {
     exists: (path) => ipcRenderer.invoke(IpcChannels.fs.exists, path),
-    readDirectory: (path) => ipcRenderer.invoke(IpcChannels.fs.readDirectory, path),
+    readDirectory: (path) =>
+      ipcRenderer.invoke(IpcChannels.fs.readDirectory, path),
     readFile: (path) => ipcRenderer.invoke(IpcChannels.fs.readFile, path),
     stat: (path) => ipcRenderer.invoke(IpcChannels.fs.stat, path),
-    writeFile: (path, content) => ipcRenderer.invoke(IpcChannels.fs.writeFile, path, content),
+    writeFile: (path, content) =>
+      ipcRenderer.invoke(IpcChannels.fs.writeFile, path, content),
   },
   store: {
     delete: (key) => ipcRenderer.invoke(IpcChannels.store.delete, key),
-    get: <T>(key: string) => ipcRenderer.invoke(IpcChannels.store.get, key) as Promise<T | undefined>,
+    get: <T>(key: string) =>
+      ipcRenderer.invoke(IpcChannels.store.get, key) as Promise<T | undefined>,
     set: (key, value) => ipcRenderer.invoke(IpcChannels.store.set, key, value),
   },
 };
 
-contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+contextBridge.exposeInMainWorld("electronAPI", electronAPI);
 ```
 
 ### Preload Rules
@@ -493,24 +557,35 @@ contextBridge.exposeInMainWorld('electronAPI', electronAPI);
 ```typescript
 // types/electron.d.ts
 // Re-export database types for renderer use
-export type { NewProject, Project } from '../db/types';
+export type { NewProject, Project } from "../db/types";
 
 export interface ElectronAPI {
   // Mirror the interface from preload.ts exactly
   app: {
-    getPath(name: 'appData' | 'desktop' | 'documents' | 'downloads' | 'home' | 'temp' | 'userData'): Promise<string>;
+    getPath(
+      name:
+        | "appData"
+        | "desktop"
+        | "documents"
+        | "downloads"
+        | "home"
+        | "temp"
+        | "userData"
+    ): Promise<string>;
     getVersion(): Promise<string>;
   };
   db: {
     projects: {
-      create(data: import('../db/types').NewProject): Promise<import('../db/types').Project>;
+      create(
+        data: import("../db/types").NewProject
+      ): Promise<import("../db/types").Project>;
       delete(id: number): Promise<boolean>;
-      getAll(): Promise<Array<import('../db/types').Project>>;
-      getById(id: number): Promise<import('../db/types').Project | undefined>;
+      getAll(): Promise<Array<import("../db/types").Project>>;
+      getById(id: number): Promise<import("../db/types").Project | undefined>;
       update(
         id: number,
-        data: Partial<import('../db/types').NewProject>
-      ): Promise<import('../db/types').Project | undefined>;
+        data: Partial<import("../db/types").NewProject>
+      ): Promise<import("../db/types").Project | undefined>;
     };
   };
   // ... additional domains
@@ -541,11 +616,11 @@ export {};
 
 ```typescript
 // hooks/use-electron.ts
-'use client';
+"use client";
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from "react";
 
-import type { ElectronAPI } from '@/types/electron';
+import type { ElectronAPI } from "@/types/electron";
 
 interface UseElectronResult {
   api: ElectronAPI | null;
@@ -554,14 +629,14 @@ interface UseElectronResult {
 
 export function useElectron(): UseElectronResult {
   const isElectron = useMemo(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return false;
     }
     return window.electronAPI !== undefined;
   }, []);
 
   const api = useMemo(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return null;
     }
     return window.electronAPI ?? null;
@@ -579,12 +654,14 @@ export function useElectronDb() {
 
   const projects = useMemo(
     () => ({
-      create: (data: Parameters<NonNullable<typeof api>['db']['projects']['create']>[0]) => {
-        if (!api) throw new Error('Electron API not available');
+      create: (
+        data: Parameters<NonNullable<typeof api>["db"]["projects"]["create"]>[0]
+      ) => {
+        if (!api) throw new Error("Electron API not available");
         return api.db.projects.create(data);
       },
       delete: (id: number) => {
-        if (!api) throw new Error('Electron API not available');
+        if (!api) throw new Error("Electron API not available");
         return api.db.projects.delete(id);
       },
       getAll: () => api?.db.projects.getAll() ?? Promise.resolve([]),
@@ -592,8 +669,11 @@ export function useElectronDb() {
         if (!api) return Promise.resolve(undefined);
         return api.db.projects.getById(id);
       },
-      update: (id: number, data: Parameters<NonNullable<typeof api>['db']['projects']['update']>[1]) => {
-        if (!api) throw new Error('Electron API not available');
+      update: (
+        id: number,
+        data: Parameters<NonNullable<typeof api>["db"]["projects"]["update"]>[1]
+      ) => {
+        if (!api) throw new Error("Electron API not available");
         return api.db.projects.update(id, data);
       },
     }),
@@ -612,7 +692,9 @@ export function useElectronDialog() {
   }, [api]);
 
   const openFile = useCallback(
-    async (filters?: Array<{ extensions: Array<string>; name: string }>): Promise<null | string> => {
+    async (
+      filters?: Array<{ extensions: Array<string>; name: string }>
+    ): Promise<null | string> => {
       if (!api) return null;
       return api.dialog.openFile(filters);
     },
@@ -671,13 +753,16 @@ export function useElectronDialog() {
 // For operations that can fail, return result objects
 ipcMain.handle(
   IpcChannels.fs.readFile,
-  async (_event, filePath: string): Promise<{ content?: string; error?: string; success: boolean }> => {
+  async (
+    _event,
+    filePath: string
+  ): Promise<{ content?: string; error?: string; success: boolean }> => {
     try {
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fs.readFile(filePath, "utf-8");
       return { content, success: true };
     } catch (error) {
       return {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         success: false,
       };
     }
@@ -685,19 +770,25 @@ ipcMain.handle(
 );
 
 // For simple operations, return boolean success
-ipcMain.handle(IpcChannels.store.set, (_event, key: string, value: unknown): boolean => {
-  try {
-    store.set(key, value);
-    return true;
-  } catch {
-    return false;
+ipcMain.handle(
+  IpcChannels.store.set,
+  (_event, key: string, value: unknown): boolean => {
+    try {
+      store.set(key, value);
+      return true;
+    } catch {
+      return false;
+    }
   }
-});
+);
 
 // For database operations, let errors propagate (handled by query layer)
-ipcMain.handle(IpcChannels.db.projects.create, (_event, data: NewProject): Project => {
-  return projectsRepository.create(data);
-});
+ipcMain.handle(
+  IpcChannels.db.projects.create,
+  (_event, data: NewProject): Project => {
+    return projectsRepository.create(data);
+  }
+);
 ```
 
 ---
@@ -710,12 +801,12 @@ ipcMain.handle(IpcChannels.db.projects.create, (_event, data: NewProject): Proje
 // Always validate paths in fs handlers
 function isValidPath(filePath: string): boolean {
   const normalizedPath = path.normalize(filePath);
-  return !normalizedPath.includes('..');
+  return !normalizedPath.includes("..");
 }
 
 // Use before any file operation
 if (!isValidPath(filePath)) {
-  return { error: 'Invalid file path', success: false };
+  return { error: "Invalid file path", success: false };
 }
 ```
 

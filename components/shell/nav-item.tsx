@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import type { ComponentPropsWithRef, ElementType } from 'react';
+import type { ComponentPropsWithRef, ElementType } from "react";
 
-import { cva, type VariantProps } from 'class-variance-authority';
-import Link from 'next/link';
+import { cva, type VariantProps } from "class-variance-authority";
+import Link from "next/link";
 
-import { Tooltip } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { Tooltip } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export const navItemVariants = cva(
   `
@@ -18,13 +18,13 @@ export const navItemVariants = cva(
   `,
   {
     defaultVariants: {
-      size: 'default',
-      variant: 'default',
+      size: "default",
+      variant: "default",
     },
     variants: {
       size: {
-        default: 'h-10 px-3 py-2',
-        sm: 'h-8 px-2 py-1.5 text-xs',
+        default: "h-10 px-3 py-2",
+        sm: "h-8 px-2 py-1.5 text-xs",
       },
       variant: {
         active: `
@@ -45,8 +45,9 @@ export const navItemVariants = cva(
 );
 
 interface NavItemProps
-  extends NavItemVariants,
-    Omit<ComponentPropsWithRef<typeof Link>, 'children'> {
+  extends
+    NavItemVariants,
+    Omit<ComponentPropsWithRef<typeof Link>, "children"> {
   href: string;
   icon?: ElementType;
   isActive?: boolean;
@@ -70,14 +71,15 @@ export const NavItem = ({
   variant,
   ...props
 }: NavItemProps) => {
-  const computedVariant = variant ?? (isActive ? 'active' : isNested ? 'nested' : 'default');
+  const computedVariant =
+    variant ?? (isActive ? "active" : isNested ? "nested" : "default");
 
   const linkContent = (
     <Link
-      aria-current={isActive ? 'page' : undefined}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
         navItemVariants({ className, size, variant: computedVariant }),
-        isCollapsed && 'justify-center px-0'
+        isCollapsed && "justify-center px-0"
       )}
       href={href}
       ref={ref}
@@ -86,19 +88,22 @@ export const NavItem = ({
       {/* Icon */}
       {Icon && (
         <Icon
-          aria-hidden={'true'}
-          className={cn('size-4 shrink-0', isActive && 'text-accent-foreground')}
+          aria-hidden={"true"}
+          className={cn(
+            "size-4 shrink-0",
+            isActive && "text-accent-foreground"
+          )}
         />
       )}
 
       {/* Label */}
-      {!isCollapsed && <span className={'truncate'}>{label}</span>}
+      {!isCollapsed && <span className={"truncate"}>{label}</span>}
     </Link>
   );
 
   if (isCollapsed) {
     return (
-      <Tooltip content={label} side={'right'}>
+      <Tooltip content={label} side={"right"}>
         {linkContent}
       </Tooltip>
     );

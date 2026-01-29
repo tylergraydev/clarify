@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { AppHeader, AppSidebar, StatusBar } from '@/components/shell';
-import { useShellStore } from '@/lib/stores/shell-store';
-import { cn } from '@/lib/utils';
+import { AppHeader, AppSidebar, StatusBar } from "@/components/shell";
+import { useShellStore } from "@/lib/stores/shell-store";
+import { cn } from "@/lib/utils";
 
 type AppLayoutProps = RequiredChildren;
 
@@ -20,7 +20,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const { isSidebarCollapsed } = useShellStore();
 
   return (
-    <div className={'relative min-h-screen bg-background'}>
+    <div className={"relative min-h-screen bg-background"}>
       {/* Header - fixed at top */}
       <AppHeader />
 
@@ -36,15 +36,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
             transition-[margin-left] duration-200 ease-out
           `,
           // Margin top accounts for header height (48px = 3rem)
-          'mt-12',
+          "mt-12",
           // Margin bottom accounts for status bar height (32px = 2rem)
-          'mb-8',
+          "mb-8",
           // Padding uses CSS variables for responsive values
-          'px-(--padding-content-x) py-(--padding-content-y)',
+          "px-(--padding-content-x) py-(--padding-content-y)",
           // Margin left accounts for sidebar width based on collapsed state
           isSidebarCollapsed
-            ? 'ml-(--sidebar-width-collapsed)'
-            : 'ml-(--sidebar-width-expanded)'
+            ? "ml-(--sidebar-width-collapsed)"
+            : "ml-(--sidebar-width-expanded)"
         )}
       >
         {children}
