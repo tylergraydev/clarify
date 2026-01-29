@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentPropsWithRef } from 'react';
+import { useEffect, useState, type ComponentPropsWithRef } from 'react';
 
 import { Bot, FileText, History, LayoutDashboard, Play, Settings, Workflow } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -37,6 +37,18 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
    * Check if any child path is active (for expandable sections)
    */
   const isWorkflowsSectionActive = pathname.startsWith('/workflows');
+
+  /**
+   * Controlled state for Workflows collapsible section.
+   * Auto-expands when navigating to workflow routes.
+   */
+  const [isWorkflowsOpen, setIsWorkflowsOpen] = useState(isWorkflowsSectionActive);
+
+  useEffect(() => {
+    if (isWorkflowsSectionActive) {
+      setIsWorkflowsOpen(true);
+    }
+  }, [isWorkflowsSectionActive]);
 
   return (
     <aside
@@ -90,7 +102,7 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             </Tooltip>
           ) : (
             /* Expanded: Show collapsible section */
-            <Collapsible defaultOpen={isWorkflowsSectionActive}>
+            <Collapsible open={isWorkflowsOpen} onOpenChange={setIsWorkflowsOpen}>
               <CollapsibleTrigger
                 className={cn(
                   'h-10 w-full px-3 py-2 text-muted-foreground',
