@@ -19,6 +19,7 @@ import {
   createDiscoveredFilesRepository,
   createProjectsRepository,
   createRepositoriesRepository,
+  createSettingsRepository,
   createTemplatesRepository,
   createWorkflowsRepository,
   createWorkflowStepsRepository,
@@ -32,6 +33,7 @@ import { registerDiscoveryHandlers } from "./discovery.handlers";
 import { registerFsHandlers } from "./fs.handlers";
 import { registerProjectHandlers } from "./project.handlers";
 import { registerRepositoryHandlers } from "./repository.handlers";
+import { registerSettingsHandlers } from "./settings.handlers";
 import { registerStepHandlers } from "./step.handlers";
 import { registerStoreHandlers } from "./store.handlers";
 import { registerTemplateHandlers } from "./template.handlers";
@@ -121,4 +123,12 @@ export function registerAllHandlers(
   // Audit logs - system event tracking
   const auditLogsRepository = createAuditLogsRepository(db);
   registerAuditHandlers(auditLogsRepository);
+
+  // ============================================
+  // Database handlers - Settings
+  // ============================================
+
+  // Settings - application configuration
+  const settingsRepository = createSettingsRepository(db);
+  registerSettingsHandlers(settingsRepository);
 }

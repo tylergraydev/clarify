@@ -8,6 +8,7 @@ import { auditLogKeys } from "./audit-logs";
 import { discoveredFileKeys } from "./discovered-files";
 import { projectKeys } from "./projects";
 import { repositoryKeys } from "./repositories";
+import { settingKeys } from "./settings";
 import { stepKeys } from "./steps";
 import { templateKeys } from "./templates";
 import { workflowKeys } from "./workflows";
@@ -18,6 +19,7 @@ export const queries = mergeQueryKeys(
   discoveredFileKeys,
   projectKeys,
   repositoryKeys,
+  settingKeys,
   stepKeys,
   templateKeys,
   workflowKeys
@@ -31,6 +33,7 @@ export { auditLogKeys } from "./audit-logs";
 export { discoveredFileKeys } from "./discovered-files";
 export { projectKeys } from "./projects";
 export { repositoryKeys } from "./repositories";
+export { settingKeys } from "./settings";
 export { stepKeys } from "./steps";
 export { templateKeys } from "./templates";
 export { workflowKeys } from "./workflows";

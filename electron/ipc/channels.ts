@@ -69,6 +69,15 @@ export const IpcChannels = {
     setDefault: "repository:setDefault",
     update: "repository:update",
   },
+  settings: {
+    bulkUpdate: "settings:bulkUpdate",
+    get: "settings:get",
+    getByCategory: "settings:getByCategory",
+    getByKey: "settings:getByKey",
+    list: "settings:list",
+    resetToDefault: "settings:resetToDefault",
+    setValue: "settings:setValue",
+  },
   step: {
     complete: "step:complete",
     edit: "step:edit",

@@ -70,6 +70,19 @@ export {
 } from "./use-repositories";
 
 // ============================================================================
+// Settings Hooks
+// ============================================================================
+export {
+  useBulkUpdateSettings,
+  useResetSetting,
+  useSetting,
+  useSettingByKey,
+  useSettings,
+  useSettingsByCategory,
+  useUpdateSetting,
+} from "./use-settings";
+
+// ============================================================================
 // Step Hooks
 // ============================================================================
 export {
@@ -121,6 +134,7 @@ export {
   projectKeys,
   queries,
   repositoryKeys,
+  settingKeys,
   stepKeys,
   templateKeys,
   workflowKeys,

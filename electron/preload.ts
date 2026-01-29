@@ -13,6 +13,7 @@ import type {
   NewWorkflow,
   Project,
   Repository,
+  Setting,
   Template,
   Workflow,
   WorkflowStep,
@@ -77,6 +78,15 @@ const IpcChannels = {
     list: "repository:list",
     setDefault: "repository:setDefault",
     update: "repository:update",
+  },
+  settings: {
+    bulkUpdate: "settings:bulkUpdate",
+    get: "settings:get",
+    getByCategory: "settings:getByCategory",
+    getByKey: "settings:getByKey",
+    list: "settings:list",
+    resetToDefault: "settings:resetToDefault",
+    setValue: "settings:setValue",
   },
   step: {
     complete: "step:complete",
@@ -212,6 +222,17 @@ export interface ElectronAPI {
       data: Partial<NewRepository>
     ): Promise<Repository | undefined>;
   };
+  settings: {
+    bulkUpdate(
+      updates: Array<{ key: string; value: string }>
+    ): Promise<Array<Setting>>;
+    get(id: number): Promise<Setting | undefined>;
+    getByCategory(category: string): Promise<Array<Setting>>;
+    getByKey(key: string): Promise<Setting | undefined>;
+    list(): Promise<Array<Setting>>;
+    resetToDefault(key: string): Promise<Setting | undefined>;
+    setValue(key: string, value: string): Promise<Setting | undefined>;
+  };
   step: {
     complete(id: number, output?: string): Promise<undefined | WorkflowStep>;
     edit(id: number, editedOutput: string): Promise<undefined | WorkflowStep>;
@@ -321,6 +342,19 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke(IpcChannels.repository.setDefault, id),
     update: (id, data) =>
       ipcRenderer.invoke(IpcChannels.repository.update, id, data),
+  },
+  settings: {
+    bulkUpdate: (updates) =>
+      ipcRenderer.invoke(IpcChannels.settings.bulkUpdate, updates),
+    get: (id) => ipcRenderer.invoke(IpcChannels.settings.get, id),
+    getByCategory: (category) =>
+      ipcRenderer.invoke(IpcChannels.settings.getByCategory, category),
+    getByKey: (key) => ipcRenderer.invoke(IpcChannels.settings.getByKey, key),
+    list: () => ipcRenderer.invoke(IpcChannels.settings.list),
+    resetToDefault: (key) =>
+      ipcRenderer.invoke(IpcChannels.settings.resetToDefault, key),
+    setValue: (key, value) =>
+      ipcRenderer.invoke(IpcChannels.settings.setValue, key, value),
   },
   step: {
     complete: (id, output) =>

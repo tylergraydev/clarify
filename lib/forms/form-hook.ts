@@ -1,5 +1,6 @@
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form";
 
+import { PathInputField } from "@/components/settings/path-input-field";
 import { CheckboxField } from "@/components/ui/form/checkbox-field";
 import { FormError } from "@/components/ui/form/form-error";
 import { MultiSelectField } from "@/components/ui/form/multi-select-field";
@@ -19,6 +20,7 @@ export const { useAppForm, withForm } = createFormHook({
     CheckboxField,
     MultiSelectField,
     NumberField: NumberFieldComponent,
+    PathInputField,
     RadioField,
     SelectField,
     SwitchField,

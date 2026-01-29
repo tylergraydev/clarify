@@ -358,6 +358,40 @@ export function useElectronDb() {
     [api, throwIfNoApi]
   );
 
+  const settings = useMemo(
+    () => ({
+      bulkUpdate: async (updates: Array<{ key: string; value: string }>) => {
+        const electronApi = throwIfNoApi("settings.bulkUpdate");
+        return electronApi.settings.bulkUpdate(updates);
+      },
+      get: async (id: number) => {
+        if (!api) return undefined;
+        return api.settings.get(id);
+      },
+      getByCategory: async (category: string) => {
+        if (!api) return [];
+        return api.settings.getByCategory(category);
+      },
+      getByKey: async (key: string) => {
+        if (!api) return undefined;
+        return api.settings.getByKey(key);
+      },
+      list: async () => {
+        if (!api) return [];
+        return api.settings.list();
+      },
+      resetToDefault: async (key: string) => {
+        const electronApi = throwIfNoApi("settings.resetToDefault");
+        return electronApi.settings.resetToDefault(key);
+      },
+      setValue: async (key: string, value: string) => {
+        const electronApi = throwIfNoApi("settings.setValue");
+        return electronApi.settings.setValue(key, value);
+      },
+    }),
+    [api, throwIfNoApi]
+  );
+
   return {
     agents,
     audit,
@@ -365,6 +399,7 @@ export function useElectronDb() {
     isElectron,
     projects,
     repositories,
+    settings,
     steps,
     templates,
     workflows,

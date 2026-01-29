@@ -8,10 +8,12 @@ export type {
   NewDiscoveredFile,
   NewProject,
   NewRepository,
+  NewSetting,
   NewTemplate,
   NewWorkflow,
   Project,
   Repository,
+  Setting,
   Template,
   Workflow,
   WorkflowStep,
@@ -148,6 +150,24 @@ export interface ElectronAPI {
       id: number,
       data: Partial<import("../db/schema").NewRepository>
     ): Promise<import("../db/schema").Repository | undefined>;
+  };
+  settings: {
+    bulkUpdate(
+      updates: Array<{ key: string; value: string }>
+    ): Promise<Array<import("../db/schema").Setting>>;
+    get(id: number): Promise<import("../db/schema").Setting | undefined>;
+    getByCategory(
+      category: string
+    ): Promise<Array<import("../db/schema").Setting>>;
+    getByKey(key: string): Promise<import("../db/schema").Setting | undefined>;
+    list(): Promise<Array<import("../db/schema").Setting>>;
+    resetToDefault(
+      key: string
+    ): Promise<import("../db/schema").Setting | undefined>;
+    setValue(
+      key: string,
+      value: string
+    ): Promise<import("../db/schema").Setting | undefined>;
   };
   step: {
     complete(
