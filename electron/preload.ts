@@ -17,6 +17,7 @@ import type {
   Template,
   Workflow,
   WorkflowStep,
+  Worktree,
 } from "../db/schema";
 
 // IPC Channel constants inlined here because sandboxed preload scripts
@@ -70,6 +71,7 @@ const IpcChannels = {
     update: "project:update",
   },
   repository: {
+    clearDefault: "repository:clearDefault",
     create: "repository:create",
     delete: "repository:delete",
     findByPath: "repository:findByPath",
@@ -119,6 +121,11 @@ const IpcChannels = {
     pause: "workflow:pause",
     resume: "workflow:resume",
     start: "workflow:start",
+  },
+  worktree: {
+    get: "worktree:get",
+    getByWorkflowId: "worktree:getByWorkflowId",
+    list: "worktree:list",
   },
 } as const;
 
@@ -212,6 +219,7 @@ export interface ElectronAPI {
     update(id: number, data: Partial<NewProject>): Promise<Project | undefined>;
   };
   repository: {
+    clearDefault(id: number): Promise<Repository | undefined>;
     create(data: NewRepository): Promise<Repository>;
     delete(id: number): Promise<boolean>;
     findByPath(path: string): Promise<Repository | undefined>;
@@ -273,6 +281,11 @@ export interface ElectronAPI {
     pause(id: number): Promise<undefined | Workflow>;
     resume(id: number): Promise<undefined | Workflow>;
     start(id: number): Promise<undefined | Workflow>;
+  };
+  worktree: {
+    get(id: number): Promise<undefined | Worktree>;
+    getByWorkflowId(workflowId: number): Promise<undefined | Worktree>;
+    list(options?: { repositoryId?: number; status?: string }): Promise<Array<Worktree>>;
   };
 }
 
@@ -394,6 +407,8 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke(IpcChannels.project.update, id, data),
   },
   repository: {
+    clearDefault: (id) =>
+      ipcRenderer.invoke(IpcChannels.repository.clearDefault, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.repository.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.repository.delete, id),
     findByPath: (path) =>
@@ -459,6 +474,12 @@ const electronAPI: ElectronAPI = {
     pause: (id) => ipcRenderer.invoke(IpcChannels.workflow.pause, id),
     resume: (id) => ipcRenderer.invoke(IpcChannels.workflow.resume, id),
     start: (id) => ipcRenderer.invoke(IpcChannels.workflow.start, id),
+  },
+  worktree: {
+    get: (id) => ipcRenderer.invoke(IpcChannels.worktree.get, id),
+    getByWorkflowId: (workflowId) =>
+      ipcRenderer.invoke(IpcChannels.worktree.getByWorkflowId, workflowId),
+    list: (options) => ipcRenderer.invoke(IpcChannels.worktree.list, options),
   },
 };
 

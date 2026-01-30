@@ -1,17 +1,17 @@
 'use client';
 
 import { differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
-import { Activity, Clock, Play, Plus } from 'lucide-react';
+import { Activity, Clock, Eye, GitBranch, Pause, Play, Plus, X } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { type KeyboardEvent, useMemo } from 'react';
+import { Fragment, type KeyboardEvent, type MouseEvent, useMemo, useState } from 'react';
 
 import type { Project, Workflow } from '@/types/electron';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { Badge } from '@/components/ui/badge';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -19,9 +19,24 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  DialogBackdrop,
+  DialogClose,
+  DialogDescription,
+  DialogPopup,
+  DialogPortal,
+  DialogRoot,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useProjects } from '@/hooks/queries/use-projects';
-import { useWorkflows } from '@/hooks/queries/use-workflows';
+import {
+  useCancelWorkflow,
+  usePauseWorkflow,
+  useResumeWorkflow,
+  useWorkflows,
+} from '@/hooks/queries/use-workflows';
+import { useWorktreeByWorkflowId } from '@/hooks/queries/use-worktrees';
 import { cn } from '@/lib/utils';
 
 // ============================================================================
@@ -31,10 +46,26 @@ import { cn } from '@/lib/utils';
 type ActiveWorkflowsWidgetProps = ClassName;
 
 type WorkflowCardProps = ClassName<{
+  isCancelPending?: boolean;
+  isPausePending?: boolean;
+  isResumePending?: boolean;
+  onCancel?: () => void;
   onClick: () => void;
+  onPause?: () => void;
+  onResume?: () => void;
   projectName: string;
   workflow: Workflow;
 }>;
+
+type WorkflowStatus = Workflow['status'];
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'paused', 'running'];
+const PAUSABLE_STATUSES: Array<WorkflowStatus> = ['running'];
+const RESUMABLE_STATUSES: Array<WorkflowStatus> = ['paused'];
 
 // ============================================================================
 // Utility Functions
@@ -164,12 +195,41 @@ const LoadingSkeleton = () => {
 };
 
 // ============================================================================
+// Branch Name Component
+// ============================================================================
+
+/**
+ * Fetches and displays the branch name for a workflow
+ * Only renders for workflows with a worktreeId
+ */
+const WorkflowBranchName = ({ workflowId }: { workflowId: number }) => {
+  const { data: worktree } = useWorktreeByWorkflowId(workflowId);
+
+  if (!worktree?.branchName) {
+    return null;
+  }
+
+  return (
+    <span className={'flex items-center gap-1 text-xs text-muted-foreground'}>
+      <GitBranch aria-hidden={'true'} className={'size-3'} />
+      <span className={'truncate'}>{worktree.branchName}</span>
+    </span>
+  );
+};
+
+// ============================================================================
 // Workflow Card Component
 // ============================================================================
 
 const WorkflowCard = ({
   className,
+  isCancelPending,
+  isPausePending,
+  isResumePending,
+  onCancel,
   onClick,
+  onPause,
+  onResume,
   projectName,
   workflow,
 }: WorkflowCardProps) => {
@@ -181,6 +241,10 @@ const WorkflowCard = ({
   const statusVariant = getStatusVariant(workflow.status);
   const formattedStatus = formatStatus(workflow.status);
 
+  const isPausable = PAUSABLE_STATUSES.includes(workflow.status as WorkflowStatus);
+  const isResumable = RESUMABLE_STATUSES.includes(workflow.status as WorkflowStatus);
+  const isCancellable = CANCELLABLE_STATUSES.includes(workflow.status as WorkflowStatus);
+
   const handleClick = () => {
     onClick();
   };
@@ -190,6 +254,26 @@ const WorkflowCard = ({
       event.preventDefault();
       onClick();
     }
+  };
+
+  const handleViewClick = (event: MouseEvent) => {
+    event.stopPropagation();
+    onClick();
+  };
+
+  const handlePauseClick = (event: MouseEvent) => {
+    event.stopPropagation();
+    onPause?.();
+  };
+
+  const handleResumeClick = (event: MouseEvent) => {
+    event.stopPropagation();
+    onResume?.();
+  };
+
+  const handleCancelClick = (event: MouseEvent) => {
+    event.stopPropagation();
+    onCancel?.();
   };
 
   return (
@@ -214,6 +298,10 @@ const WorkflowCard = ({
         <div className={'min-w-0 flex-1'}>
           <h4 className={'truncate font-medium'}>{workflow.featureName}</h4>
           <p className={'text-sm text-muted-foreground'}>{projectName}</p>
+          {/* Branch name for implementation workflows */}
+          {workflow.worktreeId && (
+            <WorkflowBranchName workflowId={workflow.id} />
+          )}
         </div>
         <Badge size={'sm'} variant={statusVariant}>
           {formattedStatus}
@@ -245,13 +333,64 @@ const WorkflowCard = ({
         </div>
       </div>
 
-      {/* Footer */}
-      <div className={'mt-3 flex items-center justify-between text-xs text-muted-foreground'}>
-        <span className={'flex items-center gap-1'}>
-          <Clock aria-hidden={'true'} className={'size-3'} />
-          {elapsedTime}
-        </span>
-        <span className={'capitalize'}>{workflow.type}</span>
+      {/* Footer with Info and Actions */}
+      <div className={'mt-3 flex items-center justify-between'}>
+        <div className={'flex items-center gap-3 text-xs text-muted-foreground'}>
+          <span className={'flex items-center gap-1'}>
+            <Clock aria-hidden={'true'} className={'size-3'} />
+            {elapsedTime}
+          </span>
+          <span className={'capitalize'}>{workflow.type}</span>
+        </div>
+
+        {/* Action Buttons - Icons Only */}
+        <div className={'flex items-center gap-1'}>
+          <Button
+            aria-label={'View workflow'}
+            onClick={handleViewClick}
+            size={'icon-sm'}
+            variant={'ghost'}
+          >
+            <Eye aria-hidden={'true'} className={'size-4'} />
+          </Button>
+
+          {isPausable && (
+            <Button
+              aria-label={'Pause workflow'}
+              disabled={isPausePending}
+              onClick={handlePauseClick}
+              size={'icon-sm'}
+              variant={'ghost'}
+            >
+              <Pause aria-hidden={'true'} className={'size-4'} />
+            </Button>
+          )}
+
+          {isResumable && (
+            <Button
+              aria-label={'Resume workflow'}
+              disabled={isResumePending}
+              onClick={handleResumeClick}
+              size={'icon-sm'}
+              variant={'ghost'}
+            >
+              <Play aria-hidden={'true'} className={'size-4'} />
+            </Button>
+          )}
+
+          {isCancellable && (
+            <Button
+              aria-label={'Cancel workflow'}
+              className={'hover:bg-destructive/10 hover:text-destructive'}
+              disabled={isCancelPending}
+              onClick={handleCancelClick}
+              size={'icon-sm'}
+              variant={'ghost'}
+            >
+              <X aria-hidden={'true'} className={'size-4'} />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -265,6 +404,14 @@ const ActiveWorkflowsContent = () => {
   const router = useRouter();
   const { data: workflows = [], isLoading: isWorkflowsLoading } = useWorkflows();
   const { data: projects = [], isLoading: isProjectsLoading } = useProjects();
+
+  // Mutations
+  const pauseMutation = usePauseWorkflow();
+  const resumeMutation = useResumeWorkflow();
+  const cancelMutation = useCancelWorkflow();
+
+  // Cancel confirmation dialog state
+  const [workflowToCancel, setWorkflowToCancel] = useState<null | Workflow>(null);
 
   const isLoading = isWorkflowsLoading || isProjectsLoading;
 
@@ -288,10 +435,28 @@ const ActiveWorkflowsContent = () => {
 
   /**
    * Navigate to workflow detail page
-   * Note: Requires /workflows/[id] route to be implemented
    */
   const handleWorkflowClick = (workflowId: number) => {
     router.push($path({ route: '/workflows/[id]', routeParams: { id: String(workflowId) } }));
+  };
+
+  const handlePauseWorkflow = (workflowId: number) => {
+    pauseMutation.mutate(workflowId);
+  };
+
+  const handleResumeWorkflow = (workflowId: number) => {
+    resumeMutation.mutate(workflowId);
+  };
+
+  const handleCancelRequest = (workflow: Workflow) => {
+    setWorkflowToCancel(workflow);
+  };
+
+  const handleConfirmCancel = () => {
+    if (workflowToCancel) {
+      cancelMutation.mutate(workflowToCancel.id);
+      setWorkflowToCancel(null);
+    }
   };
 
   const hasActiveWorkflows = activeWorkflows.length > 0;
@@ -323,16 +488,52 @@ const ActiveWorkflowsContent = () => {
 
   // Workflows List
   return (
-    <div aria-live={'polite'} className={'space-y-3'}>
-      {activeWorkflows.map((workflow) => (
-        <WorkflowCard
-          key={workflow.id}
-          onClick={() => handleWorkflowClick(workflow.id)}
-          projectName={projectMap[workflow.projectId]?.name ?? 'Unknown Project'}
-          workflow={workflow}
-        />
-      ))}
-    </div>
+    <Fragment>
+      <div aria-live={'polite'} className={'space-y-3'}>
+        {activeWorkflows.map((workflow) => (
+          <WorkflowCard
+            isCancelPending={cancelMutation.isPending && cancelMutation.variables === workflow.id}
+            isPausePending={pauseMutation.isPending && pauseMutation.variables === workflow.id}
+            isResumePending={resumeMutation.isPending && resumeMutation.variables === workflow.id}
+            key={workflow.id}
+            onCancel={() => handleCancelRequest(workflow)}
+            onClick={() => handleWorkflowClick(workflow.id)}
+            onPause={() => handlePauseWorkflow(workflow.id)}
+            onResume={() => handleResumeWorkflow(workflow.id)}
+            projectName={projectMap[workflow.projectId]?.name ?? 'Unknown Project'}
+            workflow={workflow}
+          />
+        ))}
+      </div>
+
+      {/* Cancel Confirmation Dialog */}
+      <DialogRoot
+        onOpenChange={(open: boolean) => !open && setWorkflowToCancel(null)}
+        open={workflowToCancel !== null}
+      >
+        <DialogPortal>
+          <DialogBackdrop />
+          <DialogPopup size={'sm'}>
+            <DialogTitle>Cancel Workflow</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel{' '}
+              <span className={'font-medium text-foreground'}>
+                {workflowToCancel?.featureName}
+              </span>
+              ? This action cannot be undone.
+            </DialogDescription>
+            <div className={'mt-6 flex justify-end gap-3'}>
+              <DialogClose render={<Button variant={'outline'} />}>
+                Keep Running
+              </DialogClose>
+              <Button onClick={handleConfirmCancel} variant={'destructive'}>
+                Cancel Workflow
+              </Button>
+            </div>
+          </DialogPopup>
+        </DialogPortal>
+      </DialogRoot>
+    </Fragment>
   );
 };
 

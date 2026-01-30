@@ -3,7 +3,7 @@
 import type { ComponentPropsWithRef } from "react";
 
 import { format } from "date-fns";
-import { FolderGit2, Star, Trash2 } from "lucide-react";
+import { FolderGit2, Pencil, Star, StarOff, Trash2 } from "lucide-react";
 
 import type { Repository } from "@/db/schema/repositories.schema";
 
@@ -22,7 +22,9 @@ import { cn } from "@/lib/utils";
 interface RepositoryCardProps
   extends Omit<ComponentPropsWithRef<"div">, "onClick"> {
   isDefault?: boolean;
+  onClearDefault?: (repositoryId: number) => void;
   onDelete?: (repositoryId: number) => void;
+  onEdit?: (repository: Repository) => void;
   onSetDefault?: (repositoryId: number) => void;
   repository: Repository;
 }
@@ -30,14 +32,24 @@ interface RepositoryCardProps
 export const RepositoryCard = ({
   className,
   isDefault = false,
+  onClearDefault,
   onDelete,
+  onEdit,
   onSetDefault,
   ref,
   repository,
   ...props
 }: RepositoryCardProps) => {
+  const handleClearDefaultClick = () => {
+    onClearDefault?.(repository.id);
+  };
+
   const handleDeleteClick = () => {
     onDelete?.(repository.id);
+  };
+
+  const handleEditClick = () => {
+    onEdit?.(repository);
   };
 
   const handleSetDefaultClick = () => {
@@ -94,15 +106,35 @@ export const RepositoryCard = ({
 
       {/* Actions */}
       <CardFooter className={"gap-2"}>
+        {isDefault ? (
+          <Button
+            aria-label={"Clear default repository status"}
+            onClick={handleClearDefaultClick}
+            size={"sm"}
+            variant={"outline"}
+          >
+            <StarOff aria-hidden={"true"} className={"size-4"} />
+            {"Clear Default"}
+          </Button>
+        ) : (
+          <Button
+            aria-label={"Set repository as default"}
+            onClick={handleSetDefaultClick}
+            size={"sm"}
+            variant={"outline"}
+          >
+            <Star aria-hidden={"true"} className={"size-4"} />
+            {"Set Default"}
+          </Button>
+        )}
         <Button
-          aria-label={"Set repository as default"}
-          disabled={isDefault}
-          onClick={handleSetDefaultClick}
+          aria-label={"Edit repository"}
+          onClick={handleEditClick}
           size={"sm"}
-          variant={"outline"}
+          variant={"ghost"}
         >
-          <Star aria-hidden={"true"} className={"size-4"} />
-          {"Set Default"}
+          <Pencil aria-hidden={"true"} className={"size-4"} />
+          {"Edit"}
         </Button>
         <Button
           aria-label={"Remove repository"}

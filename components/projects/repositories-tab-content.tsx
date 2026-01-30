@@ -3,13 +3,19 @@
 import type { ComponentPropsWithRef } from 'react';
 
 import { AlertCircle, FolderGit2, Plus } from 'lucide-react';
+import { useState } from 'react';
+
+import type { Repository } from '@/types/electron';
 
 import { AddRepositoryDialog } from '@/components/projects/add-repository-dialog';
+import { ConfirmDeleteRepositoryDialog } from '@/components/repositories/confirm-delete-repository-dialog';
+import { EditRepositoryDialog } from '@/components/repositories/edit-repository-dialog';
 import { RepositoryCard } from '@/components/repositories/repository-card';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
+  useClearDefaultRepository,
   useDeleteRepository,
   useRepositoriesByProject,
   useSetDefaultRepository,
@@ -27,13 +33,46 @@ export const RepositoriesTabContent = ({
   ref,
   ...props
 }: RepositoriesTabContentProps) => {
+  // Dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedRepository, setSelectedRepository] = useState<null | Repository>(null);
+
+  // Data fetching
   const { data: repositories, error, isLoading } = useRepositoriesByProject(projectId);
 
+  // Mutations
+  const clearDefaultRepositoryMutation = useClearDefaultRepository();
   const deleteRepositoryMutation = useDeleteRepository();
   const setDefaultRepositoryMutation = useSetDefaultRepository();
 
-  const handleDelete = (repositoryId: number) => {
-    deleteRepositoryMutation.mutate(repositoryId);
+  // Handlers
+  const handleClearDefault = (repositoryId: number) => {
+    clearDefaultRepositoryMutation.mutate(repositoryId);
+  };
+
+  const handleDeleteClick = (repositoryId: number) => {
+    const repo = repositories?.find((r) => r.id === repositoryId);
+    if (repo) {
+      setSelectedRepository(repo);
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedRepository) {
+      deleteRepositoryMutation.mutate(selectedRepository.id, {
+        onSuccess: () => {
+          setDeleteDialogOpen(false);
+          setSelectedRepository(null);
+        },
+      });
+    }
+  };
+
+  const handleEdit = (repository: Repository) => {
+    setSelectedRepository(repository);
+    setEditDialogOpen(true);
   };
 
   const handleSetDefault = (repositoryId: number) => {
@@ -142,13 +181,36 @@ export const RepositoriesTabContent = ({
               <RepositoryCard
                 isDefault={isDefault}
                 key={repository.id}
-                onDelete={handleDelete}
+                onClearDefault={handleClearDefault}
+                onDelete={handleDeleteClick}
+                onEdit={handleEdit}
                 onSetDefault={handleSetDefault}
                 repository={repository}
               />
             );
           })}
         </div>
+
+        {/* Edit Repository Dialog */}
+        {selectedRepository && (
+          <EditRepositoryDialog
+            isOpen={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            onSuccess={() => setSelectedRepository(null)}
+            repository={selectedRepository}
+          />
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        {selectedRepository && (
+          <ConfirmDeleteRepositoryDialog
+            isLoading={deleteRepositoryMutation.isPending}
+            isOpen={deleteDialogOpen}
+            onConfirm={handleDeleteConfirm}
+            onOpenChange={setDeleteDialogOpen}
+            repositoryName={selectedRepository.name}
+          />
+        )}
       </div>
     );
   }

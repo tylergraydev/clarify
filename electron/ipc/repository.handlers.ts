@@ -92,6 +92,14 @@ export function registerRepositoryHandlers(
     }
   );
 
+  // Clear the default status from a repository
+  ipcMain.handle(
+    IpcChannels.repository.clearDefault,
+    (_event: IpcMainInvokeEvent, id: number): Repository | undefined => {
+      return repositoriesRepository.clearDefault(id);
+    }
+  );
+
   // Find all repositories for a project
   ipcMain.handle(
     IpcChannels.repository.findByProject,

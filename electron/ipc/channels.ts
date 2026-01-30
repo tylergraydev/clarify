@@ -60,6 +60,7 @@ export const IpcChannels = {
     update: "project:update",
   },
   repository: {
+    clearDefault: "repository:clearDefault",
     create: "repository:create",
     delete: "repository:delete",
     findByPath: "repository:findByPath",
@@ -109,6 +110,11 @@ export const IpcChannels = {
     pause: "workflow:pause",
     resume: "workflow:resume",
     start: "workflow:start",
+  },
+  worktree: {
+    get: "worktree:get",
+    getByWorkflowId: "worktree:getByWorkflowId",
+    list: "worktree:list",
   },
 } as const;
 

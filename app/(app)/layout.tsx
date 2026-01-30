@@ -1,6 +1,7 @@
 "use client";
 
 import { AppHeader, AppSidebar, StatusBar } from "@/components/shell";
+import { useActiveWorkflows } from "@/hooks/queries/use-workflows";
 import { useShellStore } from "@/lib/stores/shell-store";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,7 @@ type AppLayoutProps = RequiredChildren;
  */
 export default function AppLayout({ children }: AppLayoutProps) {
   const { isSidebarCollapsed } = useShellStore();
+  const { data: activeWorkflows } = useActiveWorkflows();
 
   return (
     <div className={"relative min-h-screen bg-background"}>
@@ -51,7 +53,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </main>
 
       {/* Status bar - fixed at bottom */}
-      <StatusBar />
+      <StatusBar activeWorkflowCount={activeWorkflows?.length ?? 0} />
     </div>
   );
 }

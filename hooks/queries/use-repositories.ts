@@ -14,6 +14,43 @@ import { useElectron } from "../use-electron";
 // ============================================================================
 
 /**
+ * Clear the default status from a repository
+ */
+export function useClearDefaultRepository() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+
+  return useMutation({
+    mutationFn: (id: number) => api!.repository.clearDefault(id),
+    onSuccess: (repository) => {
+      if (repository) {
+        // Update detail cache directly
+        queryClient.setQueryData(
+          repositoryKeys.detail(repository.id).queryKey,
+          repository
+        );
+        // Invalidate list queries
+        void queryClient.invalidateQueries({
+          queryKey: repositoryKeys.list._def,
+        });
+        // Invalidate project-specific queries
+        void queryClient.invalidateQueries({
+          queryKey: repositoryKeys.byProject(repository.projectId).queryKey,
+        });
+        // Invalidate default repository query for the project
+        void queryClient.invalidateQueries({
+          queryKey: repositoryKeys.default(repository.projectId).queryKey,
+        });
+        // Invalidate project detail
+        void queryClient.invalidateQueries({
+          queryKey: projectKeys.detail(repository.projectId).queryKey,
+        });
+      }
+    },
+  });
+}
+
+/**
  * Create a new repository
  */
 export function useCreateRepository() {
@@ -57,6 +94,10 @@ export function useDeleteRepository() {
   });
 }
 
+// ============================================================================
+// Mutation Hooks
+// ============================================================================
+
 /**
  * Fetch all repositories
  */
@@ -69,10 +110,6 @@ export function useRepositories() {
     queryFn: () => api!.repository.list(),
   });
 }
-
-// ============================================================================
-// Mutation Hooks
-// ============================================================================
 
 /**
  * Fetch repositories filtered by project ID

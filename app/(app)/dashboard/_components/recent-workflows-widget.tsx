@@ -52,6 +52,27 @@ const formatRelativeTime = (timestamp: null | string): string => {
 };
 
 /**
+ * Formats duration in milliseconds to human-readable format (e.g., "8m 32s")
+ */
+const formatDuration = (durationMs: null | number): string => {
+  if (!durationMs) {
+    return '-';
+  }
+
+  const seconds = Math.floor(durationMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds % 60}s`;
+  }
+  return `${seconds}s`;
+};
+
+/**
  * Maps workflow status to badge variant
  */
 const getStatusVariant = (
@@ -158,6 +179,7 @@ const WorkflowItem = ({
   const statusVariant = getStatusVariant(workflow.status);
   const formattedStatus = formatStatus(workflow.status);
   const relativeTime = formatRelativeTime(workflow.updatedAt);
+  const duration = formatDuration(workflow.durationMs);
 
   const handleClick = () => {
     onClick();
@@ -204,7 +226,10 @@ const WorkflowItem = ({
           <StatusIcon status={workflow.status} />
           {relativeTime}
         </span>
-        <span className={'capitalize'}>{workflow.type}</span>
+        <span className={'flex items-center gap-3'}>
+          <span className={'tabular-nums'}>{duration}</span>
+          <span className={'capitalize'}>{workflow.type}</span>
+        </span>
       </div>
     </div>
   );

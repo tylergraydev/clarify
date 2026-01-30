@@ -17,6 +17,7 @@ export type {
   Template,
   Workflow,
   WorkflowStep,
+  Worktree,
 } from "../db/schema";
 
 export interface ElectronAPI {
@@ -131,6 +132,9 @@ export interface ElectronAPI {
     ): Promise<import("../db/schema").Project | undefined>;
   };
   repository: {
+    clearDefault(
+      id: number
+    ): Promise<import("../db/schema").Repository | undefined>;
     create(
       data: import("../db/schema").NewRepository
     ): Promise<import("../db/schema").Repository>;
@@ -226,6 +230,16 @@ export interface ElectronAPI {
     pause(id: number): Promise<import("../db/schema").Workflow | undefined>;
     resume(id: number): Promise<import("../db/schema").Workflow | undefined>;
     start(id: number): Promise<import("../db/schema").Workflow | undefined>;
+  };
+  worktree: {
+    get(id: number): Promise<import("../db/schema").Worktree | undefined>;
+    getByWorkflowId(
+      workflowId: number
+    ): Promise<import("../db/schema").Worktree | undefined>;
+    list(options?: {
+      repositoryId?: number;
+      status?: string;
+    }): Promise<Array<import("../db/schema").Worktree>>;
   };
 }
 

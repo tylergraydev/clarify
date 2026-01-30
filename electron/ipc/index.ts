@@ -23,6 +23,7 @@ import {
   createTemplatesRepository,
   createWorkflowsRepository,
   createWorkflowStepsRepository,
+  createWorktreesRepository,
 } from "../../db/repositories";
 // Handler registration imports (to be implemented in Steps 3-10)
 import { registerAgentHandlers } from "./agent.handlers";
@@ -38,6 +39,7 @@ import { registerStepHandlers } from "./step.handlers";
 import { registerStoreHandlers } from "./store.handlers";
 import { registerTemplateHandlers } from "./template.handlers";
 import { registerWorkflowHandlers } from "./workflow.handlers";
+import { registerWorktreeHandlers } from "./worktree.handlers";
 
 // Re-export channels for external use
 export { IpcChannels } from "./channels";
@@ -131,4 +133,12 @@ export function registerAllHandlers(
   // Settings - application configuration
   const settingsRepository = createSettingsRepository(db);
   registerSettingsHandlers(settingsRepository);
+
+  // ============================================
+  // Database handlers - Git worktrees
+  // ============================================
+
+  // Worktrees - git worktree management for parallel workflows
+  const worktreesRepository = createWorktreesRepository(db);
+  registerWorktreeHandlers(worktreesRepository);
 }
