@@ -12,7 +12,11 @@
  */
 import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { AgentsRepository } from "../../db/repositories";
+import type {
+  AgentSkillsRepository,
+  AgentsRepository,
+  AgentToolsRepository,
+} from "../../db/repositories";
 import type { Agent, NewAgent } from "../../db/schema";
 
 import { IpcChannels } from "./channels";
@@ -56,9 +60,13 @@ const BUILT_IN_PROTECTED_FIELDS = new Set(["name", "systemPrompt", "type"]);
  * Register all agent-related IPC handlers.
  *
  * @param agentsRepository - The agents repository for database operations
+ * @param agentToolsRepository - The agent tools repository for duplication
+ * @param agentSkillsRepository - The agent skills repository for duplication
  */
 export function registerAgentHandlers(
-  agentsRepository: AgentsRepository
+  agentsRepository: AgentsRepository,
+  agentToolsRepository: AgentToolsRepository,
+  agentSkillsRepository: AgentSkillsRepository
 ): void {
   // Create a new agent
   ipcMain.handle(
@@ -186,6 +194,30 @@ export function registerAgentHandlers(
         };
 
         const duplicatedAgent = await agentsRepository.create(newAgentData);
+
+        // Copy tools from source agent to duplicated agent
+        const sourceTools = await agentToolsRepository.findByAgentId(id);
+        for (const tool of sourceTools) {
+          await agentToolsRepository.create({
+            agentId: duplicatedAgent.id,
+            disallowedAt: tool.disallowedAt,
+            orderIndex: tool.orderIndex,
+            toolName: tool.toolName,
+            toolPattern: tool.toolPattern,
+          });
+        }
+
+        // Copy skills from source agent to duplicated agent
+        const sourceSkills = await agentSkillsRepository.findByAgentId(id);
+        for (const skill of sourceSkills) {
+          await agentSkillsRepository.create({
+            agentId: duplicatedAgent.id,
+            orderIndex: skill.orderIndex,
+            requiredAt: skill.requiredAt,
+            skillName: skill.skillName,
+          });
+        }
+
         return { agent: duplicatedAgent, success: true };
       } catch (error) {
         console.error("[IPC Error] agent:duplicate:", error);

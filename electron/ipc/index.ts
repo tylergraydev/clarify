@@ -103,14 +103,22 @@ export function registerAllHandlers(
 
   // Agents - AI agent definitions and configurations
   const agentsRepository = createAgentsRepository(db);
-  registerAgentHandlers(agentsRepository);
 
   // Agent tools - tool allowlist/denylist for agents
   const agentToolsRepository = createAgentToolsRepository(db);
-  registerAgentToolHandlers(agentToolsRepository);
 
   // Agent skills - skills referenced by agents
   const agentSkillsRepository = createAgentSkillsRepository(db);
+
+  // Register agent handlers (needs tools and skills repos for duplication)
+  registerAgentHandlers(
+    agentsRepository,
+    agentToolsRepository,
+    agentSkillsRepository
+  );
+
+  // Register tool and skill handlers
+  registerAgentToolHandlers(agentToolsRepository);
   registerAgentSkillHandlers(agentSkillsRepository);
 
   // Templates - prompt templates for workflows
