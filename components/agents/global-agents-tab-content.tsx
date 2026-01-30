@@ -7,18 +7,17 @@ import type { Agent } from '@/types/electron';
 
 import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
 import { AgentLayoutRenderer } from '@/components/agents/agent-layout-renderer';
+import { AgentListSkeleton } from '@/components/agents/agent-list-skeleton';
+import { AgentTableSkeleton } from '@/components/agents/agent-table-skeleton';
 import { ConfirmDeleteAgentDialog } from '@/components/agents/confirm-delete-agent-dialog';
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { Button } from '@/components/ui/button';
-import { AgentListSkeleton } from '@/components/agents/agent-list-skeleton';
-import { AgentTableSkeleton } from '@/components/agents/agent-table-skeleton';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
-import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
   useActivateAgent,
@@ -29,6 +28,7 @@ import {
   useGlobalAgents,
   useResetAgent,
 } from '@/hooks/queries/use-agents';
+import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
 import { useShellStore } from '@/lib/stores/shell-store';
 
 // ============================================================================

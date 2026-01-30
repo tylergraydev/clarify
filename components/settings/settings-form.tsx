@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useBulkUpdateSettings } from "@/hooks/queries/use-settings";
@@ -16,7 +17,7 @@ import type { SettingsFormApi as LoggingFormApi } from "./logging-settings-secti
 import type { SettingsFormApi as WorkflowFormApi } from "./workflow-settings-section";
 import type { SettingsFormApi as WorktreeFormApi } from "./worktree-settings-section";
 
-import { AutoSaveStatus, type AutoSaveState } from "./auto-save-status";
+import { type AutoSaveState, AutoSaveStatus } from "./auto-save-status";
 import { LoggingSettingsSection } from "./logging-settings-section";
 import { UISettingsSection } from "./ui-settings-section";
 import { WorkflowSettingsSection } from "./workflow-settings-section";
@@ -108,7 +109,7 @@ export const SettingsForm = ({
   const toast = useToast();
   const bulkUpdateMutation = useBulkUpdateSettings();
   const [saveStatus, setSaveStatus] = useState<AutoSaveState>("idle");
-  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedTimeoutRef = useRef<null | ReturnType<typeof setTimeout>>(null);
   const hasInitializedRef = useRef(false);
 
   const form = useAppForm({

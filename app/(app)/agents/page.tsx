@@ -87,7 +87,7 @@ export default function AgentsPage() {
   );
 
   // Persisted state from Zustand store (electron-store backed)
-  const { showDeactivated, setShowDeactivated } = useAgentLayoutStore();
+  const { setShowDeactivated, showDeactivated } = useAgentLayoutStore();
 
   // Shell store for selected project
   const selectedProjectId = useShellStore((state) => state.selectedProjectId);

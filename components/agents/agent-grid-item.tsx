@@ -14,15 +14,15 @@ import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
 export interface AgentGridItemProps {
   agent: Agent;
   isCreatingOverride?: boolean;
-  isDeleting: boolean;
-  isDuplicating: boolean;
-  isResetting: boolean;
-  isToggling: boolean;
+  isDeleting?: boolean;
+  isDuplicating?: boolean;
+  isResetting?: boolean;
+  isToggling?: boolean;
   onCreateOverride?: (agent: Agent) => void;
-  onDelete: (agentId: number) => void;
-  onDuplicate: (agent: Agent) => void;
-  onReset: (agentId: number) => void;
-  onToggleActive: (agentId: number, isActive: boolean) => void;
+  onDelete?: (agentId: number) => void;
+  onDuplicate?: (agent: Agent) => void;
+  onReset?: (agentId: number) => void;
+  onToggleActive?: (agentId: number, isActive: boolean) => void;
   selectedProjectId?: null | number;
 }
 

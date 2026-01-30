@@ -9,16 +9,6 @@ import {
 } from "../layout/constants";
 
 /**
- * Agent layout state interface for managing layout and filter preferences.
- */
-export interface AgentLayoutState {
-  /** Currently selected layout for the agents view */
-  layout: AgentLayout;
-  /** Whether to show deactivated agents */
-  showDeactivated: boolean;
-}
-
-/**
  * Agent layout actions interface for modifying state.
  */
 export interface AgentLayoutActions {
@@ -26,6 +16,16 @@ export interface AgentLayoutActions {
   setLayout: (layout: AgentLayout) => void;
   /** Set the show deactivated preference and persist to electron-store */
   setShowDeactivated: (show: boolean) => void;
+}
+
+/**
+ * Agent layout state interface for managing layout and filter preferences.
+ */
+export interface AgentLayoutState {
+  /** Currently selected layout for the agents view */
+  layout: AgentLayout;
+  /** Whether to show deactivated agents */
+  showDeactivated: boolean;
 }
 
 /**
@@ -67,8 +67,6 @@ export type AgentLayoutStore = AgentLayoutActions & AgentLayoutState;
 export const useAgentLayoutStore = create<AgentLayoutStore>()((set) => ({
   // Initial state - will be hydrated from electron-store on mount
   layout: DEFAULT_AGENT_LAYOUT,
-  showDeactivated: DEFAULT_AGENT_SHOW_DEACTIVATED,
-
   // Actions
   setLayout: (layout: AgentLayout) => {
     set({ layout });
@@ -87,4 +85,6 @@ export const useAgentLayoutStore = create<AgentLayoutStore>()((set) => ({
       window.electronAPI.store.set(AGENT_SHOW_DEACTIVATED_STORAGE_KEY, show);
     }
   },
+
+  showDeactivated: DEFAULT_AGENT_SHOW_DEACTIVATED,
 }));

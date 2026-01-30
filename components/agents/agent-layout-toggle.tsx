@@ -30,7 +30,7 @@ interface LayoutOption {
 // Constants
 // ============================================================================
 
-const LAYOUT_OPTIONS: LayoutOption[] = [
+const LAYOUT_OPTIONS: Array<LayoutOption> = [
   { icon: LayoutGrid, label: 'Card view', value: 'card' },
   { icon: List, label: 'List view', value: 'list' },
   { icon: Table2, label: 'Table view', value: 'table' },

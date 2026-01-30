@@ -162,7 +162,7 @@ export const ProjectAgentEditorDialog = ({
 
           {/* Form wraps DialogBody + DialogFooter for submit to work */}
           <form
-            className={"flex flex-1 min-h-0 flex-col"}
+            className={"flex min-h-0 flex-1 flex-col"}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();

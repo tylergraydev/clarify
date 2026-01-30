@@ -21,14 +21,14 @@ export const CLAUDE_BUILTIN_TOOLS = [
 ] as const;
 
 /**
- * Tool name type derived from built-in tools
- */
-export type BuiltinToolName = (typeof CLAUDE_BUILTIN_TOOLS)[number]["name"];
-
-/**
  * Agent type for tool defaults
  */
 export type AgentToolType = "planning" | "review" | "specialist";
+
+/**
+ * Tool name type derived from built-in tools
+ */
+export type BuiltinToolName = (typeof CLAUDE_BUILTIN_TOOLS)[number]["name"];
 
 /**
  * Default tools enabled by agent type

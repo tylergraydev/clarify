@@ -2,9 +2,8 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { useState } from 'react';
-
 import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 import type { Agent } from '@/db/schema';
 
@@ -19,11 +18,8 @@ import { cn } from '@/lib/utils';
 // Types
 // ============================================================================
 
-type AgentType = Agent['type'];
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
-
 interface AgentTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onReset'> {
-  agents: Agent[];
+  agents: Array<Agent>;
   isCreatingOverride?: boolean;
   isDeleting?: boolean;
   isDuplicating?: boolean;
@@ -37,6 +33,9 @@ interface AgentTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onReset'> 
   /** The currently selected project ID, used to determine if override action is available */
   selectedProjectId?: null | number;
 }
+type AgentType = Agent['type'];
+
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
 // ============================================================================
 // Helper Functions

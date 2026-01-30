@@ -7,15 +7,17 @@ import {
   useCallback,
   useEffect,
   useEffectEvent,
+  useMemo,
   useState,
 } from "react";
 
+import type { AgentToolType } from "@/lib/constants/claude-tools";
 import type {
   CreateAgentFormData,
   UpdateAgentFormValues,
 } from "@/lib/validations/agent";
-import type { Agent } from "@/types/electron";
 import type { CreateToolData, ToolSelection } from "@/types/agent-tools";
+import type { Agent } from "@/types/electron";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,9 +42,9 @@ import {
 import { agentColors, agentTypes } from "@/db/schema/agents.schema";
 import {
   useAgentTools,
+  useAllowAgentTool,
   useCreateAgentTool,
   useDeleteAgentTool,
-  useAllowAgentTool,
   useDisallowAgentTool,
 } from "@/hooks/queries/use-agent-tools";
 import {
@@ -57,7 +59,6 @@ import {
   getDefaultToolsForAgentType,
   isBuiltinTool,
 } from "@/lib/constants/claude-tools";
-import type { AgentToolType } from "@/lib/constants/claude-tools";
 import { useAppForm } from "@/lib/forms/form-hook";
 import {
   createAgentFormSchema,
@@ -125,9 +126,13 @@ export const AgentEditorDialog = ({
   // Determine if component is controlled
   const isControlled = controlledIsOpen !== undefined;
   const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
-  const setIsOpen = isControlled
-    ? (open: boolean) => controlledOnOpenChange?.(open)
-    : setInternalIsOpen;
+  const setIsOpen = useMemo(
+    () =>
+      isControlled
+        ? (open: boolean) => controlledOnOpenChange?.(open)
+        : setInternalIsOpen,
+    [isControlled, controlledOnOpenChange]
+  );
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<"" | AgentColor>("");
 
@@ -136,11 +141,6 @@ export const AgentEditorDialog = ({
     []
   );
   const [customTools, setCustomTools] = useState<Array<CreateToolData>>([]);
-
-  // Track the selected agent type for resetting tool defaults
-  const [selectedAgentType, setSelectedAgentType] = useState<AgentToolType>(
-    initialData?.type ?? "specialist"
-  );
 
   const createAgentMutation = useCreateAgent();
   const updateAgentMutation = useUpdateAgent();
@@ -292,6 +292,20 @@ export const AgentEditorDialog = ({
     setSelectedColor(agentColor);
   });
 
+  const setToolDefaults = useEffectEvent((type: AgentToolType) => {
+    initializeToolDefaults(type);
+  });
+
+  const updateToolSelections = useEffectEvent(
+    (selections: Array<ToolSelection>) => {
+      setToolSelections(selections);
+    }
+  );
+
+  const updateCustomTools = useEffectEvent((tools: Array<CreateToolData>) => {
+    setCustomTools(tools);
+  });
+
   // Reset form and color when agent or initialData changes
   useEffect(() => {
     form.reset(getDefaultValues());
@@ -299,10 +313,8 @@ export const AgentEditorDialog = ({
       updateSelectedColor((agent.color as AgentColor) ?? "");
     } else if (initialData) {
       updateSelectedColor(initialData.color ?? "");
-      setSelectedAgentType(initialData.type);
     } else {
       updateSelectedColor("");
-      setSelectedAgentType("specialist");
     }
   }, [agent, initialData, form, getDefaultValues, isEditMode]);
 
@@ -313,8 +325,7 @@ export const AgentEditorDialog = ({
     if (!isEditMode) {
       // Create mode: initialize from defaults based on agent type
       const type = initialData?.type ?? "specialist";
-      initializeToolDefaults(type);
-      setSelectedAgentType(type);
+      setToolDefaults(type);
     }
   }, [isEditMode, isOpen, initialData, initializeToolDefaults]);
 
@@ -354,8 +365,8 @@ export const AgentEditorDialog = ({
       }
     }
 
-    setToolSelections(builtinSelections);
-    setCustomTools(customToolsList);
+    updateToolSelections(builtinSelections);
+    updateCustomTools(customToolsList);
   }, [isOpen, isEditMode, existingTools]);
 
   const getInitialColor = useCallback((): "" | AgentColor => {
@@ -375,7 +386,6 @@ export const AgentEditorDialog = ({
     if (!isEditMode) {
       const type = initialData?.type ?? "specialist";
       initializeToolDefaults(type);
-      setSelectedAgentType(type);
     }
   }, [
     form,
@@ -402,7 +412,6 @@ export const AgentEditorDialog = ({
         if (!isEditMode) {
           const type = initialData?.type ?? "specialist";
           initializeToolDefaults(type);
-          setSelectedAgentType(type);
         }
       } else {
         resetFormAndColor();
@@ -443,7 +452,6 @@ export const AgentEditorDialog = ({
   const handleAgentTypeChange = useCallback(
     (newType: string) => {
       const type = newType as AgentToolType;
-      setSelectedAgentType(type);
       initializeToolDefaults(type);
     },
     [initializeToolDefaults]
@@ -749,11 +757,8 @@ export const AgentEditorDialog = ({
                   <CollapsibleContent>
                     <div className={"border-t border-border p-3"}>
                       <AgentToolsSection
-                        agentType={isEditMode ? (agent?.type as AgentToolType) : selectedAgentType}
                         customTools={customTools}
                         disabled={isSubmitting || isResetting}
-                        existingTools={isEditMode ? existingTools : undefined}
-                        isCreateMode={!isEditMode}
                         onCustomToolsChange={
                           isEditMode
                             ? handleEditModeCustomToolsChange

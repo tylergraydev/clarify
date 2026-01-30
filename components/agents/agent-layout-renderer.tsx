@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentPropsWithRef } from 'react';
+import type { ComponentPropsWithoutRef } from 'react';
 
 import type { Agent } from '@/db/schema';
 
@@ -15,9 +15,9 @@ import { cn } from '@/lib/utils';
 // ============================================================================
 
 export interface AgentLayoutRendererProps
-  extends Omit<ComponentPropsWithRef<'div'>, 'onReset'> {
+  extends Omit<ComponentPropsWithoutRef<'div'>, 'onReset'> {
   /** Array of agents to render */
-  agents: Agent[];
+  agents: Array<Agent>;
   /** Whether an override creation is in progress */
   isCreatingOverride?: boolean;
   /** Whether a deletion is in progress */
@@ -82,7 +82,6 @@ export const AgentLayoutRenderer = ({
   onDuplicate,
   onReset,
   onToggleActive,
-  ref,
   selectedProjectId,
   ...props
 }: AgentLayoutRendererProps) => {
@@ -97,7 +96,6 @@ export const AgentLayoutRenderer = ({
           'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
           className
         )}
-        ref={ref}
         {...props}
       >
         {agents.map((agent) => (
@@ -137,9 +135,7 @@ export const AgentLayoutRenderer = ({
         onDuplicate={onDuplicate}
         onReset={onReset}
         onToggleActive={onToggleActive}
-        ref={ref}
         selectedProjectId={selectedProjectId}
-        {...props}
       />
     );
   }
@@ -159,9 +155,7 @@ export const AgentLayoutRenderer = ({
       onDuplicate={onDuplicate}
       onReset={onReset}
       onToggleActive={onToggleActive}
-      ref={ref}
       selectedProjectId={selectedProjectId}
-      {...props}
     />
   );
 };

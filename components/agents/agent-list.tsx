@@ -2,9 +2,8 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { useState } from 'react';
-
 import { Copy, FolderPlus, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 import type { Agent } from '@/db/schema';
 
@@ -18,25 +17,6 @@ import { cn } from '@/lib/utils';
 // ============================================================================
 // Types
 // ============================================================================
-
-type AgentType = Agent['type'];
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
-
-interface AgentListProps extends Omit<ComponentPropsWithRef<'ul'>, 'onReset'> {
-  agents: Agent[];
-  isCreatingOverride?: boolean;
-  isDeleting?: boolean;
-  isDuplicating?: boolean;
-  isResetting?: boolean;
-  isToggling?: boolean;
-  onCreateOverride?: (agent: Agent) => void;
-  onDelete?: (agentId: number) => void;
-  onDuplicate?: (agent: Agent) => void;
-  onReset?: (agentId: number) => void;
-  onToggleActive?: (agentId: number, isActive: boolean) => void;
-  /** The currently selected project ID, used to determine if override action is available */
-  selectedProjectId?: null | number;
-}
 
 interface AgentListItemProps
   extends Omit<ComponentPropsWithRef<'li'>, 'onClick' | 'onReset'> {
@@ -53,6 +33,25 @@ interface AgentListItemProps
   onToggleActive?: (agentId: number, isActive: boolean) => void;
   selectedProjectId?: null | number;
 }
+interface AgentListProps extends Omit<ComponentPropsWithRef<'ul'>, 'onReset'> {
+  agents: Array<Agent>;
+  isCreatingOverride?: boolean;
+  isDeleting?: boolean;
+  isDuplicating?: boolean;
+  isResetting?: boolean;
+  isToggling?: boolean;
+  onCreateOverride?: (agent: Agent) => void;
+  onDelete?: (agentId: number) => void;
+  onDuplicate?: (agent: Agent) => void;
+  onReset?: (agentId: number) => void;
+  onToggleActive?: (agentId: number, isActive: boolean) => void;
+  /** The currently selected project ID, used to determine if override action is available */
+  selectedProjectId?: null | number;
+}
+
+type AgentType = Agent['type'];
+
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
 // ============================================================================
 // Helper Functions

@@ -61,10 +61,14 @@ export const BuiltinToolsSelector = ({
 
       if (existingIndex >= 0) {
         // Update existing tool
-        newTools[existingIndex] = {
-          ...newTools[existingIndex],
-          enabled: checked,
-        };
+        const existing = newTools[existingIndex];
+        if (existing) {
+          newTools[existingIndex] = {
+            enabled: checked,
+            pattern: existing.pattern,
+            toolName: existing.toolName,
+          };
+        }
       } else {
         // Add new tool selection
         newTools.push({
@@ -86,10 +90,14 @@ export const BuiltinToolsSelector = ({
       const newTools = [...value];
 
       if (existingIndex >= 0) {
-        newTools[existingIndex] = {
-          ...newTools[existingIndex],
-          pattern,
-        };
+        const existing = newTools[existingIndex];
+        if (existing) {
+          newTools[existingIndex] = {
+            enabled: existing.enabled,
+            pattern,
+            toolName: existing.toolName,
+          };
+        }
       } else {
         // Add new tool with pattern (enabled by default if pattern is being set)
         newTools.push({
@@ -145,7 +153,9 @@ export const BuiltinToolsSelector = ({
                 <Input
                   className={"h-7 w-24 font-mono text-xs"}
                   disabled={disabled || !isEnabled}
-                  onChange={(e) => handlePatternChange(tool.name, e.target.value)}
+                  onChange={(e) =>
+                    handlePatternChange(tool.name, e.target.value)
+                  }
                   placeholder={"*"}
                   value={isEnabled ? pattern : ""}
                 />

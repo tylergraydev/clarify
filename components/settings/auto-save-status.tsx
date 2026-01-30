@@ -1,9 +1,8 @@
 "use client";
 
-import type { ReactElement } from "react";
-
 import { cva, type VariantProps } from "class-variance-authority";
 import { Check, Loader2 } from "lucide-react";
+import { Fragment, ReactElement } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -26,8 +25,9 @@ const autoSaveStatusVariants = cva(
   }
 );
 
-interface AutoSaveStatusProps
-  extends VariantProps<typeof autoSaveStatusVariants> {
+interface AutoSaveStatusProps extends VariantProps<
+  typeof autoSaveStatusVariants
+> {
   className?: string;
   state: AutoSaveState;
 }
@@ -42,16 +42,16 @@ export const AutoSaveStatus = ({
       className={cn(autoSaveStatusVariants({ state }), className)}
     >
       {state === "saving" && (
-        <>
+        <Fragment>
           <Loader2 aria-hidden={"true"} className={"size-4 animate-spin"} />
           <span>Saving...</span>
-        </>
+        </Fragment>
       )}
       {state === "saved" && (
-        <>
+        <Fragment>
           <Check aria-hidden={"true"} className={"size-4"} />
           <span>Saved</span>
-        </>
+        </Fragment>
       )}
       {state === "error" && <span>Failed to save</span>}
     </div>
