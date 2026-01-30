@@ -5,28 +5,28 @@
  * Only visible rows are rendered, dramatically improving performance.
  */
 
-import { useReactTable, getCoreRowModel, ColumnDef, flexRender } from '@tanstack/react-table'
+import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useMemo, useRef } from 'react'
 
 interface DataRow {
+  category: string
   id: number
   name: string
   value: number
-  category: string
 }
 
 // Generate large dataset (10k rows)
-function generateLargeDataset(count: number): DataRow[] {
+function generateLargeDataset(count: number): Array<DataRow> {
   return Array.from({ length: count }, (_, i) => ({
+    category: ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)],
     id: i + 1,
     name: `Item ${i + 1}`,
     value: Math.floor(Math.random() * 1000),
-    category: ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)],
   }))
 }
 
-const columns: ColumnDef<DataRow>[] = [
+const columns: Array<ColumnDef<DataRow>> = [
   {
     accessorKey: 'id',
     header: 'ID',
@@ -38,8 +38,8 @@ const columns: ColumnDef<DataRow>[] = [
   },
   {
     accessorKey: 'value',
-    header: 'Value',
     cell: info => info.getValue().toLocaleString(),
+    header: 'Value',
   },
   {
     accessorKey: 'category',
@@ -56,8 +56,8 @@ export function VirtualizedTable() {
 
   // TanStack Table
   const table = useReactTable({
-    data,
     columns,
+    data,
     getCoreRowModel: getCoreRowModel(),
   })
 
@@ -66,8 +66,8 @@ export function VirtualizedTable() {
   // TanStack Virtual: Virtualize rows
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
-    getScrollElement: () => tableContainerRef.current,
     estimateSize: () => 50, // Estimated row height in pixels
+    getScrollElement: () => tableContainerRef.current,
     overscan: 10, // Render 10 extra rows above/below viewport for smooth scrolling
   })
 
@@ -82,27 +82,27 @@ export function VirtualizedTable() {
       : 0
 
   return (
-    <div className="p-4">
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold">Virtualized Table</h2>
-        <p className="text-gray-600">
+    <div className={"p-4"}>
+      <div className={"mb-4"}>
+        <h2 className={"text-2xl font-bold"}>Virtualized Table</h2>
+        <p className={"text-gray-600"}>
           Rendering {rows.length.toLocaleString()} rows efficiently
         </p>
       </div>
 
       <div
+        className={"overflow-auto border border-gray-300"}
         ref={tableContainerRef}
-        className="border border-gray-300 overflow-auto"
         style={{ height: '600px' }}
       >
-        <table className="w-full">
-          <thead className="bg-gray-100 sticky top-0 z-10">
+        <table className={"w-full"}>
+          <thead className={"sticky top-0 z-10 bg-gray-100"}>
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
                   <th
+                    className={"border-b border-gray-300 px-4 py-2 text-left font-semibold"}
                     key={header.id}
-                    className="border-b border-gray-300 px-4 py-2 text-left font-semibold"
                     style={{ width: header.getSize() }}
                   >
                     {header.isPlaceholder
@@ -125,9 +125,9 @@ export function VirtualizedTable() {
             {virtualRows.map(virtualRow => {
               const row = rows[virtualRow.index]
               return (
-                <tr key={row.id} className="hover:bg-gray-50">
+                <tr className={"hover:bg-gray-50"} key={row.id}>
                   {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="border-b border-gray-200 px-4 py-2">
+                    <td className={"border-b border-gray-200 px-4 py-2"} key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -143,7 +143,7 @@ export function VirtualizedTable() {
         </table>
       </div>
 
-      <div className="mt-2 text-sm text-gray-600">
+      <div className={"mt-2 text-sm text-gray-600"}>
         Scroll performance: Only {virtualRows.length} rows rendered of{' '}
         {rows.length.toLocaleString()} total
       </div>

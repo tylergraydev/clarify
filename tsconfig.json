@@ -33,7 +33,7 @@
     "strictNullChecks": true,
     "target": "ES2017"
   },
-  "exclude": ["node_modules", ".worktrees"],
+  "exclude": ["node_modules", ".worktrees", ".claude", "docs"],
   "include": [
     "next-env.d.ts",
     "**/*.ts",

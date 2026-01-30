@@ -5,16 +5,16 @@
  * Use createColumnHelper for full type safety.
  */
 
-import { createColumnHelper, ColumnDef } from '@tanstack/react-table'
+import { ColumnDef, createColumnHelper } from '@tanstack/react-table'
 
 interface User {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
   age: number
-  status: 'active' | 'inactive'
   createdAt: Date
+  email: string
+  firstName: string
+  id: string
+  lastName: string
+  status: 'active' | 'inactive'
 }
 
 // ============================================
@@ -29,8 +29,8 @@ export const columnsWithHelper = [
     size: 80,
   }),
   columnHelper.accessor('firstName', {
-    header: 'First Name',
     cell: info => info.getValue(), // Fully typed!
+    header: 'First Name',
   }),
   columnHelper.accessor('lastName', {
     header: 'Last Name',
@@ -39,28 +39,27 @@ export const columnsWithHelper = [
   columnHelper.accessor(
     row => `${row.firstName} ${row.lastName}`,
     {
-      id: 'fullName',
-      header: 'Full Name',
       cell: info => <strong>{info.getValue()}</strong>,
+      header: 'Full Name',
+      id: 'fullName',
     }
   ),
   columnHelper.accessor('email', {
-    header: 'Email',
     cell: info => (
-      <a href={`mailto:${info.getValue()}`} className="text-blue-600 underline">
+      <a className={"text-blue-600 underline"} href={`mailto:${info.getValue()}`}>
         {info.getValue()}
       </a>
     ),
+    header: 'Email',
   }),
   columnHelper.accessor('age', {
     header: 'Age',
     size: 80,
   }),
   columnHelper.accessor('status', {
-    header: 'Status',
     cell: info => (
       <span
-        className={`px-2 py-1 rounded text-xs ${
+        className={`rounded-sm px-2 py-1 text-xs ${
           info.getValue() === 'active'
             ? 'bg-green-100 text-green-800'
             : 'bg-gray-100 text-gray-800'
@@ -69,11 +68,12 @@ export const columnsWithHelper = [
         {info.getValue()}
       </span>
     ),
+    header: 'Status',
   }),
   columnHelper.accessor('createdAt', {
-    header: 'Created',
     cell: info => info.getValue().toLocaleDateString(),
     enableSorting: true,
+    header: 'Created',
   }),
 ]
 
@@ -81,7 +81,7 @@ export const columnsWithHelper = [
 // Method 2: Manual ColumnDef (TypeScript)
 // ============================================
 
-export const columnsManual: ColumnDef<User>[] = [
+export const columnsManual: Array<ColumnDef<User>> = [
   {
     accessorKey: 'id',
     header: 'ID',
@@ -105,24 +105,24 @@ export const advancedColumns = [
     header: 'ID',
   }),
   columnHelper.display({
-    id: 'actions',
-    header: 'Actions',
     cell: props => (
-      <div className="flex gap-2">
+      <div className={"flex gap-2"}>
         <button
+          className={"rounded-sm bg-blue-500 px-2 py-1 text-sm text-white"}
           onClick={() => console.log('Edit', props.row.original.id)}
-          className="px-2 py-1 bg-blue-500 text-white rounded text-sm"
         >
           Edit
         </button>
         <button
+          className={"rounded-sm bg-red-500 px-2 py-1 text-sm text-white"}
           onClick={() => console.log('Delete', props.row.original.id)}
-          className="px-2 py-1 bg-red-500 text-white rounded text-sm"
         >
           Delete
         </button>
       </div>
     ),
+    header: 'Actions',
+    id: 'actions',
   }),
 ]
 
@@ -132,20 +132,20 @@ export const advancedColumns = [
 
 export const sortableFilterableColumns = [
   columnHelper.accessor('firstName', {
-    header: 'First Name',
-    enableSorting: true,
     enableColumnFilter: true,
+    enableSorting: true,
+    header: 'First Name',
   }),
   columnHelper.accessor('age', {
-    header: 'Age',
-    enableSorting: true,
     enableColumnFilter: true,
+    enableSorting: true,
     filterFn: 'inNumberRange', // Built-in filter function
+    header: 'Age',
   }),
   columnHelper.accessor('status', {
-    header: 'Status',
     enableColumnFilter: true,
     filterFn: 'equals', // Exact match
+    header: 'Status',
   }),
 ]
 

@@ -5,7 +5,9 @@
  * Requires: Tailwind v4 + shadcn/ui Table components
  */
 
-import { useReactTable, getCoreRowModel, ColumnDef, flexRender } from '@tanstack/react-table'
+import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { useMemo } from 'react'
+
 import {
   Table,
   TableBody,
@@ -15,16 +17,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useMemo } from 'react'
 
 interface User {
+  email: string
   id: string
   name: string
-  email: string
   status: 'active' | 'inactive' | 'pending'
 }
 
-const columns: ColumnDef<User>[] = [
+const columns: Array<ColumnDef<User>> = [
   {
     accessorKey: 'id',
     header: 'ID',
@@ -39,7 +40,6 @@ const columns: ColumnDef<User>[] = [
   },
   {
     accessorKey: 'status',
-    header: 'Status',
     cell: ({ row }) => {
       const status = row.getValue('status') as string
       return (
@@ -56,27 +56,28 @@ const columns: ColumnDef<User>[] = [
         </span>
       )
     },
+    header: 'Status',
   },
 ]
 
 export function ShadcnStyledTable() {
-  const data = useMemo<User[]>(
+  const data = useMemo<Array<User>>(
     () => [
-      { id: '1', name: 'Alice Smith', email: 'alice@example.com', status: 'active' },
-      { id: '2', name: 'Bob Johnson', email: 'bob@example.com', status: 'inactive' },
-      { id: '3', name: 'Charlie Brown', email: 'charlie@example.com', status: 'pending' },
+      { email: 'alice@example.com', id: '1', name: 'Alice Smith', status: 'active' },
+      { email: 'bob@example.com', id: '2', name: 'Bob Johnson', status: 'inactive' },
+      { email: 'charlie@example.com', id: '3', name: 'Charlie Brown', status: 'pending' },
     ],
     []
   )
 
   const table = useReactTable({
-    data,
     columns,
+    data,
     getCoreRowModel: getCoreRowModel(),
   })
 
   return (
-    <div className="rounded-md border">
+    <div className={"rounded-md border"}>
       <Table>
         <TableCaption>A list of your recent users.</TableCaption>
         <TableHeader>
@@ -99,8 +100,8 @@ export function ShadcnStyledTable() {
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map(row => (
               <TableRow
-                key={row.id}
                 data-state={row.getIsSelected() && 'selected'}
+                key={row.id}
               >
                 {row.getVisibleCells().map(cell => (
                   <TableCell key={cell.id}>
@@ -111,7 +112,7 @@ export function ShadcnStyledTable() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+              <TableCell className={"h-24 text-center"} colSpan={columns.length}>
                 No results.
               </TableCell>
             </TableRow>

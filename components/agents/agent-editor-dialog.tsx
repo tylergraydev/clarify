@@ -42,6 +42,10 @@ import {
 } from "@/components/ui/dialog";
 import { agentColors, agentTypes } from "@/db/schema/agents.schema";
 import {
+  useCreateAgentSkill,
+  useSetAgentSkillRequired,
+} from "@/hooks/queries/use-agent-skills";
+import {
   useAgentTools,
   useAllowAgentTool,
   useCreateAgentTool,
@@ -65,11 +69,6 @@ import {
   createAgentFormSchema,
   updateAgentSchema,
 } from "@/lib/validations/agent";
-
-import {
-  useCreateAgentSkill,
-  useSetAgentSkillRequired,
-} from "@/hooks/queries/use-agent-skills";
 
 import { AgentColorPicker } from "./agent-color-picker";
 import { AgentSkillsManager } from "./agent-skills-manager";
@@ -603,6 +602,8 @@ export const AgentEditorDialog = ({
       ? "Creating..."
       : "Create Agent";
 
+  const isEditAgent = isEditMode && agent;
+
   return (
     <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
       {/* Trigger - only render when provided (uncontrolled mode) */}
@@ -828,7 +829,7 @@ export const AgentEditorDialog = ({
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className={"border-t border-border p-3"}>
-                      {isEditMode && agent ? (
+                      {isEditAgent ? (
                         <AgentSkillsManager
                           agentId={agent.id}
                           disabled={isSubmitting || isResetting || isViewMode}

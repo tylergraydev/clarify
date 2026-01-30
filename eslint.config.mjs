@@ -21,6 +21,8 @@ const eslintConfig = defineConfig([
     "electron-dist/**",
     // Git worktrees for parallel implementations:
     ".worktrees/**",
+    ".claude/**",
+    "docs/**",
   ]),
   // TypeScript ESLint recommended and stylistic rules.
   tseslint.configs.recommended,

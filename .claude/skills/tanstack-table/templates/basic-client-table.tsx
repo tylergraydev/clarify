@@ -5,18 +5,18 @@
  * Use for: Small datasets (<1000 rows), all data available client-side
  */
 
-import { useReactTable, getCoreRowModel, ColumnDef, flexRender } from '@tanstack/react-table'
+import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { useMemo } from 'react'
 
 interface User {
+  email: string
   id: string
   name: string
-  email: string
   role: string
 }
 
 // Define columns outside component OR use useMemo to prevent infinite re-renders
-const columns: ColumnDef<User>[] = [
+const columns: Array<ColumnDef<User>> = [
   {
     accessorKey: 'id',
     header: 'ID',
@@ -37,34 +37,34 @@ const columns: ColumnDef<User>[] = [
 
 export function BasicClientTable() {
   // CRITICAL: Memoize data to prevent infinite re-renders
-  const data = useMemo<User[]>(
+  const data = useMemo<Array<User>>(
     () => [
-      { id: '1', name: 'Alice Smith', email: 'alice@example.com', role: 'Admin' },
-      { id: '2', name: 'Bob Johnson', email: 'bob@example.com', role: 'User' },
-      { id: '3', name: 'Charlie Brown', email: 'charlie@example.com', role: 'User' },
-      { id: '4', name: 'Diana Prince', email: 'diana@example.com', role: 'Editor' },
+      { email: 'alice@example.com', id: '1', name: 'Alice Smith', role: 'Admin' },
+      { email: 'bob@example.com', id: '2', name: 'Bob Johnson', role: 'User' },
+      { email: 'charlie@example.com', id: '3', name: 'Charlie Brown', role: 'User' },
+      { email: 'diana@example.com', id: '4', name: 'Diana Prince', role: 'Editor' },
     ],
     []
   )
 
   const table = useReactTable({
-    data,
     columns,
+    data,
     getCoreRowModel: getCoreRowModel(), // Required: Core functionality
   })
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Users</h2>
+    <div className={"p-4"}>
+      <h2 className={"mb-4 text-2xl font-bold"}>Users</h2>
 
-      <table className="w-full border-collapse border border-gray-300">
+      <table className={"w-full border-collapse border border-gray-300"}>
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id} className="bg-gray-100">
+            <tr className={"bg-gray-100"} key={headerGroup.id}>
               {headerGroup.headers.map(header => (
                 <th
+                  className={"border border-gray-300 px-4 py-2 text-left"}
                   key={header.id}
-                  className="border border-gray-300 px-4 py-2 text-left"
                 >
                   {header.isPlaceholder
                     ? null
@@ -79,11 +79,11 @@ export function BasicClientTable() {
         </thead>
         <tbody>
           {table.getRowModel().rows.map(row => (
-            <tr key={row.id} className="hover:bg-gray-50">
+            <tr className={"hover:bg-gray-50"} key={row.id}>
               {row.getVisibleCells().map(cell => (
                 <td
+                  className={"border border-gray-300 px-4 py-2"}
                   key={cell.id}
-                  className="border border-gray-300 px-4 py-2"
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
@@ -93,7 +93,7 @@ export function BasicClientTable() {
         </tbody>
       </table>
 
-      <div className="mt-4 text-sm text-gray-600">
+      <div className={"mt-4 text-sm text-gray-600"}>
         Showing {table.getRowModel().rows.length} rows
       </div>
     </div>

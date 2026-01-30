@@ -5,34 +5,34 @@
  * Use for: Large datasets (1000+ rows), data from API
  */
 
-import {
-  useReactTable,
-  getCoreRowModel,
-  ColumnDef,
-  PaginationState,
-  flexRender,
-} from '@tanstack/react-table'
 import { useQuery } from '@tanstack/react-query'
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  PaginationState,
+  useReactTable,
+} from '@tanstack/react-table'
 import { useState } from 'react'
 
 interface User {
+  created_at: string
+  email: string
   id: string
   name: string
-  email: string
-  created_at: string
 }
 
 interface UsersResponse {
-  data: User[]
+  data: Array<User>
   pagination: {
     page: number
+    pageCount: number
     pageSize: number
     total: number
-    pageCount: number
   }
 }
 
-const columns: ColumnDef<User>[] = [
+const columns: Array<ColumnDef<User>> = [
   {
     accessorKey: 'id',
     header: 'ID',
@@ -48,8 +48,8 @@ const columns: ColumnDef<User>[] = [
   },
   {
     accessorKey: 'created_at',
-    header: 'Created',
     cell: info => new Date(info.getValue() as string).toLocaleDateString(),
+    header: 'Created',
   },
 ]
 
@@ -61,8 +61,9 @@ export function ServerPaginatedTable() {
 
   // TanStack Query: Fetch data from API
   // CRITICAL: Include ALL table state in query key for proper refetching
-  const { data, isLoading, isError, error } = useQuery<UsersResponse>({
-    queryKey: ['users', pagination.pageIndex, pagination.pageSize],
+  const { data, error, isError, isLoading } = useQuery<UsersResponse>({
+    // Keep previous data while fetching new page
+    placeholderData: (previousData) => previousData,
     queryFn: async () => {
       const response = await fetch(
         `/api/users?page=${pagination.pageIndex}&pageSize=${pagination.pageSize}`
@@ -72,32 +73,31 @@ export function ServerPaginatedTable() {
       }
       return response.json()
     },
-    // Keep previous data while fetching new page
-    placeholderData: (previousData) => previousData,
+    queryKey: ['users', pagination.pageIndex, pagination.pageSize],
   })
 
   // TanStack Table: Manage display and interactions
   const table = useReactTable({
-    data: data?.data ?? [],
     columns,
+    data: data?.data ?? [],
     getCoreRowModel: getCoreRowModel(),
     // CRITICAL: Tell table that pagination is handled by server
     manualPagination: true,
+    onPaginationChange: setPagination,
     pageCount: data?.pagination.pageCount ?? 0,
     state: {
       pagination,
     },
-    onPaginationChange: setPagination,
   })
 
   if (isLoading) {
     return (
-      <div className="p-4">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded mb-4"></div>
-          <div className="space-y-3">
+      <div className={"p-4"}>
+        <div className={"animate-pulse"}>
+          <div className={"mb-4 h-8 rounded-sm bg-gray-200"}></div>
+          <div className={"space-y-3"}>
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-12 bg-gray-200 rounded"></div>
+              <div className={"h-12 rounded-sm bg-gray-200"} key={i}></div>
             ))}
           </div>
         </div>
@@ -107,8 +107,8 @@ export function ServerPaginatedTable() {
 
   if (isError) {
     return (
-      <div className="p-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      <div className={"p-4"}>
+        <div className={"rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-red-700"}>
           Error: {error.message}
         </div>
       </div>
@@ -116,18 +116,18 @@ export function ServerPaginatedTable() {
   }
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Users (Server-Side Pagination)</h2>
+    <div className={"p-4"}>
+      <h2 className={"mb-4 text-2xl font-bold"}>Users (Server-Side Pagination)</h2>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
+      <div className={"overflow-x-auto"}>
+        <table className={"w-full border-collapse border border-gray-300"}>
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id} className="bg-gray-100">
+              <tr className={"bg-gray-100"} key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
                   <th
+                    className={"border border-gray-300 px-4 py-2 text-left font-semibold"}
                     key={header.id}
-                    className="border border-gray-300 px-4 py-2 text-left font-semibold"
                     style={{ width: header.getSize() }}
                   >
                     {header.isPlaceholder
@@ -143,9 +143,9 @@ export function ServerPaginatedTable() {
           </thead>
           <tbody>
             {table.getRowModel().rows.map(row => (
-              <tr key={row.id} className="hover:bg-gray-50">
+              <tr className={"hover:bg-gray-50"} key={row.id}>
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="border border-gray-300 px-4 py-2">
+                  <td className={"border border-gray-300 px-4 py-2"} key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -156,39 +156,39 @@ export function ServerPaginatedTable() {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between mt-4">
-        <div className="flex items-center gap-2">
+      <div className={"mt-4 flex items-center justify-between"}>
+        <div className={"flex items-center gap-2"}>
           <button
-            onClick={() => table.firstPage()}
+            className={"rounded-sm border px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"}
             disabled={!table.getCanPreviousPage()}
-            className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            onClick={() => table.firstPage()}
           >
             {'<<'}
           </button>
           <button
-            onClick={() => table.previousPage()}
+            className={"rounded-sm border px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"}
             disabled={!table.getCanPreviousPage()}
-            className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            onClick={() => table.previousPage()}
           >
             {'<'}
           </button>
           <button
-            onClick={() => table.nextPage()}
+            className={"rounded-sm border px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"}
             disabled={!table.getCanNextPage()}
-            className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            onClick={() => table.nextPage()}
           >
             {'>'}
           </button>
           <button
-            onClick={() => table.lastPage()}
+            className={"rounded-sm border px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"}
             disabled={!table.getCanNextPage()}
-            className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            onClick={() => table.lastPage()}
           >
             {'>>'}
           </button>
         </div>
 
-        <div className="flex items-center gap-4 text-sm">
+        <div className={"flex items-center gap-4 text-sm"}>
           <span>
             Page <strong>{table.getState().pagination.pageIndex + 1}</strong> of{' '}
             <strong>{table.getPageCount()}</strong>
@@ -199,11 +199,11 @@ export function ServerPaginatedTable() {
           </span>
 
           <select
-            value={table.getState().pagination.pageSize}
+            className={"rounded-sm border px-2 py-1"}
             onChange={e => {
               table.setPageSize(Number(e.target.value))
             }}
-            className="border rounded px-2 py-1"
+            value={table.getState().pagination.pageSize}
           >
             {[10, 20, 30, 40, 50].map(pageSize => (
               <option key={pageSize} value={pageSize}>

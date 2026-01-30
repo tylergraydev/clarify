@@ -13,7 +13,7 @@ interface Env {
   DB: D1Database
 }
 
-export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const url = new URL(request.url)
 
   // Parse query parameters
@@ -31,7 +31,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       SELECT id, name, email, role, created_at
       FROM users
     `
-    const params: (string | number)[] = []
+    const params: Array<number | string> = []
 
     // Add search filter
     if (search) {
@@ -57,7 +57,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
     // Get total count for pagination
     let countQuery = `SELECT COUNT(*) as total FROM users`
-    const countParams: (string)[] = []
+    const countParams: Array<string> = []
     if (search) {
       countQuery += ` WHERE name LIKE ? OR email LIKE ?`
       countParams.push(`%${search}%`, `%${search}%`)
@@ -69,9 +69,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       data: results,
       pagination: {
         page,
+        pageCount: Math.ceil(total / pageSize),
         pageSize,
         total,
-        pageCount: Math.ceil(total / pageSize),
       },
     })
   } catch (error) {
@@ -87,62 +87,62 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 // CLIENT-SIDE TABLE COMPONENT
 // ============================================
 
+import { useQuery } from '@tanstack/react-query'
 import {
-  useReactTable,
-  getCoreRowModel,
   ColumnDef,
-  PaginationState,
-  SortingState,
   ColumnFiltersState,
   flexRender,
+  getCoreRowModel,
+  PaginationState,
+  SortingState,
+  useReactTable,
 } from '@tanstack/react-table'
-import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 interface User {
+  created_at: string
+  email: string
   id: string
   name: string
-  email: string
   role: string
-  created_at: string
 }
 
 interface UsersResponse {
-  data: User[]
+  data: Array<User>
   pagination: {
     page: number
+    pageCount: number
     pageSize: number
     total: number
-    pageCount: number
   }
 }
 
-const columns: ColumnDef<User>[] = [
+const columns: Array<ColumnDef<User>> = [
   {
     accessorKey: 'id',
-    header: 'ID',
     enableSorting: true,
+    header: 'ID',
   },
   {
     accessorKey: 'name',
-    header: 'Name',
     enableSorting: true,
+    header: 'Name',
   },
   {
     accessorKey: 'email',
-    header: 'Email',
     enableSorting: true,
+    header: 'Email',
   },
   {
     accessorKey: 'role',
-    header: 'Role',
     enableSorting: true,
+    header: 'Role',
   },
   {
     accessorKey: 'created_at',
-    header: 'Created',
-    enableSorting: true,
     cell: info => new Date(info.getValue() as string).toLocaleDateString(),
+    enableSorting: true,
+    header: 'Created',
   },
 ]
 
@@ -159,8 +159,8 @@ export function D1DatabaseTable() {
   const searchValue = columnFilters.find(f => f.id === 'search')?.value as string || ''
 
   // CRITICAL: Include ALL state in query key
-  const { data, isLoading, isError } = useQuery<UsersResponse>({
-    queryKey: ['users', pagination, sorting, searchValue],
+  const { data, isError, isLoading } = useQuery<UsersResponse>({
+    placeholderData: (previousData) => previousData,
     queryFn: async () => {
       const params = new URLSearchParams({
         page: pagination.pageIndex.toString(),
@@ -182,61 +182,61 @@ export function D1DatabaseTable() {
       if (!response.ok) throw new Error('Failed to fetch')
       return response.json()
     },
-    placeholderData: (previousData) => previousData,
+    queryKey: ['users', pagination, sorting, searchValue],
   })
 
   const table = useReactTable({
-    data: data?.data ?? [],
     columns,
+    data: data?.data ?? [],
     getCoreRowModel: getCoreRowModel(),
+    manualFiltering: true,
     // Server-side features
     manualPagination: true,
     manualSorting: true,
-    manualFiltering: true,
-    pageCount: data?.pagination.pageCount ?? 0,
-    state: {
-      pagination,
-      sorting,
-      columnFilters,
-    },
+    onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    pageCount: data?.pagination.pageCount ?? 0,
+    state: {
+      columnFilters,
+      pagination,
+      sorting,
+    },
   })
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Users (D1 Database)</h2>
+    <div className={"p-4"}>
+      <h2 className={"mb-4 text-2xl font-bold"}>Users (D1 Database)</h2>
 
       {/* Search Filter */}
-      <div className="mb-4">
+      <div className={"mb-4"}>
         <input
-          type="text"
-          placeholder="Search by name or email..."
-          value={searchValue}
+          className={"w-full max-w-md rounded-sm border px-3 py-2"}
           onChange={e =>
             setColumnFilters([{ id: 'search', value: e.target.value }])
           }
-          className="border rounded px-3 py-2 w-full max-w-md"
+          placeholder={"Search by name or email..."}
+          type={"text"}
+          value={searchValue}
         />
       </div>
 
       {isLoading && <div>Loading...</div>}
-      {isError && <div className="text-red-600">Error loading data</div>}
+      {isError && <div className={"text-red-600"}>Error loading data</div>}
 
       {!isLoading && !isError && (
         <>
-          <table className="w-full border-collapse">
+          <table className={"w-full border-collapse"}>
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map(header => (
                     <th
+                      className={"cursor-pointer border bg-gray-100 px-4 py-2 hover:bg-gray-200"}
                       key={header.id}
                       onClick={header.column.getToggleSortingHandler()}
-                      className="border px-4 py-2 bg-gray-100 cursor-pointer hover:bg-gray-200"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className={"flex items-center gap-2"}>
                         {flexRender(
                           header.column.columnDef.header,
                           header.getContext()
@@ -255,7 +255,7 @@ export function D1DatabaseTable() {
               {table.getRowModel().rows.map(row => (
                 <tr key={row.id}>
                   {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="border px-4 py-2">
+                    <td className={"border px-4 py-2"} key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -265,22 +265,22 @@ export function D1DatabaseTable() {
           </table>
 
           {/* Pagination */}
-          <div className="mt-4 flex justify-between">
+          <div className={"mt-4 flex justify-between"}>
             <div>
               Page {pagination.pageIndex + 1} of {data?.pagination.pageCount ?? 0}
             </div>
-            <div className="flex gap-2">
+            <div className={"flex gap-2"}>
               <button
-                onClick={() => table.previousPage()}
+                className={"rounded-sm border px-3 py-1 disabled:opacity-50"}
                 disabled={!table.getCanPreviousPage()}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                onClick={() => table.previousPage()}
               >
                 Previous
               </button>
               <button
-                onClick={() => table.nextPage()}
+                className={"rounded-sm border px-3 py-1 disabled:opacity-50"}
                 disabled={!table.getCanNextPage()}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                onClick={() => table.nextPage()}
               >
                 Next
               </button>
