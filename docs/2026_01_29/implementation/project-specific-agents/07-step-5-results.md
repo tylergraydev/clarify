@@ -5,19 +5,21 @@
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
+| File                          | Changes                                                                                                                           |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `hooks/queries/use-agents.ts` | Added `useGlobalAgents` and `useProjectAgents` query hooks, updated `useCreateAgent` mutation with scope-aware cache invalidation |
 
 ## Query Hooks Created
 
 ### `useGlobalAgents(filters?)`
+
 - Uses `agentKeys.global(filters)` query key
 - Calls `api.agent.list({ scope: "global", ... })`
 - Returns only agents with `projectId IS NULL`
 - Supports optional `includeDeactivated` and `type` filters
 
 ### `useProjectAgents(projectId, filters?)`
+
 - Uses `agentKeys.projectScoped(projectId, filters)` query key
 - Requires `projectId` parameter
 - Calls `api.agent.list({ scope: "project", projectId, ... })`
@@ -26,6 +28,7 @@
 - Supports optional `includeDeactivated` and `type` filters
 
 ### `useCreateAgent` mutation updated
+
 - Now performs scope-aware cache invalidation
 - If created agent has `projectId`: invalidates `agentKeys.projectScoped._def` and `agentKeys.byProject(projectId)`
 - If created agent has no `projectId` (global): invalidates `agentKeys.global._def`

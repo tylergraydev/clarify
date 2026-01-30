@@ -13,12 +13,12 @@ This orchestration implements multiple layout views for the agent management scr
 
 ## Orchestration Steps
 
-| Step | Name | Status | Description |
-|------|------|--------|-------------|
-| 0a | Clarification | Skipped | Request was sufficiently detailed (score 4/5) |
-| 1 | Feature Refinement | Completed | Enhanced request with project context |
-| 2 | File Discovery | Completed | Discovered 20+ relevant files |
-| 3 | Implementation Planning | Completed | Generated 14-step implementation plan |
+| Step | Name                    | Status    | Description                                   |
+| ---- | ----------------------- | --------- | --------------------------------------------- |
+| 0a   | Clarification           | Skipped   | Request was sufficiently detailed (score 4/5) |
+| 1    | Feature Refinement      | Completed | Enhanced request with project context         |
+| 2    | File Discovery          | Completed | Discovered 20+ relevant files                 |
+| 3    | Implementation Planning | Completed | Generated 14-step implementation plan         |
 
 ## Navigation
 

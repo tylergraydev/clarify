@@ -4,7 +4,10 @@ import { agentColors, agentTypes } from "../../db/schema/agents.schema";
 
 // Agent tool input schema for validating tool configuration
 export const agentToolInputSchema = z.object({
-  name: z.string().min(1, "Tool name is required").max(255, "Tool name is too long"),
+  name: z
+    .string()
+    .min(1, "Tool name is required")
+    .max(255, "Tool name is too long"),
   pattern: z.string().max(1000, "Pattern is too long").optional(),
 });
 
@@ -12,7 +15,10 @@ export type AgentToolInput = z.infer<typeof agentToolInputSchema>;
 
 // Agent skill input schema for validating skill configuration
 export const agentSkillInputSchema = z.object({
-  name: z.string().min(1, "Skill name is required").max(255, "Skill name is too long"),
+  name: z
+    .string()
+    .min(1, "Skill name is required")
+    .max(255, "Skill name is too long"),
 });
 
 export type AgentSkillInput = z.infer<typeof agentSkillInputSchema>;
@@ -35,8 +41,18 @@ export const createAgentSchema = z.object({
       /^[a-z][a-z0-9-]*$/,
       "Agent name must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens"
     ),
-  parentAgentId: z.number().int().positive("Invalid parent agent ID").nullable().optional(),
-  projectId: z.number().int().positive("Invalid project ID").nullable().optional(),
+  parentAgentId: z
+    .number()
+    .int()
+    .positive("Invalid parent agent ID")
+    .nullable()
+    .optional(),
+  projectId: z
+    .number()
+    .int()
+    .positive("Invalid project ID")
+    .nullable()
+    .optional(),
   systemPrompt: z
     .string()
     .min(1, "System prompt is required")
@@ -67,7 +83,12 @@ export const createAgentFormSchema = z.object({
       /^[a-z][a-z0-9-]*$/,
       "Agent name must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens"
     ),
-  projectId: z.number().int().positive("Invalid project ID").nullable().optional(),
+  projectId: z
+    .number()
+    .int()
+    .positive("Invalid project ID")
+    .nullable()
+    .optional(),
   systemPrompt: z
     .string()
     .min(1, "System prompt is required")
@@ -101,7 +122,11 @@ export const updateAgentRepositorySchema = z.object({
   builtInAt: z.string().nullable().optional(),
   color: z.enum(agentColors).nullable().optional(),
   deactivatedAt: z.string().nullable().optional(),
-  description: z.string().max(1000, "Description is too long").nullable().optional(),
+  description: z
+    .string()
+    .max(1000, "Description is too long")
+    .nullable()
+    .optional(),
   displayName: z
     .string()
     .min(1, "Display name is required")
@@ -116,16 +141,30 @@ export const updateAgentRepositorySchema = z.object({
       "Agent name must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens"
     )
     .optional(),
-  parentAgentId: z.number().int().positive("Invalid parent agent ID").nullable().optional(),
-  projectId: z.number().int().positive("Invalid project ID").nullable().optional(),
+  parentAgentId: z
+    .number()
+    .int()
+    .positive("Invalid parent agent ID")
+    .nullable()
+    .optional(),
+  projectId: z
+    .number()
+    .int()
+    .positive("Invalid project ID")
+    .nullable()
+    .optional(),
   systemPrompt: z
     .string()
     .min(1, "System prompt is required")
     .max(50000, "System prompt is too long")
     .optional(),
-  type: z.enum(agentTypes, {
-    error: "Please select a valid agent type",
-  }).optional(),
+  type: z
+    .enum(agentTypes, {
+      error: "Please select a valid agent type",
+    })
+    .optional(),
 });
 
-export type UpdateAgentRepositoryInput = z.infer<typeof updateAgentRepositorySchema>;
+export type UpdateAgentRepositoryInput = z.infer<
+  typeof updateAgentRepositorySchema
+>;

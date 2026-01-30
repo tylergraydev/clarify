@@ -21,6 +21,7 @@
 
 **Total Steps**: 14
 **Specialist Agents Required**:
+
 - general-purpose (types)
 - database-schema (repository)
 - ipc-handler (IPC handlers)

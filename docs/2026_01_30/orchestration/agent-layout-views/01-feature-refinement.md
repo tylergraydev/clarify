@@ -6,9 +6,11 @@
 ## Input
 
 ### Original Request
+
 > The agent management screen should support different layouts. The only layout currently supported is the card layout. The user should have at least 2 other layout options, list and table. The users preference should be saved and reloaded so that if the user sets it to the table view then it will always be the table view until they come back and change it.
 
 ### Project Context
+
 - Electron desktop app with Next.js App Router
 - Uses electron-store for persistent key-value storage
 - Uses Zustand for client state management

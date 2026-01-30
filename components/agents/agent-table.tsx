@@ -1,24 +1,27 @@
-'use client';
+"use client";
 
-import type { ComponentPropsWithRef } from 'react';
+import type { ComponentPropsWithRef } from "react";
 
-import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { useState } from "react";
 
-import type { Agent } from '@/db/schema';
+import type { Agent } from "@/db/schema";
 
-import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
-import { Badge, type badgeVariants } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { getAgentColorClass } from '@/lib/colors/agent-colors';
-import { cn } from '@/lib/utils';
+import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
+import { Badge, type badgeVariants } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { getAgentColorClass } from "@/lib/colors/agent-colors";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface AgentTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onReset'> {
+interface AgentTableProps extends Omit<
+  ComponentPropsWithRef<"div">,
+  "onReset"
+> {
   agents: Array<Agent>;
   isCreatingOverride?: boolean;
   isDeleting?: boolean;
@@ -33,9 +36,9 @@ interface AgentTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onReset'> 
   /** The currently selected project ID, used to determine if override action is available */
   selectedProjectId?: null | number;
 }
-type AgentType = Agent['type'];
+type AgentType = Agent["type"];
 
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
 
 // ============================================================================
 // Helper Functions
@@ -43,26 +46,26 @@ type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
 const getTypeVariant = (type: AgentType): BadgeVariant => {
   const typeVariantMap: Record<string, BadgeVariant> = {
-    planning: 'planning',
-    review: 'review',
-    specialist: 'specialist',
-    utility: 'default',
+    planning: "planning",
+    review: "review",
+    specialist: "specialist",
+    utility: "default",
   };
 
-  return typeVariantMap[type ?? ''] ?? 'default';
+  return typeVariantMap[type ?? ""] ?? "default";
 };
 
 const formatTypeLabel = (type: AgentType): string => {
-  if (!type) return 'Unknown';
+  if (!type) return "Unknown";
   return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
 const getScopeLabel = (agent: Agent): string => {
-  return agent.projectId !== null ? 'Project' : 'Global';
+  return agent.projectId !== null ? "Project" : "Global";
 };
 
 const getStatusLabel = (agent: Agent): string => {
-  return agent.deactivatedAt === null ? 'Active' : 'Inactive';
+  return agent.deactivatedAt === null ? "Active" : "Inactive";
 };
 
 // ============================================================================
@@ -118,53 +121,70 @@ export const AgentTable = ({
   };
 
   const isActionDisabled =
-    isCreatingOverride || isDeleting || isDuplicating || isResetting || isToggling;
+    isCreatingOverride ||
+    isDeleting ||
+    isDuplicating ||
+    isResetting ||
+    isToggling;
 
   return (
     <div
-      className={cn('overflow-x-auto rounded-lg border border-border', className)}
+      className={cn(
+        "overflow-x-auto rounded-lg border border-border",
+        className
+      )}
       ref={ref}
       {...props}
     >
-      <table className={'w-full border-collapse text-sm'}>
+      <table className={"w-full border-collapse text-sm"}>
         {/* Table Header */}
-        <thead className={'border-b border-border bg-muted/50'}>
+        <thead className={"border-b border-border bg-muted/50"}>
           <tr>
             <th
-              className={'px-4 py-3 text-left font-medium text-muted-foreground'}
-              scope={'col'}
+              className={
+                "px-4 py-3 text-left font-medium text-muted-foreground"
+              }
+              scope={"col"}
             >
-              {'Name'}
+              {"Name"}
             </th>
             <th
-              className={'px-4 py-3 text-left font-medium text-muted-foreground'}
-              scope={'col'}
+              className={
+                "px-4 py-3 text-left font-medium text-muted-foreground"
+              }
+              scope={"col"}
             >
-              {'Type'}
+              {"Type"}
             </th>
             <th
-              className={'px-4 py-3 text-left font-medium text-muted-foreground'}
-              scope={'col'}
+              className={
+                "px-4 py-3 text-left font-medium text-muted-foreground"
+              }
+              scope={"col"}
             >
-              {'Status'}
+              {"Status"}
             </th>
             <th
-              className={'px-4 py-3 text-left font-medium text-muted-foreground'}
-              scope={'col'}
+              className={
+                "px-4 py-3 text-left font-medium text-muted-foreground"
+              }
+              scope={"col"}
             >
-              {'Scope'}
+              {"Scope"}
             </th>
             <th
-              className={'px-4 py-3 text-right font-medium text-muted-foreground'}
-              scope={'col'}
+              className={
+                "px-4 py-3 text-right font-medium text-muted-foreground"
+              }
+              scope={"col"}
             >
-              {'Actions'}
+              {"Actions"}
             </th>
           </tr>
         </thead>
 
         {/* Table Body */}
-        <tbody className={'divide-y divide-border'}>
+        <tbody className={"divide-y divide-border"}>
           {agents.map((agent) => {
             const isActive = agent.deactivatedAt === null;
             const isCustomAgent = agent.builtInAt === null;
@@ -174,7 +194,9 @@ export const AgentTable = ({
 
             // Show override action only for global agents when a project is selected
             const isOverrideAvailable =
-              isGlobalAgent && selectedProjectId !== null && selectedProjectId !== undefined;
+              isGlobalAgent &&
+              selectedProjectId !== null &&
+              selectedProjectId !== undefined;
 
             const handleCreateOverrideClick = () => {
               onCreateOverride?.(agent);
@@ -199,44 +221,47 @@ export const AgentTable = ({
             return (
               <tr
                 className={cn(
-                  'cursor-pointer transition-colors hover:bg-muted/30',
-                  !isActive && 'opacity-60'
+                  "cursor-pointer transition-colors hover:bg-muted/30",
+                  !isActive && "opacity-60"
                 )}
                 key={agent.id}
                 onClick={() => handleRowClick(agent)}
               >
                 {/* Name Cell */}
-                <td className={'px-4 py-3'}>
-                  <div className={'flex items-center gap-2'}>
+                <td className={"px-4 py-3"}>
+                  <div className={"flex items-center gap-2"}>
                     {/* Color Indicator */}
                     <div
-                      aria-hidden={'true'}
-                      className={cn('size-3 shrink-0 rounded-full', getAgentColorClass(agent.color))}
+                      aria-hidden={"true"}
+                      className={cn(
+                        "size-3 shrink-0 rounded-full",
+                        getAgentColorClass(agent.color)
+                      )}
                     />
                     <button
                       className={cn(
-                        'text-left font-medium text-foreground hover:text-accent',
-                        'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
-                        'focus-visible:outline-none'
+                        "text-left font-medium text-foreground hover:text-accent",
+                        "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0",
+                        "focus-visible:outline-none"
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEditClick(agent);
                       }}
-                      type={'button'}
+                      type={"button"}
                     >
                       {agent.displayName}
                     </button>
                     {/* Origin Badges */}
-                    <div className={'flex items-center gap-1'}>
+                    <div className={"flex items-center gap-1"}>
                       {isCustomAgent && (
-                        <Badge size={'sm'} variant={'custom'}>
-                          {'Custom'}
+                        <Badge size={"sm"} variant={"custom"}>
+                          {"Custom"}
                         </Badge>
                       )}
                       {isCustomized && (
-                        <Badge size={'sm'} variant={'default'}>
-                          {'Customized'}
+                        <Badge size={"sm"} variant={"default"}>
+                          {"Customized"}
                         </Badge>
                       )}
                     </div>
@@ -244,42 +269,47 @@ export const AgentTable = ({
                 </td>
 
                 {/* Type Cell */}
-                <td className={'px-4 py-3'}>
-                  <Badge size={'sm'} variant={getTypeVariant(agent.type)}>
+                <td className={"px-4 py-3"}>
+                  <Badge size={"sm"} variant={getTypeVariant(agent.type)}>
                     {formatTypeLabel(agent.type)}
                   </Badge>
                 </td>
 
                 {/* Status Cell */}
-                <td className={'px-4 py-3'}>
+                <td className={"px-4 py-3"}>
                   <div
-                    className={'flex items-center gap-2'}
+                    className={"flex items-center gap-2"}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <span className={'text-xs text-muted-foreground'}>
+                    <span className={"text-xs text-muted-foreground"}>
                       {getStatusLabel(agent)}
                     </span>
                     <Switch
-                      aria-label={isActive ? 'Deactivate agent' : 'Activate agent'}
+                      aria-label={
+                        isActive ? "Deactivate agent" : "Activate agent"
+                      }
                       checked={isActive}
                       disabled={isToggling}
                       onCheckedChange={handleToggleChange}
-                      size={'sm'}
+                      size={"sm"}
                     />
                   </div>
                 </td>
 
                 {/* Scope Cell */}
-                <td className={'px-4 py-3'}>
-                  <Badge size={'sm'} variant={isProjectScoped ? 'project' : 'default'}>
+                <td className={"px-4 py-3"}>
+                  <Badge
+                    size={"sm"}
+                    variant={isProjectScoped ? "project" : "default"}
+                  >
                     {getScopeLabel(agent)}
                   </Badge>
                 </td>
 
                 {/* Actions Cell */}
-                <td className={'px-4 py-3'}>
+                <td className={"px-4 py-3"}>
                   <div
-                    className={'flex items-center justify-end gap-1'}
+                    className={"flex items-center justify-end gap-1"}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {/* View/Edit */}
@@ -287,11 +317,11 @@ export const AgentTable = ({
                       aria-label={`Edit ${agent.displayName}`}
                       disabled={isActionDisabled}
                       onClick={() => handleEditClick(agent)}
-                      size={'sm'}
-                      variant={'ghost'}
+                      size={"sm"}
+                      variant={"ghost"}
                     >
-                      <Eye aria-hidden={'true'} className={'size-4'} />
-                      {'View'}
+                      <Eye aria-hidden={"true"} className={"size-4"} />
+                      {"View"}
                     </Button>
 
                     {/* Edit */}
@@ -299,10 +329,10 @@ export const AgentTable = ({
                       aria-label={`Edit ${agent.displayName}`}
                       disabled={isActionDisabled}
                       onClick={() => handleEditClick(agent)}
-                      size={'sm'}
-                      variant={'ghost'}
+                      size={"sm"}
+                      variant={"ghost"}
                     >
-                      <Pencil aria-hidden={'true'} className={'size-4'} />
+                      <Pencil aria-hidden={"true"} className={"size-4"} />
                     </Button>
 
                     {/* Duplicate */}
@@ -310,10 +340,10 @@ export const AgentTable = ({
                       aria-label={`Duplicate ${agent.displayName}`}
                       disabled={isActionDisabled}
                       onClick={handleDuplicateClick}
-                      size={'sm'}
-                      variant={'ghost'}
+                      size={"sm"}
+                      variant={"ghost"}
                     >
-                      <Copy aria-hidden={'true'} className={'size-4'} />
+                      <Copy aria-hidden={"true"} className={"size-4"} />
                     </Button>
 
                     {/* Override */}
@@ -322,10 +352,10 @@ export const AgentTable = ({
                         aria-label={`Create project override for ${agent.displayName}`}
                         disabled={isActionDisabled}
                         onClick={handleCreateOverrideClick}
-                        size={'sm'}
-                        variant={'ghost'}
+                        size={"sm"}
+                        variant={"ghost"}
                       >
-                        <FolderPlus aria-hidden={'true'} className={'size-4'} />
+                        <FolderPlus aria-hidden={"true"} className={"size-4"} />
                       </Button>
                     )}
 
@@ -335,10 +365,10 @@ export const AgentTable = ({
                         aria-label={`Reset ${agent.displayName} to default`}
                         disabled={isActionDisabled}
                         onClick={handleResetClick}
-                        size={'sm'}
-                        variant={'ghost'}
+                        size={"sm"}
+                        variant={"ghost"}
                       >
-                        <RotateCcw aria-hidden={'true'} className={'size-4'} />
+                        <RotateCcw aria-hidden={"true"} className={"size-4"} />
                       </Button>
                     )}
 
@@ -348,10 +378,13 @@ export const AgentTable = ({
                         aria-label={`Delete ${agent.displayName}`}
                         disabled={isActionDisabled}
                         onClick={handleDeleteClick}
-                        size={'sm'}
-                        variant={'ghost'}
+                        size={"sm"}
+                        variant={"ghost"}
                       >
-                        <Trash2 aria-hidden={'true'} className={'size-4 text-destructive'} />
+                        <Trash2
+                          aria-hidden={"true"}
+                          className={"size-4 text-destructive"}
+                        />
                       </Button>
                     )}
                   </div>
@@ -367,7 +400,7 @@ export const AgentTable = ({
         <AgentEditorDialog
           agent={editDialogAgent}
           isOpen={isEditDialogOpen}
-          mode={'edit'}
+          mode={"edit"}
           onOpenChange={handleEditDialogChange}
         />
       )}

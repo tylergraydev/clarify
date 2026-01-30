@@ -5,6 +5,7 @@
 ## Validation Commands
 
 ### pnpm lint
+
 **Status:** PASS
 
 ```
@@ -15,6 +16,7 @@
 No errors or warnings.
 
 ### pnpm typecheck
+
 **Status:** PASS
 
 ```

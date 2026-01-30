@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { Bot, FolderOpen, Plus, Search } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { Bot, FolderOpen, Plus, Search } from "lucide-react";
+import { Fragment, useState } from "react";
 
-import type { Agent } from '@/types/electron';
+import type { Agent } from "@/types/electron";
 
-import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
-import { AgentLayoutRenderer } from '@/components/agents/agent-layout-renderer';
-import { AgentListSkeleton } from '@/components/agents/agent-list-skeleton';
-import { AgentTableSkeleton } from '@/components/agents/agent-table-skeleton';
-import { ConfirmDeleteAgentDialog } from '@/components/agents/confirm-delete-agent-dialog';
-import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
-import { Button } from '@/components/ui/button';
+import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
+import { AgentLayoutRenderer } from "@/components/agents/agent-layout-renderer";
+import { AgentListSkeleton } from "@/components/agents/agent-list-skeleton";
+import { AgentTableSkeleton } from "@/components/agents/agent-table-skeleton";
+import { ConfirmDeleteAgentDialog } from "@/components/agents/confirm-delete-agent-dialog";
+import { QueryErrorBoundary } from "@/components/data/query-error-boundary";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
+} from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   useActivateAgent,
   useDeactivateAgent,
@@ -26,8 +26,8 @@ import {
   useDuplicateAgent,
   useProjectAgents,
   useResetAgent,
-} from '@/hooks/queries/use-agents';
-import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
+} from "@/hooks/queries/use-agents";
+import { useAgentLayoutStore } from "@/lib/stores/agent-layout-store";
 
 // ============================================================================
 // Types
@@ -52,41 +52,41 @@ interface ProjectAgentsTabContentProps {
  */
 const AgentCardSkeleton = () => {
   return (
-    <Card className={'animate-pulse'}>
+    <Card className={"animate-pulse"}>
       {/* Header */}
       <CardHeader>
-        <div className={'flex items-start justify-between gap-2'}>
-          <div className={'flex items-center gap-2'}>
+        <div className={"flex items-start justify-between gap-2"}>
+          <div className={"flex items-center gap-2"}>
             {/* Color indicator */}
-            <div className={'size-3 shrink-0 rounded-full bg-muted'} />
+            <div className={"size-3 shrink-0 rounded-full bg-muted"} />
             {/* Title */}
-            <div className={'h-5 w-32 rounded-sm bg-muted'} />
+            <div className={"h-5 w-32 rounded-sm bg-muted"} />
           </div>
           {/* Type badge */}
-          <div className={'h-5 w-16 rounded-full bg-muted'} />
+          <div className={"h-5 w-16 rounded-full bg-muted"} />
         </div>
         {/* Description */}
-        <div className={'mt-1.5 space-y-1'}>
-          <div className={'h-4 w-full rounded-sm bg-muted'} />
-          <div className={'h-4 w-3/4 rounded-sm bg-muted'} />
+        <div className={"mt-1.5 space-y-1"}>
+          <div className={"h-4 w-full rounded-sm bg-muted"} />
+          <div className={"h-4 w-3/4 rounded-sm bg-muted"} />
         </div>
       </CardHeader>
 
       {/* Content */}
-      <CardContent className={'flex flex-1 flex-col gap-3'}>
+      <CardContent className={"flex flex-1 flex-col gap-3"}>
         {/* Status row with label and switch */}
-        <div className={'flex items-center justify-between'}>
-          <div className={'h-4 w-16 rounded-sm bg-muted'} />
-          <div className={'h-5 w-9 rounded-full bg-muted'} />
+        <div className={"flex items-center justify-between"}>
+          <div className={"h-4 w-16 rounded-sm bg-muted"} />
+          <div className={"h-5 w-9 rounded-full bg-muted"} />
         </div>
       </CardContent>
 
       {/* Actions */}
-      <CardFooter className={'gap-2'}>
+      <CardFooter className={"gap-2"}>
         {/* Edit button */}
-        <div className={'h-8 w-16 rounded-md bg-muted'} />
+        <div className={"h-8 w-16 rounded-md bg-muted"} />
         {/* Reset button */}
-        <div className={'h-8 w-16 rounded-md bg-muted'} />
+        <div className={"h-8 w-16 rounded-md bg-muted"} />
       </CardFooter>
     </Card>
   );
@@ -172,7 +172,10 @@ export const ProjectAgentsTabContent = ({
   const handleConfirmDelete = () => {
     if (agentToDelete) {
       deleteAgentMutation.mutate(
-        { id: agentToDelete.id, projectId: agentToDelete.projectId ?? undefined },
+        {
+          id: agentToDelete.id,
+          projectId: agentToDelete.projectId ?? undefined,
+        },
         {
           onSettled: () => {
             setAgentToDelete(null);
@@ -216,10 +219,10 @@ export const ProjectAgentsTabContent = ({
     return (
       <EmptyState
         description={
-          'Select a project from the dropdown above to view and manage project-specific agent configurations.'
+          "Select a project from the dropdown above to view and manage project-specific agent configurations."
         }
-        icon={<FolderOpen aria-hidden={'true'} className={'size-6'} />}
-        title={'Select a project'}
+        icon={<FolderOpen aria-hidden={"true"} className={"size-6"} />}
+        title={"Select a project"}
       />
     );
   }
@@ -229,16 +232,16 @@ export const ProjectAgentsTabContent = ({
       <QueryErrorBoundary>
         {isLoading ? (
           // Loading skeletons - render appropriate skeleton based on current layout
-          layout === 'list' ? (
+          layout === "list" ? (
             <AgentListSkeleton count={6} />
-          ) : layout === 'table' ? (
+          ) : layout === "table" ? (
             <AgentTableSkeleton count={6} />
           ) : (
             <div
-              aria-busy={'true'}
-              aria-label={'Loading project agents'}
-              className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}
-              role={'status'}
+              aria-busy={"true"}
+              aria-label={"Loading project agents"}
+              className={"grid gap-4 md:grid-cols-2 lg:grid-cols-3"}
+              role={"status"}
             >
               {Array.from({ length: 6 }).map((_, index) => (
                 <AgentCardSkeleton key={index} />
@@ -250,30 +253,30 @@ export const ProjectAgentsTabContent = ({
           <EmptyState
             action={
               <AgentEditorDialog
-                mode={'create'}
+                mode={"create"}
                 projectId={projectId}
                 trigger={
                   <Button>
-                    <Plus aria-hidden={'true'} className={'size-4'} />
-                    {'Create project agent'}
+                    <Plus aria-hidden={"true"} className={"size-4"} />
+                    {"Create project agent"}
                   </Button>
                 }
               />
             }
             description={
-              'Project-specific agents allow you to customize AI behavior for this project. Create a new agent or customize a global agent for this project.'
+              "Project-specific agents allow you to customize AI behavior for this project. Create a new agent or customize a global agent for this project."
             }
-            icon={<Bot aria-hidden={'true'} className={'size-6'} />}
-            title={'No project agents yet'}
+            icon={<Bot aria-hidden={"true"} className={"size-6"} />}
+            title={"No project agents yet"}
           />
         ) : hasNoFilteredAgents ? (
           // Empty state when filters hide all agents
           <EmptyState
             description={
-              'No project agents match your current filters. Try adjusting your search criteria.'
+              "No project agents match your current filters. Try adjusting your search criteria."
             }
-            icon={<Search aria-hidden={'true'} className={'size-6'} />}
-            title={'No matching project agents'}
+            icon={<Search aria-hidden={"true"} className={"size-6"} />}
+            title={"No matching project agents"}
           />
         ) : (
           // Agent layout (card/list/table based on user preference)
@@ -294,7 +297,7 @@ export const ProjectAgentsTabContent = ({
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDeleteAgentDialog
-        agentName={agentToDelete?.displayName ?? ''}
+        agentName={agentToDelete?.displayName ?? ""}
         isLoading={isDeletingAgent}
         isOpen={isDeleteDialogOpen}
         onConfirm={handleConfirmDelete}

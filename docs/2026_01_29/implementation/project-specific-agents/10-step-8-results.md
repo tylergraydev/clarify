@@ -5,8 +5,8 @@
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
+| File                                        | Changes                                                          |
+| ------------------------------------------- | ---------------------------------------------------------------- |
 | `components/agents/agent-editor-dialog.tsx` | Added `projectId` prop support for project-scoped agent creation |
 
 ## Changes Made

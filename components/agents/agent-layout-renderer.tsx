@@ -1,21 +1,23 @@
-'use client';
+"use client";
 
-import type { ComponentPropsWithoutRef } from 'react';
+import type { ComponentPropsWithoutRef } from "react";
 
-import type { Agent } from '@/db/schema';
+import type { Agent } from "@/db/schema";
 
-import { AgentGridItem } from '@/components/agents/agent-grid-item';
-import { AgentList } from '@/components/agents/agent-list';
-import { AgentTable } from '@/components/agents/agent-table';
-import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
-import { cn } from '@/lib/utils';
+import { AgentGridItem } from "@/components/agents/agent-grid-item";
+import { AgentList } from "@/components/agents/agent-list";
+import { AgentTable } from "@/components/agents/agent-table";
+import { useAgentLayoutStore } from "@/lib/stores/agent-layout-store";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export interface AgentLayoutRendererProps
-  extends Omit<ComponentPropsWithoutRef<'div'>, 'onReset'> {
+export interface AgentLayoutRendererProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "onReset"
+> {
   /** Array of agents to render */
   agents: Array<Agent>;
   /** Whether an override creation is in progress */
@@ -88,12 +90,12 @@ export const AgentLayoutRenderer = ({
   const { layout } = useAgentLayoutStore();
 
   // Card layout: Render responsive grid of AgentGridItem components
-  if (layout === 'card') {
+  if (layout === "card") {
     return (
       <div
         className={cn(
-          'grid gap-4',
-          'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+          "grid gap-4",
+          "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
           className
         )}
         {...props}
@@ -120,7 +122,7 @@ export const AgentLayoutRenderer = ({
   }
 
   // List layout: Render compact vertical list
-  if (layout === 'list') {
+  if (layout === "list") {
     return (
       <AgentList
         agents={agents}

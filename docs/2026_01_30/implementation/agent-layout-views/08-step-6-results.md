@@ -9,11 +9,13 @@
 ## Component Structure
 
 **Props Interface**:
+
 - Same as AgentList for consistency
 - Extends `ComponentPropsWithRef<'div'>`
 - All action handlers included
 
 **Table Columns**:
+
 1. **Name** - Display name with color indicator and origin badges
 2. **Type** - Agent type badge (Planning, Specialist, Review, Utility)
 3. **Status** - Active/Inactive toggle with Switch component
@@ -21,6 +23,7 @@
 5. **Actions** - View, Edit, Duplicate, Override, Reset, Delete
 
 **Features**:
+
 - Row click opens edit dialog
 - Inline status toggle
 - Conditional actions based on agent properties

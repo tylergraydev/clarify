@@ -5,19 +5,20 @@
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
-| `electron/ipc/channels.ts` | Added `createOverride: "agent:createOverride"` to agent channels |
-| `electron/ipc/agent.handlers.ts` | Added IPC handler for `agent:createOverride` that creates project override with `parentAgentId` |
-| `electron/preload.ts` | Added `createOverride` channel and method to ElectronAPI |
-| `types/electron.d.ts` | Added `createOverride(agentId, projectId): Promise<AgentOperationResult>` type |
-| `hooks/queries/use-agents.ts` | Added `useCreateAgentOverride` mutation hook with dual cache invalidation |
-| `components/agents/agent-card.tsx` | Added `onCreateOverride`, `isCreatingOverride`, `selectedProjectId` props and "Override" button |
-| `components/agents/global-agents-tab-content.tsx` | Integrated override functionality with hook and handler |
+| File                                              | Changes                                                                                         |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `electron/ipc/channels.ts`                        | Added `createOverride: "agent:createOverride"` to agent channels                                |
+| `electron/ipc/agent.handlers.ts`                  | Added IPC handler for `agent:createOverride` that creates project override with `parentAgentId` |
+| `electron/preload.ts`                             | Added `createOverride` channel and method to ElectronAPI                                        |
+| `types/electron.d.ts`                             | Added `createOverride(agentId, projectId): Promise<AgentOperationResult>` type                  |
+| `hooks/queries/use-agents.ts`                     | Added `useCreateAgentOverride` mutation hook with dual cache invalidation                       |
+| `components/agents/agent-card.tsx`                | Added `onCreateOverride`, `isCreatingOverride`, `selectedProjectId` props and "Override" button |
+| `components/agents/global-agents-tab-content.tsx` | Integrated override functionality with hook and handler                                         |
 
 ## Implementation Details
 
 ### IPC Handler
+
 - Validates override doesn't already exist for same agent/project
 - Creates new agent with:
   - `parentAgentId` set to original global agent's ID
@@ -25,11 +26,13 @@
   - Inherits all properties from parent agent
 
 ### UI
+
 - "Override" button with FolderPlus icon
 - Only appears on global agents when project is selected
 - Toast notification informs user they can customize the agent
 
 ### Cache Invalidation
+
 - Invalidates `agentKeys.global._def`
 - Invalidates `agentKeys.projectScoped._def`
 - Invalidates `agentKeys.byProject(projectId)`

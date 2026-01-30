@@ -9,11 +9,11 @@
 
 ## Overview
 
-| Attribute | Value |
-|-----------|-------|
+| Attribute              | Value     |
+| ---------------------- | --------- |
 | **Estimated Duration** | 4-6 hours |
-| **Complexity** | Medium |
-| **Risk Level** | Low |
+| **Complexity**         | Medium    |
+| **Risk Level**         | Low       |
 
 ## Quick Summary
 
@@ -39,19 +39,23 @@ This feature adds three layout options (card, list, table) to the agent manageme
 **Confidence**: High
 
 **Files to Create:**
+
 - `lib/layout/constants.ts` - Layout type definitions and storage key constant
 
 **Changes:**
+
 - Define AgentLayout type as union of "card" | "list" | "table"
 - Define AGENT_LAYOUT_STORAGE_KEY constant for electron-store persistence
 - Define DEFAULT_AGENT_LAYOUT constant defaulting to "card"
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Constants file created with proper TypeScript types
 - [ ] Exports are accessible from other modules
 - [ ] All validation commands pass
@@ -67,20 +71,24 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `lib/stores/agent-layout-store.ts` - Zustand store for layout preference
 
 **Changes:**
+
 - Define AgentLayoutState interface with layout property
 - Define AgentLayoutActions interface with setLayout action
 - Create useAgentLayoutStore hook using Zustand create function
 - Implement setLayout action that updates both Zustand state and persists to electron-store
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Store exports useAgentLayoutStore hook
 - [ ] Store includes layout state and setLayout action
 - [ ] TypeScript types are properly defined
@@ -97,20 +105,24 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `components/providers/agent-layout-provider.tsx` - Provider for layout store hydration
 
 **Changes:**
+
 - Create AgentLayoutProvider component that wraps children
 - Use useElectronStore hook to read persisted layout on mount
 - Hydrate the Zustand store with persisted value
 - Render null or skeleton during hydration to prevent flash
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Provider component created with proper hydration logic
 - [ ] Prevents rendering until layout is hydrated
 - [ ] All validation commands pass
@@ -126,19 +138,23 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/layout.tsx` - Add AgentLayoutProvider to provider composition (if exists) OR
 - `app/(app)/agents/page.tsx` - Wrap page content with provider
 
 **Changes:**
+
 - Import AgentLayoutProvider component
 - Add AgentLayoutProvider to provider composition chain
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Provider is properly integrated into component tree
 - [ ] No circular dependency issues
 - [ ] All validation commands pass
@@ -154,9 +170,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `components/agents/agent-list.tsx` - List view component for agents
 
 **Changes:**
+
 - Define AgentListProps interface matching AgentCard action handlers
 - Create AgentList component rendering agents as horizontal rows
 - Include agent color indicator, display name, type badge, status, and action buttons inline
@@ -164,11 +182,13 @@ pnpm run lint && pnpm run typecheck
 - Integrate AgentEditorDialog for edit functionality using hidden trigger pattern
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Component accepts same action handlers as AgentCard
 - [ ] Displays agent info in compact horizontal row format
 - [ ] Maintains feature parity with card view for actions
@@ -185,9 +205,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `components/agents/agent-table.tsx` - Table view component for agents
 
 **Changes:**
+
 - Define AgentTableProps interface with agents array and action handlers
 - Create AgentTable component following WorkflowTable structure
 - Include columns for: Name, Type, Status, Scope (Global/Project), Actions
@@ -196,11 +218,13 @@ pnpm run lint && pnpm run typecheck
 - Integrate AgentEditorDialog for edit actions
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Table structure matches WorkflowTable patterns
 - [ ] All agent fields are displayed in appropriate columns
 - [ ] Action buttons function correctly
@@ -218,9 +242,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `components/agents/agent-layout-toggle.tsx` - Layout toggle control
 
 **Changes:**
+
 - Create AgentLayoutToggle component using ButtonGroup and IconButton components
 - Add icons for each layout type (LayoutGrid for card, List for list, Table2 for table from lucide-react)
 - Connect to useAgentLayoutStore for current layout state and setLayout action
@@ -228,11 +254,13 @@ pnpm run lint && pnpm run typecheck
 - Add proper aria-labels for accessibility
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Toggle displays three icon buttons for layout options
 - [ ] Active layout is visually indicated
 - [ ] Clicking a button updates the layout state
@@ -250,23 +278,28 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Create:**
+
 - `components/agents/agent-grid-item.tsx` - Shared grid item wrapper component
 
 **Files to Modify:**
+
 - `components/agents/global-agents-tab-content.tsx` - Import shared component
 - `components/agents/project-agents-tab-content.tsx` - Import shared component
 
 **Changes:**
+
 - Extract AgentGridItem component with its props interface to new file
 - Update both tab content components to import from shared location
 - Remove duplicate AgentGridItem definitions from tab content files
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] AgentGridItem component is exported from shared file
 - [ ] Both tab content components use shared import
 - [ ] No duplicate component definitions remain
@@ -283,20 +316,24 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `components/agents/agent-layout-renderer.tsx` - Conditional layout renderer
 
 **Changes:**
+
 - Define AgentLayoutRendererProps interface with agents array and action handler props
 - Create component that reads layout from useAgentLayoutStore
 - Conditionally render AgentCard grid, AgentList, or AgentTable based on layout value
 - Pass through all action handlers to child components
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Component correctly switches between three layouts
 - [ ] All action handlers are properly passed to layout components
 - [ ] Layout switching is immediate without page reload
@@ -313,20 +350,24 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `components/agents/global-agents-tab-content.tsx` - Integrate layout renderer
 
 **Changes:**
+
 - Import AgentLayoutRenderer component
 - Replace the card grid `<ul>` element with AgentLayoutRenderer
 - Pass filtered agents and all action handlers to AgentLayoutRenderer
 - Keep loading skeletons, empty states, and delete dialog unchanged
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] GlobalAgentsTabContent renders via AgentLayoutRenderer
 - [ ] All existing functionality preserved
 - [ ] Layout changes reflect immediately
@@ -343,20 +384,24 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `components/agents/project-agents-tab-content.tsx` - Integrate layout renderer
 
 **Changes:**
+
 - Import AgentLayoutRenderer component
 - Replace the card grid `<ul>` element with AgentLayoutRenderer
 - Pass filtered agents and all action handlers to AgentLayoutRenderer
 - Keep loading skeletons, empty states, select project prompt, and delete dialog unchanged
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] ProjectAgentsTabContent renders via AgentLayoutRenderer
 - [ ] All existing functionality preserved
 - [ ] Layout changes reflect immediately
@@ -373,19 +418,23 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/agents/page.tsx` - Add layout toggle to header
 
 **Changes:**
+
 - Import AgentLayoutToggle component
 - Add AgentLayoutToggle to the header area between filters and Create Agent button
 - Position toggle appropriately within the existing flex layout
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Layout toggle appears in page header
 - [ ] Toggle is visually integrated with existing header elements
 - [ ] Toggle functions correctly to switch layouts
@@ -402,24 +451,29 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `components/agents/agent-list-skeleton.tsx` - List view loading skeleton
 - `components/agents/agent-table-skeleton.tsx` - Table view loading skeleton
 
 **Files to Modify:**
+
 - `components/agents/global-agents-tab-content.tsx` - Add skeleton switching based on layout
 - `components/agents/project-agents-tab-content.tsx` - Add skeleton switching based on layout
 
 **Changes:**
+
 - Create AgentListSkeleton with animated placeholder rows
 - Create AgentTableSkeleton with table structure and animated cells
 - Update both tab content components to render appropriate skeleton based on current layout
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] List skeleton displays animated row placeholders
 - [ ] Table skeleton displays animated table structure
 - [ ] Tab content components show correct skeleton for current layout
@@ -436,9 +490,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - None - testing step only
 
 **Changes:**
+
 - Verify layout preference persists across app restarts
 - Test all agent actions (edit, duplicate, delete, toggle active, create override, reset) in each layout
 - Verify empty states display correctly in all layouts
@@ -446,11 +502,13 @@ pnpm run lint && pnpm run typecheck
 - Test keyboard navigation and accessibility in each layout
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Layout preference persists across sessions
 - [ ] All agent actions work in card, list, and table views
 - [ ] Empty states render appropriately in each layout

@@ -108,7 +108,11 @@ export const MobileDrawer = () => {
           )}
         >
           {/* Header */}
-          <div className={"flex h-12 items-center justify-between border-b border-sidebar-border px-4"}>
+          <div
+            className={
+              "flex h-12 items-center justify-between border-b border-sidebar-border px-4"
+            }
+          >
             <span className={"text-sm font-semibold text-foreground"}>
               {"Navigation"}
             </span>
@@ -162,7 +166,10 @@ export const MobileDrawer = () => {
                     isWorkflowsSectionActive && "text-foreground"
                   )}
                 >
-                  <Workflow aria-hidden={"true"} className={"size-4 shrink-0"} />
+                  <Workflow
+                    aria-hidden={"true"}
+                    className={"size-4 shrink-0"}
+                  />
                   <span
                     className={"flex-1 truncate text-left text-sm font-medium"}
                   >

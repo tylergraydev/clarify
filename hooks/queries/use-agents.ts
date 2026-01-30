@@ -50,7 +50,9 @@ export function useActivateAgent() {
           });
         } else {
           // Invalidate global queries
-          void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+          void queryClient.invalidateQueries({
+            queryKey: agentKeys.global._def,
+          });
         }
 
         // Invalidate type-specific queries
@@ -210,12 +212,19 @@ export function useCreateAgentOverride() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ agentId, projectId }: { agentId: number; projectId: number }) =>
-      api!.agent.createOverride(agentId, projectId),
+    mutationFn: ({
+      agentId,
+      projectId,
+    }: {
+      agentId: number;
+      projectId: number;
+    }) => api!.agent.createOverride(agentId, projectId),
     onError: (error) => {
       toast.error({
         description:
-          error instanceof Error ? error.message : "Failed to create agent override",
+          error instanceof Error
+            ? error.message
+            : "Failed to create agent override",
         title: "Override Failed",
       });
     },
@@ -249,7 +258,8 @@ export function useCreateAgentOverride() {
       }
 
       toast.success({
-        description: "Project override created successfully. You can now customize this agent for your project.",
+        description:
+          "Project override created successfully. You can now customize this agent for your project.",
         title: "Override Created",
       });
     },
@@ -273,9 +283,7 @@ export function useDeactivateAgent() {
     onError: (error) => {
       toast.error({
         description:
-          error instanceof Error
-            ? error.message
-            : "Failed to deactivate agent",
+          error instanceof Error ? error.message : "Failed to deactivate agent",
         title: "Deactivation Failed",
       });
     },
@@ -299,7 +307,9 @@ export function useDeactivateAgent() {
           });
         } else {
           // Invalidate global queries
-          void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+          void queryClient.invalidateQueries({
+            queryKey: agentKeys.global._def,
+          });
         }
 
         // Invalidate type-specific queries
@@ -346,7 +356,9 @@ export function useDeleteAgent() {
       // Invalidate active queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
       // Invalidate builtIn queries (in case this was related to a built-in override)
-      void queryClient.invalidateQueries({ queryKey: agentKeys.builtIn.queryKey });
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.builtIn.queryKey,
+      });
 
       // Invalidate scope-specific queries based on whether agent had projectId
       if (variables.projectId) {
@@ -509,7 +521,9 @@ export function useResetAgent() {
       // Invalidate active queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
       // Invalidate builtIn queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.builtIn.queryKey });
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.builtIn.queryKey,
+      });
 
       // Handle scope-specific invalidation
       // For project overrides being reset, we need to invalidate the project cache
@@ -596,7 +610,9 @@ export function useUpdateAgent() {
           });
         } else {
           // Invalidate global queries
-          void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+          void queryClient.invalidateQueries({
+            queryKey: agentKeys.global._def,
+          });
         }
 
         // Invalidate type-specific queries

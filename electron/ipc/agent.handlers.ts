@@ -96,7 +96,8 @@ export function registerAgentHandlers(
       } catch (error) {
         console.error("[IPC Error] agent:create:", error);
         return {
-          error: error instanceof Error ? error.message : "Failed to create agent",
+          error:
+            error instanceof Error ? error.message : "Failed to create agent",
           success: false,
         };
       }
@@ -120,7 +121,8 @@ export function registerAgentHandlers(
         // Protect built-in agents from deletion
         if (isBuiltInAgent(agent)) {
           return {
-            error: "Cannot delete built-in agents. You can only deactivate them.",
+            error:
+              "Cannot delete built-in agents. You can only deactivate them.",
             success: false,
           };
         }
@@ -131,7 +133,8 @@ export function registerAgentHandlers(
       } catch (error) {
         console.error("[IPC Error] agent:delete:", error);
         return {
-          error: error instanceof Error ? error.message : "Failed to delete agent",
+          error:
+            error instanceof Error ? error.message : "Failed to delete agent",
           success: false,
         };
       }
@@ -188,7 +191,9 @@ export function registerAgentHandlers(
         console.error("[IPC Error] agent:duplicate:", error);
         return {
           error:
-            error instanceof Error ? error.message : "Failed to duplicate agent",
+            error instanceof Error
+              ? error.message
+              : "Failed to duplicate agent",
           success: false,
         };
       }
@@ -206,7 +211,10 @@ export function registerAgentHandlers(
       try {
         // Validate projectId
         if (!projectId || projectId <= 0) {
-          return { error: "A valid project ID is required to create an override", success: false };
+          return {
+            error: "A valid project ID is required to create an override",
+            success: false,
+          };
         }
 
         // Fetch the source agent by ID
@@ -273,7 +281,9 @@ export function registerAgentHandlers(
         console.error("[IPC Error] agent:createOverride:", error);
         return {
           error:
-            error instanceof Error ? error.message : "Failed to create agent override",
+            error instanceof Error
+              ? error.message
+              : "Failed to create agent override",
           success: false,
         };
       }
@@ -348,7 +358,8 @@ export function registerAgentHandlers(
       } catch (error) {
         console.error("[IPC Error] agent:update:", error);
         return {
-          error: error instanceof Error ? error.message : "Failed to update agent",
+          error:
+            error instanceof Error ? error.message : "Failed to update agent",
           success: false,
         };
       }

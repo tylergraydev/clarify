@@ -6,6 +6,7 @@
 ## Changes Made
 
 **File**: `components/workflows/template-picker-dialog.tsx`
+
 - Import for `TemplatePlaceholder` type from `@/types/electron`
 - Import for `useTemplatePlaceholders` hook from `@/hooks/queries/use-templates`
 - New `mapDatabasePlaceholderToParsed()` function that converts database `TemplatePlaceholder` to component's `ParsedPlaceholder` format

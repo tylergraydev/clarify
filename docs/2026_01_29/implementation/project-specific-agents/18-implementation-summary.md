@@ -11,21 +11,23 @@ Successfully implemented a dual-tier agent management system with a tabbed inter
 
 ## Statistics
 
-| Metric | Value |
-|--------|-------|
-| Steps Completed | 14/14 |
-| Files Modified | 14 |
-| Files Created | 2 |
-| Lines Changed | +831 / -466 |
-| Quality Gates | 2/2 PASS |
+| Metric          | Value       |
+| --------------- | ----------- |
+| Steps Completed | 14/14       |
+| Files Modified  | 14          |
+| Files Created   | 2           |
+| Lines Changed   | +831 / -466 |
+| Quality Gates   | 2/2 PASS    |
 
 ## Files Changed
 
 ### Created
+
 - `components/agents/global-agents-tab-content.tsx` - Global agents tab panel
 - `components/agents/project-agents-tab-content.tsx` - Project agents tab panel
 
 ### Modified
+
 - `app/(app)/agents/page.tsx` - Tabbed interface with Global/Project tabs
 - `components/agents/agent-card.tsx` - Project badge, override button
 - `components/agents/agent-editor-dialog.tsx` - Project-scoped creation support
@@ -51,13 +53,13 @@ Successfully implemented a dual-tier agent management system with a tabbed inter
 
 ## Specialist Agents Used
 
-| Agent | Steps |
-|-------|-------|
-| general-purpose | 1 |
-| database-schema | 2 |
-| ipc-handler | 3 |
-| tanstack-query | 4, 5, 12 |
-| tanstack-form | 6 |
+| Agent              | Steps                   |
+| ------------------ | ----------------------- |
+| general-purpose    | 1                       |
+| database-schema    | 2                       |
+| ipc-handler        | 3                       |
+| tanstack-query     | 4, 5, 12                |
+| tanstack-form      | 6                       |
 | frontend-component | 7, 8, 9, 10, 11, 13, 14 |
 
 ## Quality Gates

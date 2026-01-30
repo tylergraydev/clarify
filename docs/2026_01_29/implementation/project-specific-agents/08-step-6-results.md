@@ -5,8 +5,8 @@
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
+| File                       | Changes                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `lib/validations/agent.ts` | Added optional `projectId` field to `createAgentFormSchema` with validation for positive integer, nullable, and optional |
 
 ## Changes Made

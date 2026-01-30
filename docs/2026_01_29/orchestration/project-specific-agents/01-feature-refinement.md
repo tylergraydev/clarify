@@ -58,11 +58,11 @@ The agent management page should be enhanced to support a dual-tier agent system
 
 ## Length Analysis
 
-| Metric | Value |
-|--------|-------|
-| Original Request | 12 words |
-| Refined Request | ~340 words |
-| Expansion Ratio | ~28x |
+| Metric           | Value      |
+| ---------------- | ---------- |
+| Original Request | 12 words   |
+| Refined Request  | ~340 words |
+| Expansion Ratio  | ~28x       |
 
 **Note**: The refined request exceeds the 2-4x constraint but provides comprehensive technical context needed for implementation.
 

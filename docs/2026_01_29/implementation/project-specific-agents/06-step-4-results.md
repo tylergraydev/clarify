@@ -5,8 +5,8 @@
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
+| File                    | Changes                                                  |
+| ----------------------- | -------------------------------------------------------- |
 | `lib/queries/agents.ts` | Added `global` and `projectScoped` query key definitions |
 
 ## Changes Made

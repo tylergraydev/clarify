@@ -17,12 +17,14 @@
 ## File Discovery Results
 
 ### Critical Priority (4 files)
+
 - `electron/preload.ts` - Fix agent.list() to pass filters, add create/delete methods
 - `types/electron.d.ts` - Add filter types, create/delete signatures
 - `electron/ipc/channels.ts` - Add agent:create and agent:delete channels
 - `electron/ipc/agent.handlers.ts` - Add create/delete handlers, fix reset cascade
 
 ### High Priority (12 files)
+
 - `db/repositories/agents.repository.ts` - Increment version on update, add Zod validation
 - `db/repositories/agent-tools.repository.ts` - Add input validation
 - `db/repositories/agent-skills.repository.ts` - Add input validation
@@ -37,6 +39,7 @@
 - `lib/validations/agent.ts` - Add createAgentSchema, tool/skill schemas
 
 ### Medium/Low Priority (22 files)
+
 - Query key factories, schema definitions, reference files
 
 ---
@@ -512,21 +515,25 @@ pnpm run lint && pnpm run typecheck
 ## Notes
 
 **Dependencies and Order Constraints:**
+
 - Steps 1-3 (IPC layer) must be completed before Steps 6-7 (handlers and hooks)
 - Step 4 (validation schemas) must be completed before Steps 5 and 10 (repository and component validation)
 - Steps 6 and 7 can be done in parallel after Steps 1-3
 
 **Rollback Considerations:**
+
 - All database changes are additive (no schema migrations required for this plan)
 - Version field already exists in schema, just needs to be incremented
 - If issues arise, individual handlers can be reverted independently
 
 **Testing Recommendations:**
+
 - Test agent CRUD operations end-to-end after completing Steps 1-7
 - Test built-in agent protection after Step 13
 - Verify toast notifications appear for all error scenarios
 - Test form validation in both tools and skills managers
 
 **Assumptions Requiring Confirmation:**
+
 - The `useEffectEvent` hook is being used correctly in AgentEditorDialog (it is - this is a React 19 feature)
 - Cascade delete for tools/skills is already handled by database foreign keys (confirmed in schema - onDelete: "cascade")

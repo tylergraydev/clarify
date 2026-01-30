@@ -9,6 +9,7 @@
 ## Component Structure
 
 **AgentListProps Interface**:
+
 - Extends `ComponentPropsWithRef<'ul'>`
 - `agents: Agent[]`
 - Same action handlers as AgentCard: `onEdit`, `onDelete`, `onDuplicate`, `onCreateOverride`, `onReset`, `onToggleActive`
@@ -16,6 +17,7 @@
 - `selectedProjectId` for override availability
 
 **AgentListItem Sub-Component**:
+
 - Color indicator
 - Display name (truncated)
 - Type badge (Planning, Specialist, Review)

@@ -18,6 +18,7 @@ Fix all issues identified in the Agents Feature Audit Report. The report identif
 ## Context Provided
 
 **Project Context (from CLAUDE.md):**
+
 - Clarify is an Electron desktop app with Next.js 16.1.6, React 19.2.4, TypeScript
 - Database: better-sqlite3 with Drizzle ORM
 - UI: @base-ui/react with CVA patterns, TanStack Query for data fetching, TanStack Form for forms

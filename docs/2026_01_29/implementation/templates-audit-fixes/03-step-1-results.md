@@ -6,6 +6,7 @@
 ## Changes Made
 
 **File**: `electron/ipc/template.handlers.ts`
+
 - Changed the `template:delete` handler to call `templatesRepository.delete(id)` instead of `templatesRepository.deactivate(id)`
 - Updated the return type annotation from `Template | undefined` to `boolean`
 
@@ -23,6 +24,7 @@
 ## Notes
 
 The handler now correctly returns a `boolean` indicating whether the delete operation succeeded, matching the type declarations in both `types/electron.d.ts` (line 263) and `electron/preload.ts` (line 345). The four-layer IPC type consistency is now maintained:
+
 - `channels.ts`: `template:delete` channel (unchanged)
 - `template.handlers.ts`: Now returns `boolean` via `templatesRepository.delete(id)`
 - `preload.ts`: `delete(id: number): Promise<boolean>` (already correct)

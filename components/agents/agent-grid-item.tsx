@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import type { Agent } from '@/types/electron';
+import type { Agent } from "@/types/electron";
 
-import { AgentCard } from '@/components/agents/agent-card';
-import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
+import { AgentCard } from "@/components/agents/agent-card";
+import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
 
 // ============================================================================
 // Types
@@ -80,7 +80,7 @@ export const AgentGridItem = ({
       <AgentEditorDialog
         agent={agent}
         isOpen={isEditDialogOpen}
-        mode={'edit'}
+        mode={"edit"}
         onOpenChange={setIsEditDialogOpen}
       />
     </div>

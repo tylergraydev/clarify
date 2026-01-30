@@ -6,10 +6,12 @@
 ## Changes Made
 
 **File**: `electron/preload.ts`
+
 - Added `TemplateListFilters` interface
 - Updated `template.list` method signature and implementation to accept optional filters parameter
 
 **File**: `types/electron.d.ts`
+
 - Added `TemplateListFilters` interface
 - Updated `template.list` method signature to accept optional filters parameter
 

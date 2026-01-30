@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { Bot, Plus, Search } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { Bot, Plus, Search } from "lucide-react";
+import { Fragment, useState } from "react";
 
-import type { Agent } from '@/types/electron';
+import type { Agent } from "@/types/electron";
 
-import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
-import { AgentLayoutRenderer } from '@/components/agents/agent-layout-renderer';
-import { AgentListSkeleton } from '@/components/agents/agent-list-skeleton';
-import { AgentTableSkeleton } from '@/components/agents/agent-table-skeleton';
-import { ConfirmDeleteAgentDialog } from '@/components/agents/confirm-delete-agent-dialog';
-import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
-import { Button } from '@/components/ui/button';
+import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
+import { AgentLayoutRenderer } from "@/components/agents/agent-layout-renderer";
+import { AgentListSkeleton } from "@/components/agents/agent-list-skeleton";
+import { AgentTableSkeleton } from "@/components/agents/agent-table-skeleton";
+import { ConfirmDeleteAgentDialog } from "@/components/agents/confirm-delete-agent-dialog";
+import { QueryErrorBoundary } from "@/components/data/query-error-boundary";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
+} from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   useActivateAgent,
   useCreateAgentOverride,
@@ -27,9 +27,9 @@ import {
   useDuplicateAgent,
   useGlobalAgents,
   useResetAgent,
-} from '@/hooks/queries/use-agents';
-import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
-import { useShellStore } from '@/lib/stores/shell-store';
+} from "@/hooks/queries/use-agents";
+import { useAgentLayoutStore } from "@/lib/stores/agent-layout-store";
+import { useShellStore } from "@/lib/stores/shell-store";
 
 // ============================================================================
 // Types
@@ -53,41 +53,41 @@ interface GlobalAgentsTabContentProps {
  */
 const AgentCardSkeleton = () => {
   return (
-    <Card className={'animate-pulse'}>
+    <Card className={"animate-pulse"}>
       {/* Header */}
       <CardHeader>
-        <div className={'flex items-start justify-between gap-2'}>
-          <div className={'flex items-center gap-2'}>
+        <div className={"flex items-start justify-between gap-2"}>
+          <div className={"flex items-center gap-2"}>
             {/* Color indicator */}
-            <div className={'size-3 shrink-0 rounded-full bg-muted'} />
+            <div className={"size-3 shrink-0 rounded-full bg-muted"} />
             {/* Title */}
-            <div className={'h-5 w-32 rounded-sm bg-muted'} />
+            <div className={"h-5 w-32 rounded-sm bg-muted"} />
           </div>
           {/* Type badge */}
-          <div className={'h-5 w-16 rounded-full bg-muted'} />
+          <div className={"h-5 w-16 rounded-full bg-muted"} />
         </div>
         {/* Description */}
-        <div className={'mt-1.5 space-y-1'}>
-          <div className={'h-4 w-full rounded-sm bg-muted'} />
-          <div className={'h-4 w-3/4 rounded-sm bg-muted'} />
+        <div className={"mt-1.5 space-y-1"}>
+          <div className={"h-4 w-full rounded-sm bg-muted"} />
+          <div className={"h-4 w-3/4 rounded-sm bg-muted"} />
         </div>
       </CardHeader>
 
       {/* Content */}
-      <CardContent className={'flex flex-1 flex-col gap-3'}>
+      <CardContent className={"flex flex-1 flex-col gap-3"}>
         {/* Status row with label and switch */}
-        <div className={'flex items-center justify-between'}>
-          <div className={'h-4 w-16 rounded-sm bg-muted'} />
-          <div className={'h-5 w-9 rounded-full bg-muted'} />
+        <div className={"flex items-center justify-between"}>
+          <div className={"h-4 w-16 rounded-sm bg-muted"} />
+          <div className={"h-5 w-9 rounded-full bg-muted"} />
         </div>
       </CardContent>
 
       {/* Actions */}
-      <CardFooter className={'gap-2'}>
+      <CardFooter className={"gap-2"}>
         {/* Edit button */}
-        <div className={'h-8 w-16 rounded-md bg-muted'} />
+        <div className={"h-8 w-16 rounded-md bg-muted"} />
         {/* Reset button */}
-        <div className={'h-8 w-16 rounded-md bg-muted'} />
+        <div className={"h-8 w-16 rounded-md bg-muted"} />
       </CardFooter>
     </Card>
   );
@@ -229,16 +229,16 @@ export const GlobalAgentsTabContent = ({
       <QueryErrorBoundary>
         {isLoading ? (
           // Loading skeletons - render appropriate skeleton based on current layout
-          layout === 'list' ? (
+          layout === "list" ? (
             <AgentListSkeleton count={6} />
-          ) : layout === 'table' ? (
+          ) : layout === "table" ? (
             <AgentTableSkeleton count={6} />
           ) : (
             <div
-              aria-busy={'true'}
-              aria-label={'Loading global agents'}
-              className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}
-              role={'status'}
+              aria-busy={"true"}
+              aria-label={"Loading global agents"}
+              className={"grid gap-4 md:grid-cols-2 lg:grid-cols-3"}
+              role={"status"}
             >
               {Array.from({ length: 6 }).map((_, index) => (
                 <AgentCardSkeleton key={index} />
@@ -250,29 +250,29 @@ export const GlobalAgentsTabContent = ({
           <EmptyState
             action={
               <AgentEditorDialog
-                mode={'create'}
+                mode={"create"}
                 trigger={
                   <Button>
-                    <Plus aria-hidden={'true'} className={'size-4'} />
-                    {'Create your first global agent'}
+                    <Plus aria-hidden={"true"} className={"size-4"} />
+                    {"Create your first global agent"}
                   </Button>
                 }
               />
             }
             description={
-              'Global agents are available across all projects. Create one to get started with AI-assisted workflows.'
+              "Global agents are available across all projects. Create one to get started with AI-assisted workflows."
             }
-            icon={<Bot aria-hidden={'true'} className={'size-6'} />}
-            title={'No global agents yet'}
+            icon={<Bot aria-hidden={"true"} className={"size-6"} />}
+            title={"No global agents yet"}
           />
         ) : hasNoFilteredAgents ? (
           // Empty state when filters hide all agents
           <EmptyState
             description={
-              'No global agents match your current filters. Try adjusting your search criteria.'
+              "No global agents match your current filters. Try adjusting your search criteria."
             }
-            icon={<Search aria-hidden={'true'} className={'size-6'} />}
-            title={'No matching global agents'}
+            icon={<Search aria-hidden={"true"} className={"size-6"} />}
+            title={"No matching global agents"}
           />
         ) : (
           // Agent layout (card/list/table based on user preference)
@@ -296,7 +296,7 @@ export const GlobalAgentsTabContent = ({
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDeleteAgentDialog
-        agentName={agentToDelete?.displayName ?? ''}
+        agentName={agentToDelete?.displayName ?? ""}
         isLoading={isDeletingAgent}
         isOpen={isDeleteDialogOpen}
         onConfirm={handleConfirmDelete}

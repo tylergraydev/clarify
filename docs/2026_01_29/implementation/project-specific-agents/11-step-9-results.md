@@ -5,20 +5,22 @@
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
-| `components/agents/global-agents-tab-content.tsx` | Tab content component for displaying global agents (agents without project association) |
-| `components/agents/project-agents-tab-content.tsx` | Tab content component for displaying project-specific agents |
+| File                                               | Purpose                                                                                 |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `components/agents/global-agents-tab-content.tsx`  | Tab content component for displaying global agents (agents without project association) |
+| `components/agents/project-agents-tab-content.tsx` | Tab content component for displaying project-specific agents                            |
 
 ## Component Details
 
 ### GlobalAgentsTabContent
+
 - Uses `useGlobalAgents` hook
 - Accepts optional `filters` prop for search/type filtering
 - Empty states: "No global agents yet" / "No matching global agents"
 - Includes create, edit, delete, activate/deactivate, reset actions
 
 ### ProjectAgentsTabContent
+
 - Uses `useProjectAgents` hook
 - Requires `projectId` prop
 - Shows "Select a project" empty state when no project selected
@@ -26,6 +28,7 @@
 - Same action set as global component
 
 ## Shared Features
+
 - Both use existing `AgentCard`, `AgentEditorDialog`, `ConfirmDeleteAgentDialog` components
 - Loading skeletons for data fetching
 - Filter integration with search and type filters

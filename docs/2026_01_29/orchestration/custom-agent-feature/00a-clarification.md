@@ -35,7 +35,9 @@ The clarification agent examined:
 ## Design Document References
 
 ### Section 2.4 - Agents Overview
+
 Defines 10 specialist agents:
+
 - clarification-agent
 - file-discovery-agent
 - implementation-planner
@@ -48,7 +50,9 @@ Defines 10 specialist agents:
 - general-purpose
 
 ### Section 4.6 - Agent Editor UI
+
 Specifies:
+
 - Name field
 - Description field
 - Color tag picker (green/blue/yellow/cyan/red)
@@ -57,7 +61,9 @@ Specifies:
 - Referenced skills section
 
 ### Section 8.1 - Agent Bundling
+
 Specifies:
+
 - bundled-agents directory structure with planning/, specialists/, and skills/
 - On first launch: copy to app data, parse markdown for metadata, seed database
 - Mark bundled agents as `isBuiltIn: true`
@@ -67,6 +73,7 @@ Specifies:
 **Score**: 4/5 (Mostly clear, minor details might help)
 
 **Reasoning**: The design document provides comprehensive specifications for implementing the "create new custom agent" feature. The current codebase already has significant implementation infrastructure:
+
 - Database schema is complete
 - IPC handlers for CRUD operations exist
 - Agent Editor Dialog with all specified fields exists
@@ -77,6 +84,7 @@ Specifies:
 **Decision**: SKIP_CLARIFICATION
 
 **Reason**: The implementation gap is clearly identifiable from the design document and existing codebase:
+
 1. Adding a "Create New Agent" button to the Agents page
 2. Adapting the existing AgentEditorDialog to support both create and edit modes
 3. Ensuring IPC `agent:create` handler works correctly for user-created agents (isBuiltIn: false)

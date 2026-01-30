@@ -219,9 +219,7 @@ export const DialogHeader = ({
   showCloseButton = true,
 }: DialogHeaderProps) => {
   return (
-    <div
-      className={cn("flex items-start justify-between gap-4", className)}
-    >
+    <div className={cn("flex items-start justify-between gap-4", className)}>
       <div className={"min-w-0 flex-1"}>{children}</div>
       {(badges || showCloseButton) && (
         <div className={"flex shrink-0 items-center gap-2"}>
@@ -254,27 +252,24 @@ export const DialogBody = ({ children, className }: DialogBodyProps) => {
   );
 };
 
-export const dialogFooterVariants = cva(
-  "flex gap-3 bg-background pt-4",
-  {
-    defaultVariants: {
-      alignment: "end",
-      sticky: true,
+export const dialogFooterVariants = cva("flex gap-3 bg-background pt-4", {
+  defaultVariants: {
+    alignment: "end",
+    sticky: true,
+  },
+  variants: {
+    alignment: {
+      between: "justify-between",
+      center: "justify-center",
+      end: "justify-end",
+      start: "justify-start",
     },
-    variants: {
-      alignment: {
-        between: "justify-between",
-        center: "justify-center",
-        end: "justify-end",
-        start: "justify-start",
-      },
-      sticky: {
-        false: "mt-6",
-        true: "-mx-6 -mb-6 border-t border-border px-6 pb-6",
-      },
+    sticky: {
+      false: "mt-6",
+      true: "-mx-6 -mb-6 border-t border-border px-6 pb-6",
     },
-  }
-);
+  },
+});
 
 type DialogFooterProps = ComponentPropsWithRef<"div"> &
   VariantProps<typeof dialogFooterVariants>;

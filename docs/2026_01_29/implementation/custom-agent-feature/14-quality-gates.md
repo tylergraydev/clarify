@@ -4,14 +4,15 @@
 
 ## Validation Results
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| pnpm lint | PASS | No errors or warnings |
-| pnpm typecheck | PASS | No TypeScript errors |
+| Gate           | Status | Notes                 |
+| -------------- | ------ | --------------------- |
+| pnpm lint      | PASS   | No errors or warnings |
+| pnpm typecheck | PASS   | No TypeScript errors  |
 
 ## Files Changed
 
 ### Modified (10 files)
+
 1. `app/(app)/agents/page.tsx` - Create Agent button, duplicate/delete integration, result count, empty state
 2. `components/agents/agent-card.tsx` - Duplicate/Delete buttons, Custom badge
 3. `components/agents/agent-editor-dialog.tsx` - Create mode support, Custom Agent badge
@@ -24,6 +25,7 @@
 10. `types/electron.d.ts` - Duplicate method type definition
 
 ### Created (1 file)
+
 1. `components/agents/confirm-delete-agent-dialog.tsx` - Delete confirmation dialog
 
 ## Manual Testing Checklist (from plan)

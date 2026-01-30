@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { AgentLayoutProvider } from '@/components/providers/agent-layout-provider';
+import { AgentLayoutProvider } from "@/components/providers/agent-layout-provider";
 
 type AgentsLayoutProps = RequiredChildren;
 

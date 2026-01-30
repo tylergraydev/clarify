@@ -49,6 +49,7 @@ useMutation<boolean, Error, number, DeleteTemplateMutationContext>({
 **Impact:** Type safety is broken. The mutation will receive a `Template` object but TypeScript expects a `boolean`. This could cause runtime errors or unexpected behavior if code checks `if (result === true)`.
 
 **Recommendation:** Either:
+
 1. Update the handler to return `boolean` (check if template was deactivated)
 2. Update all type declarations to return `Template | undefined`
 
@@ -81,6 +82,7 @@ ipcMain.handle(
 **Impact:** All filtering happens client-side unnecessarily. The `useTemplates` hook fetches ALL templates and filters them in JavaScript, defeating the purpose of server-side filtering.
 
 **Recommendation:** Update preload API to accept and pass filters:
+
 ```typescript
 list: (filters?: { category?: string; includeDeactivated?: boolean }) =>
   ipcRenderer.invoke(IpcChannels.template.list, filters),
@@ -121,6 +123,7 @@ if (initialData) {
 **Impact:** Users who duplicate a template will lose all placeholder definitions (display names, descriptions, validation patterns, default values, required status). They must manually recreate all placeholder metadata.
 
 **Recommendation:**
+
 1. Fetch placeholders from the original template when duplicating
 2. Pass placeholders in the `initialData` object
 3. Initialize the placeholder editor with copied data
@@ -152,6 +155,7 @@ function parsePlaceholdersFromText(templateText: string): Array<ParsedPlaceholde
 ```
 
 **Impact:**
+
 - Custom validation patterns won't be applied when inserting templates
 - Placeholder descriptions won't help users understand what to enter
 - Default values won't be pre-filled
@@ -192,6 +196,7 @@ replaceForTemplate(templateId, placeholders) {
 **Impact:** If the insert operation fails (e.g., constraint violation, disk full), all existing placeholder data for that template is lost with no recovery possible.
 
 **Recommendation:** Wrap the delete and insert in a Drizzle transaction:
+
 ```typescript
 replaceForTemplate(templateId, placeholders) {
   return db.transaction((tx) => {
@@ -231,6 +236,7 @@ Placeholder cards use the array index as the React key, which can cause issues w
 ```
 
 **Impact:** When dragging to reorder or deleting placeholders, React may incorrectly reuse component instances, causing:
+
 - Input values appearing in wrong fields after reorder
 - Stale validation errors
 - Flickering or animation issues
@@ -261,11 +267,13 @@ export function useActiveTemplates() {
 ```
 
 **Impact:**
+
 - Unnecessary data transfer for large template libraries
 - Client-side filtering overhead
 - Inconsistent caching (all hooks cache same data differently)
 
 **Recommendation:** After fixing Issue #2, update hooks to pass filters to the server:
+
 ```typescript
 queryFn: () => api!.template.list({ includeDeactivated: false }),
 ```
@@ -313,17 +321,17 @@ for (const template of templatesToActivate) {
 
 ## Summary Table
 
-| # | Severity | Issue | Status |
-|---|----------|-------|--------|
-| 1 | CRITICAL | Delete handler returns Template instead of boolean | Needs Fix |
-| 2 | HIGH | Preload doesn't pass template list filters | Needs Fix |
-| 3 | MEDIUM | Duplicate doesn't copy placeholders | Needs Fix |
-| 4 | MEDIUM | Template picker ignores stored placeholder metadata | Needs Fix |
-| 5 | MEDIUM | ReplaceForTemplate lacks transaction | Needs Fix |
-| 6 | LOW | Array index used as React key | Should Fix |
-| 7 | LOW | Client-side filtering in hooks | Should Fix |
-| 8 | LOW | Missing activate IPC handler | Optional |
-| 9 | INFO | Sequential bulk operations | Optional |
+| #   | Severity | Issue                                               | Status     |
+| --- | -------- | --------------------------------------------------- | ---------- |
+| 1   | CRITICAL | Delete handler returns Template instead of boolean  | Needs Fix  |
+| 2   | HIGH     | Preload doesn't pass template list filters          | Needs Fix  |
+| 3   | MEDIUM   | Duplicate doesn't copy placeholders                 | Needs Fix  |
+| 4   | MEDIUM   | Template picker ignores stored placeholder metadata | Needs Fix  |
+| 5   | MEDIUM   | ReplaceForTemplate lacks transaction                | Needs Fix  |
+| 6   | LOW      | Array index used as React key                       | Should Fix |
+| 7   | LOW      | Client-side filtering in hooks                      | Should Fix |
+| 8   | LOW      | Missing activate IPC handler                        | Optional   |
+| 9   | INFO     | Sequential bulk operations                          | Optional   |
 
 ---
 
@@ -347,18 +355,21 @@ The implementation includes many well-designed aspects:
 ## Recommended Action Plan
 
 ### Phase 1: Critical Fixes (Immediate)
+
 1. Fix delete handler return type mismatch (Issue #1)
 2. Add filter support to preload API (Issue #2)
 
 ### Phase 2: Medium Priority (Next Sprint)
+
 3. Implement placeholder copying for duplicate flow (Issue #3)
 4. Fetch stored placeholders in template picker (Issue #4)
 5. Wrap replaceForTemplate in transaction (Issue #5)
 
 ### Phase 3: Low Priority (Backlog)
+
 6. Switch to unique keys in PlaceholderEditor (Issue #6)
 7. Update hooks to use server-side filtering (Issue #7)
 
 ---
 
-*Report generated by analyzing 15+ template-related files across schema, repositories, IPC handlers, query hooks, and UI components.*
+_Report generated by analyzing 15+ template-related files across schema, repositories, IPC handlers, query hooks, and UI components._

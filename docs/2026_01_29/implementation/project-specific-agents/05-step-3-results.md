@@ -6,11 +6,13 @@
 ## Files Modified
 
 No modifications needed - the handler was already properly configured:
+
 - `electron/ipc/agent.handlers.ts` - Already has correct implementation
 
 ## Verification
 
 All layers are properly synchronized:
+
 1. **Repository**: Has `AgentListFilters` with `scope`, `excludeProjectAgents`, and other filters
 2. **Handler**: Has `AgentListFilters` interface and passes filters directly to `agentsRepository.findAll(filters)`
 3. **Preload**: Has `AgentListFilters` interface and the `list` method accepts filters

@@ -5,8 +5,8 @@
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
+| File                                   | Changes                                                                                                                                            |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `db/repositories/agents.repository.ts` | Added `AgentListFilters` interface, `findGlobal()` method, `findByProjectWithParents()` method, and updated `findAll()` to support scope filtering |
 
 ## Changes Summary

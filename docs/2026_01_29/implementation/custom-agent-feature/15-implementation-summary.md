@@ -3,6 +3,7 @@
 ## Feature: Create New Custom Agent Feature
 
 ### Statistics
+
 - **Total Steps**: 11
 - **Steps Completed**: 11 (100%)
 - **Quality Gates**: All passed
@@ -35,6 +36,7 @@
    - Added accessibility improvements (skip link, ARIA attributes)
 
 ### Architecture Patterns Used
+
 - IPC Handler pattern with four-layer sync
 - TanStack Query mutation pattern with cache invalidation
 - CVA component variants for badge styling
@@ -42,4 +44,5 @@
 - Keyboard shortcut handling
 
 ### Ready for Manual Testing
+
 See 14-quality-gates.md for the manual testing checklist.

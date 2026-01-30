@@ -59,13 +59,20 @@ export interface AgentOperationResult {
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<import("../db/schema").Agent | undefined>;
-    create(data: import("../db/schema").NewAgent): Promise<AgentOperationResult>;
-    createOverride(agentId: number, projectId: number): Promise<AgentOperationResult>;
+    create(
+      data: import("../db/schema").NewAgent
+    ): Promise<AgentOperationResult>;
+    createOverride(
+      agentId: number,
+      projectId: number
+    ): Promise<AgentOperationResult>;
     deactivate(id: number): Promise<import("../db/schema").Agent | undefined>;
     delete(id: number): Promise<AgentOperationResult>;
     duplicate(id: number): Promise<AgentOperationResult>;
     get(id: number): Promise<import("../db/schema").Agent | undefined>;
-    list(filters?: AgentListFilters): Promise<Array<import("../db/schema").Agent>>;
+    list(
+      filters?: AgentListFilters
+    ): Promise<Array<import("../db/schema").Agent>>;
     reset(id: number): Promise<import("../db/schema").Agent | undefined>;
     update(
       id: number,

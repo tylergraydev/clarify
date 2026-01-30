@@ -13,27 +13,30 @@
 ## File Discovery Results
 
 ### Critical Files (Must Modify)
-| File | Action | Purpose |
-|------|--------|---------|
-| `app/(app)/agents/page.tsx` | Modify | Add tabbed interface for Global/Project agents |
-| `db/repositories/agents.repository.ts` | Modify | Add global agent filtering methods |
-| `hooks/queries/use-agents.ts` | Modify | Add useGlobalAgents and useProjectAgents hooks |
-| `lib/queries/agents.ts` | Modify | Add query keys for global and project agents |
-| `electron/ipc/agent.handlers.ts` | Modify | Update filtering patterns for scope |
-| `lib/stores/shell-store.ts` | Verify | Ensure project selection integration |
+
+| File                                   | Action | Purpose                                        |
+| -------------------------------------- | ------ | ---------------------------------------------- |
+| `app/(app)/agents/page.tsx`            | Modify | Add tabbed interface for Global/Project agents |
+| `db/repositories/agents.repository.ts` | Modify | Add global agent filtering methods             |
+| `hooks/queries/use-agents.ts`          | Modify | Add useGlobalAgents and useProjectAgents hooks |
+| `lib/queries/agents.ts`                | Modify | Add query keys for global and project agents   |
+| `electron/ipc/agent.handlers.ts`       | Modify | Update filtering patterns for scope            |
+| `lib/stores/shell-store.ts`            | Verify | Ensure project selection integration           |
 
 ### High Priority Files
-| File | Action | Purpose |
-|------|--------|---------|
+
+| File                                        | Action | Purpose                                        |
+| ------------------------------------------- | ------ | ---------------------------------------------- |
 | `components/agents/agent-editor-dialog.tsx` | Modify | Add projectId prop for project-scoped creation |
-| `components/agents/agent-card.tsx` | Modify | Add project scope badge |
-| `types/electron.d.ts` | Modify | Add scope property to AgentListFilters |
-| `lib/validations/agent.ts` | Modify | Add projectId to form schema |
+| `components/agents/agent-card.tsx`          | Modify | Add project scope badge                        |
+| `types/electron.d.ts`                       | Modify | Add scope property to AgentListFilters         |
+| `lib/validations/agent.ts`                  | Modify | Add projectId to form schema                   |
 
 ### Files to Create
-| File | Purpose |
-|------|---------|
-| `components/agents/global-agents-tab-content.tsx` | Global agents tab panel content |
+
+| File                                               | Purpose                          |
+| -------------------------------------------------- | -------------------------------- |
+| `components/agents/global-agents-tab-content.tsx`  | Global agents tab panel content  |
 | `components/agents/project-agents-tab-content.tsx` | Project agents tab panel content |
 
 ---

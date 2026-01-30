@@ -10,12 +10,12 @@ This orchestration captures the complete planning process for adding project-spe
 
 ## Steps
 
-| Step | Name | Status | Duration | Log File |
-|------|------|--------|----------|----------|
-| 0a | Clarification | Completed | ~60s | [00a-clarification.md](./00a-clarification.md) |
-| 1 | Feature Refinement | Completed | ~60s | [01-feature-refinement.md](./01-feature-refinement.md) |
-| 2 | File Discovery | Completed | ~90s | [02-file-discovery.md](./02-file-discovery.md) |
-| 3 | Implementation Planning | Completed | ~90s | [03-implementation-planning.md](./03-implementation-planning.md) |
+| Step | Name                    | Status    | Duration | Log File                                                         |
+| ---- | ----------------------- | --------- | -------- | ---------------------------------------------------------------- |
+| 0a   | Clarification           | Completed | ~60s     | [00a-clarification.md](./00a-clarification.md)                   |
+| 1    | Feature Refinement      | Completed | ~60s     | [01-feature-refinement.md](./01-feature-refinement.md)           |
+| 2    | File Discovery          | Completed | ~90s     | [02-file-discovery.md](./02-file-discovery.md)                   |
+| 3    | Implementation Planning | Completed | ~90s     | [03-implementation-planning.md](./03-implementation-planning.md) |
 
 ## Original Request
 
@@ -29,14 +29,14 @@ This orchestration captures the complete planning process for adding project-spe
 
 ## Summary Statistics
 
-| Metric | Value |
-|--------|-------|
-| Total Files Discovered | 30 |
-| Critical Files | 6 |
-| High Priority Files | 10 |
-| Implementation Steps | 14 |
-| Estimated Duration | 2-3 days |
-| Complexity | Medium |
+| Metric                 | Value    |
+| ---------------------- | -------- |
+| Total Files Discovered | 30       |
+| Critical Files         | 6        |
+| High Priority Files    | 10       |
+| Implementation Steps   | 14       |
+| Estimated Duration     | 2-3 days |
+| Complexity             | Medium   |
 
 ## Output Files
 

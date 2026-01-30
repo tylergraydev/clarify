@@ -5,8 +5,8 @@
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
+| File                        | Changes                                                               |
+| --------------------------- | --------------------------------------------------------------------- |
 | `app/(app)/agents/page.tsx` | Added project context display in page header with dynamic description |
 
 ## Changes Made

@@ -15,12 +15,14 @@
 ## Skeleton Features
 
 **AgentListSkeleton**:
+
 - Mimics AgentList horizontal row structure
 - Placeholders for: color indicator, name, type badge, origin badges, status toggle, actions
 - Accepts `count` prop (default: 6)
 - Uses `animate-pulse` animation
 
 **AgentTableSkeleton**:
+
 - Mimics AgentTable structure with headers
 - Headers: Name, Type, Status, Scope, Actions
 - Row placeholders with proper sizing
@@ -29,6 +31,7 @@
 ## Tab Content Updates
 
 Both components now conditionally render based on layout:
+
 - `'list'` → AgentListSkeleton
 - `'table'` → AgentTableSkeleton
 - `'card'` → Card grid with AgentCardSkeleton

@@ -4,10 +4,10 @@
 
 ## Results
 
-| Gate | Status |
-|------|--------|
-| `pnpm lint` | PASS |
-| `pnpm typecheck` | PASS |
+| Gate             | Status |
+| ---------------- | ------ |
+| `pnpm lint`      | PASS   |
+| `pnpm typecheck` | PASS   |
 
 ## Commands Run
 

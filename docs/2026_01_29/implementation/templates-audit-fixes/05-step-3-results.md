@@ -6,6 +6,7 @@
 ## Changes Made
 
 **File**: `db/repositories/template-placeholders.repository.ts`
+
 - Wrapped delete and insert operations in `replaceForTemplate` within a `db.transaction()` block for atomicity
 
 ## Implementation Details

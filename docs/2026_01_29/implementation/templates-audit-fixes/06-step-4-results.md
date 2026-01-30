@@ -6,11 +6,13 @@
 ## Changes Made
 
 **File**: `lib/queries/templates.ts`
+
 - Imported `TemplateListFilters` type from `@/types/electron`
 - Updated `list` to use `TemplateListFilters` type
 - Updated `byCategory` to use `TemplateListFilters["category"]` for type-safe category values
 
 **File**: `hooks/queries/use-templates.ts`
+
 - **`useActiveTemplates`**: Now calls `api.template.list({ includeDeactivated: false })` directly - removed client-side filtering
 - **`useBuiltInTemplates`**: Uses server-side filter then applies minimal client-side filter for `builtInAt !== null`
 - **`useTemplates`**: Now passes `filters` directly to `api.template.list(filters)` - removed all client-side filtering

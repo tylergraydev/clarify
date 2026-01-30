@@ -8,9 +8,11 @@
 ## Input Summary
 
 ### Refined Feature Request
+
 The agent management page should be enhanced to support a dual-tier agent system that distinguishes between globally-available agents and project-specific agents through a tabbed interface. The implementation will use a two-tab design accessible from the agents page at app/(app)/agents/page.tsx, with the 'Global Agents' tab displaying organization-wide agents managed at a single configuration level and the 'Project Agents' tab showing agents specific to the currently-selected project, as determined by the ProjectSelector component in the sidebar. The feature must support two key ownership models: custom agents created specifically for a particular project, which exist only within that project's context, and per-project overrides of global agents.
 
 ### File Discovery Summary
+
 - Critical files: 6
 - High priority files: 10
 - Medium priority files: 8
@@ -68,14 +70,14 @@ The implementation planner generated a comprehensive 14-step plan covering:
 
 ## Complexity Assessment
 
-| Metric | Value |
-|--------|-------|
+| Metric             | Value    |
+| ------------------ | -------- |
 | Estimated Duration | 2-3 days |
-| Complexity | Medium |
-| Risk Level | Medium |
-| Total Steps | 14 |
-| Files to Modify | 10 |
-| Files to Create | 2 |
+| Complexity         | Medium   |
+| Risk Level         | Medium   |
+| Total Steps        | 14       |
+| Files to Modify    | 10       |
+| Files to Create    | 2        |
 
 ## Quality Gate Results
 

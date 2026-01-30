@@ -5,8 +5,8 @@
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
+| File                        | Changes                                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------- |
 | `app/(app)/agents/page.tsx` | Completely refactored to implement dual-tab interface with Global and Project tabs |
 
 ## Summary of Changes

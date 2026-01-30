@@ -5,11 +5,11 @@
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
-| `types/electron.d.ts` | Added `scope` property with type `"global" \| "project"` and `excludeProjectAgents` boolean to `AgentListFilters` interface |
-| `electron/ipc/agent.handlers.ts` | Added matching `scope` and `excludeProjectAgents` properties to local `AgentListFilters` interface |
-| `electron/preload.ts` | Added matching `scope` and `excludeProjectAgents` properties for consistency |
+| File                             | Changes                                                                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `types/electron.d.ts`            | Added `scope` property with type `"global" \| "project"` and `excludeProjectAgents` boolean to `AgentListFilters` interface |
+| `electron/ipc/agent.handlers.ts` | Added matching `scope` and `excludeProjectAgents` properties to local `AgentListFilters` interface                          |
+| `electron/preload.ts`            | Added matching `scope` and `excludeProjectAgents` properties for consistency                                                |
 
 ## Validation Results
 

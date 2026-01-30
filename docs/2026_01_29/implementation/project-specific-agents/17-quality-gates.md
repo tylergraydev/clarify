@@ -4,10 +4,10 @@
 
 ## Automated Quality Gates
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| `pnpm lint` | ✅ PASS | ESLint with auto-fix completed successfully |
-| `pnpm typecheck` | ✅ PASS | TypeScript compilation with no errors |
+| Gate             | Status  | Notes                                       |
+| ---------------- | ------- | ------------------------------------------- |
+| `pnpm lint`      | ✅ PASS | ESLint with auto-fix completed successfully |
+| `pnpm typecheck` | ✅ PASS | TypeScript compilation with no errors       |
 
 ## Manual Verification Checklist
 

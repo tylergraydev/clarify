@@ -6,6 +6,7 @@
 ## Changes Made
 
 **File**: `app/(app)/templates/page.tsx`
+
 - Added `countSettledResults` helper function to count fulfilled and rejected results from `Promise.allSettled()`
 - Updated `handleBulkActivate` to use `Promise.allSettled()` for parallel template activation
 - Updated `handleBulkDeactivate` to use `Promise.allSettled()` for parallel template deactivation
@@ -14,6 +15,7 @@
 ## Implementation Details
 
 The `countSettledResults` helper function:
+
 ```typescript
 function countSettledResults(results: PromiseSettledResult<unknown>[]) {
   return results.reduce(
@@ -28,6 +30,7 @@ function countSettledResults(results: PromiseSettledResult<unknown>[]) {
 ```
 
 Each bulk operation now:
+
 1. Creates an array of promises for all operations
 2. Executes them in parallel with `Promise.allSettled()`
 3. Counts results using the helper

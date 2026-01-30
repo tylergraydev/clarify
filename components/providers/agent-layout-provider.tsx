@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 import {
   AGENT_LAYOUT_STORAGE_KEY,
   AGENT_SHOW_DEACTIVATED_STORAGE_KEY,
   type AgentLayout,
-} from '@/lib/layout/constants';
-import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
+} from "@/lib/layout/constants";
+import { useAgentLayoutStore } from "@/lib/stores/agent-layout-store";
 
 interface AgentLayoutProviderProps {
   children: ReactNode;
@@ -33,7 +33,7 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
   useEffect(() => {
     const hydrateStore = async () => {
       // Check if running in Electron environment
-      if (typeof window !== 'undefined' && window.electronAPI?.store) {
+      if (typeof window !== "undefined" && window.electronAPI?.store) {
         // Hydrate layout preference
         const persistedLayout = await window.electronAPI.store.get<AgentLayout>(
           AGENT_LAYOUT_STORAGE_KEY
@@ -54,13 +54,13 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
         // Validate and add layout to update
         if (
           persistedLayout &&
-          ['card', 'list', 'table'].includes(persistedLayout)
+          ["card", "list", "table"].includes(persistedLayout)
         ) {
           stateUpdate.layout = persistedLayout;
         }
 
         // Validate and add showDeactivated to update
-        if (typeof persistedShowDeactivated === 'boolean') {
+        if (typeof persistedShowDeactivated === "boolean") {
           stateUpdate.showDeactivated = persistedShowDeactivated;
         }
 

@@ -3,29 +3,33 @@
 ## Routing Table
 
 ### Phase 1: Critical Priority
-| Step | Specialist | Dependencies |
-|------|------------|--------------|
-| 1 | ipc-handler | None |
-| 2 | ipc-handler | None |
-| 3 | database-schema | None |
+
+| Step | Specialist      | Dependencies |
+| ---- | --------------- | ------------ |
+| 1    | ipc-handler     | None         |
+| 2    | ipc-handler     | None         |
+| 3    | database-schema | None         |
 
 ### Phase 2: High Priority
-| Step | Specialist | Dependencies |
-|------|------------|--------------|
-| 4 | tanstack-query | Step 2 |
+
+| Step | Specialist     | Dependencies |
+| ---- | -------------- | ------------ |
+| 4    | tanstack-query | Step 2       |
 
 ### Phase 3: Medium Priority
-| Step | Specialist | Dependencies |
-|------|------------|--------------|
-| 5 | frontend-component | None |
-| 6 | frontend-component | None |
-| 7 | frontend-component | None |
+
+| Step | Specialist         | Dependencies |
+| ---- | ------------------ | ------------ |
+| 5    | frontend-component | None         |
+| 6    | frontend-component | None         |
+| 7    | frontend-component | None         |
 
 ### Phase 4: Lower Priority
-| Step | Specialist | Dependencies |
-|------|------------|--------------|
-| 8 | ipc-handler | None |
-| 9 | frontend-component | None |
+
+| Step | Specialist         | Dependencies |
+| ---- | ------------------ | ------------ |
+| 8    | ipc-handler        | None         |
+| 9    | frontend-component | None         |
 
 ## Execution Order
 

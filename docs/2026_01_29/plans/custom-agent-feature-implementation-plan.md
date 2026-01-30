@@ -29,19 +29,23 @@
 **Confidence**: High
 
 **Files to Modify:**
+
 - `electron/ipc/agent.handlers.ts` - Verify create handler sets proper defaults
 
 **Changes:**
+
 - Verify the `create` handler in `agent.handlers.ts` does not set `builtInAt` for user-created agents (defaults to null)
 - Confirm that new agents are created with `deactivatedAt: null` (active by default)
 - Verify version defaults to 1 in the repository layer (already in schema default)
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Create handler does not set `builtInAt` for new agents
 - [ ] New agents are active by default (`deactivatedAt` is null)
 - [ ] All validation commands pass
@@ -55,12 +59,14 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `electron/ipc/channels.ts` - Add `duplicate` channel to agent namespace
 - `electron/preload.ts` - Add duplicate method to agent API
 - `types/electron.d.ts` - Add type definition for duplicate method
 - `electron/ipc/agent.handlers.ts` - Implement duplicate handler
 
 **Changes:**
+
 - Add `duplicate: "agent:duplicate"` to `IpcChannels.agent` object in both channels.ts and preload.ts
 - Add `duplicate(id: number): Promise<AgentOperationResult>` method to the agent API interface
 - Implement handler that:
@@ -70,11 +76,13 @@ pnpm run lint && pnpm run typecheck
   - Returns the newly created agent
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] `agent:duplicate` channel exists in both channel files
 - [ ] Duplicate method available on ElectronAPI interface
 - [ ] Handler implementation creates proper copy with unique name
@@ -89,20 +97,24 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `hooks/queries/use-agents.ts` - Add `useDuplicateAgent` mutation hook
 
 **Changes:**
+
 - Add `useDuplicateAgent` function following the existing mutation patterns
 - Call `api.agent.duplicate(id)` in the mutation function
 - Handle success with toast notification and cache invalidation
 - Handle error with appropriate toast error message
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] `useDuplicateAgent` hook exports from the file
 - [ ] Hook follows existing mutation patterns for error handling and cache invalidation
 - [ ] All validation commands pass
@@ -116,20 +128,24 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `lib/validations/agent.ts` - Add `createAgentFormSchema`
 
 **Changes:**
+
 - Add `createAgentFormSchema` that extends/mirrors `createAgentSchema` but designed for form input
 - Include fields: `name`, `displayName`, `description`, `type`, `systemPrompt`, `color`
 - Ensure proper validation messages for each field
 - Export the schema and its inferred type
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] `createAgentFormSchema` is exported
 - [ ] All required fields have proper validation rules
 - [ ] Type inference works correctly
@@ -144,9 +160,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Modify:**
+
 - `components/agents/agent-editor-dialog.tsx` - Add create mode support
 
 **Changes:**
+
 - Add `mode: "create" | "edit"` prop to the component interface
 - Add optional `initialData` prop for duplicating agents
 - Make `agent` prop optional (only required for edit mode)
@@ -158,11 +176,13 @@ pnpm run lint && pnpm run typecheck
 - Add type selector using the `agentTypes` from schema
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Dialog supports both "create" and "edit" modes via prop
 - [ ] Create mode shows name and type fields
 - [ ] Edit mode hides/disables name field
@@ -179,9 +199,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/agents/page.tsx` - Add Create Agent button
 
 **Changes:**
+
 - Add a header section similar to templates page with title, description, and button
 - Include `TemplateEditorDialog` replacement with `AgentEditorDialog` in create mode
 - Add "Create Agent" button with Plus icon as the dialog trigger
@@ -189,11 +211,13 @@ pnpm run lint && pnpm run typecheck
 - Wire up keyboard shortcut handler for Ctrl+N
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Create Agent button appears in page header
 - [ ] Clicking button opens AgentEditorDialog in create mode
 - [ ] Button styling matches the templates page pattern
@@ -209,9 +233,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `components/agents/confirm-delete-agent-dialog.tsx` - New confirmation dialog
 
 **Changes:**
+
 - Create dialog component following `ConfirmDeleteDialog` pattern
 - Accept props: `agentName`, `isOpen`, `isLoading`, `onConfirm`, `onOpenChange`
 - Add warning message about permanent deletion
@@ -219,11 +245,13 @@ pnpm run lint && pnpm run typecheck
 - Use `alertdialog` role for accessibility
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Dialog component is created and exported
 - [ ] Props interface matches the pattern from templates
 - [ ] Accessibility attributes are properly set
@@ -238,9 +266,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Modify:**
+
 - `components/agents/agent-card.tsx` - Add Duplicate and Delete buttons
 
 **Changes:**
+
 - Add `onDuplicate?: (agent: Agent) => void` prop to the component interface
 - Add `onDelete?: (agentId: number) => void` prop to the component interface
 - Add Duplicate button (Copy icon) that calls `onDuplicate` - shown for all agents
@@ -249,11 +279,13 @@ pnpm run lint && pnpm run typecheck
 - Add visual indicator badge for "Custom" agents (similar to "Customized" badge but different)
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Duplicate button appears on all agent cards
 - [ ] Delete button only appears on custom agent cards
 - [ ] Visual distinction between built-in and custom agents is clear
@@ -269,9 +301,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Modify:**
+
 - `app/(app)/agents/page.tsx` - Add delete/duplicate state and handlers
 
 **Changes:**
+
 - Add `useDeleteAgent` and `useDuplicateAgent` mutation imports
 - Add state for delete confirmation dialog (`agentToDelete`, `isDeleteDialogOpen`)
 - Add state for duplicate dialog data (`duplicateAgentData`, `duplicateDialogTriggerRef`)
@@ -283,11 +317,13 @@ pnpm run lint && pnpm run typecheck
 - Add hidden duplicate trigger button with `AgentEditorDialog` in create mode with initialData
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Delete confirmation dialog opens when Delete button is clicked
 - [ ] Agent is deleted after confirmation
 - [ ] Duplicate dialog opens with pre-filled data when Duplicate button is clicked
@@ -304,21 +340,25 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `components/agents/agent-card.tsx` - Add "Custom" badge
 - `components/agents/agent-editor-dialog.tsx` - Show "Custom Agent" badge in header for custom agents
 
 **Changes:**
+
 - In AgentCard: Add a "Custom" badge when `builtInAt === null` (different styling from "Customized")
 - Consider using a different color or icon to distinguish from "Built-in"
 - In AgentEditorDialog: Show "Custom Agent" badge instead of "Built-in Agent" when editing a custom agent
 - Ensure consistent visual language across all agent-related components
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Custom agents display a "Custom" badge
 - [ ] Built-in agents display a "Built-in Agent" badge in dialogs
 - [ ] Visual distinction is clear and consistent
@@ -333,19 +373,23 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/agents/page.tsx` - Add result count and enhance empty state
 
 **Changes:**
+
 - Add Badge component showing agent count in the page header (matching templates pattern)
 - Update the "No agents yet" empty state to include a "Create your first agent" action button
 - Add skip link for keyboard navigation accessibility
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Agent count badge appears in page header
 - [ ] Empty state includes create action button
 - [ ] Skip link for accessibility is present

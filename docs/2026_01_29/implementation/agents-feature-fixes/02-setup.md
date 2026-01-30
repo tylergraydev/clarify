@@ -4,21 +4,21 @@
 
 ## Routing Table
 
-| Step | Title | Specialist Agent | Files |
-|------|-------|------------------|-------|
-| 1 | Add agent list filter types and channel definitions | `ipc-handler` | `electron/ipc/channels.ts` |
-| 2 | Update type definitions with filter interface and new method signatures | `ipc-handler` | `types/electron.d.ts` |
-| 3 | Update preload API to pass filters and add create/delete methods | `ipc-handler` | `electron/preload.ts` |
-| 4 | Update agents repository with version increment and input validation | `database-schema` | `db/repositories/agents.repository.ts`, `lib/validations/agent.ts` |
-| 5 | Add Zod validation to agent tools and skills repositories | `database-schema` | `db/repositories/agent-tools.repository.ts`, `db/repositories/agent-skills.repository.ts` |
-| 6 | Add create, delete, and reset cascade handlers to agent IPC | `ipc-handler` | `electron/ipc/agent.handlers.ts` |
-| 7 | Update query hooks with server-side filtering and toast integration | `tanstack-query` | `hooks/queries/use-agents.ts`, `hooks/queries/use-agent-tools.ts`, `hooks/queries/use-agent-skills.ts` |
-| 8 | Fix AgentEditorDialog useEffect dependencies and add error toasts | `frontend-component` | `components/agents/agent-editor-dialog.tsx` |
-| 9 | Add explicit color fallback logic in AgentCard | `frontend-component` | `components/agents/agent-card.tsx` |
-| 10 | Add input validation to agent tools and skills manager components | `frontend-component` | `components/agents/agent-tools-manager.tsx`, `components/agents/agent-skills-manager.tsx` |
-| 11 | Update agents page to use server-side filtering | `frontend-component` | `app/(app)/agents/page.tsx` |
-| 12 | Clean up unused query key definitions | `tanstack-query` | `lib/queries/agents.ts`, `lib/queries/agent-tools.ts`, `lib/queries/agent-skills.ts` |
-| 13 | Add built-in agent protection in IPC layer | `ipc-handler` | `electron/ipc/agent.handlers.ts` |
+| Step | Title                                                                   | Specialist Agent     | Files                                                                                                  |
+| ---- | ----------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1    | Add agent list filter types and channel definitions                     | `ipc-handler`        | `electron/ipc/channels.ts`                                                                             |
+| 2    | Update type definitions with filter interface and new method signatures | `ipc-handler`        | `types/electron.d.ts`                                                                                  |
+| 3    | Update preload API to pass filters and add create/delete methods        | `ipc-handler`        | `electron/preload.ts`                                                                                  |
+| 4    | Update agents repository with version increment and input validation    | `database-schema`    | `db/repositories/agents.repository.ts`, `lib/validations/agent.ts`                                     |
+| 5    | Add Zod validation to agent tools and skills repositories               | `database-schema`    | `db/repositories/agent-tools.repository.ts`, `db/repositories/agent-skills.repository.ts`              |
+| 6    | Add create, delete, and reset cascade handlers to agent IPC             | `ipc-handler`        | `electron/ipc/agent.handlers.ts`                                                                       |
+| 7    | Update query hooks with server-side filtering and toast integration     | `tanstack-query`     | `hooks/queries/use-agents.ts`, `hooks/queries/use-agent-tools.ts`, `hooks/queries/use-agent-skills.ts` |
+| 8    | Fix AgentEditorDialog useEffect dependencies and add error toasts       | `frontend-component` | `components/agents/agent-editor-dialog.tsx`                                                            |
+| 9    | Add explicit color fallback logic in AgentCard                          | `frontend-component` | `components/agents/agent-card.tsx`                                                                     |
+| 10   | Add input validation to agent tools and skills manager components       | `frontend-component` | `components/agents/agent-tools-manager.tsx`, `components/agents/agent-skills-manager.tsx`              |
+| 11   | Update agents page to use server-side filtering                         | `frontend-component` | `app/(app)/agents/page.tsx`                                                                            |
+| 12   | Clean up unused query key definitions                                   | `tanstack-query`     | `lib/queries/agents.ts`, `lib/queries/agent-tools.ts`, `lib/queries/agent-skills.ts`                   |
+| 13   | Add built-in agent protection in IPC layer                              | `ipc-handler`        | `electron/ipc/agent.handlers.ts`                                                                       |
 
 ## Specialist Agent Distribution
 

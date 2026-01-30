@@ -360,9 +360,7 @@ export const TemplateEditorDialog = ({
               {/* Usage Count Display (Edit Mode Only) */}
               {isEditMode && template && (
                 <div
-                  className={
-                    "rounded-md border border-border bg-muted/50 p-3"
-                  }
+                  className={"rounded-md border border-border bg-muted/50 p-3"}
                 >
                   <div className={"flex items-center justify-between text-sm"}>
                     <span className={"text-muted-foreground"}>

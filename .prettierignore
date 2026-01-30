@@ -3,9 +3,7 @@ node_modules
 
 # Build outputs
 .next
-out
 build
-dist
 
 # Generated files
 next-env.d.ts
@@ -13,5 +11,7 @@ next-env.d.ts
 
 # Package manager
 pnpm-lock.yaml
-package-lock.json
-yarn.lock
+
+docs
+.claude
+electron-dist

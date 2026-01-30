@@ -17,19 +17,21 @@
 ## File Discovery Results
 
 ### Critical Priority (Must Modify)
-| File | Issue(s) | Modification |
-|------|----------|--------------|
-| `electron/ipc/template.handlers.ts` | #1, #8 | Fix delete return type; Add activate handler |
-| `electron/preload.ts` | #2 | Add filter parameters to list() |
-| `types/electron.d.ts` | #1, #2 | Update type declarations |
-| `db/repositories/template-placeholders.repository.ts` | #5 | Add transaction wrapper |
-| `app/(app)/templates/page.tsx` | #3, #9 | Copy placeholders; Parallelize bulk ops |
-| `components/templates/template-editor-dialog.tsx` | #3 | Accept copied placeholders |
-| `components/workflows/template-picker-dialog.tsx` | #4 | Fetch stored placeholder metadata |
-| `components/templates/placeholder-editor.tsx` | #6 | Use unique IDs as keys |
-| `hooks/queries/use-templates.ts` | #7 | Pass filters to server |
+
+| File                                                  | Issue(s) | Modification                                 |
+| ----------------------------------------------------- | -------- | -------------------------------------------- |
+| `electron/ipc/template.handlers.ts`                   | #1, #8   | Fix delete return type; Add activate handler |
+| `electron/preload.ts`                                 | #2       | Add filter parameters to list()              |
+| `types/electron.d.ts`                                 | #1, #2   | Update type declarations                     |
+| `db/repositories/template-placeholders.repository.ts` | #5       | Add transaction wrapper                      |
+| `app/(app)/templates/page.tsx`                        | #3, #9   | Copy placeholders; Parallelize bulk ops      |
+| `components/templates/template-editor-dialog.tsx`     | #3       | Accept copied placeholders                   |
+| `components/workflows/template-picker-dialog.tsx`     | #4       | Fetch stored placeholder metadata            |
+| `components/templates/placeholder-editor.tsx`         | #6       | Use unique IDs as keys                       |
+| `hooks/queries/use-templates.ts`                      | #7       | Pass filters to server                       |
 
 ### Reference Files
+
 - `electron/ipc/repository.handlers.ts` - Delete handler boolean pattern
 - `electron/ipc/channels.ts` - IPC channel definitions
 - `db/repositories/templates.repository.ts` - Server-side filtering

@@ -6,9 +6,11 @@
 ## Changes Made
 
 **File**: `lib/validations/template.ts`
+
 - Added `uid` field to `templatePlaceholderSchema` with validation requiring a non-empty string
 
 **File**: `components/templates/placeholder-editor.tsx`
+
 - Updated `createDefaultPlaceholder` to generate a unique ID using `crypto.randomUUID()`
 - Changed `validationErrors` state type from `Map<number, PlaceholderValidationErrors>` to `Map<string, PlaceholderValidationErrors>`
 - Updated `handleRemovePlaceholder` to take `uid: string` parameter instead of index
@@ -18,9 +20,11 @@
 - Updated all handler calls and element IDs to use `placeholder.uid` instead of index
 
 **File**: `components/templates/template-editor-dialog.tsx`
+
 - Updated placeholder loading to include `uid: crypto.randomUUID()` for existing placeholders
 
 **File**: `app/(app)/templates/page.tsx`
+
 - Updated placeholder mapping instances to include `uid: crypto.randomUUID()` for duplicated placeholders
 
 ## Validation Results

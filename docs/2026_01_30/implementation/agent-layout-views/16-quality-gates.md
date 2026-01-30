@@ -5,9 +5,9 @@
 
 ## Validation Commands
 
-| Command | Result |
-|---------|--------|
-| `pnpm lint` | ✅ PASS |
+| Command          | Result  |
+| ---------------- | ------- |
+| `pnpm lint`      | ✅ PASS |
 | `pnpm typecheck` | ✅ PASS |
 
 ## Quality Gate Checklist
@@ -23,6 +23,7 @@
 ## Files Changed Summary
 
 ### New Files Created (13)
+
 1. `lib/layout/constants.ts` - Layout type definitions
 2. `lib/stores/agent-layout-store.ts` - Zustand store
 3. `components/providers/agent-layout-provider.tsx` - Hydration provider
@@ -36,6 +37,7 @@
 11. `components/agents/agent-table-skeleton.tsx` - Table skeleton
 
 ### Files Modified (3)
+
 1. `components/agents/global-agents-tab-content.tsx`
 2. `components/agents/project-agents-tab-content.tsx`
 3. `app/(app)/agents/page.tsx`

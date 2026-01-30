@@ -84,7 +84,10 @@ export const AgentCard = ({
   const isProjectScoped = agent.projectId !== null;
 
   // Show override action only for global agents when a project is selected
-  const isOverrideAvailable = isGlobalAgent && selectedProjectId !== null && selectedProjectId !== undefined;
+  const isOverrideAvailable =
+    isGlobalAgent &&
+    selectedProjectId !== null &&
+    selectedProjectId !== undefined;
 
   const handleCreateOverrideClick = () => {
     onCreateOverride?.(agent);
@@ -110,7 +113,12 @@ export const AgentCard = ({
     onToggleActive?.(agent.id, checked);
   };
 
-  const isActionDisabled = isCreatingOverride || isDeleting || isDuplicating || isResetting || isToggling;
+  const isActionDisabled =
+    isCreatingOverride ||
+    isDeleting ||
+    isDuplicating ||
+    isResetting ||
+    isToggling;
 
   return (
     <Card
@@ -124,7 +132,9 @@ export const AgentCard = ({
     >
       {/* Header */}
       <CardHeader className={"overflow-hidden"}>
-        <div className={"flex items-start justify-between gap-2 overflow-hidden"}>
+        <div
+          className={"flex items-start justify-between gap-2 overflow-hidden"}
+        >
           <div className={"flex min-w-0 flex-1 items-center gap-2"}>
             {/* Color Indicator */}
             <div
@@ -134,9 +144,7 @@ export const AgentCard = ({
                 getAgentColorClass(agent.color)
               )}
             />
-            <CardTitle className={"truncate"}>
-              {agent.displayName}
-            </CardTitle>
+            <CardTitle className={"truncate"}>{agent.displayName}</CardTitle>
           </div>
           <Badge className={"shrink-0"} variant={getTypeVariant(agent.type)}>
             {formatTypeLabel(agent.type)}
@@ -239,7 +247,10 @@ export const AgentCard = ({
             size={"sm"}
             variant={"ghost"}
           >
-            <Trash2 aria-hidden={"true"} className={"size-4 text-destructive"} />
+            <Trash2
+              aria-hidden={"true"}
+              className={"size-4 text-destructive"}
+            />
             {"Delete"}
           </Button>
         )}

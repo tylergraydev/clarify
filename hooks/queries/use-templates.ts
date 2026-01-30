@@ -326,8 +326,7 @@ export function useTemplatesByCategory(
   return useQuery({
     ...templateKeys.byCategory(category),
     enabled: isElectron && Boolean(category),
-    queryFn: () =>
-      api!.template.list({ category, includeDeactivated: false }),
+    queryFn: () => api!.template.list({ category, includeDeactivated: false }),
   });
 }
 

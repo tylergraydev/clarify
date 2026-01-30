@@ -1,21 +1,24 @@
-'use client';
+"use client";
 
-import type { ComponentPropsWithRef } from 'react';
+import type { ComponentPropsWithRef } from "react";
 
-import { LayoutGrid, List, Table2 } from 'lucide-react';
+import { LayoutGrid, List, Table2 } from "lucide-react";
 
-import type { AgentLayout } from '@/lib/layout/constants';
+import type { AgentLayout } from "@/lib/layout/constants";
 
-import { ButtonGroup } from '@/components/ui/button-group';
-import { IconButton } from '@/components/ui/icon-button';
-import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
-import { cn } from '@/lib/utils';
+import { ButtonGroup } from "@/components/ui/button-group";
+import { IconButton } from "@/components/ui/icon-button";
+import { useAgentLayoutStore } from "@/lib/stores/agent-layout-store";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface AgentLayoutToggleProps extends Omit<ComponentPropsWithRef<'div'>, 'onChange'> {
+interface AgentLayoutToggleProps extends Omit<
+  ComponentPropsWithRef<"div">,
+  "onChange"
+> {
   /** Callback when layout changes */
   onChange?: (layout: AgentLayout) => void;
 }
@@ -31,9 +34,9 @@ interface LayoutOption {
 // ============================================================================
 
 const LAYOUT_OPTIONS: Array<LayoutOption> = [
-  { icon: LayoutGrid, label: 'Card view', value: 'card' },
-  { icon: List, label: 'List view', value: 'list' },
-  { icon: Table2, label: 'Table view', value: 'table' },
+  { icon: LayoutGrid, label: "Card view", value: "card" },
+  { icon: List, label: "List view", value: "list" },
+  { icon: Table2, label: "Table view", value: "table" },
 ];
 
 // ============================================================================
@@ -64,8 +67,8 @@ export const AgentLayoutToggle = ({
 
   return (
     <ButtonGroup
-      aria-label={'Agent layout view options'}
-      className={cn('rounded-md border border-border', className)}
+      aria-label={"Agent layout view options"}
+      className={cn("rounded-md border border-border", className)}
       ref={ref}
       {...props}
     >
@@ -77,16 +80,16 @@ export const AgentLayoutToggle = ({
             aria-label={label}
             aria-pressed={isActive}
             className={cn(
-              'rounded-none border-0',
+              "rounded-none border-0",
               isActive
-                ? 'bg-accent text-accent-foreground hover:bg-accent-hover'
-                : 'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+                ? "bg-accent text-accent-foreground hover:bg-accent-hover"
+                : "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
             key={value}
             onClick={() => handleLayoutChange(value)}
-            type={'button'}
+            type={"button"}
           >
-            <Icon aria-hidden={'true'} className={'size-4'} />
+            <Icon aria-hidden={"true"} className={"size-4"} />
           </IconButton>
         );
       })}

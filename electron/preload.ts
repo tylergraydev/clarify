@@ -207,7 +207,10 @@ export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<Agent | undefined>;
     create(data: NewAgent): Promise<AgentOperationResult>;
-    createOverride(agentId: number, projectId: number): Promise<AgentOperationResult>;
+    createOverride(
+      agentId: number,
+      projectId: number
+    ): Promise<AgentOperationResult>;
     deactivate(id: number): Promise<Agent | undefined>;
     delete(id: number): Promise<AgentOperationResult>;
     duplicate(id: number): Promise<AgentOperationResult>;
@@ -343,7 +346,11 @@ export interface ElectronAPI {
     setValue(key: string, value: string): Promise<Setting | undefined>;
   };
   step: {
-    complete(id: number, output?: string, durationMs?: number): Promise<undefined | WorkflowStep>;
+    complete(
+      id: number,
+      output?: string,
+      durationMs?: number
+    ): Promise<undefined | WorkflowStep>;
     edit(id: number, editedOutput: string): Promise<undefined | WorkflowStep>;
     fail(id: number, errorMessage: string): Promise<undefined | WorkflowStep>;
     get(id: number): Promise<undefined | WorkflowStep>;
