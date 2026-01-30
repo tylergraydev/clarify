@@ -23,6 +23,7 @@ This orchestration implements the Project Detail Tabs feature through a 3-4 step
 > (repositories table, queries, handlers).
 >
 > Scope:
+>
 > - Repositories tab: List repos, add repository dialog, remove repository, set default
 > - Workflows tab: Filter workflows by project with existing WorkflowCard/Table components
 > - Settings tab: Project-specific agent customizations
@@ -42,23 +43,23 @@ Implement comprehensive project detail tabs (Repositories, Workflows, Settings) 
 
 ## File Discovery Summary
 
-| Priority | Count | Description |
-|----------|-------|-------------|
-| Critical | 1 | Must modify |
-| High | 7 | Likely changes |
-| Medium | 15 | Reference/patterns |
-| Low | 18 | Context |
-| **Total** | **41** | |
+| Priority  | Count  | Description        |
+| --------- | ------ | ------------------ |
+| Critical  | 1      | Must modify        |
+| High      | 7      | Likely changes     |
+| Medium    | 15     | Reference/patterns |
+| Low       | 18     | Context            |
+| **Total** | **41** |                    |
 
 ## Implementation Plan Summary
 
-| Attribute | Value |
-|-----------|-------|
-| Total Steps | 9 |
-| Complexity | Medium |
-| Risk Level | Low |
-| New Files | 7 |
-| Modified Files | 2 |
+| Attribute      | Value  |
+| -------------- | ------ |
+| Total Steps    | 9      |
+| Complexity     | Medium |
+| Risk Level     | Low    |
+| New Files      | 7      |
+| Modified Files | 2      |
 
 ### Steps Overview
 
@@ -78,10 +79,10 @@ Implement comprehensive project detail tabs (Repositories, Workflows, Settings) 
 
 ## Execution Metrics
 
-| Step | Duration |
-|------|----------|
-| Step 0a (Clarification) | ~30s (skipped) |
-| Step 1 (Refinement) | ~30s |
-| Step 2 (Discovery) | ~60s |
-| Step 3 (Planning) | ~90s |
-| **Total** | **~3.5 minutes** |
+| Step                    | Duration         |
+| ----------------------- | ---------------- |
+| Step 0a (Clarification) | ~30s (skipped)   |
+| Step 1 (Refinement)     | ~30s             |
+| Step 2 (Discovery)      | ~60s             |
+| Step 3 (Planning)       | ~90s             |
+| **Total**               | **~3.5 minutes** |

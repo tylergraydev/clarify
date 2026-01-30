@@ -14,6 +14,7 @@
 > (repositories table, queries, handlers).
 >
 > Scope:
+>
 > - Repositories tab: List repos, add repository dialog, remove repository, set default
 > - Workflows tab: Filter workflows by project with existing WorkflowCard/Table components
 > - Settings tab: Project-specific agent customizations
@@ -23,6 +24,7 @@
 ## Context Provided
 
 **Project Context (from CLAUDE.md):**
+
 - Clarify is an Electron desktop app for orchestrating Claude Code CLI workflows
 - Tech stack: Next.js 16.1.6, Electron 35.1.0, React 19.2.4, TypeScript, Drizzle ORM, TanStack Query/Form, Base UI components with CVA patterns
 - UI components in `components/ui/` built on Base UI with class-variance-authority
@@ -49,17 +51,18 @@ Implement comprehensive project detail tabs (Repositories, Workflows, Settings) 
 
 ## Length Analysis
 
-| Metric | Value |
-|--------|-------|
-| Original word count | ~85 words |
-| Refined word count | ~260 words |
-| Expansion ratio | ~3.1x |
+| Metric              | Value      |
+| ------------------- | ---------- |
+| Original word count | ~85 words  |
+| Refined word count  | ~260 words |
+| Expansion ratio     | ~3.1x      |
 
 **Assessment**: Within acceptable 2-4x range. Expansion adds technical context without excessive elaboration.
 
 ## Scope Analysis
 
 **Core intent preserved**: Yes
+
 - Repositories tab: List, add dialog, remove, set default ✓
 - Workflows tab: Filter by project with existing components ✓
 - Settings tab: Project-specific agent customizations ✓

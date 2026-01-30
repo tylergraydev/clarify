@@ -14,6 +14,7 @@ Implement comprehensive project detail tabs (Repositories, Workflows, Settings) 
 ### Discovered Files
 
 **Critical/High Priority:**
+
 - `app/(app)/projects/[id]/page.tsx` - Main project detail page
 - `hooks/queries/use-repositories.ts` - Repository query hooks
 - `hooks/queries/use-workflows.ts` - Workflow query hooks
@@ -24,6 +25,7 @@ Implement comprehensive project detail tabs (Repositories, Workflows, Settings) 
 - `lib/queries/agents.ts` - Agent query key factory
 
 **Reference Components:**
+
 - `components/workflows/workflow-card.tsx`
 - `components/workflows/workflow-table.tsx`
 - `components/agents/agent-card.tsx`
@@ -56,25 +58,28 @@ Rules:
 ## Plan Generation Results
 
 ### Format Validation
+
 - ✅ Plan is in MARKDOWN format (not XML)
 - ✅ All required sections present (Overview, Prerequisites, Steps, Quality Gates, Notes)
 - ✅ Each step includes validation commands
 - ✅ No code examples included
 
 ### Template Compliance
+
 - ✅ Overview table with Complexity, Risk Level, Total Steps
 - ✅ Quick Summary provided
 - ✅ Prerequisites with checkboxes
 - ✅ Each step has: What, Why, Confidence, Files, Changes, Validation Commands, Success Criteria
 
 ### Plan Summary
-| Metric | Value |
-|--------|-------|
-| Total Steps | 9 |
-| Complexity | Medium |
-| Risk Level | Low |
-| New Files | 7 |
-| Modified Files | 2 |
+
+| Metric         | Value  |
+| -------------- | ------ |
+| Total Steps    | 9      |
+| Complexity     | Medium |
+| Risk Level     | Low    |
+| New Files      | 7      |
+| Modified Files | 2      |
 
 ### Step Breakdown
 

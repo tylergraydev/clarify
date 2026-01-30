@@ -13,19 +13,23 @@
 ## Changes Summary
 
 ### Step 2: Channel Constants
+
 - `workflow:listHistory` - List workflow history with filters
 - `workflow:getStatistics` - Get aggregate statistics
 
 ### Step 3: IPC Handlers
+
 - `listHistory(filters?)` - Calls `workflowsRepository.findHistory()`
 - `getStatistics(filters?)` - Calls `workflowsRepository.getHistoryStatistics()`
 
 ### Step 4: Preload Script
+
 - Added inline type definitions for IPC isolation
 - Added `workflow.listHistory()` and `workflow.getStatistics()` methods
 - Updated IpcChannels constant
 
 ### Step 5: Type Definitions
+
 - Exported `TerminalStatus`, `WorkflowHistorySortField`, `WorkflowHistorySortOrder`
 - Exported `WorkflowHistoryFilters`, `WorkflowHistoryResult`, `WorkflowStatistics`
 - Updated `ElectronAPI.workflow` interface

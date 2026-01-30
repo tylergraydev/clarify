@@ -19,9 +19,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = NonNullable<
-  Parameters<typeof badgeVariants>[0]
->["variant"];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
 
 type WorkflowStatus = Workflow["status"];
 
@@ -49,8 +47,10 @@ const formatStatusLabel = (status: WorkflowStatus): string => {
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
-interface WorkflowCardProps
-  extends Omit<ComponentPropsWithRef<"div">, "onClick"> {
+interface WorkflowCardProps extends Omit<
+  ComponentPropsWithRef<"div">,
+  "onClick"
+> {
   onCancel?: (workflowId: number) => void;
   onViewDetails?: (workflowId: number) => void;
   projectName?: string;
@@ -141,11 +141,7 @@ export const WorkflowCard = ({
               {"%)"}
             </span>
           </div>
-          <div
-            className={
-              "h-2 w-full overflow-hidden rounded-full bg-muted"
-            }
-          >
+          <div className={"h-2 w-full overflow-hidden rounded-full bg-muted"}>
             <div
               className={cn(
                 "h-full rounded-full bg-accent transition-all duration-300",
@@ -158,10 +154,20 @@ export const WorkflowCard = ({
         </div>
 
         {/* Timing Info */}
-        <div className={"flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"}>
-          <span>{"Created "}{createdDate}</span>
+        <div
+          className={
+            "flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"
+          }
+        >
+          <span>
+            {"Created "}
+            {createdDate}
+          </span>
           {elapsedTime && (
-            <span>{"Duration: "}{elapsedTime}</span>
+            <span>
+              {"Duration: "}
+              {elapsedTime}
+            </span>
           )}
         </div>
       </CardContent>

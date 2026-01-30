@@ -24,9 +24,11 @@
 ## Component Features
 
 **Props**:
+
 - `projectId` (required) - Project ID for scoping agent queries
 
 **Features**:
+
 - Uses `useAgentsByProject(projectId)` for project-scoped agents
 - Uses `useAgents()` for global agents comparison
 - Groups agents by type with section headers
@@ -37,6 +39,7 @@
 - Supports activate/deactivate toggle and reset to defaults
 
 **States**:
+
 - Loading state with skeletons
 - Error state with EmptyState
 - No agents empty state

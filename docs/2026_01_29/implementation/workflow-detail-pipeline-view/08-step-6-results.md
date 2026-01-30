@@ -6,14 +6,15 @@
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
-| `app/(app)/workflows/[id]/_components/workflow-detail-skeleton.tsx` | Loading skeleton mimicking workflow detail page layout |
-| `app/(app)/workflows/[id]/_components/workflow-not-found.tsx` | Not found state with EmptyState pattern and back navigation |
+| File                                                                | Purpose                                                     |
+| ------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `app/(app)/workflows/[id]/_components/workflow-detail-skeleton.tsx` | Loading skeleton mimicking workflow detail page layout      |
+| `app/(app)/workflows/[id]/_components/workflow-not-found.tsx`       | Not found state with EmptyState pattern and back navigation |
 
 ## Implementation Summary
 
 ### WorkflowDetailSkeleton
+
 - Breadcrumb skeleton area
 - Header skeleton with title and badge placeholders
 - Control bar with button placeholders
@@ -22,6 +23,7 @@
 - All placeholder elements use `animate-pulse` on `bg-muted`
 
 ### WorkflowNotFound
+
 - Breadcrumb showing "Workflows > Not Found"
 - EmptyState component with Workflow icon
 - Message: "Workflow not found"

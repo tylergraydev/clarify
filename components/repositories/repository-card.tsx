@@ -19,8 +19,10 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-interface RepositoryCardProps
-  extends Omit<ComponentPropsWithRef<"div">, "onClick"> {
+interface RepositoryCardProps extends Omit<
+  ComponentPropsWithRef<"div">,
+  "onClick"
+> {
   isDefault?: boolean;
   onClearDefault?: (repositoryId: number) => void;
   onDelete?: (repositoryId: number) => void;

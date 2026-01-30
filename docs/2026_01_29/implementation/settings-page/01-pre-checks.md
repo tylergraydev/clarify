@@ -27,6 +27,7 @@
 ## Files to Create/Modify
 
 ### Critical Files (11 files)
+
 - `app/(app)/settings/page.tsx` - Modify (complete rewrite)
 - `hooks/queries/use-settings.ts` - Create
 - `lib/queries/settings.ts` - Create
@@ -40,6 +41,7 @@
 - `hooks/queries/index.ts` - Modify
 
 ### New Components (8 files)
+
 - `components/settings/settings-section.tsx`
 - `components/settings/path-input-field.tsx`
 - `components/settings/workflow-settings-section.tsx`

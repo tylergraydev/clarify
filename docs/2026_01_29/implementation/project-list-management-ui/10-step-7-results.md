@@ -20,7 +20,7 @@
 ## Props Interface
 
 ```typescript
-interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
+interface ProjectTableProps extends ComponentPropsWithRef<"div"> {
   isArchiving?: boolean;
   onArchive?: (projectId: number) => void;
   onUnarchive?: (projectId: number) => void;

@@ -14,6 +14,7 @@
 ## Component Summary
 
 The `TemplateCard` component includes:
+
 - **Props Interface**: Accepts `template` data prop and `onEdit` callback handler
 - **Template metadata display**: Name, category badge, description (truncated to 2 lines)
 - **Placeholder count badge**: Dynamically extracts and counts `{{placeholder}}` patterns

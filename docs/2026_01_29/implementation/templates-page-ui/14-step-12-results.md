@@ -39,9 +39,9 @@
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| Ctrl/Cmd+K | Focus search input |
+| Shortcut   | Action                      |
+| ---------- | --------------------------- |
+| Ctrl/Cmd+K | Focus search input          |
 | Ctrl/Cmd+N | Open create template dialog |
 
 ## Validation Results

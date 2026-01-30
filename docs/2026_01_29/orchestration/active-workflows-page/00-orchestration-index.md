@@ -12,12 +12,12 @@ Create active workflows page showing running/paused workflows with real-time sta
 
 ## Orchestration Steps
 
-| Step | Name | Status | Output File |
-|------|------|--------|-------------|
-| 0a | Clarification | Skipped (5/5) | [00a-clarification.md](./00a-clarification.md) |
-| 1 | Feature Refinement | Completed | [01-feature-refinement.md](./01-feature-refinement.md) |
-| 2 | File Discovery | Completed | [02-file-discovery.md](./02-file-discovery.md) |
-| 3 | Implementation Planning | Completed | [03-implementation-planning.md](./03-implementation-planning.md) |
+| Step | Name                    | Status        | Output File                                                      |
+| ---- | ----------------------- | ------------- | ---------------------------------------------------------------- |
+| 0a   | Clarification           | Skipped (5/5) | [00a-clarification.md](./00a-clarification.md)                   |
+| 1    | Feature Refinement      | Completed     | [01-feature-refinement.md](./01-feature-refinement.md)           |
+| 2    | File Discovery          | Completed     | [02-file-discovery.md](./02-file-discovery.md)                   |
+| 3    | Implementation Planning | Completed     | [03-implementation-planning.md](./03-implementation-planning.md) |
 
 ## Summary
 

@@ -10,11 +10,13 @@
 ## Changes Summary
 
 Created `updateAgentSchema` with fields:
+
 - `description`: optional string, max 1000 chars
 - `displayName`: required string (min 1, max 255 chars)
 - `systemPrompt`: required string (min 1, max 50000 chars)
 
 Exported types:
+
 - `UpdateAgentFormValues` - input type for form default values
 - `UpdateAgentOutput` - output type after validation
 

@@ -12,16 +12,17 @@
 
 ### Badge Variants Added
 
-| Agent Type | Badge Variant | Color |
-|-----------|---------------|-------|
-| planning | planning (existed) | Purple |
-| specialist | specialist (new) | Blue |
-| review | review (new) | Yellow |
-| utility | default (fallback) | Muted/Gray |
+| Agent Type | Badge Variant      | Color      |
+| ---------- | ------------------ | ---------- |
+| planning   | planning (existed) | Purple     |
+| specialist | specialist (new)   | Blue       |
+| review     | review (new)       | Yellow     |
+| utility    | default (fallback) | Muted/Gray |
 
 ### Type Variant Mapping Updated
 
 The `AgentCard` component's `getTypeVariant` function now maps directly to schema types:
+
 - `planning` → `planning` (purple)
 - `specialist` → `specialist` (blue)
 - `review` → `review` (yellow)

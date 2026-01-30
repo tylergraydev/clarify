@@ -30,13 +30,13 @@
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
-| `components/projects/project-card.tsx` | Card view component |
-| `components/projects/confirm-archive-dialog.tsx` | Confirmation dialog |
-| `components/projects/project-table.tsx` | Table view component |
-| `components/projects/create-project-dialog.tsx` | Create form dialog |
-| `lib/validations/project.ts` | Zod validation schema |
+| File                                             | Purpose               |
+| ------------------------------------------------ | --------------------- |
+| `components/projects/project-card.tsx`           | Card view component   |
+| `components/projects/confirm-archive-dialog.tsx` | Confirmation dialog   |
+| `components/projects/project-table.tsx`          | Table view component  |
+| `components/projects/create-project-dialog.tsx`  | Create form dialog    |
+| `lib/validations/project.ts`                     | Zod validation schema |
 
 ## Next Steps
 

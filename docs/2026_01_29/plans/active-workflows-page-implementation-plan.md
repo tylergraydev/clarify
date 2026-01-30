@@ -24,17 +24,20 @@ This plan implements the Active Workflows page that displays a real-time grid of
 ## File Discovery Results
 
 ### Critical Priority (Core Implementation)
+
 - `app/(app)/workflows/active/page.tsx` - Main Active Workflows page - **MODIFY**
 - `hooks/queries/use-workflows.ts` - TanStack Query hooks - add `useActiveWorkflows` with polling - **MODIFY**
 - `components/workflows/workflow-card.tsx` - Existing workflow card component - **REFERENCE/MODIFY**
 
 ### High Priority (Supporting Implementation)
+
 - `app/(app)/dashboard/_components/active-workflows-widget.tsx` - Reference implementation - **REFERENCE**
 - `lib/queries/workflows.ts` - Query key factory - may need `active` key - **MODIFY**
 - `app/(app)/workflows/[id]/_components/workflow-control-bar.tsx` - Control button logic - **REFERENCE**
 - `db/schema/workflows.schema.ts` - Workflow status types - **REFERENCE**
 
 ### Medium Priority (Integration Points)
+
 - `components/ui/badge.tsx` - Badge for status display - **REFERENCE**
 - `components/ui/card.tsx` - Card component primitives - **REFERENCE**
 - `components/ui/button.tsx` - Button for actions - **REFERENCE**
@@ -56,20 +59,24 @@ This plan implements the Active Workflows page that displays a real-time grid of
 **Confidence**: High
 
 **Files to Modify:**
+
 - `hooks/queries/use-workflows.ts` - Add new `useActiveWorkflows` hook
 
 **Changes:**
+
 - Add `useActiveWorkflows` hook that queries all workflows and filters client-side for statuses: `running`, `paused`, `editing`
 - Configure `refetchInterval` of 5000ms (5 seconds) for polling active workflows
 - Use `workflowKeys.running` query key from the existing factory
 - Accept optional `enabled` parameter to pause polling when not needed
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] `useActiveWorkflows` hook exports correctly
 - [ ] Hook filters workflows by active statuses
 - [ ] Polling interval is configured at 5 seconds
@@ -84,9 +91,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/workflows/active/_components/active-workflow-card.tsx` - Enhanced workflow card with pause/resume controls
 
 **Changes:**
+
 - Create component accepting `workflow`, `projectName`, `onView`, `onPause`, `onResume`, `onCancel`, and pending state props
 - Display workflow type icon, feature name, project name, status badge
 - Include progress bar with step indicator (e.g., "Step 2 of 5: File Discovery")
@@ -98,11 +107,13 @@ pnpm run lint && pnpm run typecheck
 - Use `WorkflowControlBar` button logic patterns for status-based action visibility
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Component renders workflow information correctly
 - [ ] Progress bar displays current step and percentage
 - [ ] Pause button shows for running workflows
@@ -119,9 +130,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/workflows/active/_components/active-workflow-card-skeleton.tsx` - Loading skeleton for workflow cards
 
 **Changes:**
+
 - Create skeleton matching the `ActiveWorkflowCard` structure
 - Include placeholders for header (title, project name, status badge)
 - Include placeholder for progress bar and step indicator
@@ -131,11 +144,13 @@ pnpm run lint && pnpm run typecheck
 - Add appropriate ARIA attributes for accessibility
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Skeleton layout matches actual card dimensions
 - [ ] Animation provides loading feedback
 - [ ] ARIA attributes indicate loading state
@@ -150,9 +165,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/workflows/active/page.tsx` - Replace placeholder with full implementation
 
 **Changes:**
+
 - Add `"use client"` directive for client-side interactivity
 - Import and use `useActiveWorkflows` hook for data fetching with polling
 - Import and use `useProjects` hook for project name mapping
@@ -167,11 +184,13 @@ pnpm run lint && pnpm run typecheck
 - Follow page header pattern with title and description
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Page displays active workflows in responsive grid
 - [ ] Loading state shows skeleton cards
 - [ ] Empty state displays when no active workflows
@@ -190,20 +209,24 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Modify:**
+
 - `app/(app)/workflows/active/_components/active-workflow-card.tsx` - Add current step name display
 
 **Changes:**
+
 - Accept optional `currentStepName` prop derived from workflow step data
 - Display step name alongside step number in progress section (e.g., "Step 2 of 5: File Discovery")
 - Handle missing step name gracefully with fallback to just step numbers
 - Truncate long step names with ellipsis to prevent layout overflow
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Step name displays when available
 - [ ] Falls back gracefully when step name is not available
 - [ ] Long step names are truncated appropriately
@@ -218,20 +241,24 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/workflows/active/page.tsx` - Add cancel confirmation logic
 
 **Changes:**
+
 - Add state for tracking workflow pending cancellation
 - Create confirmation handler that shows alert or uses existing dialog pattern
 - Only execute cancel mutation after user confirms
 - Pass pending state to cards to disable cancel button during confirmation/mutation
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Cancel action prompts for confirmation
 - [ ] Confirmed cancellation triggers mutation
 - [ ] Declined cancellation does not affect workflow
@@ -247,10 +274,12 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/workflows/active/page.tsx` - Final polish and edge case handling
 - `app/(app)/workflows/active/_components/active-workflow-card.tsx` - Final styling adjustments
 
 **Changes:**
+
 - Verify polling pauses when page is not visible (TanStack Query handles this)
 - Ensure card hover and focus states match existing UI patterns
 - Verify responsive grid layout at all breakpoints
@@ -259,11 +288,13 @@ pnpm run lint && pnpm run typecheck
 - Test empty state action link navigation
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Polling works correctly and updates UI
 - [ ] All interactive elements are keyboard accessible
 - [ ] Responsive layout works at all screen sizes

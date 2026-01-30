@@ -10,12 +10,14 @@
 ## Component Features
 
 **Template List View**:
+
 - Fetches active templates using `useActiveTemplates` hook
 - Search input to filter templates by name, category, or description
 - Displays template name, category badge, description, and placeholder count
 - Loading and empty states handled
 
 **Placeholder Form View**:
+
 - Parses `{{placeholderName}}` syntax from template text
 - Generates dynamic form fields for each unique placeholder
 - Converts camelCase names to display names (e.g., `entityName` -> `Entity Name`)
@@ -24,10 +26,12 @@
 - Real-time validation feedback with error messages
 
 **Preview Section**:
+
 - Shows live preview of template content with substituted placeholder values
 - Updates in real-time as user fills in values
 
 **Actions**:
+
 - Cancel button closes dialog and resets state
 - Insert button validates all fields and returns formatted content
 - Back button allows returning to template list

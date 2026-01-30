@@ -24,23 +24,23 @@
 
 ## Files to Modify
 
-| File | Description |
-|------|-------------|
-| `db/repositories/workflows.repository.ts` | Add history query methods |
-| `electron/ipc/channels.ts` | Add channel constants |
-| `electron/ipc/workflow.handlers.ts` | Add history IPC handlers |
-| `electron/preload.ts` | Expose new API methods |
-| `types/electron.d.ts` | Add type definitions |
-| `lib/queries/workflows.ts` | Add history query keys |
-| `hooks/queries/use-workflows.ts` | Add history and statistics hooks |
-| `app/(app)/workflows/history/page.tsx` | Replace placeholder with implementation |
+| File                                      | Description                             |
+| ----------------------------------------- | --------------------------------------- |
+| `db/repositories/workflows.repository.ts` | Add history query methods               |
+| `electron/ipc/channels.ts`                | Add channel constants                   |
+| `electron/ipc/workflow.handlers.ts`       | Add history IPC handlers                |
+| `electron/preload.ts`                     | Expose new API methods                  |
+| `types/electron.d.ts`                     | Add type definitions                    |
+| `lib/queries/workflows.ts`                | Add history query keys                  |
+| `hooks/queries/use-workflows.ts`          | Add history and statistics hooks        |
+| `app/(app)/workflows/history/page.tsx`    | Replace placeholder with implementation |
 
 ## Files to Create
 
-| File | Description |
-|------|-------------|
+| File                                                | Description                  |
+| --------------------------------------------------- | ---------------------------- |
 | `components/workflows/history-statistics-cards.tsx` | Statistics summary component |
-| `components/workflows/workflow-history-table.tsx` | History table component |
-| `components/workflows/date-range-filter.tsx` | Date range filter component |
-| `components/ui/pagination.tsx` | Generic pagination component |
-| `app/(app)/workflows/history/route-type.ts` | URL route type definition |
+| `components/workflows/workflow-history-table.tsx`   | History table component      |
+| `components/workflows/date-range-filter.tsx`        | Date range filter component  |
+| `components/ui/pagination.tsx`                      | Generic pagination component |
+| `app/(app)/workflows/history/route-type.ts`         | URL route type definition    |

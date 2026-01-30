@@ -25,12 +25,14 @@
 ## Component Details
 
 **States Implemented**:
+
 1. Loading - Skeleton placeholders for button and 3 cards
 2. Error - EmptyState with error icon and message
 3. Empty - EmptyState with add repository action
 4. Content - Add button and responsive grid of RepositoryCard components
 
 **Hooks Used**:
+
 - `useRepositoriesByProject(projectId)` - Fetch repositories
 - `useDeleteRepository` - Delete mutation
 - `useSetDefaultRepository` - Set default mutation

@@ -11,12 +11,12 @@ This orchestration creates the workflow history page at `/workflows/history` wit
 
 ## Navigation
 
-| Step | File | Status | Description |
-|------|------|--------|-------------|
-| 0a | [00a-clarification.md](./00a-clarification.md) | Skipped | Clarification phase (skipped - request was detailed) |
-| 1 | [01-feature-refinement.md](./01-feature-refinement.md) | Completed | Feature request refinement |
-| 2 | [02-file-discovery.md](./02-file-discovery.md) | Completed | AI-powered file discovery |
-| 3 | [03-implementation-planning.md](./03-implementation-planning.md) | Completed | Implementation plan generation |
+| Step | File                                                             | Status    | Description                                          |
+| ---- | ---------------------------------------------------------------- | --------- | ---------------------------------------------------- |
+| 0a   | [00a-clarification.md](./00a-clarification.md)                   | Skipped   | Clarification phase (skipped - request was detailed) |
+| 1    | [01-feature-refinement.md](./01-feature-refinement.md)           | Completed | Feature request refinement                           |
+| 2    | [02-file-discovery.md](./02-file-discovery.md)                   | Completed | AI-powered file discovery                            |
+| 3    | [03-implementation-planning.md](./03-implementation-planning.md) | Completed | Implementation plan generation                       |
 
 ## Output
 

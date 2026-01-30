@@ -2,8 +2,26 @@
 
 import type { MouseEvent, RefObject } from "react";
 
-import { Copy, FileText, Grid3X3, List, Minus, Pencil, Plus, Power, PowerOff, Search, Trash2, X } from "lucide-react";
-import { parseAsBoolean, parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
+import {
+  Copy,
+  FileText,
+  Grid3X3,
+  List,
+  Minus,
+  Pencil,
+  Plus,
+  Power,
+  PowerOff,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
+import {
+  parseAsBoolean,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryState,
+} from "nuqs";
 import { Fragment, useCallback, useMemo, useRef, useState } from "react";
 
 import type { Template } from "@/types/electron";
@@ -44,15 +62,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { templateCategories, type TemplateCategory } from "@/db/schema/templates.schema";
-import { useDeleteTemplate, useTemplates, useUpdateTemplate } from "@/hooks/queries/use-templates";
+import {
+  templateCategories,
+  type TemplateCategory,
+} from "@/db/schema/templates.schema";
+import {
+  useDeleteTemplate,
+  useTemplates,
+  useUpdateTemplate,
+} from "@/hooks/queries/use-templates";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcut";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = NonNullable<
-  Parameters<typeof badgeVariants>[0]
->["variant"];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
 
 const VIEW_OPTIONS = ["card", "table"] as const;
 type ViewOption = (typeof VIEW_OPTIONS)[number];
@@ -150,18 +173,24 @@ const TemplateTableSkeleton = () => {
       <table className={"w-full border-collapse text-sm"}>
         <thead className={"border-b border-border bg-muted/50"}>
           <tr>
-            {["Name", "Category", "Description", "Placeholders", "Uses", "Status", "Actions"].map(
-              (header) => (
-                <th
-                  className={
-                    "px-4 py-3 text-left font-medium text-muted-foreground"
-                  }
-                  key={header}
-                >
-                  {header}
-                </th>
-              )
-            )}
+            {[
+              "Name",
+              "Category",
+              "Description",
+              "Placeholders",
+              "Uses",
+              "Status",
+              "Actions",
+            ].map((header) => (
+              <th
+                className={
+                  "px-4 py-3 text-left font-medium text-muted-foreground"
+                }
+                key={header}
+              >
+                {header}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody className={"divide-y divide-border"}>
@@ -243,13 +272,19 @@ const filterTemplatesBySearch = (
     if (template.category.toLowerCase().includes(searchLower)) {
       return true;
     }
-    if (formatCategoryLabel(template.category).toLowerCase().includes(searchLower)) {
+    if (
+      formatCategoryLabel(template.category).toLowerCase().includes(searchLower)
+    ) {
       return true;
     }
 
     // Match against placeholder names
     const placeholders = extractPlaceholders(template.templateText);
-    if (placeholders.some((placeholder) => placeholder.toLowerCase().includes(searchLower))) {
+    if (
+      placeholders.some((placeholder) =>
+        placeholder.toLowerCase().includes(searchLower)
+      )
+    ) {
       return true;
     }
 
@@ -338,7 +373,9 @@ const BulkDeleteConfirmDialog = ({
               onClick={handleConfirmClick}
               variant={"destructive"}
             >
-              {isLoading ? "Deleting..." : `Delete ${selectedCount} ${selectedCount === 1 ? "Template" : "Templates"}`}
+              {isLoading
+                ? "Deleting..."
+                : `Delete ${selectedCount} ${selectedCount === 1 ? "Template" : "Templates"}`}
             </Button>
           </div>
         </DialogPopup>
@@ -370,7 +407,13 @@ interface TemplateGridItemProps {
  * Renders a TemplateCard with a TemplateEditorDialog.
  * The Edit button in the card triggers the dialog via a hidden trigger element.
  */
-const TemplateGridItem = ({ isSelected, onDelete, onDuplicate, onSelectionChange, template }: TemplateGridItemProps) => {
+const TemplateGridItem = ({
+  isSelected,
+  onDelete,
+  onDuplicate,
+  onSelectionChange,
+  template,
+}: TemplateGridItemProps) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const isBuiltIn = template.builtInAt !== null;
 
@@ -458,7 +501,13 @@ interface TemplateTableRowProps {
  * Renders a table row for a template with an embedded TemplateEditorDialog.
  * The entire row is clickable to open the editor dialog.
  */
-const TemplateTableRow = ({ isSelected, onDelete, onDuplicate, onSelectionChange, template }: TemplateTableRowProps) => {
+const TemplateTableRow = ({
+  isSelected,
+  onDelete,
+  onDuplicate,
+  onSelectionChange,
+  template,
+}: TemplateTableRowProps) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const isActive = template.deactivatedAt === null;
   const isBuiltIn = template.builtInAt !== null;
@@ -561,7 +610,9 @@ const TemplateTableRow = ({ isSelected, onDelete, onDuplicate, onSelectionChange
           <span
             className={cn(
               "text-sm",
-              isActive ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+              isActive
+                ? "text-green-600 dark:text-green-400"
+                : "text-muted-foreground"
             )}
           >
             {isActive ? "Active" : "Deactivated"}
@@ -656,17 +707,22 @@ export default function TemplatesPage() {
   );
 
   // Delete confirmation dialog state
-  const [templateToDelete, setTemplateToDelete] = useState<null | Template>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<null | Template>(
+    null
+  );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Bulk delete confirmation dialog state
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
 
   // Selection state for bulk actions
-  const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<number>>(new Set());
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<number>>(
+    new Set()
+  );
 
   // Duplicate template dialog state
-  const [duplicateTemplateData, setDuplicateTemplateData] = useState<DuplicateTemplateData | null>(null);
+  const [duplicateTemplateData, setDuplicateTemplateData] =
+    useState<DuplicateTemplateData | null>(null);
   const duplicateDialogTriggerRef = useRef<HTMLButtonElement>(null);
 
   // Create template dialog control
@@ -763,7 +819,9 @@ export default function TemplatesPage() {
 
     try {
       await deleteTemplateMutation.mutateAsync(templateToDelete.id);
-      toast.success({ description: `Template "${templateToDelete.name}" deleted successfully.` });
+      toast.success({
+        description: `Template "${templateToDelete.name}" deleted successfully.`,
+      });
       setIsDeleteDialogOpen(false);
       setTemplateToDelete(null);
     } catch (error) {
@@ -811,7 +869,9 @@ export default function TemplatesPage() {
    */
   const selectedTemplates = useMemo(() => {
     if (!filteredTemplates) return [];
-    return filteredTemplates.filter((template) => selectedTemplateIds.has(template.id));
+    return filteredTemplates.filter((template) =>
+      selectedTemplateIds.has(template.id)
+    );
   }, [filteredTemplates, selectedTemplateIds]);
 
   /**
@@ -819,42 +879,48 @@ export default function TemplatesPage() {
    */
   const isAllSelected =
     selectableTemplates.length > 0 &&
-    selectableTemplates.every((template) => selectedTemplateIds.has(template.id));
+    selectableTemplates.every((template) =>
+      selectedTemplateIds.has(template.id)
+    );
 
   /**
    * Check if some but not all selectable templates are selected.
    */
-  const isSomeSelected =
-    selectedTemplateIds.size > 0 &&
-    !isAllSelected;
+  const isSomeSelected = selectedTemplateIds.size > 0 && !isAllSelected;
 
   /**
    * Toggle selection for a single template.
    */
-  const handleSelectionChange = useCallback((templateId: number, isSelected: boolean) => {
-    setSelectedTemplateIds((prev) => {
-      const next = new Set(prev);
-      if (isSelected) {
-        next.add(templateId);
-      } else {
-        next.delete(templateId);
-      }
-      return next;
-    });
-  }, []);
+  const handleSelectionChange = useCallback(
+    (templateId: number, isSelected: boolean) => {
+      setSelectedTemplateIds((prev) => {
+        const next = new Set(prev);
+        if (isSelected) {
+          next.add(templateId);
+        } else {
+          next.delete(templateId);
+        }
+        return next;
+      });
+    },
+    []
+  );
 
   /**
    * Toggle select all/deselect all for visible selectable templates.
    */
-  const handleSelectAllChange = useCallback((checked: boolean) => {
-    if (checked) {
-      // Select all selectable templates
-      setSelectedTemplateIds(new Set(selectableTemplates.map((t) => t.id)));
-    } else {
-      // Deselect all
-      setSelectedTemplateIds(new Set());
-    }
-  }, [selectableTemplates]);
+  const handleSelectAllChange = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        // Select all selectable templates
+        setSelectedTemplateIds(new Set(selectableTemplates.map((t) => t.id)));
+      } else {
+        // Deselect all
+        setSelectedTemplateIds(new Set());
+      }
+    },
+    [selectableTemplates]
+  );
 
   /**
    * Clear all selections.
@@ -917,7 +983,9 @@ export default function TemplatesPage() {
     );
 
     if (templatesToDeactivate.length === 0) {
-      toast.info({ description: "All selected templates are already deactivated." });
+      toast.info({
+        description: "All selected templates are already deactivated.",
+      });
       return;
     }
 
@@ -1022,7 +1090,8 @@ export default function TemplatesPage() {
   /**
    * Whether any bulk operation is in progress.
    */
-  const isBulkOperationPending = updateTemplateMutation.isPending || deleteTemplateMutation.isPending;
+  const isBulkOperationPending =
+    updateTemplateMutation.isPending || deleteTemplateMutation.isPending;
 
   // Derived state
   const hasNoTemplates = !isLoading && templates && templates.length === 0;
@@ -1208,11 +1277,7 @@ export default function TemplatesPage() {
 
           {/* Clear filters button */}
           {hasActiveFilters && (
-            <Button
-              onClick={handleClearFilters}
-              size={"sm"}
-              variant={"ghost"}
-            >
+            <Button onClick={handleClearFilters} size={"sm"} variant={"ghost"}>
               <X aria-hidden={"true"} className={"size-4"} />
               {"Clear filters"}
             </Button>
@@ -1349,41 +1414,38 @@ export default function TemplatesPage() {
               <TemplateTableSkeleton />
             )
           ) : hasNoTemplates ? (
-          // Empty state when no templates exist
-          <EmptyState
-            action={
-              <TemplateEditorDialog
-                mode={"create"}
-                trigger={
-                  <Button>
-                    <Plus aria-hidden={"true"} className={"size-4"} />
-                    {"Create your first template"}
-                  </Button>
-                }
-              />
-            }
-            description={
-              "Get started by creating your first template to streamline your feature requests."
-            }
-            icon={<FileText aria-hidden={"true"} className={"size-6"} />}
-            title={"No templates yet"}
-          />
-        ) : hasNoFilteredTemplates ? (
-          // Empty state when filters hide all templates
-          <EmptyState
-            action={
-              <Button
-                onClick={handleClearFilters}
-                variant={"outline"}
-              >
-                <X aria-hidden={"true"} className={"size-4"} />
-                {"Clear filters"}
-              </Button>
-            }
-            description={getFilteredEmptyStateMessage()}
-            icon={<Search aria-hidden={"true"} className={"size-6"} />}
-            title={"No matching templates"}
-          />
+            // Empty state when no templates exist
+            <EmptyState
+              action={
+                <TemplateEditorDialog
+                  mode={"create"}
+                  trigger={
+                    <Button>
+                      <Plus aria-hidden={"true"} className={"size-4"} />
+                      {"Create your first template"}
+                    </Button>
+                  }
+                />
+              }
+              description={
+                "Get started by creating your first template to streamline your feature requests."
+              }
+              icon={<FileText aria-hidden={"true"} className={"size-6"} />}
+              title={"No templates yet"}
+            />
+          ) : hasNoFilteredTemplates ? (
+            // Empty state when filters hide all templates
+            <EmptyState
+              action={
+                <Button onClick={handleClearFilters} variant={"outline"}>
+                  <X aria-hidden={"true"} className={"size-4"} />
+                  {"Clear filters"}
+                </Button>
+              }
+              description={getFilteredEmptyStateMessage()}
+              icon={<Search aria-hidden={"true"} className={"size-6"} />}
+              title={"No matching templates"}
+            />
           ) : view === "card" ? (
             // Card view
             <ul
@@ -1542,7 +1604,10 @@ export default function TemplatesPage() {
         onConfirm={handleConfirmBulkDelete}
         onOpenChange={handleBulkDeleteDialogOpenChange}
         selectedCount={selectedTemplates.length}
-        totalUsageCount={selectedTemplates.reduce((sum, t) => sum + t.usageCount, 0)}
+        totalUsageCount={selectedTemplates.reduce(
+          (sum, t) => sum + t.usageCount,
+          0
+        )}
       />
 
       {/* Duplicate Template Dialog */}

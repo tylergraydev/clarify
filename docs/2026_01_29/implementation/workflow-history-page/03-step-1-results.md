@@ -10,6 +10,7 @@
 ## Changes Summary
 
 ### New Types and Constants Added
+
 - `terminalStatuses`: Constant array of terminal statuses (`"completed"`, `"failed"`, `"cancelled"`)
 - `TerminalStatus`: Type derived from terminalStatuses
 - `workflowHistorySortFields`: Constant array of valid sort fields
@@ -20,6 +21,7 @@
 - `WorkflowStatistics`: Interface for aggregate statistics
 
 ### New Methods Added
+
 - `findHistory(filters?: WorkflowHistoryFilters): WorkflowHistoryResult` - Paginated history query with filtering and sorting
 - `getHistoryStatistics(filters?)`: WorkflowStatistics` - Aggregate statistics using SQL aggregation
 

@@ -14,22 +14,25 @@
 ## File Discovery Results
 
 ### Core Infrastructure (Already Complete)
-| File | Purpose |
-|------|---------|
-| `db/schema/templates.schema.ts` | Template schema with category enum, usageCount, builtInAt, deactivatedAt |
+
+| File                                        | Purpose                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------ |
+| `db/schema/templates.schema.ts`             | Template schema with category enum, usageCount, builtInAt, deactivatedAt |
 | `db/schema/template-placeholders.schema.ts` | Placeholder schema with name, displayName, validationPattern, orderIndex |
-| `db/repositories/templates.repository.ts` | Complete CRUD (13 methods) |
-| `electron/ipc/template.handlers.ts` | All IPC operations |
-| `hooks/queries/use-templates.ts` | 9 TanStack Query hooks |
+| `db/repositories/templates.repository.ts`   | Complete CRUD (13 methods)                                               |
+| `electron/ipc/template.handlers.ts`         | All IPC operations                                                       |
+| `hooks/queries/use-templates.ts`            | 9 TanStack Query hooks                                                   |
 
 ### Pattern References
-| File | Pattern |
-|------|---------|
-| `app/(app)/agents/page.tsx` | Page layout with nuqs, filters, grid, dialogs |
-| `components/agents/agent-card.tsx` | Card with badges, actions, status |
-| `components/agents/agent-editor-dialog.tsx` | Dialog form with TanStack Form |
+
+| File                                        | Pattern                                       |
+| ------------------------------------------- | --------------------------------------------- |
+| `app/(app)/agents/page.tsx`                 | Page layout with nuqs, filters, grid, dialogs |
+| `components/agents/agent-card.tsx`          | Card with badges, actions, status             |
+| `components/agents/agent-editor-dialog.tsx` | Dialog form with TanStack Form                |
 
 ### Files to Create
+
 1. `lib/validations/template.ts` - Zod validation schemas
 2. `components/templates/template-card.tsx` - Template card component
 3. `components/templates/placeholder-editor.tsx` - Placeholder management
@@ -66,9 +69,11 @@ Implement a comprehensive templates management page with card/table view layouts
 **Confidence**: High
 
 **Files to Create**:
+
 - `lib/validations/template.ts` - Template and placeholder validation schemas
 
 **Changes**:
+
 - Add `createTemplateSchema` with name, category, description validation
 - Add `updateTemplateSchema` extending create schema with id and active state
 - Add `templatePlaceholderSchema` with name, displayName, description, defaultValue, validationPattern (regex), orderIndex
@@ -76,11 +81,13 @@ Implement a comprehensive templates management page with card/table view layouts
 - Export type inference helpers for each schema
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] All schemas export proper TypeScript types
 - [ ] Validation patterns match database schema constraints
 - [ ] All validation commands pass
@@ -94,9 +101,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create**:
+
 - `components/templates/template-card.tsx` - Template card display component
 
 **Changes**:
+
 - Import Card components and Badge from `components/ui`
 - Accept template data prop with placeholders, usageCount, isBuiltIn, deactivatedAt
 - Display template name, category badge, description truncated to 2 lines
@@ -108,11 +117,13 @@ pnpm run lint && pnpm run typecheck
 - Follow Tailwind CSS 4.x conventions
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Component renders all template metadata correctly
 - [ ] Active/deactivated states visually distinct
 - [ ] Follows existing card component patterns
@@ -127,9 +138,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Create**:
+
 - `components/templates/placeholder-editor.tsx` - Placeholder array management component
 
 **Changes**:
+
 - Accept placeholders array prop and onChange handler
 - Use TanStack Form field components (TextField, TextareaField, NumberField)
 - Implement add placeholder button with default values
@@ -142,11 +155,13 @@ pnpm run lint && pnpm run typecheck
 - Show validation errors inline per field
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Users can add, edit, remove, and reorder placeholders
 - [ ] Validation patterns work correctly
 - [ ] Form state updates propagate to parent
@@ -161,9 +176,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Create**:
+
 - `components/templates/template-editor-dialog.tsx` - Template create/edit dialog
 
 **Changes**:
+
 - Import Dialog components, Button, form fields from `components/ui`
 - Accept mode prop (create vs edit), template data for edit mode, onSave, onCancel handlers
 - Use `useAppForm` with appropriate validation schema from step 1
@@ -178,11 +195,13 @@ pnpm run lint && pnpm run typecheck
 - Handle dialog close and form reset
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Dialog opens/closes correctly with proper form reset
 - [ ] Create and edit modes render appropriate fields
 - [ ] Built-in template restrictions enforced
@@ -198,9 +217,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify**:
+
 - `app/(app)/templates/page.tsx` - Replace placeholder with full implementation
 
 **Changes**:
+
 - Import useTemplates hook and required UI components
 - Add page header with title "Templates" and create template button
 - Implement view toggle buttons (card grid vs table layout) using nuqs for URL state
@@ -215,11 +236,13 @@ pnpm run lint && pnpm run typecheck
 - Wire create button to open TemplateEditorDialog in create mode
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Page renders with proper header and controls
 - [ ] Search and filters sync with URL state
 - [ ] Create button opens dialog correctly
@@ -235,9 +258,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify**:
+
 - `app/(app)/templates/page.tsx` - Add table layout rendering
 
 **Changes**:
+
 - Import Table components from `components/ui/table`
 - Conditionally render table when view mode is "table"
 - Add table columns: Name, Category (badge), Placeholders (count), Usage Count, Status (active/deactivated badge), Actions
@@ -252,11 +277,13 @@ pnpm run lint && pnpm run typecheck
 - Handle empty state within table structure
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Table view displays all template information clearly
 - [ ] Sorting and row actions work correctly
 - [ ] View toggle switches between card and table seamlessly
@@ -271,9 +298,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify**:
+
 - `app/(app)/templates/page.tsx` - Add edit and delete handlers
 
 **Changes**:
+
 - Add local state for selected template and editor dialog open state
 - Implement handleEditTemplate function to open dialog with template data
 - Implement handleDeleteTemplate function using useDeleteTemplate hook
@@ -285,11 +314,13 @@ pnpm run lint && pnpm run typecheck
 - Ensure template list refreshes after mutations
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Edit opens dialog with correct template data
 - [ ] Delete shows confirmation and removes template
 - [ ] List updates reflect mutations immediately
@@ -305,9 +336,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify**:
+
 - `app/(app)/templates/page.tsx` - Add filtering logic
 
 **Changes**:
+
 - Extract search term and filter values from nuqs searchParams
 - Implement filterTemplates function that applies search and filters to template array
 - Search against template name, description, category, and placeholder names
@@ -320,11 +353,13 @@ pnpm run lint && pnpm run typecheck
 - Ensure search and filters work in both card and table views
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Search filters templates by name, description, category, placeholders
 - [ ] Category and active state filters work correctly
 - [ ] Empty state reflects current filter context
@@ -340,9 +375,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Create**:
+
 - `components/workflows/template-picker-dialog.tsx` - Template selection dialog with placeholder form
 
 **Changes**:
+
 - Import Dialog, Button, TextField components from `components/ui`
 - Use useTemplates hook to fetch active templates only
 - Add search input to filter templates by name/category
@@ -358,11 +395,13 @@ pnpm run lint && pnpm run typecheck
 - Provide cancel and insert actions
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Dialog displays active templates with search
 - [ ] Placeholder form generates correctly from template
 - [ ] Validation patterns enforce correct input
@@ -378,9 +417,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Modify**:
+
 - `app/(app)/workflows/new/page.tsx` - Add template picker integration (or equivalent workflow creation component)
 
 **Changes**:
+
 - Import TemplatePicker component
 - Add "Insert Template" button near feature request textarea
 - Open TemplatePicker dialog on button click
@@ -392,11 +433,13 @@ pnpm run lint && pnpm run typecheck
 - Add tooltip explaining template feature
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Insert template button opens picker
 - [ ] Selected template with filled placeholders inserts correctly
 - [ ] Textarea state updates properly
@@ -412,10 +455,12 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Modify**:
+
 - `components/workflows/template-picker-dialog.tsx` - Add usage tracking on insert
 - `hooks/queries/use-templates.ts` - Verify incrementUsageCount mutation exists
 
 **Changes**:
+
 - Import useIncrementTemplateUsage hook (verify exists or matches naming)
 - Call incrementUsageCount mutation when template is inserted
 - Handle mutation optimistically to update local cache
@@ -424,11 +469,13 @@ pnpm run lint && pnpm run typecheck
 - Update template card usage count display after increment
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Usage count increments when template is inserted
 - [ ] Failure doesn't block template insertion
 - [ ] Template list reflects updated usage counts
@@ -443,12 +490,14 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Modify**:
+
 - `app/(app)/templates/page.tsx` - Add keyboard shortcuts
 - `components/templates/template-card.tsx` - Add ARIA attributes
 - `components/templates/template-editor-dialog.tsx` - Add dialog accessibility
 - `components/workflows/template-picker-dialog.tsx` - Add picker accessibility
 
 **Changes**:
+
 - Add keyboard shortcut (Ctrl/Cmd+K) to focus search input
 - Add keyboard shortcut (Ctrl/Cmd+N) to open create template dialog
 - Implement arrow key navigation in template grid/table
@@ -460,11 +509,13 @@ pnpm run lint && pnpm run typecheck
 - Verify all focusable elements have visible focus indicators
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] All keyboard shortcuts work correctly
 - [ ] Screen reader navigation is logical
 - [ ] Focus management follows accessibility guidelines
@@ -480,10 +531,12 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify**:
+
 - `app/(app)/templates/page.tsx` - Add loading skeletons
 - `components/templates/template-editor-dialog.tsx` - Add optimistic updates
 
 **Changes**:
+
 - Create skeleton components matching TemplateCard layout
 - Show skeletons during initial template fetch
 - Show skeletons during search/filter operations
@@ -496,11 +549,13 @@ pnpm run lint && pnpm run typecheck
 - Show inline loading indicators for usage count updates
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Skeletons match actual card/table layout
 - [ ] Optimistic updates feel instant
 - [ ] Rollback works correctly on errors
@@ -516,11 +571,13 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Modify**:
+
 - `app/(app)/templates/page.tsx` - Add duplicate action
 - `components/templates/template-card.tsx` - Add duplicate button
 - `components/templates/template-editor-dialog.tsx` - Support duplicate mode
 
 **Changes**:
+
 - Add duplicate button to template card actions menu
 - Add duplicate action to table row actions
 - Implement handleDuplicateTemplate function
@@ -533,11 +590,13 @@ pnpm run lint && pnpm run typecheck
 - Focus name field for user to rename
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Duplicate button opens editor with copied data
 - [ ] Name is modified to indicate copy
 - [ ] All placeholders are preserved
@@ -553,9 +612,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: Medium
 
 **Files to Modify**:
+
 - `app/(app)/templates/page.tsx` - Add bulk action UI and logic
 
 **Changes**:
+
 - Add checkbox to template cards and table rows for selection
 - Add "Select All" checkbox in table header
 - Show bulk action toolbar when templates are selected
@@ -571,11 +632,13 @@ pnpm run lint && pnpm run typecheck
 - Handle partial success scenarios with informative toasts
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Multi-select works in both card and table views
 - [ ] Bulk actions execute correctly
 - [ ] Built-in templates protected from bulk operations

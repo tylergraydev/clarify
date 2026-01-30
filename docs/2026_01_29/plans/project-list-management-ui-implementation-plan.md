@@ -42,20 +42,24 @@ Implement a complete Project List & Management UI that serves as the organizatio
 **Confidence**: High
 
 **Files**:
+
 - `lib/stores/shell-store.ts` (modify)
 
 **Changes**:
+
 - Add `selectedProjectId: number | null` to ShellState interface
 - Add `setSelectedProject: (id: number | null) => void` to ShellActions interface
 - Implement setSelectedProject action in the store creator
 - Initialize selectedProjectId to null
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] ShellStore includes selectedProjectId state
 - [ ] setSelectedProject action updates the state correctly
 - [ ] All validation commands pass
@@ -71,18 +75,22 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `lib/queries/projects.ts` (modify)
 
 **Changes**:
+
 - Ensure list query key factory correctly handles includeArchived filter parameter
 - Add archived query key for filtered archived project lists if needed
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Query keys differentiate between active-only and all-projects views
 - [ ] All validation commands pass
 
@@ -97,20 +105,24 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `hooks/queries/use-projects.ts` (modify)
 
 **Changes**:
+
 - Add useArchiveProject hook that calls project.update with archivedAt set to current ISO timestamp
 - Add useUnarchiveProject hook that calls project.update with archivedAt set to null
-- Both hooks should invalidate projectKeys.list._def and update detail cache
+- Both hooks should invalidate projectKeys.list.\_def and update detail cache
 - Follow existing mutation pattern with useElectron and useQueryClient
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] useArchiveProject sets archivedAt to current timestamp
 - [ ] useUnarchiveProject clears archivedAt to null
 - [ ] Both hooks follow existing mutation patterns with proper cache invalidation
@@ -127,20 +139,24 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/shell/app-sidebar.tsx` (modify)
 
 **Changes**:
+
 - Import FolderKanban icon from lucide-react
 - Add NavItem for Projects route after Dashboard section (before Separator)
 - Use $path with route "/projects" for the href
 - Add isPathActive check for the projects route
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Projects nav item appears in sidebar below Dashboard
 - [ ] Active state displays correctly when on projects routes
 - [ ] Navigation works for both collapsed and expanded sidebar states
@@ -157,9 +173,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/projects/project-card.tsx` (create)
 
 **Changes**:
+
 - Create ProjectCard component accepting Project type as prop
 - Display project name as CardTitle, description as CardDescription
 - Show creation date formatted with date-fns
@@ -170,11 +188,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Apply opacity or muted styling for archived projects
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Card displays all project information correctly
 - [ ] Archived projects have visual distinction (badge, muted styling)
 - [ ] Action buttons are accessible and keyboard navigable
@@ -191,9 +211,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/projects/confirm-archive-dialog.tsx` (create)
 
 **Changes**:
+
 - Create ConfirmArchiveDialog component using DialogRoot, DialogTrigger, DialogPortal, DialogBackdrop, DialogPopup
 - Accept props for project name, isArchived (to determine action direction), onConfirm callback, and isLoading state
 - Display appropriate title and description based on archive/unarchive action
@@ -202,11 +224,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Use DialogClose for the cancel action
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Dialog opens and closes correctly via trigger
 - [ ] Displays appropriate messaging for archive vs unarchive
 - [ ] Buttons are disabled during loading state
@@ -223,9 +247,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: Medium
 
 **Files**:
+
 - `components/projects/project-table.tsx` (create)
 
 **Changes**:
+
 - Create ProjectTable component accepting projects array as prop
 - Build semantic HTML table with accessible structure (thead, tbody, th scope)
 - Include columns: Name, Description (truncated), Created, Status, Actions
@@ -236,11 +262,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Integrate ConfirmArchiveDialog for archive actions
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Table renders all projects with correct column data
 - [ ] Rows are clickable and navigate to project detail
 - [ ] Archive actions show confirmation dialog
@@ -258,9 +286,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/projects/create-project-dialog.tsx` (create)
 
 **Changes**:
+
 - Create CreateProjectDialog component using DialogRoot and form components
 - Use useAppForm hook with defaultValues for name (empty string) and description (empty string)
 - Implement name validation: required, non-empty, minimum length
@@ -272,11 +302,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Display FormError for server errors
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Form validates name as required and non-empty
 - [ ] Successful creation closes dialog and shows new project in list
 - [ ] Loading state prevents double submission
@@ -294,9 +326,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `app/(app)/projects/page.tsx` (create)
 
 **Changes**:
+
 - Create ProjectsPage component with standard page heading structure
 - Use useProjects hook to fetch project list
 - Implement nuqs parseAsStringLiteral for view preference (card | table) with default card
@@ -311,11 +345,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Show loading skeleton while data is fetching
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Page displays projects in selected view format
 - [ ] View toggle persists preference to URL via nuqs
 - [ ] Archive filter correctly shows/hides archived projects
@@ -334,9 +370,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `app/(app)/projects/[id]/page.tsx` (create)
 
 **Changes**:
+
 - Create ProjectDetailPage component with dynamic route parameter
 - Extract project ID from route params and parse as number
 - Use useProject hook to fetch single project by ID
@@ -352,11 +390,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Redirect to projects list if project not found
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Page loads correct project based on route ID
 - [ ] Breadcrumb navigation works correctly
 - [ ] Tabs render and switch between panels
@@ -375,9 +415,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/shell/project-selector.tsx` (modify)
 
 **Changes**:
+
 - Import useShellStore from lib/stores/shell-store
 - Read selectedProjectId from shell store for controlled value
 - Call setSelectedProject from shell store when selection changes
@@ -385,11 +427,13 @@ pnpm run lint:fix && pnpm run typecheck
 - Ensure two-way binding: selecting project updates store, viewing project detail updates store
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Project selector reflects currently selected project from shell store
 - [ ] Changing selection in dropdown updates shell store
 - [ ] Navigating to project detail page updates selector
@@ -406,19 +450,23 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - Run `pnpm next-typesafe-url` to regenerate route definitions
 
 **Changes**:
+
 - Execute the route generation command after creating new page files
 - Verify generated types include /projects and /projects/[id] routes
 - Update any $path usages in components to use new route types
 
 **Validation Commands**:
+
 ```bash
 pnpm next-typesafe-url && pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Route types generated for /projects and /projects/[id]
 - [ ] $path function works with new routes in NavItem
 - [ ] All validation commands pass
@@ -428,6 +476,7 @@ pnpm next-typesafe-url && pnpm run lint:fix && pnpm run typecheck
 ## Quality Gates
 
 ### After Step 4: Navigation Foundation Complete
+
 - [ ] Shell store has selectedProjectId state
 - [ ] Query keys support archived filtering
 - [ ] Archive/unarchive hooks are functional
@@ -435,6 +484,7 @@ pnpm next-typesafe-url && pnpm run lint:fix && pnpm run typecheck
 - [ ] `pnpm run lint:fix && pnpm run typecheck` passes
 
 ### After Step 8: Components Complete
+
 - [ ] ProjectCard renders correctly with all data
 - [ ] ProjectTable displays projects in rows
 - [ ] ConfirmArchiveDialog shows appropriate messaging
@@ -442,6 +492,7 @@ pnpm next-typesafe-url && pnpm run lint:fix && pnpm run typecheck
 - [ ] `pnpm run lint:fix && pnpm run typecheck` passes
 
 ### After Step 12: Feature Complete
+
 - [ ] Projects list page displays with view toggle
 - [ ] Create, archive, unarchive operations work
 - [ ] Project detail page loads with tabs
@@ -465,20 +516,22 @@ pnpm next-typesafe-url && pnpm run lint:fix && pnpm run typecheck
 ## File Discovery Reference
 
 ### Files to Create
-| File | Purpose |
-|------|---------|
-| `app/(app)/projects/page.tsx` | Project list page |
-| `app/(app)/projects/[id]/page.tsx` | Project detail page |
-| `components/projects/project-card.tsx` | Card view component |
-| `components/projects/project-table.tsx` | Table view component |
-| `components/projects/create-project-dialog.tsx` | Create form dialog |
-| `components/projects/confirm-archive-dialog.tsx` | Confirmation dialog |
+
+| File                                             | Purpose              |
+| ------------------------------------------------ | -------------------- |
+| `app/(app)/projects/page.tsx`                    | Project list page    |
+| `app/(app)/projects/[id]/page.tsx`               | Project detail page  |
+| `components/projects/project-card.tsx`           | Card view component  |
+| `components/projects/project-table.tsx`          | Table view component |
+| `components/projects/create-project-dialog.tsx`  | Create form dialog   |
+| `components/projects/confirm-archive-dialog.tsx` | Confirmation dialog  |
 
 ### Files to Modify
-| File | Changes |
-|------|---------|
-| `lib/stores/shell-store.ts` | Add selectedProjectId state |
-| `lib/queries/projects.ts` | Extend for archived filters |
-| `hooks/queries/use-projects.ts` | Add archive/unarchive hooks |
-| `components/shell/app-sidebar.tsx` | Add Projects nav item |
-| `components/shell/project-selector.tsx` | Integrate with shell store |
+
+| File                                    | Changes                     |
+| --------------------------------------- | --------------------------- |
+| `lib/stores/shell-store.ts`             | Add selectedProjectId state |
+| `lib/queries/projects.ts`               | Extend for archived filters |
+| `hooks/queries/use-projects.ts`         | Add archive/unarchive hooks |
+| `components/shell/app-sidebar.tsx`      | Add Projects nav item       |
+| `components/shell/project-selector.tsx` | Integrate with shell store  |

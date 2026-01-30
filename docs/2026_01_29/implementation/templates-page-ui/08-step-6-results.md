@@ -10,6 +10,7 @@
 ## Table Features Implemented
 
 **Columns**:
+
 - Name - Template name
 - Category - Colored badge matching card view
 - Description - Truncated with hover tooltip
@@ -19,12 +20,14 @@
 - Actions - Edit button
 
 **Interactions**:
+
 - Rows are clickable to open editor dialog
 - Edit button in Actions column
 - Hover states on rows
 - Deactivated templates have reduced opacity (opacity-60)
 
 **Helpers Added**:
+
 - `getCategoryVariant()` - Maps template categories to badge variants
 - `extractPlaceholders()` - Extracts unique placeholders from template text
 - `TemplateTableRow` component - Renders clickable table row with editor dialog integration

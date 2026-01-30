@@ -22,9 +22,11 @@
 ## Export Summary
 
 **components/repositories/index.ts**:
+
 - `RepositoryCard`
 
 **components/projects/index.ts**:
+
 - All 11 project-related components organized by category (dialogs, display, tab content)
 
 ## Notes

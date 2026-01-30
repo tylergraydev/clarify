@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import type { ReactElement } from 'react';
+import type { ReactElement } from "react";
 
-import { SettingsSection } from './settings-section';
+import { SettingsSection } from "./settings-section";
 
 /**
  * Minimal form interface for settings section components.
@@ -35,45 +35,51 @@ export const WorktreeSettingsSection = ({
   form,
 }: WorktreeSettingsSectionProps): ReactElement => {
   return (
-    <SettingsSection title={'Git Worktrees'}>
+    <SettingsSection title={"Git Worktrees"}>
       {/* Worktree Location */}
-      <form.AppField name={'worktree.worktreeLocation'}>
+      <form.AppField name={"worktree.worktreeLocation"}>
         {(field) => (
           <field.PathInputField
-            description={'Directory where git worktrees will be created for parallel work'}
+            description={
+              "Directory where git worktrees will be created for parallel work"
+            }
             isRequired={true}
-            label={'Worktree Location'}
-            placeholder={'Select a directory for worktrees'}
+            label={"Worktree Location"}
+            placeholder={"Select a directory for worktrees"}
           />
         )}
       </form.AppField>
 
       {/* Auto Cleanup */}
-      <form.AppField name={'worktree.autoCleanup'}>
+      <form.AppField name={"worktree.autoCleanup"}>
         {(field) => (
           <field.SwitchField
-            description={'Automatically remove worktrees after workflow completion'}
-            label={'Auto-cleanup Worktrees'}
+            description={
+              "Automatically remove worktrees after workflow completion"
+            }
+            label={"Auto-cleanup Worktrees"}
           />
         )}
       </form.AppField>
 
       {/* Create Feature Branch */}
-      <form.AppField name={'worktree.createFeatureBranch'}>
+      <form.AppField name={"worktree.createFeatureBranch"}>
         {(field) => (
           <field.SwitchField
-            description={'Create a new feature branch when starting a workflow'}
-            label={'Create Feature Branch'}
+            description={"Create a new feature branch when starting a workflow"}
+            label={"Create Feature Branch"}
           />
         )}
       </form.AppField>
 
       {/* Push on Completion */}
-      <form.AppField name={'worktree.pushOnCompletion'}>
+      <form.AppField name={"worktree.pushOnCompletion"}>
         {(field) => (
           <field.SwitchField
-            description={'Push changes to remote repository when workflow completes'}
-            label={'Push on Completion'}
+            description={
+              "Push changes to remote repository when workflow completes"
+            }
+            label={"Push on Completion"}
           />
         )}
       </form.AppField>

@@ -8,9 +8,11 @@
 ## Inputs Used
 
 ### Refined Feature Request
+
 Implement the workflow list page and new workflow creation dialog to establish the primary user journey for Clarify's core orchestration feature. The workflow infrastructure is fully complete on the backend with the database schema defining workflows with status types (created, running, paused, editing, completed, failed, cancelled), workflow types (planning, implementation), and pause behaviors (continuous, auto_pause, gates_only), along with corresponding repositories, IPC handlers in the workflow domain, and TanStack Query hooks already implemented. The workflow list page at /workflows should follow the established Projects page pattern, featuring a dual card/table view toggle, status-based filtering, text search functionality, proper loading states with skeletons, and meaningful empty states.
 
 ### File Discovery Summary
+
 - **Critical Files (7)**: 2 to modify, 5 to create
 - **High Priority Files (8)**: All reference/dependency files
 - **Medium Priority Files (7)**: Reference implementations
@@ -42,29 +44,29 @@ Critical Requirements:
 
 ## Plan Format Validation
 
-| Check | Result |
-|-------|--------|
-| Format (Markdown, not XML) | PASS |
-| Contains Overview section | PASS |
-| Contains Quick Summary | PASS |
-| Contains Prerequisites | PASS |
-| Contains Implementation Steps | PASS |
-| Contains Quality Gates | PASS |
-| Contains Notes | PASS |
-| Each step has validation commands | PASS |
-| No code examples included | PASS |
-| Steps are atomic | PASS |
+| Check                             | Result |
+| --------------------------------- | ------ |
+| Format (Markdown, not XML)        | PASS   |
+| Contains Overview section         | PASS   |
+| Contains Quick Summary            | PASS   |
+| Contains Prerequisites            | PASS   |
+| Contains Implementation Steps     | PASS   |
+| Contains Quality Gates            | PASS   |
+| Contains Notes                    | PASS   |
+| Each step has validation commands | PASS   |
+| No code examples included         | PASS   |
+| Steps are atomic                  | PASS   |
 
 ## Plan Statistics
 
-| Metric | Value |
-|--------|-------|
-| Total Steps | 8 |
-| Files to Create | 5 |
-| Files to Modify | 2 |
+| Metric               | Value  |
+| -------------------- | ------ |
+| Total Steps          | 8      |
+| Files to Create      | 5      |
+| Files to Modify      | 2      |
 | Estimated Complexity | Medium |
-| Risk Level | Low |
-| Quality Gates | 10 |
+| Risk Level           | Low    |
+| Quality Gates        | 10     |
 
 ## Implementation Steps Summary
 
@@ -91,4 +93,5 @@ Critical Requirements:
 - Loading skeletons display during data fetching
 
 ---
+
 **MILESTONE:STEP_3_COMPLETE**

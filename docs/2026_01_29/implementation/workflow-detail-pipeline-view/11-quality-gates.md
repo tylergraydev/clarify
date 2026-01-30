@@ -4,20 +4,22 @@
 
 ## Gate Results
 
-| Gate | Command | Status |
-|------|---------|--------|
-| Lint | `pnpm run lint` | PASS |
-| TypeCheck | `pnpm run typecheck` | PASS |
+| Gate      | Command              | Status |
+| --------- | -------------------- | ------ |
+| Lint      | `pnpm run lint`      | PASS   |
+| TypeCheck | `pnpm run typecheck` | PASS   |
 
 ## Quality Gate 1: After Step 2
 
 **Status**: PASSED
+
 - `PipelineStepNode` renders correctly with all step statuses
 - Correct visual treatments for each state (active, completed, failed, pending)
 
 ## Quality Gate 2: After Step 5
 
 **Status**: PASSED
+
 - `PipelineView` renders complete pipeline with multiple steps
 - Visual connectors appear between nodes
 - Loading skeleton and empty state work correctly
@@ -25,6 +27,7 @@
 ## Quality Gate 3: After Step 8
 
 **Status**: PASSED
+
 - Full integration verified
 - Navigate to `/workflows/[id]` with valid workflow ID
 - Data loads and displays correctly

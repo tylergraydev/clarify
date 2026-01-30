@@ -6,12 +6,14 @@
 ## Files Modified
 
 **`components/templates/template-card.tsx`**:
+
 - Added `Copy` icon import
 - Added `onDuplicate` prop
 - Added `handleDuplicateClick` handler
 - Added Duplicate button in CardFooter (between Edit and Delete)
 
 **`components/templates/template-editor-dialog.tsx`**:
+
 - Added `TemplateInitialData` interface for pre-filling
 - Added `initialData` prop
 - Added `isDuplicateMode` computed flag
@@ -20,6 +22,7 @@
 - Added `autoFocus` to name field when duplicating
 
 **`app/(app)/templates/page.tsx`**:
+
 - Added `DuplicateTemplateData` interface
 - Updated `TemplateGridItem` and `TemplateTableRow` with `onDuplicate`
 - Added duplicate state and dialog trigger ref

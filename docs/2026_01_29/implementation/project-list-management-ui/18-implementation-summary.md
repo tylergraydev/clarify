@@ -17,26 +17,26 @@ Successfully implemented the complete Project List & Management UI feature with 
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
-| `app/(app)/projects/page.tsx` | Project list page with card/table views |
-| `app/(app)/projects/[id]/page.tsx` | Project detail page with tabs |
-| `components/projects/project-card.tsx` | Card view component |
-| `components/projects/project-table.tsx` | Table view component |
-| `components/projects/create-project-dialog.tsx` | Create form dialog |
-| `components/projects/confirm-archive-dialog.tsx` | Confirmation dialog |
-| `lib/validations/project.ts` | Zod validation schema |
+| File                                             | Purpose                                 |
+| ------------------------------------------------ | --------------------------------------- |
+| `app/(app)/projects/page.tsx`                    | Project list page with card/table views |
+| `app/(app)/projects/[id]/page.tsx`               | Project detail page with tabs           |
+| `components/projects/project-card.tsx`           | Card view component                     |
+| `components/projects/project-table.tsx`          | Table view component                    |
+| `components/projects/create-project-dialog.tsx`  | Create form dialog                      |
+| `components/projects/confirm-archive-dialog.tsx` | Confirmation dialog                     |
+| `lib/validations/project.ts`                     | Zod validation schema                   |
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
-| `lib/stores/shell-store.ts` | Added selectedProjectId state |
-| `lib/queries/projects.ts` | Extended for archived filters |
-| `hooks/queries/use-projects.ts` | Added archive/unarchive hooks |
-| `components/shell/app-sidebar.tsx` | Added Projects nav item |
-| `components/shell/project-selector.tsx` | Integrated with shell store |
-| `_next-typesafe-url_.d.ts` | Updated route definitions |
+| File                                    | Changes                       |
+| --------------------------------------- | ----------------------------- |
+| `lib/stores/shell-store.ts`             | Added selectedProjectId state |
+| `lib/queries/projects.ts`               | Extended for archived filters |
+| `hooks/queries/use-projects.ts`         | Added archive/unarchive hooks |
+| `components/shell/app-sidebar.tsx`      | Added Projects nav item       |
+| `components/shell/project-selector.tsx` | Integrated with shell store   |
+| `_next-typesafe-url_.d.ts`              | Updated route definitions     |
 
 ## Features Implemented
 

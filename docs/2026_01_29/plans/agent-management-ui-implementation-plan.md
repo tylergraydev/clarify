@@ -10,6 +10,7 @@ Agent Management UI
 Why: Agents are central to the orchestration system (11 agents defined in design: clarification-agent, database-schema, tanstack-query, etc.). Backend fully implemented with CRUD operations, activation/deactivation, and project-scoped overrides. Users need to customize prompts and tool allowlists.
 
 Scope:
+
 - Build /agents page with agent list/grid view
 - Create agent detail/edit form (name, description, prompt, allowed tools)
 - Implement agent activation toggle
@@ -47,19 +48,23 @@ Build a comprehensive Agent Management UI at `/agents` that displays all 11 buil
 **Confidence**: High
 
 **Files to Create:**
+
 - `lib/validations/agent.ts` - Agent form validation schema
 
 **Changes:**
+
 - Create `updateAgentSchema` with fields: `displayName` (required, max 255), `description` (optional, max 1000), `systemPrompt` (required, max 50000)
 - Export `UpdateAgentFormValues` and `UpdateAgentOutput` types
 - Follow the pattern from `lib/validations/workflow.ts`
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Schema file exists at `lib/validations/agent.ts`
 - [ ] Schema validates required fields with appropriate error messages
 - [ ] Types are exported for form integration
@@ -74,9 +79,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `components/agents/agent-card.tsx` - Agent card component
 
 **Changes:**
+
 - Create `AgentCard` component following `WorkflowCard` pattern
 - Display: `displayName`, `description` (truncated), `type` badge, `color` indicator dot
 - Show active/deactivated status via opacity or badge indicator
@@ -87,11 +94,13 @@ pnpm run lint && pnpm run typecheck
 - Accept props: `agent`, `onEdit`, `onToggleActive`, `onReset`, `isToggling`, `isResetting`
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Component renders agent display name, description, type badge
 - [ ] Color indicator displays agent's assigned color
 - [ ] Switch toggles activation state
@@ -107,9 +116,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `components/agents/agent-editor-dialog.tsx` - Agent editor dialog with TanStack Form
 
 **Changes:**
+
 - Create `AgentEditorDialog` component following `CreateWorkflowDialog` pattern
 - Accept props: `trigger`, `agent` (the agent to edit), `onSuccess`
 - Use `DialogRoot`, `DialogPortal`, `DialogBackdrop`, `DialogPopup`, `DialogTitle`, `DialogDescription`, `DialogClose`
@@ -122,11 +133,13 @@ pnpm run lint && pnpm run typecheck
 - Handle dialog open/close state and form reset
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Dialog opens when trigger is clicked
 - [ ] Form populates with current agent values
 - [ ] Validation errors display for required fields
@@ -143,19 +156,23 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/agents/page.tsx` - Add skeleton component inline (following workflows page pattern)
 
 **Changes:**
+
 - Create `AgentCardSkeleton` component within the page file
 - Match the visual structure of `AgentCard` with animated placeholder divs
 - Include placeholder for: title, description, type badge, color indicator, switch, buttons
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Skeleton visually matches AgentCard layout
 - [ ] Uses animate-pulse class for loading animation
 - [ ] All validation commands pass
@@ -169,9 +186,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/agents/page.tsx` - Replace placeholder with full implementation
 
 **Changes:**
+
 - Add "use client" directive
 - Import required components: `QueryErrorBoundary`, `EmptyState`, `Input`, `Select` components, `Button`, `Badge`, `Switch`
 - Import custom components: `AgentCard`, `AgentEditorDialog`
@@ -190,11 +209,13 @@ pnpm run lint && pnpm run typecheck
 - Display loading skeletons during data fetch
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Page displays all agents in grid layout
 - [ ] Search filters agents by name and description
 - [ ] Type filter limits agents by type
@@ -214,19 +235,23 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `components/ui/badge.tsx` - Add agent-related variants
 
 **Changes:**
+
 - Add badge variants for agent types: `planning`, `specialist`, `review` (planning already exists, may need specialist and review)
 - Add badge variants or utility for agent colors: `green`, `blue`, `yellow`, `cyan`, `red`
 - Consider adding a small circular "dot" variant for color indicators
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Badge variants exist for all agent types
 - [ ] Color indicator styling is available
 - [ ] All validation commands pass
@@ -240,9 +265,11 @@ pnpm run lint && pnpm run typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - Any files requiring fixes discovered during testing
 
 **Changes:**
+
 - Test agent list loading
 - Test search and filter functionality
 - Test activation/deactivation toggle
@@ -254,11 +281,13 @@ pnpm run lint && pnpm run typecheck
 - Fix any discovered issues
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All agent CRUD operations work correctly
 - [ ] Filters and search work as expected
 - [ ] UI is responsive and accessible
@@ -297,9 +326,11 @@ pnpm run lint && pnpm run typecheck
 ## File Discovery Results
 
 ### Critical Priority
+
 - `app/(app)/agents/page.tsx` - Main agents page (currently placeholder)
 
 ### High Priority
+
 - `hooks/queries/use-agents.ts` - Agent query hooks (already implemented)
 - `lib/queries/agents.ts` - Query key factory (already implemented)
 - `db/schema/agents.schema.ts` - Agent schema definition
@@ -310,17 +341,20 @@ pnpm run lint && pnpm run typecheck
 - `lib/forms/form-hook.ts` - Form hook factory
 
 ### Medium Priority (UI Components)
+
 - `components/ui/card.tsx`, `dialog.tsx`, `badge.tsx`, `button.tsx`, `switch.tsx`, `input.tsx`, `empty-state.tsx`, `tooltip.tsx`
 - Form components in `components/ui/form/`
 - `components/data/query-error-boundary.tsx`
 
 ### Reference Patterns
+
 - `app/(app)/workflows/page.tsx` - List page pattern
 - `components/workflows/workflow-card.tsx` - Card component pattern
 - `components/workflows/create-workflow-dialog.tsx` - Form dialog pattern
 - `lib/validations/workflow.ts` - Zod validation pattern
 
 ### Files to Create
+
 1. `lib/validations/agent.ts`
 2. `components/agents/agent-card.tsx`
 3. `components/agents/agent-editor-dialog.tsx`

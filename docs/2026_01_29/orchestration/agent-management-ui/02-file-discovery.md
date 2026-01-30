@@ -22,61 +22,61 @@ Refined feature request for Agent Management UI (from Step 1)
 
 ### Critical Priority (Must Modify/Create)
 
-| File Path | Relevance |
-|-----------|-----------|
+| File Path                   | Relevance                                                                                                                                                                     |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `app/(app)/agents/page.tsx` | **The main agents page to implement** - currently a placeholder that needs to be replaced with the full agent management UI including list/grid view, search, and agent cards |
 
 ### High Priority (Core Implementation Files)
 
-| File Path | Relevance |
-|-----------|-----------|
-| `hooks/queries/use-agents.ts` | **Agent query hooks** - Already implemented with useAgents, useAgent, useUpdateAgent, useActivateAgent, useDeactivateAgent, useResetAgent - will be consumed by the UI |
-| `lib/queries/agents.ts` | **Agent query key factory** - Already implemented with agentKeys for cache invalidation patterns |
-| `db/schema/agents.schema.ts` | **Agent database schema** - Defines Agent type with displayName, description, type, color, systemPrompt, deactivatedAt, builtInAt, parentAgentId fields |
-| `db/schema/agent-tools.schema.ts` | **Agent tools schema** - Defines allowed tools per agent with toolName, toolPattern, disallowedAt fields |
-| `electron/ipc/agent.handlers.ts` | **Agent IPC handlers** - Backend handlers for list, get, update, activate, deactivate, reset operations |
-| `db/repositories/agents.repository.ts` | **Agent repository** - Data access layer with findAll, findById, update, activate, deactivate methods |
-| `types/electron.d.ts` | **Type definitions** - ElectronAPI interface and Agent/NewAgent type exports for renderer use |
-| `lib/forms/form-hook.ts` | **Form hook factory** - useAppForm hook with field components for building TanStack Form-based forms |
+| File Path                              | Relevance                                                                                                                                                              |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hooks/queries/use-agents.ts`          | **Agent query hooks** - Already implemented with useAgents, useAgent, useUpdateAgent, useActivateAgent, useDeactivateAgent, useResetAgent - will be consumed by the UI |
+| `lib/queries/agents.ts`                | **Agent query key factory** - Already implemented with agentKeys for cache invalidation patterns                                                                       |
+| `db/schema/agents.schema.ts`           | **Agent database schema** - Defines Agent type with displayName, description, type, color, systemPrompt, deactivatedAt, builtInAt, parentAgentId fields                |
+| `db/schema/agent-tools.schema.ts`      | **Agent tools schema** - Defines allowed tools per agent with toolName, toolPattern, disallowedAt fields                                                               |
+| `electron/ipc/agent.handlers.ts`       | **Agent IPC handlers** - Backend handlers for list, get, update, activate, deactivate, reset operations                                                                |
+| `db/repositories/agents.repository.ts` | **Agent repository** - Data access layer with findAll, findById, update, activate, deactivate methods                                                                  |
+| `types/electron.d.ts`                  | **Type definitions** - ElectronAPI interface and Agent/NewAgent type exports for renderer use                                                                          |
+| `lib/forms/form-hook.ts`               | **Form hook factory** - useAppForm hook with field components for building TanStack Form-based forms                                                                   |
 
 ### Medium Priority (UI Components to Use)
 
-| File Path | Relevance |
-|-----------|-----------|
-| `components/ui/card.tsx` | **Card component** - Pattern for agent cards (Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter) |
-| `components/ui/dialog.tsx` | **Dialog component** - Pattern for agent editor modal with DialogRoot, DialogTrigger, DialogPopup, DialogTitle, DialogDescription, DialogClose |
-| `components/ui/badge.tsx` | **Badge component** - For agent type indicators and status display with CVA variants |
-| `components/ui/button.tsx` | **Button component** - For actions with variant support (default, outline, ghost, destructive) |
-| `components/ui/switch.tsx` | **Switch component** - For activation toggle controls |
-| `components/ui/input.tsx` | **Input component** - For search functionality with inputVariants |
-| `components/ui/empty-state.tsx` | **Empty state component** - For when no agents match search/filters |
-| `components/ui/tooltip.tsx` | **Tooltip component** - For additional context on agent actions |
-| `components/ui/form/text-field.tsx` | **TextField component** - TanStack Form field for agent name input |
-| `components/ui/form/textarea-field.tsx` | **TextareaField component** - TanStack Form field for system prompt editing |
-| `components/ui/form/select-field.tsx` | **SelectField component** - TanStack Form field for agent type selection |
-| `components/ui/form/switch-field.tsx` | **SwitchField component** - TanStack Form field for boolean options |
-| `components/ui/form/submit-button.tsx` | **SubmitButton component** - TanStack Form submit button with loading state |
-| `components/ui/form/field-wrapper.tsx` | **Field wrapper variants** - CVA variants for form styling |
-| `components/data/query-error-boundary.tsx` | **Query error boundary** - For handling data loading errors |
+| File Path                                  | Relevance                                                                                                                                      |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `components/ui/card.tsx`                   | **Card component** - Pattern for agent cards (Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter)                           |
+| `components/ui/dialog.tsx`                 | **Dialog component** - Pattern for agent editor modal with DialogRoot, DialogTrigger, DialogPopup, DialogTitle, DialogDescription, DialogClose |
+| `components/ui/badge.tsx`                  | **Badge component** - For agent type indicators and status display with CVA variants                                                           |
+| `components/ui/button.tsx`                 | **Button component** - For actions with variant support (default, outline, ghost, destructive)                                                 |
+| `components/ui/switch.tsx`                 | **Switch component** - For activation toggle controls                                                                                          |
+| `components/ui/input.tsx`                  | **Input component** - For search functionality with inputVariants                                                                              |
+| `components/ui/empty-state.tsx`            | **Empty state component** - For when no agents match search/filters                                                                            |
+| `components/ui/tooltip.tsx`                | **Tooltip component** - For additional context on agent actions                                                                                |
+| `components/ui/form/text-field.tsx`        | **TextField component** - TanStack Form field for agent name input                                                                             |
+| `components/ui/form/textarea-field.tsx`    | **TextareaField component** - TanStack Form field for system prompt editing                                                                    |
+| `components/ui/form/select-field.tsx`      | **SelectField component** - TanStack Form field for agent type selection                                                                       |
+| `components/ui/form/switch-field.tsx`      | **SwitchField component** - TanStack Form field for boolean options                                                                            |
+| `components/ui/form/submit-button.tsx`     | **SubmitButton component** - TanStack Form submit button with loading state                                                                    |
+| `components/ui/form/field-wrapper.tsx`     | **Field wrapper variants** - CVA variants for form styling                                                                                     |
+| `components/data/query-error-boundary.tsx` | **Query error boundary** - For handling data loading errors                                                                                    |
 
 ### Low Priority (Reference Patterns)
 
-| File Path | Relevance |
-|-----------|-----------|
-| `app/(app)/workflows/page.tsx` | **Reference pattern** - Comprehensive example of list page with card/table views, filters, search, URL state (nuqs), loading skeletons, empty states |
-| `components/workflows/workflow-card.tsx` | **Reference pattern** - Example card component with status badges, actions, styling patterns |
-| `components/workflows/create-workflow-dialog.tsx` | **Reference pattern** - Example TanStack Form dialog with validation, form fields, submit handling |
-| `lib/validations/workflow.ts` | **Reference pattern** - Zod schema validation pattern for forms |
-| `hooks/use-electron.ts` | **Electron hook** - useElectron hook for API access detection |
-| `hooks/queries/index.ts` | **Query hooks index** - Barrel export pattern for query hooks |
-| `lib/queries/index.ts` | **Query keys index** - Merged query keys export pattern |
-| `lib/utils.ts` | **Utilities** - cn() function for className composition |
-| `app/(app)/layout.tsx` | **App layout** - Shell layout with sidebar state |
-| `electron/preload.ts` | **Preload script** - ElectronAPI definition with agent methods |
-| `electron/ipc/channels.ts` | **IPC channels** - Channel constants for IPC communication |
-| `db/schema/index.ts` | **Schema index** - Barrel export for all schemas |
-| `db/repositories/index.ts` | **Repository index** - Barrel export for repositories |
-| `db/schema/agent-skills.schema.ts` | **Agent skills schema** - Related schema for agent skills |
+| File Path                                         | Relevance                                                                                                                                            |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/(app)/workflows/page.tsx`                    | **Reference pattern** - Comprehensive example of list page with card/table views, filters, search, URL state (nuqs), loading skeletons, empty states |
+| `components/workflows/workflow-card.tsx`          | **Reference pattern** - Example card component with status badges, actions, styling patterns                                                         |
+| `components/workflows/create-workflow-dialog.tsx` | **Reference pattern** - Example TanStack Form dialog with validation, form fields, submit handling                                                   |
+| `lib/validations/workflow.ts`                     | **Reference pattern** - Zod schema validation pattern for forms                                                                                      |
+| `hooks/use-electron.ts`                           | **Electron hook** - useElectron hook for API access detection                                                                                        |
+| `hooks/queries/index.ts`                          | **Query hooks index** - Barrel export pattern for query hooks                                                                                        |
+| `lib/queries/index.ts`                            | **Query keys index** - Merged query keys export pattern                                                                                              |
+| `lib/utils.ts`                                    | **Utilities** - cn() function for className composition                                                                                              |
+| `app/(app)/layout.tsx`                            | **App layout** - Shell layout with sidebar state                                                                                                     |
+| `electron/preload.ts`                             | **Preload script** - ElectronAPI definition with agent methods                                                                                       |
+| `electron/ipc/channels.ts`                        | **IPC channels** - Channel constants for IPC communication                                                                                           |
+| `db/schema/index.ts`                              | **Schema index** - Barrel export for all schemas                                                                                                     |
+| `db/repositories/index.ts`                        | **Repository index** - Barrel export for repositories                                                                                                |
+| `db/schema/agent-skills.schema.ts`                | **Agent skills schema** - Related schema for agent skills                                                                                            |
 
 ## Architecture Insights
 

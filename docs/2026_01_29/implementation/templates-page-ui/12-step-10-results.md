@@ -10,15 +10,18 @@
 ## Changes Made
 
 **Imports Added**:
+
 - `FileText` icon from lucide-react
 - `useCallback` from react
 - `Tooltip` component
 - `TemplatePickerDialog` component
 
 **Handler Added**:
+
 - `handleTemplateInsert` callback that appends template content to existing feature request text
 
 **UI Changes**:
+
 - Added "Insert Template" button above the Feature Request textarea
 - Button wrapped in Tooltip explaining functionality
 - Button triggers TemplatePickerDialog for template selection

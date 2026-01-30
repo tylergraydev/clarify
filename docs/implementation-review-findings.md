@@ -12,17 +12,17 @@ A comprehensive review of the Clarify application against the design document re
 
 ### Key Findings
 
-| Area | Completion | Critical Issues |
-|------|------------|-----------------|
-| Database Schema | 100% | None |
-| Projects/Repos | 90% | Missing Edit Repository UI |
-| Workflows | 85% | Auto-start not implemented |
-| Templates | 95% | Missing built-in template seeding |
-| Agents | 75% | Missing tool/skill UI, no seeding |
-| Settings | 85% | Missing per-step-type timeouts |
-| Dashboard | 85% | Status bar not wired, missing fields |
-| Navigation/Shell | 95% | Status bar activeWorkflowCount not wired |
-| IPC Handlers | 98% | Critical type mismatch in step:complete |
+| Area             | Completion | Critical Issues                          |
+| ---------------- | ---------- | ---------------------------------------- |
+| Database Schema  | 100%       | None                                     |
+| Projects/Repos   | 90%        | Missing Edit Repository UI               |
+| Workflows        | 85%        | Auto-start not implemented               |
+| Templates        | 95%        | Missing built-in template seeding        |
+| Agents           | 75%        | Missing tool/skill UI, no seeding        |
+| Settings         | 85%        | Missing per-step-type timeouts           |
+| Dashboard        | 85%        | Status bar not wired, missing fields     |
+| Navigation/Shell | 95%        | Status bar activeWorkflowCount not wired |
+| IPC Handlers     | 98%        | Critical type mismatch in step:complete  |
 
 ---
 
@@ -30,20 +30,21 @@ A comprehensive review of the Clarify application against the design document re
 
 ### 1.1 Missing Features
 
-| Feature | Design Spec | Status | Location |
-|---------|-------------|--------|----------|
-| Branch name on active workflows | Show "Branch: feat/xxx" | Not implemented | `active-workflows-widget.tsx` |
-| Action buttons on dashboard cards | View/Pause/Resume/Cancel | Not implemented | `active-workflows-widget.tsx` |
-| Duration column in recent workflows | "8m 32s" format | Not implemented | `recent-workflows-widget.tsx` |
-| "New Workflow" button in header | Per design mockup | In Quick Actions card instead | `app-header.tsx` |
+| Feature                             | Design Spec              | Status                        | Location                      |
+| ----------------------------------- | ------------------------ | ----------------------------- | ----------------------------- |
+| Branch name on active workflows     | Show "Branch: feat/xxx"  | Not implemented               | `active-workflows-widget.tsx` |
+| Action buttons on dashboard cards   | View/Pause/Resume/Cancel | Not implemented               | `active-workflows-widget.tsx` |
+| Duration column in recent workflows | "8m 32s" format          | Not implemented               | `recent-workflows-widget.tsx` |
+| "New Workflow" button in header     | Per design mockup        | In Quick Actions card instead | `app-header.tsx`              |
 
 ### 1.2 Status Bar Not Wired
 
 **Critical Bug:** The `activeWorkflowCount` prop is defined on `StatusBar` but never passed from the layout.
 
 **Location:** `app/(app)/layout.tsx:54`
+
 ```tsx
-<StatusBar />  // Missing: activeWorkflowCount prop
+<StatusBar /> // Missing: activeWorkflowCount prop
 ```
 
 **Impact:** Status bar always shows "No active workflows" regardless of actual state.
@@ -53,6 +54,7 @@ A comprehensive review of the Clarify application against the design document re
 ### 1.3 Dashboard Cards Missing Information
 
 Active workflow cards don't display:
+
 - Branch name for implementation workflows
 - Inline action buttons (View, Pause/Resume, Cancel)
 
@@ -67,11 +69,13 @@ Note: These ARE implemented on `/workflows/active` page cards but not on dashboa
 **Status:** Repository editing is NOT possible after creation.
 
 **What exists:**
+
 - IPC handler: `repository:update` ✓
 - React hook: `useUpdateRepository()` ✓
 - Repository method: `update()` ✓
 
 **What's missing:**
+
 - `EditRepositoryDialog` component
 - Edit button on `RepositoryCard`
 - `updateRepositorySchema` validation
@@ -83,6 +87,7 @@ Note: These ARE implemented on `/workflows/active` page cards but not on dashboa
 Deleting repositories and projects happens immediately without confirmation.
 
 **Affected components:**
+
 - `RepositoryCard` - "Remove" button deletes immediately
 - Should have confirmation dialog showing any associated workflows
 
@@ -105,6 +110,7 @@ No explicit "Unset Default" button for repositories. Users must set another repo
 ### 3.2 Missing Repository Selection in Create Flow
 
 **Design Flow:**
+
 1. Select Repository ❌ NOT IMPLEMENTED
 2. Enter Feature Request ✓
 3. Configure Workflow ✓
@@ -115,6 +121,7 @@ Currently only project selection is available, not repository selection.
 ### 3.3 Missing Timeout Configuration UI
 
 Design specifies per-step-type timeouts:
+
 - Clarification: 60s
 - Refinement: 30s
 - File Discovery: 120s
@@ -134,6 +141,7 @@ Repository has `delete()` method but no UI or mutation hook to use it.
 ### 3.6 Missing Step Actions in Detail View
 
 Workflow detail page doesn't have:
+
 - Edit individual step outputs
 - Retry failed steps
 - Skip steps
@@ -147,22 +155,24 @@ Workflow detail page doesn't have:
 
 **Critical Gap:** No code exists to seed the 7 design-specified built-in templates:
 
-| Template | Category |
-|----------|----------|
-| CRUD Feature | Data |
-| Form Component | UI |
-| API Integration | Backend |
-| Auth Flow | Security |
-| Dashboard Widget | UI |
-| IPC Channel | Electron |
-| Settings Page | UI |
+| Template         | Category |
+| ---------------- | -------- |
+| CRUD Feature     | Data     |
+| Form Component   | UI       |
+| API Integration  | Backend  |
+| Auth Flow        | Security |
+| Dashboard Widget | UI       |
+| IPC Channel      | Electron |
+| Settings Page    | UI       |
 
 **What exists:**
+
 - Schema supports `builtInAt` column ✓
 - UI correctly identifies and protects built-in templates ✓
 - Read-only enforcement works ✓
 
 **What's missing:**
+
 - Seeding logic in database initialization
 - Template content for the 7 templates
 - Migration or seed file with INSERT statements
@@ -180,11 +190,13 @@ The placeholder editor UI exists and works, but placeholders may not be correctl
 **Critical Gap:** No code exists to seed the 11 design-specified built-in agents:
 
 **Planning Agents:**
+
 - clarification-agent
 - file-discovery-agent
 - implementation-planner
 
 **Specialist Agents:**
+
 - database-schema
 - tanstack-query
 - tanstack-form
@@ -194,6 +206,7 @@ The placeholder editor UI exists and works, but placeholders may not be correctl
 - general-purpose
 
 **Review Agents:**
+
 - gemini-review
 
 **Impact:** Users see empty agents list on first run.
@@ -201,6 +214,7 @@ The placeholder editor UI exists and works, but placeholders may not be correctl
 ### 5.2 Missing Tool Permissions UI
 
 **Design shows:**
+
 ```
 Allowed Tools
 ├─ [✓] Read(*)
@@ -213,10 +227,12 @@ Allowed Tools
 **Current:** Agent editor only has displayName, description, and systemPrompt fields.
 
 **What exists:**
+
 - `agent_tools` database table ✓
 - Schema with toolName, toolPattern, disallowedAt ✓
 
 **What's missing:**
+
 - UI component to manage tool permissions
 - Integration in AgentEditorDialog
 
@@ -225,10 +241,12 @@ Allowed Tools
 **Design shows:** Referenced Skills section with View/Detach buttons.
 
 **What exists:**
+
 - `agent_skills` database table ✓
 - Schema with skillName, requiredAt ✓
 
 **What's missing:**
+
 - UI component to manage agent skills
 - Integration in AgentEditorDialog
 
@@ -237,15 +255,18 @@ Allowed Tools
 **Design shows:** Radio buttons for color selection (green, blue, yellow, cyan, red).
 
 **What exists:**
+
 - `color` field in agents schema ✓
 - Color indicator displayed on agent cards ✓
 
 **What's missing:**
+
 - Color selection UI in AgentEditorDialog
 
 ### 5.5 Color Map Mismatch
 
 `AgentCard` component has colors mapped that aren't in schema:
+
 - Schema defines: green, blue, yellow, cyan, red
 - Card map includes: gray, magenta, orange (extras)
 
@@ -279,6 +300,7 @@ Schema defines `"advanced"` category but no settings use it and no UI section ex
 The sidebar includes a "Projects" navigation item that's **not in the design document**. This appears intentional as a reasonable addition for multi-project management.
 
 **Routes added beyond design:**
+
 - `/projects` - Projects listing
 - `/projects/[id]` - Project detail
 
@@ -291,11 +313,13 @@ The `StatusBar` component receives `activeWorkflowCount` prop but `layout.tsx` d
 ### 7.3 Mobile Responsiveness Partial
 
 **Implemented:**
+
 - Sidebar collapses to 64px
 - CSS variables scale for mobile
 - Responsive tooltips when collapsed
 
 **Missing:**
+
 - No mobile drawer/overlay behavior
 - Sidebar doesn't auto-collapse on mobile
 - No explicit mobile breakpoint handling
@@ -309,25 +333,25 @@ The `StatusBar` component receives `activeWorkflowCount` prop but `layout.tsx` d
 
 All 17 tables from design document are fully implemented:
 
-| # | Table | Status |
-|---|-------|--------|
-| 1 | projects | ✓ |
-| 2 | repositories | ✓ |
-| 3 | workflow_repositories | ✓ |
-| 4 | worktrees | ✓ |
-| 5 | workflows | ✓ |
-| 6 | workflow_steps | ✓ |
-| 7 | discovered_files | ✓ |
-| 8 | agents | ✓ |
-| 9 | agent_tools | ✓ |
-| 10 | agent_skills | ✓ |
-| 11 | templates | ✓ |
-| 12 | template_placeholders | ✓ |
-| 13 | implementation_plans | ✓ |
-| 14 | implementation_plan_steps | ✓ |
-| 15 | implementation_plan_step_files | ✓ |
-| 16 | audit_logs | ✓ |
-| 17 | settings | ✓ |
+| #   | Table                          | Status |
+| --- | ------------------------------ | ------ |
+| 1   | projects                       | ✓      |
+| 2   | repositories                   | ✓      |
+| 3   | workflow_repositories          | ✓      |
+| 4   | worktrees                      | ✓      |
+| 5   | workflows                      | ✓      |
+| 6   | workflow_steps                 | ✓      |
+| 7   | discovered_files               | ✓      |
+| 8   | agents                         | ✓      |
+| 9   | agent_tools                    | ✓      |
+| 10  | agent_skills                   | ✓      |
+| 11  | templates                      | ✓      |
+| 12  | template_placeholders          | ✓      |
+| 13  | implementation_plans           | ✓      |
+| 14  | implementation_plan_steps      | ✓      |
+| 15  | implementation_plan_step_files | ✓      |
+| 16  | audit_logs                     | ✓      |
+| 17  | settings                       | ✓      |
 
 ### 8.2 All Repositories Implemented
 
@@ -344,11 +368,13 @@ Comprehensive indexing on all foreign keys, filter columns, and composite querie
 ### 9.1 Critical Type Mismatch: step:complete
 
 **Preload API:**
+
 ```typescript
 complete(id: number, output?: string): Promise<undefined | WorkflowStep>;
 ```
 
 **Handler:**
+
 ```typescript
 complete(id: number, outputText: string, durationMs: number): ...
 ```
@@ -359,17 +385,18 @@ complete(id: number, outputText: string, durationMs: number): ...
 
 ### 9.2 Inconsistent Error Handling
 
-| Handler Module | Error Handling |
-|---------------|----------------|
-| fs.handlers | ✓ Comprehensive try-catch |
-| store.handlers | ⚠️ Silent failures |
-| All database handlers | ❌ No error handling |
+| Handler Module        | Error Handling            |
+| --------------------- | ------------------------- |
+| fs.handlers           | ✓ Comprehensive try-catch |
+| store.handlers        | ⚠️ Silent failures        |
+| All database handlers | ❌ No error handling      |
 
 **Impact:** Repository errors propagate to renderer unhandled.
 
 ### 9.3 Duplicate Channel Definitions
 
 `IpcChannels` constant defined in both:
+
 - `electron/preload.ts` (inline)
 - `electron/ipc/channels.ts` (exported)
 
@@ -418,43 +445,44 @@ While identical, this creates maintenance burden.
 
 ### Files Needing New Components
 
-| New Component | Location | Purpose |
-|--------------|----------|---------|
+| New Component        | Location               | Purpose                        |
+| -------------------- | ---------------------- | ------------------------------ |
 | EditRepositoryDialog | `components/projects/` | Edit repository after creation |
-| ConfirmDeleteDialog | `components/ui/` | Generic delete confirmation |
-| AgentToolsEditor | `components/agents/` | Manage agent tool permissions |
-| AgentSkillsEditor | `components/agents/` | Manage agent skills |
-| AgentColorPicker | `components/agents/` | Select agent color tag |
+| ConfirmDeleteDialog  | `components/ui/`       | Generic delete confirmation    |
+| AgentToolsEditor     | `components/agents/`   | Manage agent tool permissions  |
+| AgentSkillsEditor    | `components/agents/`   | Manage agent skills            |
+| AgentColorPicker     | `components/agents/`   | Select agent color tag         |
 
 ### Files Needing Modifications
 
-| File | Changes Needed |
-|------|---------------|
-| `app/(app)/layout.tsx` | Pass activeWorkflowCount to StatusBar |
-| `electron/ipc/step.handlers.ts` | Fix complete handler signature |
-| `electron/preload.ts` | Update step.complete signature |
-| `components/agents/agent-editor-dialog.tsx` | Add tool/skill/color editors |
-| `app/(app)/settings/page.tsx` | Add per-step-type timeout fields |
-| `components/settings/workflow-settings-section.tsx` | Add individual timeout fields |
-| `components/projects/repository-card.tsx` | Add edit button |
-| `app/(app)/dashboard/_components/active-workflows-widget.tsx` | Add branch name and action buttons |
-| `app/(app)/dashboard/_components/recent-workflows-widget.tsx` | Add duration column |
-| `components/workflows/new-workflow-form.tsx` | Add repository selection, skip clarification toggle |
+| File                                                          | Changes Needed                                      |
+| ------------------------------------------------------------- | --------------------------------------------------- |
+| `app/(app)/layout.tsx`                                        | Pass activeWorkflowCount to StatusBar               |
+| `electron/ipc/step.handlers.ts`                               | Fix complete handler signature                      |
+| `electron/preload.ts`                                         | Update step.complete signature                      |
+| `components/agents/agent-editor-dialog.tsx`                   | Add tool/skill/color editors                        |
+| `app/(app)/settings/page.tsx`                                 | Add per-step-type timeout fields                    |
+| `components/settings/workflow-settings-section.tsx`           | Add individual timeout fields                       |
+| `components/projects/repository-card.tsx`                     | Add edit button                                     |
+| `app/(app)/dashboard/_components/active-workflows-widget.tsx` | Add branch name and action buttons                  |
+| `app/(app)/dashboard/_components/recent-workflows-widget.tsx` | Add duration column                                 |
+| `components/workflows/new-workflow-form.tsx`                  | Add repository selection, skip clarification toggle |
 
 ### Files Needing Creation (Seeding)
 
-| File | Purpose |
-|------|---------|
-| `db/seed/agents.seed.ts` | Seed 11 built-in agents |
-| `db/seed/templates.seed.ts` | Seed 7 built-in templates |
-| `db/seed/settings.seed.ts` | Seed default settings (may exist) |
-| `db/seed/index.ts` | Orchestrate seeding on first run |
+| File                        | Purpose                           |
+| --------------------------- | --------------------------------- |
+| `db/seed/agents.seed.ts`    | Seed 11 built-in agents           |
+| `db/seed/templates.seed.ts` | Seed 7 built-in templates         |
+| `db/seed/settings.seed.ts`  | Seed default settings (may exist) |
+| `db/seed/index.ts`          | Orchestrate seeding on first run  |
 
 ---
 
 ## Appendix: Design Document Compliance Checklist
 
 ### Section 4.2 Dashboard View
+
 - [x] Active Workflows section
 - [x] Recent Workflows section
 - [ ] Branch name on implementation workflows
@@ -463,6 +491,7 @@ While identical, this creates maintenance burden.
 - [x] "New Workflow" button (in different location)
 
 ### Section 4.6 Agent Editor
+
 - [x] Name field
 - [x] Description field
 - [ ] Color tag selection
@@ -472,6 +501,7 @@ While identical, this creates maintenance burden.
 - [x] Reset to default button
 
 ### Section 4.7 Settings Panel
+
 - [x] Default pause behavior
 - [ ] Individual step timeouts (5 types)
 - [x] Worktree location
@@ -484,6 +514,7 @@ While identical, this creates maintenance burden.
 - [x] Log export location
 
 ### Section 5.6 Template Library
+
 - [x] Template listing
 - [x] Create template
 - [x] Edit template
@@ -491,8 +522,9 @@ While identical, this creates maintenance burden.
 - [ ] Built-in templates seeded
 
 ### Section 8.1 Agent Bundling
+
 - [ ] Built-in agents seeded on first launch
 
 ---
 
-*Report generated by comprehensive codebase review against design document.*
+_Report generated by comprehensive codebase review against design document._

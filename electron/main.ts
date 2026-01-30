@@ -4,6 +4,7 @@ import serve from "electron-serve";
 import * as path from "path";
 
 import { closeDatabase, type DrizzleDatabase, initializeDatabase } from "../db";
+import { seedDatabase } from "../db/seed";
 import { registerAllHandlers } from "./ipc";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -54,7 +55,7 @@ function getMainWindow(): BrowserWindow | null {
 }
 
 /**
- * Initialize database and run migrations
+ * Initialize database, run migrations, and seed built-in data
  */
 function initializeDb(): void {
   const dbPath = isDev
@@ -69,6 +70,9 @@ function initializeDb(): void {
     : path.join(process.resourcesPath, "drizzle");
 
   migrate(db, { migrationsFolder });
+
+  // Seed built-in data (idempotent - safe to run multiple times)
+  seedDatabase(db);
 }
 
 app.whenReady().then(async () => {

@@ -8,9 +8,11 @@
 ## Input Context
 
 ### Refined Request Summary
+
 Workflow History page at `/workflows/history` with terminal status filtering, date range filtering via nuqs, statistics cards, pagination, sorting, and audit log export.
 
 ### Discovered Files Summary
+
 - **Critical (8)**: history/page.tsx, use-workflows.ts, workflows.ts (queries), workflows.repository.ts, workflow.handlers.ts, channels.ts, preload.ts, electron.d.ts
 - **Reference (15)**: Existing workflows page, templates page, workflow-table, badge, card, statistics-widget, etc.
 
@@ -25,27 +27,27 @@ Required sections: Overview, Quick Summary, Prerequisites, Implementation Steps 
 
 ## Plan Validation Results
 
-| Check | Result |
-|-------|--------|
-| Format | Markdown (correct) |
-| Template Adherence | All required sections present |
+| Check               | Result                                                        |
+| ------------------- | ------------------------------------------------------------- |
+| Format              | Markdown (correct)                                            |
+| Template Adherence  | All required sections present                                 |
 | Validation Commands | Every step includes `pnpm run lint:fix && pnpm run typecheck` |
-| No Code Examples | Confirmed - instructions only |
-| Actionable Steps | 14 concrete steps with clear deliverables |
-| Complete Coverage | All critical files addressed |
+| No Code Examples    | Confirmed - instructions only                                 |
+| Actionable Steps    | 14 concrete steps with clear deliverables                     |
+| Complete Coverage   | All critical files addressed                                  |
 
 **Status**: Validated successfully
 
 ## Plan Summary
 
-| Metric | Value |
-|--------|-------|
-| Estimated Duration | 3-4 days |
-| Complexity | High |
-| Risk Level | Medium |
-| Total Steps | 14 |
-| New Files to Create | 4 |
-| Files to Modify | 10 |
+| Metric              | Value    |
+| ------------------- | -------- |
+| Estimated Duration  | 3-4 days |
+| Complexity          | High     |
+| Risk Level          | Medium   |
+| Total Steps         | 14       |
+| New Files to Create | 4        |
+| Files to Modify     | 10       |
 
 ### Step Overview
 

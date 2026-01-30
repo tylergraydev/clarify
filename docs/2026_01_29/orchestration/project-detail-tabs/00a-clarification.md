@@ -14,6 +14,7 @@
 > (repositories table, queries, handlers).
 >
 > Scope:
+>
 > - Repositories tab: List repos, add repository dialog, remove repository, set default
 > - Workflows tab: Filter workflows by project with existing WorkflowCard/Table components
 > - Settings tab: Project-specific agent customizations
@@ -27,6 +28,7 @@
 ## Codebase Exploration Summary
 
 The agent examined:
+
 - Project detail page at `app/(app)/projects/[id]/page.tsx` - tabbed layout already implemented with placeholder content
 - Repository infrastructure: schema (`repositories.schema.ts`), query hooks (`use-repositories.ts`)
 - Workflow infrastructure: hooks (`use-workflows.ts`), components (`WorkflowCard`, `WorkflowTable`)

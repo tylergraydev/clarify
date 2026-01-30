@@ -4,11 +4,11 @@ Generated: 2026-01-29
 
 ## Overview
 
-| Attribute | Value |
-|-----------|-------|
+| Attribute            | Value  |
+| -------------------- | ------ |
 | Estimated Complexity | Medium |
-| Risk Level | Low |
-| Total Steps | 9 |
+| Risk Level           | Low    |
+| Total Steps          | 9      |
 
 ## Quick Summary
 
@@ -32,20 +32,24 @@ Implement comprehensive project detail tabs (Repositories, Workflows, Settings) 
 **Confidence**: High
 
 **Files**:
+
 - `lib/validations/repository.ts` - Create new validation schema file
 
 **Changes**:
+
 1. Create `addRepositorySchema` with fields for `name`, `path`, and optional `defaultBranch`
 2. Add path validation requiring non-empty string with minimum length
 3. Add name validation requiring non-empty string
 4. Export `AddRepositoryFormValues` type
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Schema validates repository name as required with 1-255 character length
 - [ ] Schema validates path as required non-empty string
 - [ ] Schema validates defaultBranch as optional string defaulting to "main"
@@ -62,9 +66,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/projects/add-repository-dialog.tsx` - Create new dialog component
 
 **Changes**:
+
 1. Create `AddRepositoryDialog` component accepting `projectId`, `trigger`, and `onSuccess` props
 2. Use `useAddRepositoryToProject` mutation hook for submission
 3. Implement form with `useAppForm` hook and `addRepositorySchema` validation
@@ -73,11 +79,13 @@ pnpm run lint:fix && pnpm run typecheck
 6. Handle form reset on close and dialog state management
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Dialog opens from trigger element and closes properly
 - [ ] Form validates input before submission
 - [ ] Directory picker allows selecting folder path
@@ -96,9 +104,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/repositories/repository-card.tsx` - Create new card component
 
 **Changes**:
+
 1. Create `RepositoryCard` component accepting `repository`, `onDelete`, `onSetDefault`, and `isDefault` props
 2. Display repository name, path, default branch, and creation date
 3. Add default badge indicator when `setAsDefaultAt` is not null
@@ -108,11 +118,13 @@ pnpm run lint:fix && pnpm run typecheck
 7. Follow opacity pattern for visual state from existing card components
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Card displays repository name, path, and default branch
 - [ ] Default repository shows badge indicator
 - [ ] Set Default button triggers callback and is disabled when already default
@@ -130,9 +142,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/projects/repositories-tab-content.tsx` - Create new tab content component
 
 **Changes**:
+
 1. Create `RepositoriesTabContent` component accepting `projectId` prop
 2. Use `useRepositoriesByProject(projectId)` to fetch repositories
 3. Use `useDeleteRepository` and `useSetDefaultRepository` mutation hooks
@@ -143,11 +157,13 @@ pnpm run lint:fix && pnpm run typecheck
 8. Handle error state with appropriate messaging
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Empty state displays when no repositories with add action
 - [ ] Repository cards display in responsive grid layout
 - [ ] Add Repository button opens dialog
@@ -167,9 +183,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/projects/workflows-tab-content.tsx` - Create new tab content component
 
 **Changes**:
+
 1. Create `WorkflowsTabContent` component accepting `projectId` prop
 2. Use `useWorkflowsByProject(projectId)` to fetch project-scoped workflows
 3. Use `useCancelWorkflow` mutation for cancel actions
@@ -181,11 +199,13 @@ pnpm run lint:fix && pnpm run typecheck
 9. Implement `onViewDetails` navigation to workflow detail page
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Empty state displays when no workflows with action to navigate
 - [ ] Workflows display in table format by default
 - [ ] View toggle switches between table and card views
@@ -205,9 +225,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: Medium
 
 **Files**:
+
 - `components/projects/project-agent-editor-dialog.tsx` - Create new dialog component
 
 **Changes**:
+
 1. Create `ProjectAgentEditorDialog` component accepting `agent`, `projectId`, `trigger`, and `onSuccess` props
 2. Use `useUpdateAgent` mutation hook for saving changes
 3. Implement form with `useAppForm` hook and agent validation schema
@@ -218,11 +240,13 @@ pnpm run lint:fix && pnpm run typecheck
 8. Follow dialog structure from `agent-editor-dialog.tsx`
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Dialog displays agent information with project context
 - [ ] Form allows editing display name, description, and system prompt
 - [ ] Submit saves changes with project scope via mutation
@@ -241,9 +265,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: Medium
 
 **Files**:
+
 - `components/projects/settings-tab-content.tsx` - Create new tab content component
 
 **Changes**:
+
 1. Create `SettingsTabContent` component accepting `projectId` prop
 2. Use `useAgentsByProject(projectId)` to fetch project-scoped agents
 3. Use `useAgents()` to fetch all global agents for comparison/selection
@@ -255,11 +281,13 @@ pnpm run lint:fix && pnpm run typecheck
 9. Include section headers for each agent type group
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Agents display grouped by type with section headers
 - [ ] Edit action opens project agent editor dialog
 - [ ] Customized agents show visual indicator
@@ -278,9 +306,11 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `app/(app)/projects/[id]/page.tsx` - Update existing page
 
 **Changes**:
+
 1. Import `RepositoriesTabContent` component
 2. Import `WorkflowsTabContent` component
 3. Import `SettingsTabContent` component
@@ -290,11 +320,13 @@ pnpm run lint:fix && pnpm run typecheck
 7. Update Overview tab repository and workflow cards to show actual counts from queries
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Repositories tab displays repository list from component
 - [ ] Workflows tab displays workflow list from component
 - [ ] Settings tab displays agent customization from component
@@ -313,10 +345,12 @@ pnpm run lint:fix && pnpm run typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/repositories/index.ts` - Create barrel export
 - Update `components/projects/index.ts` if it exists, otherwise create it
 
 **Changes**:
+
 1. Create `components/repositories/index.ts` exporting `RepositoryCard`
 2. Create or update `components/projects/index.ts` to export new components:
    - `AddRepositoryDialog`
@@ -326,11 +360,13 @@ pnpm run lint:fix && pnpm run typecheck
    - `ProjectAgentEditorDialog`
 
 **Validation Commands**:
+
 ```bash
 pnpm run lint:fix && pnpm run typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] All new components can be imported from barrel files
 - [ ] No circular dependency issues
 - [ ] All validation commands pass
@@ -340,26 +376,32 @@ pnpm run lint:fix && pnpm run typecheck
 ## Quality Gates
 
 ### After Step 2
+
 - [ ] Add repository dialog renders and submits correctly
 - [ ] Form validation prevents invalid submissions
 
 ### After Step 4
+
 - [ ] Repositories tab shows empty state or repository list
 - [ ] Add, delete, and set-default actions work correctly
 
 ### After Step 5
+
 - [ ] Workflows tab shows empty state or workflow list
 - [ ] View toggle and cancel actions work correctly
 
 ### After Step 7
+
 - [ ] Settings tab shows agent list grouped by type
 - [ ] Agent editing and reset work correctly
 
 ### After Step 8
+
 - [ ] All three tabs functional on project detail page
 - [ ] No regressions to existing functionality
 
 ### Final Quality Gates
+
 - [ ] All TypeScript files pass `pnpm run typecheck`
 - [ ] All files pass `pnpm run lint:fix`
 - [ ] Manual testing confirms all tab functionality works

@@ -14,17 +14,23 @@ import type { BrowserWindow } from "electron";
 import type { DrizzleDatabase } from "../../db";
 
 import {
+  createAgentSkillsRepository,
   createAgentsRepository,
+  createAgentToolsRepository,
   createAuditLogsRepository,
   createDiscoveredFilesRepository,
   createProjectsRepository,
   createRepositoriesRepository,
   createSettingsRepository,
+  createTemplatePlaceholdersRepository,
   createTemplatesRepository,
+  createWorkflowRepositoriesRepository,
   createWorkflowsRepository,
   createWorkflowStepsRepository,
   createWorktreesRepository,
 } from "../../db/repositories";
+import { registerAgentSkillHandlers } from "./agent-skill.handlers";
+import { registerAgentToolHandlers } from "./agent-tool.handlers";
 // Handler registration imports (to be implemented in Steps 3-10)
 import { registerAgentHandlers } from "./agent.handlers";
 import { registerAppHandlers } from "./app.handlers";
@@ -38,6 +44,7 @@ import { registerSettingsHandlers } from "./settings.handlers";
 import { registerStepHandlers } from "./step.handlers";
 import { registerStoreHandlers } from "./store.handlers";
 import { registerTemplateHandlers } from "./template.handlers";
+import { registerWorkflowRepositoriesHandlers } from "./workflow-repositories.handlers";
 import { registerWorkflowHandlers } from "./workflow.handlers";
 import { registerWorktreeHandlers } from "./worktree.handlers";
 
@@ -98,9 +105,19 @@ export function registerAllHandlers(
   const agentsRepository = createAgentsRepository(db);
   registerAgentHandlers(agentsRepository);
 
+  // Agent tools - tool allowlist/denylist for agents
+  const agentToolsRepository = createAgentToolsRepository(db);
+  registerAgentToolHandlers(agentToolsRepository);
+
+  // Agent skills - skills referenced by agents
+  const agentSkillsRepository = createAgentSkillsRepository(db);
+  registerAgentSkillHandlers(agentSkillsRepository);
+
   // Templates - prompt templates for workflows
   const templatesRepository = createTemplatesRepository(db);
-  registerTemplateHandlers(templatesRepository);
+  const templatePlaceholdersRepository =
+    createTemplatePlaceholdersRepository(db);
+  registerTemplateHandlers(templatesRepository, templatePlaceholdersRepository);
 
   // ============================================
   // Database handlers - Workflow system
@@ -113,6 +130,11 @@ export function registerAllHandlers(
   // Workflow steps - individual steps within workflows
   const workflowStepsRepository = createWorkflowStepsRepository(db);
   registerStepHandlers(workflowStepsRepository);
+
+  // Workflow repositories - repository associations for workflows
+  const workflowRepositoriesRepository =
+    createWorkflowRepositoriesRepository(db);
+  registerWorkflowRepositoriesHandlers(workflowRepositoriesRepository);
 
   // ============================================
   // Database handlers - Supporting entities

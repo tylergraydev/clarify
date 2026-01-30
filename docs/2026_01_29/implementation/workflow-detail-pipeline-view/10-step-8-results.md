@@ -6,14 +6,15 @@
 
 ## Files Modified
 
-| File | Description |
-|------|-------------|
-| `app/(app)/workflows/[id]/page.tsx` | Complete rewrite with data fetching, state handling, and component composition |
-| `app/(app)/workflows/[id]/route-type.ts` | Verified existing implementation is correct |
+| File                                     | Description                                                                    |
+| ---------------------------------------- | ------------------------------------------------------------------------------ |
+| `app/(app)/workflows/[id]/page.tsx`      | Complete rewrite with data fetching, state handling, and component composition |
+| `app/(app)/workflows/[id]/route-type.ts` | Verified existing implementation is correct                                    |
 
 ## Implementation Summary
 
 ### Page Features Implemented
+
 - "use client" directive for client-side hooks
 - `useRouteParams` for type-safe route parameter access
 - Query hooks integration: `useWorkflow`, `useStepsByWorkflow`, `useProject`
@@ -28,6 +29,7 @@
 - Metadata section (created date, started date, duration, pause behavior)
 
 ### Data Flow
+
 1. Parse ID from route params
 2. Fetch workflow with `useWorkflow(id)`
 3. Conditionally fetch project with `useProject(workflow.projectId)`
@@ -35,6 +37,7 @@
 5. Pass data to child components
 
 ### State Handling
+
 - Loading: `WorkflowDetailSkeleton`
 - Not Found: `WorkflowNotFound`
 - Error: `QueryErrorBoundary`
@@ -61,6 +64,7 @@
 ## Quality Gate 3: PASSED
 
 Full integration test requirements met:
+
 - Navigate to `/workflows/[id]` with valid workflow ID
 - Data loads and displays correctly
 - Steps appear in pipeline view

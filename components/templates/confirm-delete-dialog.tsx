@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   DialogBackdrop,
   DialogClose,
@@ -9,7 +9,7 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
 interface ConfirmDeleteDialogProps {
   /** Whether the mutation is in progress */
@@ -47,7 +47,9 @@ export const ConfirmDeleteDialog = ({
         <DialogBackdrop />
         <DialogPopup aria-modal={"true"} role={"alertdialog"}>
           {/* Header */}
-          <DialogTitle id={"confirm-delete-title"}>{'Delete Template'}</DialogTitle>
+          <DialogTitle id={"confirm-delete-title"}>
+            {"Delete Template"}
+          </DialogTitle>
           <DialogDescription id={"confirm-delete-description"}>
             {`Are you sure you want to delete "${templateName}"? This action cannot be undone.`}
           </DialogDescription>
@@ -57,21 +59,25 @@ export const ConfirmDeleteDialog = ({
             <div
               aria-live={"polite"}
               className={
-                'mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30'
+                "mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30"
               }
               role={"alert"}
             >
-              <p className={'text-sm text-amber-800 dark:text-amber-200'}>
-                {`This template has been used ${usageCount} ${usageCount === 1 ? 'time' : 'times'}. Deleting it will not affect existing workflows that used this template.`}
+              <p className={"text-sm text-amber-800 dark:text-amber-200"}>
+                {`This template has been used ${usageCount} ${usageCount === 1 ? "time" : "times"}. Deleting it will not affect existing workflows that used this template.`}
               </p>
             </div>
           )}
 
           {/* Actions */}
-          <div aria-label={"Confirm deletion actions"} className={'mt-6 flex justify-end gap-3'} role={"group"}>
+          <div
+            aria-label={"Confirm deletion actions"}
+            className={"mt-6 flex justify-end gap-3"}
+            role={"group"}
+          >
             <DialogClose>
-              <Button disabled={isLoading} variant={'outline'}>
-                {'Cancel'}
+              <Button disabled={isLoading} variant={"outline"}>
+                {"Cancel"}
               </Button>
             </DialogClose>
             <Button
@@ -79,9 +85,9 @@ export const ConfirmDeleteDialog = ({
               aria-label={`Delete ${templateName} template permanently`}
               disabled={isLoading}
               onClick={handleConfirmClick}
-              variant={'destructive'}
+              variant={"destructive"}
             >
-              {isLoading ? 'Deleting...' : 'Delete'}
+              {isLoading ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </DialogPopup>

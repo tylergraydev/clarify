@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
-import { FileText, Search } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { FileText, Search } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 
-import type { Template } from '@/types/electron';
+import type { Template } from "@/types/electron";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DialogBackdrop,
   DialogClose,
@@ -18,13 +18,13 @@ import {
   DialogRoot,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   useActiveTemplates,
   useIncrementTemplateUsage,
-} from '@/hooks/queries/use-templates';
-import { cn } from '@/lib/utils';
+} from "@/hooks/queries/use-templates";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types
@@ -71,16 +71,16 @@ function parsePlaceholdersFromText(
     if (name && !seenNames.has(name)) {
       seenNames.add(name);
       placeholders.push({
-        defaultValue: '',
-        description: '',
+        defaultValue: "",
+        description: "",
         // Convert camelCase to display name (e.g., entityName -> Entity Name)
         displayName: name
-          .replace(/([A-Z])/g, ' $1')
+          .replace(/([A-Z])/g, " $1")
           .replace(/^./, (str) => str.toUpperCase())
           .trim(),
         isRequired: true,
         name,
-        validationPattern: '',
+        validationPattern: "",
       });
     }
   }
@@ -98,7 +98,7 @@ function substituteValues(
   let result = templateText;
 
   for (const [name, value] of Object.entries(values)) {
-    const regex = new RegExp(`\\{\\{${name}\\}\\}`, 'g');
+    const regex = new RegExp(`\\{\\{${name}\\}\\}`, "g");
     result = result.replace(regex, value);
   }
 
@@ -141,7 +141,7 @@ export const TemplatePickerDialog = ({
   trigger,
 }: TemplatePickerDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<null | Template>(
     null
   );
@@ -179,7 +179,7 @@ export const TemplatePickerDialog = ({
     if (parsedPlaceholders.length === 0) return true;
 
     for (const placeholder of parsedPlaceholders) {
-      const value = placeholderValues[placeholder.name] ?? '';
+      const value = placeholderValues[placeholder.name] ?? "";
       const error = validatePlaceholderValue(placeholder, value);
       if (error) return false;
     }
@@ -189,12 +189,12 @@ export const TemplatePickerDialog = ({
 
   // Preview content with substituted values
   const previewContent = useMemo(() => {
-    if (!selectedTemplate) return '';
+    if (!selectedTemplate) return "";
     return substituteValues(selectedTemplate.templateText, placeholderValues);
   }, [selectedTemplate, placeholderValues]);
 
   const handleReset = useCallback(() => {
-    setSearchQuery('');
+    setSearchQuery("");
     setSelectedTemplate(null);
     setPlaceholderValues({});
     setValidationErrors({});
@@ -255,7 +255,7 @@ export const TemplatePickerDialog = ({
     let hasErrors = false;
 
     for (const placeholder of parsedPlaceholders) {
-      const value = placeholderValues[placeholder.name] ?? '';
+      const value = placeholderValues[placeholder.name] ?? "";
       const error = validatePlaceholderValue(placeholder, value);
       if (error) {
         errors[placeholder.name] = error;
@@ -280,7 +280,7 @@ export const TemplatePickerDialog = ({
     incrementUsageMutation.mutate(selectedTemplate.id, {
       onError: (error) => {
         // Log error silently without showing to user
-        console.error('Failed to increment template usage:', error);
+        console.error("Failed to increment template usage:", error);
       },
     });
 
@@ -311,19 +311,19 @@ export const TemplatePickerDialog = ({
         <DialogBackdrop />
         <DialogPopup
           aria-modal={"true"}
-          className={'max-w-2xl'}
+          className={"max-w-2xl"}
           role={"dialog"}
         >
           {/* Header */}
-          <div className={'flex items-start justify-between gap-4'}>
+          <div className={"flex items-start justify-between gap-4"}>
             <div>
               <DialogTitle id={"template-picker-title"}>
-                {selectedTemplate ? 'Fill Template Values' : 'Select Template'}
+                {selectedTemplate ? "Fill Template Values" : "Select Template"}
               </DialogTitle>
               <DialogDescription id={"template-picker-description"}>
                 {selectedTemplate
                   ? `Fill in the placeholder values for "${selectedTemplate.name}"`
-                  : 'Choose a template to insert into your feature request'}
+                  : "Choose a template to insert into your feature request"}
               </DialogDescription>
             </div>
             {selectedTemplate && (
@@ -335,24 +335,24 @@ export const TemplatePickerDialog = ({
           </div>
 
           {/* Content */}
-          <div className={'mt-6'}>
+          <div className={"mt-6"}>
             {/* Template List View */}
             {!selectedTemplate && (
-              <div className={'flex flex-col gap-4'}>
+              <div className={"flex flex-col gap-4"}>
                 {/* Search Input */}
-                <div className={'relative'}>
+                <div className={"relative"}>
                   <Search
-                    aria-hidden={'true'}
+                    aria-hidden={"true"}
                     className={
-                      'absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground'
+                      "absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
                     }
                   />
                   <Input
                     aria-controls={"template-list"}
                     aria-label={"Search templates"}
-                    className={'pl-9'}
+                    className={"pl-9"}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={'Search templates by name or category...'}
+                    placeholder={"Search templates by name or category..."}
                     role={"searchbox"}
                     value={searchQuery}
                   />
@@ -362,17 +362,15 @@ export const TemplatePickerDialog = ({
                 <div
                   aria-label={"Available templates"}
                   className={
-                    'max-h-80 overflow-y-auto rounded-lg border border-border'
+                    "max-h-80 overflow-y-auto rounded-lg border border-border"
                   }
                   id={"template-list"}
                   role={"listbox"}
                 >
                   {isLoading && (
-                    <div
-                      className={'flex items-center justify-center p-8'}
-                    >
-                      <p className={'text-sm text-muted-foreground'}>
-                        {'Loading templates...'}
+                    <div className={"flex items-center justify-center p-8"}>
+                      <p className={"text-sm text-muted-foreground"}>
+                        {"Loading templates..."}
                       </p>
                     </div>
                   )}
@@ -380,15 +378,15 @@ export const TemplatePickerDialog = ({
                   {!isLoading && !hasTemplates && (
                     <div
                       className={
-                        'flex flex-col items-center justify-center gap-2 p-8'
+                        "flex flex-col items-center justify-center gap-2 p-8"
                       }
                     >
                       <FileText
-                        aria-hidden={'true'}
-                        className={'size-8 text-muted-foreground'}
+                        aria-hidden={"true"}
+                        className={"size-8 text-muted-foreground"}
                       />
-                      <p className={'text-sm text-muted-foreground'}>
-                        {'No active templates available'}
+                      <p className={"text-sm text-muted-foreground"}>
+                        {"No active templates available"}
                       </p>
                     </div>
                   )}
@@ -396,21 +394,21 @@ export const TemplatePickerDialog = ({
                   {isShowingNoSearchResults && (
                     <div
                       className={
-                        'flex flex-col items-center justify-center gap-2 p-8'
+                        "flex flex-col items-center justify-center gap-2 p-8"
                       }
                     >
                       <Search
-                        aria-hidden={'true'}
-                        className={'size-8 text-muted-foreground'}
+                        aria-hidden={"true"}
+                        className={"size-8 text-muted-foreground"}
                       />
-                      <p className={'text-sm text-muted-foreground'}>
-                        {'No templates match your search'}
+                      <p className={"text-sm text-muted-foreground"}>
+                        {"No templates match your search"}
                       </p>
                     </div>
                   )}
 
                   {isShowingTemplateList && (
-                    <ul className={'divide-y divide-border'} role={"listbox"}>
+                    <ul className={"divide-y divide-border"} role={"listbox"}>
                       {filteredTemplates.map((template) => {
                         const placeholders = parsePlaceholdersFromText(
                           template.templateText
@@ -418,54 +416,57 @@ export const TemplatePickerDialog = ({
                         const placeholderCount = placeholders.length;
 
                         return (
-                          <li aria-selected={"false"} key={template.id} role={"option"}>
+                          <li
+                            aria-selected={"false"}
+                            key={template.id}
+                            role={"option"}
+                          >
                             <button
-                              aria-label={`Select ${template.name} template, ${template.category} category, ${placeholderCount} ${placeholderCount === 1 ? 'placeholder' : 'placeholders'}`}
+                              aria-label={`Select ${template.name} template, ${template.category} category, ${placeholderCount} ${placeholderCount === 1 ? "placeholder" : "placeholders"}`}
                               className={cn(
-                                'flex w-full flex-col gap-1 p-4 text-left transition-colors',
-                                'hover:bg-muted/50',
-                                'focus-visible:bg-muted/50 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none focus-visible:ring-inset'
+                                "flex w-full flex-col gap-1 p-4 text-left transition-colors",
+                                "hover:bg-muted/50",
+                                "focus-visible:bg-muted/50 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none focus-visible:ring-inset"
                               )}
                               onClick={() => handleTemplateSelect(template)}
-                              type={'button'}
+                              type={"button"}
                             >
                               {/* Template Header */}
                               <div
-                                className={'flex items-center justify-between'}
+                                className={"flex items-center justify-between"}
                               >
-                                <span
-                                  className={
-                                    'font-medium text-foreground'
-                                  }
-                                >
+                                <span className={"font-medium text-foreground"}>
                                   {template.name}
                                 </span>
-                                <div className={'flex items-center gap-2'}>
+                                <div className={"flex items-center gap-2"}>
                                   {template.usageCount > 0 && (
                                     <span
                                       className={
-                                        'text-xs text-muted-foreground'
+                                        "text-xs text-muted-foreground"
                                       }
                                     >
-                                      {template.usageCount}{' '}
+                                      {template.usageCount}{" "}
                                       {template.usageCount === 1
-                                        ? 'use'
-                                        : 'uses'}
+                                        ? "use"
+                                        : "uses"}
                                     </span>
                                   )}
                                   {placeholderCount > 0 && (
                                     <span
                                       className={
-                                        'text-xs text-muted-foreground'
+                                        "text-xs text-muted-foreground"
                                       }
                                     >
-                                      {placeholderCount}{' '}
+                                      {placeholderCount}{" "}
                                       {placeholderCount === 1
-                                        ? 'placeholder'
-                                        : 'placeholders'}
+                                        ? "placeholder"
+                                        : "placeholders"}
                                     </span>
                                   )}
-                                  <Badge size={'sm'} variant={template.category}>
+                                  <Badge
+                                    size={"sm"}
+                                    variant={template.category}
+                                  >
                                     {template.category}
                                   </Badge>
                                 </div>
@@ -475,7 +476,7 @@ export const TemplatePickerDialog = ({
                               {template.description && (
                                 <p
                                   className={
-                                    'line-clamp-2 text-sm text-muted-foreground'
+                                    "line-clamp-2 text-sm text-muted-foreground"
                                   }
                                 >
                                   {template.description}
@@ -493,67 +494,74 @@ export const TemplatePickerDialog = ({
 
             {/* Placeholder Form View */}
             {selectedTemplate && (
-              <div className={'flex flex-col gap-4'}>
+              <div className={"flex flex-col gap-4"}>
                 {/* Back Button */}
                 <Button
                   aria-label={"Go back to template list"}
-                  className={'w-fit'}
+                  className={"w-fit"}
                   onClick={handleBackToList}
-                  size={'sm'}
-                  type={'button'}
-                  variant={'ghost'}
+                  size={"sm"}
+                  type={"button"}
+                  variant={"ghost"}
                 >
-                  {'← Back to templates'}
+                  {"← Back to templates"}
                 </Button>
 
                 {/* Placeholder Fields */}
                 {hasPlaceholders && (
-                  <fieldset className={'flex flex-col gap-4'}>
-                    <legend className={'flex flex-col gap-1'}>
-                      <span className={'text-sm font-medium text-foreground'}>
-                        {'Placeholder Values'}
+                  <fieldset className={"flex flex-col gap-4"}>
+                    <legend className={"flex flex-col gap-1"}>
+                      <span className={"text-sm font-medium text-foreground"}>
+                        {"Placeholder Values"}
                       </span>
-                      <span className={'text-sm text-muted-foreground'}>
-                        {'Fill in the values for each placeholder below'}
+                      <span className={"text-sm text-muted-foreground"}>
+                        {"Fill in the values for each placeholder below"}
                       </span>
                     </legend>
 
-                    <div className={'flex flex-col gap-3'}>
+                    <div className={"flex flex-col gap-3"}>
                       {parsedPlaceholders.map((placeholder) => {
                         const value =
                           placeholderValues[placeholder.name] ??
                           placeholder.defaultValue;
                         const error = validationErrors[placeholder.name];
-                        const errorId = error ? `error-${placeholder.name}` : undefined;
+                        const errorId = error
+                          ? `error-${placeholder.name}`
+                          : undefined;
 
                         return (
                           <div
-                            className={'flex flex-col gap-1.5'}
+                            className={"flex flex-col gap-1.5"}
                             key={placeholder.name}
                           >
                             <label
-                              className={
-                                'text-sm font-medium text-foreground'
-                              }
+                              className={"text-sm font-medium text-foreground"}
                               htmlFor={`placeholder-${placeholder.name}`}
                             >
                               {placeholder.displayName}
                               {placeholder.isRequired && (
                                 <span
-                                  aria-hidden={'true'}
-                                  className={'ml-0.5 text-destructive'}
+                                  aria-hidden={"true"}
+                                  className={"ml-0.5 text-destructive"}
                                 >
-                                  {'*'}
+                                  {"*"}
                                 </span>
                               )}
                             </label>
                             {placeholder.description && (
-                              <p className={'text-sm text-muted-foreground'} id={`desc-${placeholder.name}`}>
+                              <p
+                                className={"text-sm text-muted-foreground"}
+                                id={`desc-${placeholder.name}`}
+                              >
                                 {placeholder.description}
                               </p>
                             )}
                             <Input
-                              aria-describedby={placeholder.description ? `desc-${placeholder.name}` : undefined}
+                              aria-describedby={
+                                placeholder.description
+                                  ? `desc-${placeholder.name}`
+                                  : undefined
+                              }
                               aria-errormessage={errorId}
                               aria-invalid={Boolean(error)}
                               aria-required={placeholder.isRequired}
@@ -569,7 +577,11 @@ export const TemplatePickerDialog = ({
                               value={value}
                             />
                             {error && (
-                              <span className={'text-sm text-destructive'} id={errorId} role={"alert"}>
+                              <span
+                                className={"text-sm text-destructive"}
+                                id={errorId}
+                                role={"alert"}
+                              >
                                 {error}
                               </span>
                             )}
@@ -584,30 +596,30 @@ export const TemplatePickerDialog = ({
                 {!hasPlaceholders && (
                   <div
                     className={
-                      'rounded-lg border border-border bg-muted/50 p-4'
+                      "rounded-lg border border-border bg-muted/50 p-4"
                     }
                   >
-                    <p className={'text-sm text-muted-foreground'}>
+                    <p className={"text-sm text-muted-foreground"}>
                       {
-                        'This template has no placeholders. The content will be inserted as-is.'
+                        "This template has no placeholders. The content will be inserted as-is."
                       }
                     </p>
                   </div>
                 )}
 
                 {/* Preview Section */}
-                <div className={'flex flex-col gap-2'}>
-                  <h3 className={'text-sm font-medium text-foreground'}>
-                    {'Preview'}
+                <div className={"flex flex-col gap-2"}>
+                  <h3 className={"text-sm font-medium text-foreground"}>
+                    {"Preview"}
                   </h3>
                   <div
                     className={
-                      'max-h-40 overflow-y-auto rounded-lg border border-border bg-muted/30 p-3'
+                      "max-h-40 overflow-y-auto rounded-lg border border-border bg-muted/30 p-3"
                     }
                   >
                     <pre
                       className={
-                        'text-sm whitespace-pre-wrap text-muted-foreground'
+                        "text-sm whitespace-pre-wrap text-muted-foreground"
                       }
                     >
                       {previewContent}
@@ -619,20 +631,26 @@ export const TemplatePickerDialog = ({
           </div>
 
           {/* Action Buttons */}
-          <div aria-label={"Dialog actions"} className={'mt-6 flex justify-end gap-3'} role={"group"}>
+          <div
+            aria-label={"Dialog actions"}
+            className={"mt-6 flex justify-end gap-3"}
+            role={"group"}
+          >
             <DialogClose>
-              <Button type={'button'} variant={'outline'}>
-                {'Cancel'}
+              <Button type={"button"} variant={"outline"}>
+                {"Cancel"}
               </Button>
             </DialogClose>
             {selectedTemplate && (
               <Button
-                aria-describedby={!isFormValid ? "insert-disabled-reason" : undefined}
+                aria-describedby={
+                  !isFormValid ? "insert-disabled-reason" : undefined
+                }
                 disabled={!isFormValid}
                 onClick={handleInsert}
-                type={'button'}
+                type={"button"}
               >
-                {'Insert Template'}
+                {"Insert Template"}
               </Button>
             )}
             {selectedTemplate && !isFormValid && (

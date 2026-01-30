@@ -28,6 +28,7 @@ The `AgentCardSkeleton` component matches the `AgentCard` visual structure:
    - Reset button placeholder (`h-8 w-16 rounded-md`)
 
 Uses:
+
 - `animate-pulse` class on Card wrapper for loading animation
 - Same Card compound components as AgentCard
 - Same flex layout structure

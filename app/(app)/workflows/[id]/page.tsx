@@ -1,22 +1,26 @@
 "use client";
 
 import { format, formatDistanceToNow } from "date-fns";
-import { Calendar, ChevronRight, Clock, Settings } from "lucide-react";
+import { Calendar, ChevronRight, Clock, Settings, Trash2 } from "lucide-react";
+import { $path } from "next-typesafe-url";
 import { useRouteParams } from "next-typesafe-url/app";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Fragment } from "react";
+import { redirect, useRouter } from "next/navigation";
+import { Fragment, useState } from "react";
 
 import type { Workflow } from "@/types/electron";
 
 import { QueryErrorBoundary } from "@/components/data/query-error-boundary";
 import { Badge, type badgeVariants } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDeleteWorkflowDialog } from "@/components/workflows/confirm-delete-workflow-dialog";
 import { workflowStatuses } from "@/db/schema/workflows.schema";
 import { useProject } from "@/hooks/queries/use-projects";
 import { useStepsByWorkflow } from "@/hooks/queries/use-steps";
 import {
   useCancelWorkflow,
+  useDeleteWorkflow,
   usePauseWorkflow,
   useResumeWorkflow,
   useWorkflow,
@@ -34,9 +38,7 @@ import { Route } from "./route-type";
 // Types
 // ============================================================================
 
-type BadgeVariant = NonNullable<
-  Parameters<typeof badgeVariants>[0]
->["variant"];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
 
 type WorkflowStatus = (typeof workflowStatuses)[number];
 
@@ -104,11 +106,16 @@ const calculateDuration = (workflow: Workflow): null | string => {
  * - QueryErrorBoundary for error handling
  */
 export default function WorkflowDetailPage() {
+  const router = useRouter();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
   // Type-safe route params validation
   const routeParams = useRouteParams(Route.routeParams);
 
   // Parse workflow ID from route params
-  const workflowId = routeParams.data?.id ? parseInt(routeParams.data.id, 10) : 0;
+  const workflowId = routeParams.data?.id
+    ? parseInt(routeParams.data.id, 10)
+    : 0;
 
   // Fetch workflow data
   const {
@@ -118,20 +125,17 @@ export default function WorkflowDetailPage() {
   } = useWorkflow(workflowId);
 
   // Fetch steps data
-  const {
-    data: steps,
-    isLoading: isStepsLoading,
-  } = useStepsByWorkflow(workflowId);
+  const { data: steps, isLoading: isStepsLoading } =
+    useStepsByWorkflow(workflowId);
 
   // Conditionally fetch project data if workflow has a projectId
-  const {
-    data: project,
-  } = useProject(workflow?.projectId ?? 0);
+  const { data: project } = useProject(workflow?.projectId ?? 0);
 
   // Mutations
   const pauseWorkflowMutation = usePauseWorkflow();
   const resumeWorkflowMutation = useResumeWorkflow();
   const cancelWorkflowMutation = useCancelWorkflow();
+  const deleteWorkflowMutation = useDeleteWorkflow();
 
   // Handle route params loading state
   if (routeParams.isLoading) {
@@ -154,11 +158,15 @@ export default function WorkflowDetailPage() {
   }
 
   // Derived data
-  const completedSteps = steps?.filter((step) => step.status === "completed").length ?? 0;
+  const completedSteps =
+    steps?.filter((step) => step.status === "completed").length ?? 0;
   const totalSteps = steps?.length ?? workflow.totalSteps ?? 0;
   const progressText = `${completedSteps}/${totalSteps} steps`;
   const duration = calculateDuration(workflow);
-  const formattedCreatedDate = format(new Date(workflow.createdAt), "MMM d, yyyy 'at' h:mm a");
+  const formattedCreatedDate = format(
+    new Date(workflow.createdAt),
+    "MMM d, yyyy 'at' h:mm a"
+  );
   const formattedStartedDate = workflow.startedAt
     ? format(new Date(workflow.startedAt), "MMM d, yyyy 'at' h:mm a")
     : null;
@@ -174,6 +182,15 @@ export default function WorkflowDetailPage() {
 
   const handleCancel = () => {
     cancelWorkflowMutation.mutate(workflowId);
+  };
+
+  const handleDelete = () => {
+    deleteWorkflowMutation.mutate(workflowId, {
+      onSuccess: () => {
+        setIsDeleteDialogOpen(false);
+        router.push($path({ route: "/workflows" }));
+      },
+    });
   };
 
   return (
@@ -192,7 +209,9 @@ export default function WorkflowDetailPage() {
           aria-hidden={"true"}
           className={"size-4 text-muted-foreground"}
         />
-        <span className={"text-sm text-foreground"}>{workflow.featureName}</span>
+        <span className={"text-sm text-foreground"}>
+          {workflow.featureName}
+        </span>
       </nav>
 
       {/* Page header */}
@@ -203,15 +222,17 @@ export default function WorkflowDetailPage() {
             <h1 className={"text-2xl font-semibold tracking-tight"}>
               {workflow.featureName}
             </h1>
-            <Badge variant={getStatusVariant(workflow.status as WorkflowStatus)}>
+            <Badge
+              variant={getStatusVariant(workflow.status as WorkflowStatus)}
+            >
               {formatStatusLabel(workflow.status as WorkflowStatus)}
             </Badge>
-            <Badge variant={"default"}>
-              {formatTypeLabel(workflow.type)}
-            </Badge>
+            <Badge variant={"default"}>{formatTypeLabel(workflow.type)}</Badge>
           </div>
           {/* Progress indicator and project name */}
-          <div className={"flex items-center gap-4 text-sm text-muted-foreground"}>
+          <div
+            className={"flex items-center gap-4 text-sm text-muted-foreground"}
+          >
             <span>{progressText}</span>
             {project && (
               <Fragment>
@@ -223,23 +244,30 @@ export default function WorkflowDetailPage() {
         </div>
 
         {/* Control bar */}
-        <WorkflowControlBar
-          isCancelPending={cancelWorkflowMutation.isPending}
-          isPausePending={pauseWorkflowMutation.isPending}
-          isResumePending={resumeWorkflowMutation.isPending}
-          onCancel={handleCancel}
-          onPause={handlePause}
-          onResume={handleResume}
-          status={workflow.status as WorkflowStatus}
-        />
+        <div className={"flex items-center gap-2"}>
+          <WorkflowControlBar
+            isCancelPending={cancelWorkflowMutation.isPending}
+            isPausePending={pauseWorkflowMutation.isPending}
+            isResumePending={resumeWorkflowMutation.isPending}
+            onCancel={handleCancel}
+            onPause={handlePause}
+            onResume={handleResume}
+            status={workflow.status as WorkflowStatus}
+          />
+          <Button
+            onClick={() => setIsDeleteDialogOpen(true)}
+            size={"icon"}
+            variant={"ghost"}
+          >
+            <Trash2 aria-hidden={"true"} className={"size-4"} />
+            <span className={"sr-only"}>{"Delete workflow"}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Pipeline view with steps */}
       <QueryErrorBoundary>
-        <PipelineView
-          isLoading={isStepsLoading}
-          steps={steps ?? []}
-        />
+        <PipelineView isLoading={isStepsLoading} steps={steps ?? []} />
       </QueryErrorBoundary>
 
       {/* Workflow metadata section */}
@@ -254,7 +282,11 @@ export default function WorkflowDetailPage() {
           <div className={"grid gap-4 sm:grid-cols-2 lg:grid-cols-4"}>
             {/* Created date */}
             <div className={"space-y-1"}>
-              <div className={"flex items-center gap-2 text-sm text-muted-foreground"}>
+              <div
+                className={
+                  "flex items-center gap-2 text-sm text-muted-foreground"
+                }
+              >
                 <Calendar aria-hidden={"true"} className={"size-4"} />
                 <span>{"Created"}</span>
               </div>
@@ -263,7 +295,11 @@ export default function WorkflowDetailPage() {
 
             {/* Started date */}
             <div className={"space-y-1"}>
-              <div className={"flex items-center gap-2 text-sm text-muted-foreground"}>
+              <div
+                className={
+                  "flex items-center gap-2 text-sm text-muted-foreground"
+                }
+              >
                 <Calendar aria-hidden={"true"} className={"size-4"} />
                 <span>{"Started"}</span>
               </div>
@@ -274,28 +310,46 @@ export default function WorkflowDetailPage() {
 
             {/* Duration */}
             <div className={"space-y-1"}>
-              <div className={"flex items-center gap-2 text-sm text-muted-foreground"}>
+              <div
+                className={
+                  "flex items-center gap-2 text-sm text-muted-foreground"
+                }
+              >
                 <Clock aria-hidden={"true"} className={"size-4"} />
                 <span>{"Duration"}</span>
               </div>
-              <p className={"text-sm font-medium"}>
-                {duration ?? "N/A"}
-              </p>
+              <p className={"text-sm font-medium"}>{duration ?? "N/A"}</p>
             </div>
 
             {/* Pause behavior */}
             <div className={"space-y-1"}>
-              <div className={"flex items-center gap-2 text-sm text-muted-foreground"}>
+              <div
+                className={
+                  "flex items-center gap-2 text-sm text-muted-foreground"
+                }
+              >
                 <Settings aria-hidden={"true"} className={"size-4"} />
                 <span>{"Pause Behavior"}</span>
               </div>
               <p className={"text-sm font-medium"}>
-                {workflow.pauseBehavior === "auto_pause" ? "Auto-pause" : "Continuous"}
+                {workflow.pauseBehavior === "auto_pause"
+                  ? "Auto-pause"
+                  : "Continuous"}
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDeleteWorkflowDialog
+        isLoading={deleteWorkflowMutation.isPending}
+        isOpen={isDeleteDialogOpen}
+        onConfirm={handleDelete}
+        onOpenChange={setIsDeleteDialogOpen}
+        status={workflow.status}
+        workflowName={workflow.featureName}
+      />
     </div>
   );
 }

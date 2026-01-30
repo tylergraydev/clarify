@@ -117,7 +117,10 @@ const ProjectNotFound = () => {
             "flex size-12 items-center justify-center rounded-full bg-muted"
           }
         >
-          <FolderGit2 aria-hidden={"true"} className={"size-6 text-muted-foreground"} />
+          <FolderGit2
+            aria-hidden={"true"}
+            className={"size-6 text-muted-foreground"}
+          />
         </div>
         <div className={"space-y-1"}>
           <h2 className={"text-lg font-semibold"}>{"Project not found"}</h2>
@@ -127,7 +130,10 @@ const ProjectNotFound = () => {
             }
           </p>
         </div>
-        <Link className={buttonVariants({ variant: "outline" })} href={"/projects"}>
+        <Link
+          className={buttonVariants({ variant: "outline" })}
+          href={"/projects"}
+        >
           {"Back to Projects"}
         </Link>
       </div>
@@ -200,8 +206,14 @@ export default function ProjectDetailPage() {
   }
 
   const isArchived = project.archivedAt !== null;
-  const formattedCreatedDate = format(new Date(project.createdAt), "MMM d, yyyy");
-  const formattedUpdatedDate = format(new Date(project.updatedAt), "MMM d, yyyy");
+  const formattedCreatedDate = format(
+    new Date(project.createdAt),
+    "MMM d, yyyy"
+  );
+  const formattedUpdatedDate = format(
+    new Date(project.updatedAt),
+    "MMM d, yyyy"
+  );
   const formattedArchivedDate = project.archivedAt
     ? format(new Date(project.archivedAt), "MMM d, yyyy")
     : null;
@@ -271,7 +283,9 @@ export default function ProjectDetailPage() {
               variant={"outline"}
             >
               <ArchiveRestore aria-hidden={"true"} className={"size-4"} />
-              {unarchiveProjectMutation.isPending ? "Unarchiving..." : "Unarchive"}
+              {unarchiveProjectMutation.isPending
+                ? "Unarchiving..."
+                : "Unarchive"}
             </Button>
           ) : (
             <Button
@@ -315,7 +329,9 @@ export default function ProjectDetailPage() {
             {/* Project metadata card */}
             <Card>
               <CardHeader>
-                <CardTitle className={"text-base"}>{"Project Details"}</CardTitle>
+                <CardTitle className={"text-base"}>
+                  {"Project Details"}
+                </CardTitle>
               </CardHeader>
               <CardContent className={"space-y-3"}>
                 <div className={"flex items-center gap-2 text-sm"}>
@@ -340,7 +356,9 @@ export default function ProjectDetailPage() {
                       aria-hidden={"true"}
                       className={"size-4 text-muted-foreground"}
                     />
-                    <span className={"text-muted-foreground"}>{"Archived:"}</span>
+                    <span className={"text-muted-foreground"}>
+                      {"Archived:"}
+                    </span>
                     <span>{formattedArchivedDate}</span>
                   </div>
                 )}
@@ -384,7 +402,9 @@ export default function ProjectDetailPage() {
             {/* Recent Workflows summary card */}
             <Card>
               <CardHeader>
-                <CardTitle className={"text-base"}>{"Recent Workflows"}</CardTitle>
+                <CardTitle className={"text-base"}>
+                  {"Recent Workflows"}
+                </CardTitle>
               </CardHeader>
               <CardContent className={"space-y-3"}>
                 <div className={"flex items-center gap-2 text-sm"}>
@@ -429,7 +449,10 @@ export default function ProjectDetailPage() {
 
         {/* Workflows Tab */}
         <TabsPanel value={"workflows"}>
-          <WorkflowsTabContent projectId={projectId} projectName={project.name} />
+          <WorkflowsTabContent
+            projectId={projectId}
+            projectName={project.name}
+          />
         </TabsPanel>
 
         {/* Settings Tab */}

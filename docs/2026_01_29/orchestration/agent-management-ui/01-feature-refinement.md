@@ -12,6 +12,7 @@ Agent Management UI
 Why: Agents are central to the orchestration system (11 agents defined in design: clarification-agent, database-schema, tanstack-query, etc.). Backend fully implemented with CRUD operations, activation/deactivation, and project-scoped overrides. Users need to customize prompts and tool allowlists.
 
 Scope:
+
 - Build /agents page with agent list/grid view
 - Create agent detail/edit form (name, description, prompt, allowed tools)
 - Implement agent activation toggle

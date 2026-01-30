@@ -33,11 +33,7 @@ export const WorkflowNotFound = () => {
       </nav>
 
       {/* Error content */}
-      <div
-        className={
-          "rounded-lg border border-dashed border-border p-8"
-        }
-      >
+      <div className={"rounded-lg border border-dashed border-border p-8"}>
         <EmptyState
           action={
             <Link

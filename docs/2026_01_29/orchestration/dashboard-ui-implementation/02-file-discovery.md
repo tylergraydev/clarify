@@ -30,58 +30,58 @@ Implement a comprehensive dashboard UI at app/(app)/dashboard/page.tsx that serv
 
 ### Critical Priority (Core Implementation) - 8 Files
 
-| File Path | Description |
-|-----------|-------------|
-| `app/(app)/dashboard/page.tsx` | Main dashboard page file that needs complete implementation. Currently a placeholder with Card components. |
+| File Path                        | Description                                                                                                                                                    |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/(app)/dashboard/page.tsx`   | Main dashboard page file that needs complete implementation. Currently a placeholder with Card components.                                                     |
 | `hooks/queries/use-workflows.ts` | TanStack Query hooks for workflows (useWorkflows, useWorkflowsByProject, useCancelWorkflow, etc.). Essential for fetching workflow data with status filtering. |
-| `hooks/queries/use-projects.ts` | TanStack Query hooks for projects (useProjects, useProject, useCreateProject, useDeleteProject). Required for project statistics. |
-| `lib/queries/workflows.ts` | Query key factory for workflows with predefined filters (byProject, byStatus, byType, running, detail). |
-| `lib/queries/projects.ts` | Query key factory for projects. Provides structured cache keys. |
-| `components/ui/card.tsx` | Card component primitive (Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter). |
-| `components/ui/button.tsx` | Button component with variant support (default, outline, ghost, destructive, secondary, link). |
-| `components/ui/badge.tsx` | Badge component with status variants (completed, failed, running, paused). Critical for status indicators. |
+| `hooks/queries/use-projects.ts`  | TanStack Query hooks for projects (useProjects, useProject, useCreateProject, useDeleteProject). Required for project statistics.                              |
+| `lib/queries/workflows.ts`       | Query key factory for workflows with predefined filters (byProject, byStatus, byType, running, detail).                                                        |
+| `lib/queries/projects.ts`        | Query key factory for projects. Provides structured cache keys.                                                                                                |
+| `components/ui/card.tsx`         | Card component primitive (Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter).                                                              |
+| `components/ui/button.tsx`       | Button component with variant support (default, outline, ghost, destructive, secondary, link).                                                                 |
+| `components/ui/badge.tsx`        | Badge component with status variants (completed, failed, running, paused). Critical for status indicators.                                                     |
 
 ### High Priority (Core Data & Types) - 6 Files
 
-| File Path | Description |
-|-----------|-------------|
-| `db/schema/workflows.schema.ts` | Workflow database schema with status types (created, running, paused, editing, completed, failed, cancelled), workflow types, and all fields. |
-| `db/schema/projects.schema.ts` | Project database schema with fields (id, name, description, createdAt, updatedAt, archivedAt). |
-| `db/schema/workflow-steps.schema.ts` | Workflow steps schema with step statuses and types. Needed for current step info. |
-| `types/electron.d.ts` | ElectronAPI type definitions including all workflow and project methods. |
-| `db/repositories/workflows.repository.ts` | Workflows repository with filter methods (findAll, findByStatus, findByProjectId, findRunning). |
-| `db/repositories/projects.repository.ts` | Projects repository with CRUD operations. |
+| File Path                                 | Description                                                                                                                                   |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db/schema/workflows.schema.ts`           | Workflow database schema with status types (created, running, paused, editing, completed, failed, cancelled), workflow types, and all fields. |
+| `db/schema/projects.schema.ts`            | Project database schema with fields (id, name, description, createdAt, updatedAt, archivedAt).                                                |
+| `db/schema/workflow-steps.schema.ts`      | Workflow steps schema with step statuses and types. Needed for current step info.                                                             |
+| `types/electron.d.ts`                     | ElectronAPI type definitions including all workflow and project methods.                                                                      |
+| `db/repositories/workflows.repository.ts` | Workflows repository with filter methods (findAll, findByStatus, findByProjectId, findRunning).                                               |
+| `db/repositories/projects.repository.ts`  | Projects repository with CRUD operations.                                                                                                     |
 
 ### Medium Priority (Supporting Components & Utilities) - 10 Files
 
-| File Path | Description |
-|-----------|-------------|
-| `components/ui/empty-state.tsx` | EmptyState component for no-data scenarios with icon, title, description, and action. |
-| `components/ui/separator.tsx` | Separator component for visual division between dashboard sections. |
-| `hooks/use-electron.ts` | Core Electron API access hook with isElectron flag. |
-| `lib/utils.ts` | cn() utility function for className merging. |
-| `lib/queries/index.ts` | Centralized query keys export. |
-| `hooks/queries/index.ts` | Barrel export for all query hooks. |
-| `components/data/query-error-boundary.tsx` | Error boundary wrapper for TanStack Query errors. |
-| `db/schema/repositories.schema.ts` | Repository schema for enhanced project statistics. |
-| `hooks/queries/use-repositories.ts` | Repository query hooks. Optional for repository counts. |
-| `lib/queries/repositories.ts` | Repository query key factory. |
+| File Path                                  | Description                                                                           |
+| ------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `components/ui/empty-state.tsx`            | EmptyState component for no-data scenarios with icon, title, description, and action. |
+| `components/ui/separator.tsx`              | Separator component for visual division between dashboard sections.                   |
+| `hooks/use-electron.ts`                    | Core Electron API access hook with isElectron flag.                                   |
+| `lib/utils.ts`                             | cn() utility function for className merging.                                          |
+| `lib/queries/index.ts`                     | Centralized query keys export.                                                        |
+| `hooks/queries/index.ts`                   | Barrel export for all query hooks.                                                    |
+| `components/data/query-error-boundary.tsx` | Error boundary wrapper for TanStack Query errors.                                     |
+| `db/schema/repositories.schema.ts`         | Repository schema for enhanced project statistics.                                    |
+| `hooks/queries/use-repositories.ts`        | Repository query hooks. Optional for repository counts.                               |
+| `lib/queries/repositories.ts`              | Repository query key factory.                                                         |
 
 ### Low Priority (Reference & Context) - 11 Files
 
-| File Path | Description |
-|-----------|-------------|
-| `app/(app)/layout.tsx` | App shell layout showing four-region design. Reference for layout constraints. |
-| `components/shell/app-header.tsx` | App header component. Reference for header structure. |
-| `components/shell/app-sidebar.tsx` | Sidebar navigation with dashboard link and routing patterns. |
-| `app/(app)/workflows/page.tsx` | Workflows page placeholder. Reference for page structure. |
-| `app/(app)/workflows/active/page.tsx` | Active workflows page. Navigation target from dashboard. |
-| `app/layout.tsx` | Root layout with providers. Shows provider hierarchy. |
-| `lib/stores/shell-store.ts` | Zustand store for sidebar state. Reference for state patterns. |
-| `app/globals.css` | Global styles with CSS variables for layout dimensions and theme. |
-| `electron/ipc/workflow.handlers.ts` | Workflow IPC handlers showing server-side filter support. |
-| `hooks/queries/use-steps.ts` | Workflow steps query hooks. May be useful for enhanced progress display. |
-| `types/component-types.ts` | Global component prop types. Reference for prop typing. |
+| File Path                             | Description                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------------ |
+| `app/(app)/layout.tsx`                | App shell layout showing four-region design. Reference for layout constraints. |
+| `components/shell/app-header.tsx`     | App header component. Reference for header structure.                          |
+| `components/shell/app-sidebar.tsx`    | Sidebar navigation with dashboard link and routing patterns.                   |
+| `app/(app)/workflows/page.tsx`        | Workflows page placeholder. Reference for page structure.                      |
+| `app/(app)/workflows/active/page.tsx` | Active workflows page. Navigation target from dashboard.                       |
+| `app/layout.tsx`                      | Root layout with providers. Shows provider hierarchy.                          |
+| `lib/stores/shell-store.ts`           | Zustand store for sidebar state. Reference for state patterns.                 |
+| `app/globals.css`                     | Global styles with CSS variables for layout dimensions and theme.              |
+| `electron/ipc/workflow.handlers.ts`   | Workflow IPC handlers showing server-side filter support.                      |
+| `hooks/queries/use-steps.ts`          | Workflow steps query hooks. May be useful for enhanced progress display.       |
+| `types/component-types.ts`            | Global component prop types. Reference for prop typing.                        |
 
 ---
 
@@ -120,6 +120,7 @@ Implement a comprehensive dashboard UI at app/(app)/dashboard/page.tsx that serv
 ## File Path Validation Results
 
 All discovered files validated to exist in the codebase:
+
 - ✅ All 8 Critical priority files exist
 - ✅ All 6 High priority files exist
 - ✅ All 10 Medium priority files exist
@@ -129,16 +130,16 @@ All discovered files validated to exist in the codebase:
 
 ## Discovery Statistics
 
-| Metric | Value |
-|--------|-------|
-| Total files discovered | 35 |
-| Critical priority | 8 |
-| High priority | 6 |
-| Medium priority | 10 |
-| Low priority | 11 |
-| Directories explored | 15+ |
-| Candidate files examined | 60+ |
+| Metric                   | Value |
+| ------------------------ | ----- |
+| Total files discovered   | 35    |
+| Critical priority        | 8     |
+| High priority            | 6     |
+| Medium priority          | 10    |
+| Low priority             | 11    |
+| Directories explored     | 15+   |
+| Candidate files examined | 60+   |
 
 ---
 
-*MILESTONE:STEP_2_COMPLETE*
+_MILESTONE:STEP_2_COMPLETE_

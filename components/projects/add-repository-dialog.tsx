@@ -122,7 +122,9 @@ export const AddRepositoryDialog = ({
               <form.AppField name={"path"}>
                 {(field) => (
                   <field.PathInputField
-                    description={"Select the local directory containing the repository"}
+                    description={
+                      "Select the local directory containing the repository"
+                    }
                     isRequired
                     label={"Repository Path"}
                     placeholder={"Select or enter repository path"}

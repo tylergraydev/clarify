@@ -14,10 +14,12 @@
 ## File Discovery Results
 
 ### Critical Priority (Must Modify/Create)
+
 1. `app/(app)/workflows/[id]/page.tsx` - Main page file, currently placeholder. Complete rewrite needed.
 2. `app/(app)/workflows/[id]/route-type.ts` - Route type definition for type-safe params.
 
 ### High Priority (Reference - No Changes Needed)
+
 1. `hooks/queries/use-workflows.ts` - Workflow query hooks (all needed hooks exist: `useWorkflow`, `usePauseWorkflow`, `useResumeWorkflow`, `useCancelWorkflow`)
 2. `hooks/queries/use-steps.ts` - Step query hooks (has `useStepsByWorkflow`)
 3. `lib/queries/steps.ts` - Query key factory for steps
@@ -25,6 +27,7 @@
 5. `components/ui/badge.tsx` - Existing variants sufficient (use mapping pattern from `workflow-card.tsx`)
 
 ### Key Reference Files
+
 - `db/schema/workflow-steps.schema.ts` - Step statuses: pending, running, paused, editing, completed, failed, skipped
 - `db/schema/workflows.schema.ts` - Workflow statuses: created, running, paused, editing, completed, failed, cancelled
 - `app/(app)/projects/[id]/page.tsx` - Reference for dynamic route pattern (useRouteParams, skeleton, not-found components)
@@ -62,31 +65,35 @@ This plan implements the /workflows/[id] dynamic route page to visualize workflo
 - **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/workflows/[id]/_components/step-status-badge.tsx` - Step status badge with mapping
 
 **Changes:**
+
 - Create a `StepStatusBadge` component that wraps Badge with step-specific mapping
 - Implement status-to-variant mapping following `workflow-card.tsx` pattern:
   ```typescript
   const stepStatusVariantMap: Record<StepStatus, BadgeVariant> = {
-    pending: "default",      // neutral gray
-    running: "planning",     // purple (indicates active work)
-    paused: "draft",         // neutral gray
-    editing: "clarifying",   // yellow
-    completed: "completed",  // green
-    failed: "failed",        // red
-    skipped: "stale",        // amber/muted
+    pending: "default", // neutral gray
+    running: "planning", // purple (indicates active work)
+    paused: "draft", // neutral gray
+    editing: "clarifying", // yellow
+    completed: "completed", // green
+    failed: "failed", // red
+    skipped: "stale", // amber/muted
   };
   ```
 - Export helper function `getStepStatusVariant(status: StepStatus): BadgeVariant`
 - Include formatted label display (capitalize first letter)
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] StepStatusBadge component renders correct variant for each step status
 - [ ] Mapping covers all statuses: pending, running, paused, editing, completed, failed, skipped
 - [ ] All validation commands pass
@@ -101,9 +108,11 @@ pnpm run lint && pnpm run typecheck
 - **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/workflows/[id]/_components/pipeline-step-node.tsx` - Pipeline step node component
 
 **Changes:**
+
 - Create component accepting `WorkflowStep` data as props
 - Implement status badge using `StepStatusBadge` component from Step 1
 - Add step type icon mapping (clarification, refinement, discovery, planning, routing, implementation, quality_gate, gemini_review)
@@ -113,11 +122,13 @@ pnpm run lint && pnpm run typecheck
 - Implement CVA variants for different step states (active, completed, failed, pending)
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Component renders step with status badge, icon, title, and step number
 - [ ] Collapsible trigger expands/collapses step details
 - [ ] Component follows CVA pattern with appropriate variants
@@ -132,9 +143,11 @@ pnpm run lint && pnpm run typecheck
 - **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/workflows/[id]/_components/step-detail-panel.tsx` - Step detail panel component
 
 **Changes:**
+
 - Create component accepting `WorkflowStep` data as props
 - Display input section with `inputText` content in a scrollable, styled container
 - Display output section with `outputText` content, also scrollable
@@ -145,11 +158,13 @@ pnpm run lint && pnpm run typecheck
 - Add max-height with overflow-y-auto for long content areas
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Panel displays input and output sections with appropriate headings
 - [ ] Long content is scrollable within constrained height
 - [ ] Error messages display with red/destructive styling
@@ -165,9 +180,11 @@ pnpm run lint && pnpm run typecheck
 - **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/workflows/[id]/_components/workflow-control-bar.tsx` - Workflow control bar component
 
 **Changes:**
+
 - Create component accepting workflow data and mutation handlers as props
 - Implement Pause button - enabled when workflow status is `running`, calls `usePauseWorkflow` mutation
 - Implement Resume button - enabled when workflow status is `paused`, calls `useResumeWorkflow` mutation
@@ -178,11 +195,13 @@ pnpm run lint && pnpm run typecheck
 - Position as sticky header bar or inline with page header
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Pause button shows and is clickable when workflow is running
 - [ ] Resume button shows and is clickable when workflow is paused
 - [ ] Cancel button shows for cancellable statuses
@@ -198,9 +217,11 @@ pnpm run lint && pnpm run typecheck
 - **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/workflows/[id]/_components/pipeline-view.tsx` - Pipeline view container component
 
 **Changes:**
+
 - Create component accepting array of `WorkflowStep` items and loading state
 - Sort steps by `stepNumber` before rendering
 - Render `PipelineStepNode` for each step in order
@@ -211,11 +232,13 @@ pnpm run lint && pnpm run typecheck
 - Include loading skeleton that matches the step node structure
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Pipeline displays steps in correct order by stepNumber
 - [ ] Visual connectors appear between step nodes
 - [ ] Current running step has visual emphasis
@@ -232,21 +255,25 @@ pnpm run lint && pnpm run typecheck
 - **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/workflows/[id]/_components/workflow-detail-skeleton.tsx` - Loading skeleton
 - `app/(app)/workflows/[id]/_components/workflow-not-found.tsx` - Not found state
 
 **Changes:**
+
 - Create skeleton mimicking the page layout: breadcrumb, header with title/badges, control bar, pipeline steps
 - Use animate-pulse class on bg-muted placeholder elements
 - Create not-found component with EmptyState pattern, icon (Workflow from lucide), message, and back navigation link
 - Include breadcrumb showing "Workflows > Not Found"
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Skeleton structure matches actual page layout
 - [ ] Skeleton elements have animate-pulse animation
 - [ ] Not found state displays appropriate message and back link
@@ -257,14 +284,16 @@ pnpm run lint && pnpm run typecheck
 
 ### Step 7: Create Component Index File
 
-- **What**: Create an index.ts barrel export file for the _components directory to simplify imports in the main page file.
+- **What**: Create an index.ts barrel export file for the \_components directory to simplify imports in the main page file.
 - **Why**: Following project conventions, barrel exports keep import statements clean and make refactoring easier.
 - **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/workflows/[id]/_components/index.ts` - Barrel export file
 
 **Changes:**
+
 - Export `StepStatusBadge` and `getStepStatusVariant` from step-status-badge.tsx
 - Export `PipelineStepNode` from pipeline-step-node.tsx
 - Export `StepDetailPanel` from step-detail-panel.tsx
@@ -274,11 +303,13 @@ pnpm run lint && pnpm run typecheck
 - Export `WorkflowNotFound` from workflow-not-found.tsx
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] All components are exported from index.ts
 - [ ] Imports work correctly using `@/app/(app)/workflows/[id]/_components` path
 - [ ] All validation commands pass
@@ -292,10 +323,12 @@ pnpm run lint && pnpm run typecheck
 - **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/workflows/[id]/page.tsx` - Complete rewrite of page component
 - `app/(app)/workflows/[id]/route-type.ts` - Verify/update route params (ID validation)
 
 **Changes:**
+
 - Add "use client" directive for client-side rendering with hooks
 - Import `useRouteParams` from next-typesafe-url/app and use with Route.routeParams
 - Import `useWorkflow`, `usePauseWorkflow`, `useResumeWorkflow`, `useCancelWorkflow` from use-workflows hook
@@ -314,11 +347,13 @@ pnpm run lint && pnpm run typecheck
 - Display workflow metadata: created date, started date, duration, pause behavior setting
 
 **Validation Commands:**
+
 ```bash
 pnpm run lint && pnpm run typecheck
 ```
 
 **Success Criteria:**
+
 - [ ] Page loads workflow and steps data on mount
 - [ ] Loading skeleton displays during data fetch
 - [ ] Not found state displays for invalid workflow IDs

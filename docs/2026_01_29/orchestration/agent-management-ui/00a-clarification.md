@@ -12,6 +12,7 @@ Agent Management UI
 Why: Agents are central to the orchestration system (11 agents defined in design: clarification-agent, database-schema, tanstack-query, etc.). Backend fully implemented with CRUD operations, activation/deactivation, and project-scoped overrides. Users need to customize prompts and tool allowlists.
 
 Scope:
+
 - Build /agents page with agent list/grid view
 - Create agent detail/edit form (name, description, prompt, allowed tools)
 - Implement agent activation toggle
@@ -22,6 +23,7 @@ Unblocks: Agent customization, project-specific agent overrides, advanced workfl
 ## Codebase Exploration Summary
 
 The clarification agent examined:
+
 - `db/schema/agents.schema.ts` - Agent schema with fields: id, name, displayName, description, systemPrompt, type, color, projectId, parentAgentId, builtInAt, deactivatedAt, version
 - `db/schema/agent-tools.schema.ts` - Agent tools schema with: agentId, toolName, toolPattern, disallowedAt
 - `electron/ipc/agent.handlers.ts` - Full IPC handlers: list, get, update, reset, activate, deactivate
@@ -34,6 +36,7 @@ The clarification agent examined:
 **Score**: 4/5 (Sufficiently Detailed)
 
 **Reasoning**:
+
 1. Specific page to build (`/agents`) is identified
 2. Specific features enumerated (list/grid view, detail/edit form, activation toggle, reset functionality)
 3. Technical context provided (backend IPC handlers fully implemented, TanStack Query hooks exist)

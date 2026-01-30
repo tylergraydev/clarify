@@ -4,16 +4,16 @@
 
 ## Routing Table
 
-| Step | Title | Specialist Agent | Files |
-|------|-------|-----------------|-------|
-| 1 | Create Step Status Badge Mapping Utility | `frontend-component` | `app/(app)/workflows/[id]/_components/step-status-badge.tsx` |
-| 2 | Create Pipeline Step Node Component | `frontend-component` | `app/(app)/workflows/[id]/_components/pipeline-step-node.tsx` |
-| 3 | Create Step Detail Panel Component | `frontend-component` | `app/(app)/workflows/[id]/_components/step-detail-panel.tsx` |
-| 4 | Create Workflow Control Bar Component | `frontend-component` | `app/(app)/workflows/[id]/_components/workflow-control-bar.tsx` |
-| 5 | Create Pipeline View Container Component | `frontend-component` | `app/(app)/workflows/[id]/_components/pipeline-view.tsx` |
-| 6 | Create Loading Skeleton and Not Found Components | `frontend-component` | `workflow-detail-skeleton.tsx`, `workflow-not-found.tsx` |
-| 7 | Create Component Index File | `general-purpose` | `app/(app)/workflows/[id]/_components/index.ts` |
-| 8 | Implement Main Workflow Detail Page | `general-purpose` | `app/(app)/workflows/[id]/page.tsx`, `route-type.ts` |
+| Step | Title                                            | Specialist Agent     | Files                                                           |
+| ---- | ------------------------------------------------ | -------------------- | --------------------------------------------------------------- |
+| 1    | Create Step Status Badge Mapping Utility         | `frontend-component` | `app/(app)/workflows/[id]/_components/step-status-badge.tsx`    |
+| 2    | Create Pipeline Step Node Component              | `frontend-component` | `app/(app)/workflows/[id]/_components/pipeline-step-node.tsx`   |
+| 3    | Create Step Detail Panel Component               | `frontend-component` | `app/(app)/workflows/[id]/_components/step-detail-panel.tsx`    |
+| 4    | Create Workflow Control Bar Component            | `frontend-component` | `app/(app)/workflows/[id]/_components/workflow-control-bar.tsx` |
+| 5    | Create Pipeline View Container Component         | `frontend-component` | `app/(app)/workflows/[id]/_components/pipeline-view.tsx`        |
+| 6    | Create Loading Skeleton and Not Found Components | `frontend-component` | `workflow-detail-skeleton.tsx`, `workflow-not-found.tsx`        |
+| 7    | Create Component Index File                      | `general-purpose`    | `app/(app)/workflows/[id]/_components/index.ts`                 |
+| 8    | Implement Main Workflow Detail Page              | `general-purpose`    | `app/(app)/workflows/[id]/page.tsx`, `route-type.ts`            |
 
 ## Specialist Selection Rationale
 

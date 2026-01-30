@@ -10,12 +10,14 @@
 ## Component Features
 
 **Props Interface**:
+
 - `mode: 'create' | 'edit'` - Editor mode
 - `template?: Template` - Template data for edit mode
 - `trigger: ReactNode` - Dialog trigger element
 - `onSuccess?: () => void` - Callback after successful save
 
 **Form Fields**:
+
 - `name` - TextField for template name
 - `category` - SelectField with category enum options
 - `description` - TextareaField for template description
@@ -23,6 +25,7 @@
 - `isActive` - SwitchField for active/deactivated toggle (edit mode only)
 
 **Features**:
+
 - Uses `useAppForm` hook with validation schema
 - Integrates `PlaceholderEditor` component for placeholder array management
 - Shows usage count metric in edit mode (read-only)

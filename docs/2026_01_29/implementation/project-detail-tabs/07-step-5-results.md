@@ -25,15 +25,18 @@
 ## Component Details
 
 **Props**:
+
 - `projectId` (required) - Project ID to filter workflows
 - `projectName` (optional) - Used for projectMap in WorkflowTable
 
 **Features**:
+
 - View toggle between table and card views
 - Create workflow button navigates to `/workflows/new?projectId={projectId}`
 - Skeletons exported for reuse (`WorkflowTableSkeleton`, `WorkflowCardSkeleton`)
 
 **Hooks Used**:
+
 - `useWorkflowsByProject(projectId)` - Fetch workflows
 - `useCancelWorkflow` - Cancel mutation
 - `useRouter` - Navigation

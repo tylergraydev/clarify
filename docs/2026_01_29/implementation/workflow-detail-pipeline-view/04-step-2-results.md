@@ -6,8 +6,8 @@
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
+| File                                                          | Purpose                                                        |
+| ------------------------------------------------------------- | -------------------------------------------------------------- |
 | `app/(app)/workflows/[id]/_components/pipeline-step-node.tsx` | Reusable pipeline step node component with collapsible details |
 
 ## Implementation Summary
@@ -15,9 +15,11 @@
 Created `PipelineStepNode` component with the following features:
 
 ### CVA Variants
+
 - `state`: active, completed, default, failed
 
 ### Props Interface
+
 - `children?: ReactNode` - Content for expanded details panel
 - `isDefaultOpen?: boolean` - Initial open state for collapsible
 - `onOpenChange?: (isOpen: boolean) => void` - Callback for open state changes
@@ -27,16 +29,17 @@ Created `PipelineStepNode` component with the following features:
 - `title: string` - Step title display
 
 ### Step Type Icon Mapping
-| Step Type | Icon |
-|-----------|------|
-| clarification | MessageSquare |
-| discovery | Search |
-| gemini_review | Bot |
-| implementation | Code |
-| planning | ListTodo |
-| quality_gate | Shield |
-| refinement | Sparkles |
-| routing | GitBranch |
+
+| Step Type      | Icon          |
+| -------------- | ------------- |
+| clarification  | MessageSquare |
+| discovery      | Search        |
+| gemini_review  | Bot           |
+| implementation | Code          |
+| planning       | ListTodo      |
+| quality_gate   | Shield        |
+| refinement     | Sparkles      |
+| routing        | GitBranch     |
 
 ## Validation Results
 

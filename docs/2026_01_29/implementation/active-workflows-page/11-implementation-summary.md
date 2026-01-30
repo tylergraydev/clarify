@@ -17,10 +17,12 @@ Successfully implemented the Active Workflows page with real-time status updates
 ## Files Changed
 
 ### Modified
+
 - `app/(app)/workflows/active/page.tsx` - Full page implementation with workflow grid, actions, and confirmations
 - `hooks/queries/use-workflows.ts` - Added `useActiveWorkflows` hook with 5-second polling
 
 ### Created
+
 - `app/(app)/workflows/active/_components/active-workflow-card.tsx` - Workflow card with progress, elapsed time, and action buttons
 - `app/(app)/workflows/active/_components/active-workflow-card-skeleton.tsx` - Loading skeleton matching card layout
 - `app/(app)/workflows/active/_components/confirm-cancel-dialog.tsx` - Cancel confirmation dialog
@@ -39,14 +41,15 @@ Successfully implemented the Active Workflows page with real-time status updates
 
 ## Specialist Routing
 
-| Step | Specialist | Status |
-|------|------------|--------|
-| 1 | tanstack-query | Completed |
-| 2-7 | frontend-component | Completed |
+| Step | Specialist         | Status    |
+| ---- | ------------------ | --------- |
+| 1    | tanstack-query     | Completed |
+| 2-7  | frontend-component | Completed |
 
 ## Next Steps
 
 The implementation is ready for testing and review. Consider:
+
 - Manual testing with actual workflows
 - User feedback on polling interval (adjustable from 5 seconds)
 - Future enhancement: manual refresh button

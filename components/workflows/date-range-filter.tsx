@@ -21,8 +21,10 @@ const PRESET_OPTIONS: Array<PresetOption> = [
   { days: null, label: "All time" },
 ];
 
-interface DateRangeFilterProps
-  extends Omit<ComponentPropsWithRef<"div">, "onChange"> {
+interface DateRangeFilterProps extends Omit<
+  ComponentPropsWithRef<"div">,
+  "onChange"
+> {
   dateFrom?: string;
   dateTo?: string;
   onDateFromChange?: (value: string | undefined) => void;
@@ -68,11 +70,7 @@ export const DateRangeFilter = ({
   };
 
   return (
-    <div
-      className={cn("flex flex-col gap-3", className)}
-      ref={ref}
-      {...props}
-    >
+    <div className={cn("flex flex-col gap-3", className)} ref={ref} {...props}>
       {/* Date Inputs */}
       <div className={"flex flex-wrap items-center gap-2"}>
         <div className={"flex items-center gap-2"}>

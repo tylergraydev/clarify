@@ -1,25 +1,41 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Pause behavior options for workflow settings
  * Maps to database pause_behavior column values
  */
 export const pauseBehaviorOptions = [
-  'continuous',
-  'auto-pause',
-  'quality-gates',
+  "continuous",
+  "auto-pause",
+  "quality-gates",
 ] as const;
 
 /**
  * Workflow settings schema
- * Controls default pause behavior and step timeout constraints
+ * Controls default pause behavior and per-step-type timeout constraints
  */
 export const workflowSettingsSchema = z.object({
-  defaultPauseBehavior: z.enum(pauseBehaviorOptions),
-  stepTimeoutSeconds: z
+  clarificationTimeoutSeconds: z
     .number()
-    .min(10, 'Minimum timeout is 10 seconds')
-    .max(600, 'Maximum timeout is 600 seconds'),
+    .min(10, "Minimum timeout is 10 seconds")
+    .max(600, "Maximum timeout is 600 seconds"),
+  defaultPauseBehavior: z.enum(pauseBehaviorOptions),
+  discoveryTimeoutSeconds: z
+    .number()
+    .min(10, "Minimum timeout is 10 seconds")
+    .max(600, "Maximum timeout is 600 seconds"),
+  implementationTimeoutSeconds: z
+    .number()
+    .min(10, "Minimum timeout is 10 seconds")
+    .max(600, "Maximum timeout is 600 seconds"),
+  planningTimeoutSeconds: z
+    .number()
+    .min(10, "Minimum timeout is 10 seconds")
+    .max(600, "Maximum timeout is 600 seconds"),
+  refinementTimeoutSeconds: z
+    .number()
+    .min(10, "Minimum timeout is 10 seconds")
+    .max(600, "Maximum timeout is 600 seconds"),
 });
 
 export type WorkflowSettingsFormValues = z.infer<typeof workflowSettingsSchema>;
@@ -32,7 +48,7 @@ export const worktreeSettingsSchema = z.object({
   autoCleanup: z.boolean(),
   createFeatureBranch: z.boolean(),
   pushOnCompletion: z.boolean(),
-  worktreeLocation: z.string().min(1, 'Worktree location is required'),
+  worktreeLocation: z.string().min(1, "Worktree location is required"),
 });
 
 export type WorktreeSettingsFormValues = z.infer<typeof worktreeSettingsSchema>;
@@ -44,11 +60,11 @@ export type WorktreeSettingsFormValues = z.infer<typeof worktreeSettingsSchema>;
 export const loggingSettingsSchema = z.object({
   exportLogsWithDatabase: z.boolean(),
   includeCliOutput: z.boolean(),
-  logExportLocation: z.string().min(1, 'Log export location is required'),
+  logExportLocation: z.string().min(1, "Log export location is required"),
   logRetentionDays: z
     .number()
-    .min(1, 'Minimum retention is 1 day')
-    .max(365, 'Maximum retention is 365 days'),
+    .min(1, "Minimum retention is 1 day")
+    .max(365, "Maximum retention is 365 days"),
 });
 
 export type LoggingSettingsFormValues = z.infer<typeof loggingSettingsSchema>;

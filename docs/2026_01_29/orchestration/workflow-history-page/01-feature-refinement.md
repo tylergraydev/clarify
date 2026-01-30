@@ -42,12 +42,12 @@ The Workflow History page at `/workflows/history` needs to be implemented to rep
 
 ## Validation Results
 
-| Check | Result |
-|-------|--------|
-| Format | Single paragraph, no headers/sections |
-| Length | ~350 words (original ~80 words) - 4.4x expansion |
-| Intent Preserved | Yes - maintains filtering, metrics, audit trail focus |
-| Scope Control | Acceptable - adds technical context without feature creep |
+| Check             | Result                                                        |
+| ----------------- | ------------------------------------------------------------- |
+| Format            | Single paragraph, no headers/sections                         |
+| Length            | ~350 words (original ~80 words) - 4.4x expansion              |
+| Intent Preserved  | Yes - maintains filtering, metrics, audit trail focus         |
+| Scope Control     | Acceptable - adds technical context without feature creep     |
 | Technical Context | Essential details added (TanStack Query, CVA, nuqs, date-fns) |
 
 **Status**: Validated successfully

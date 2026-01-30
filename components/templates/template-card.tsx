@@ -18,9 +18,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = NonNullable<
-  Parameters<typeof badgeVariants>[0]
->["variant"];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
 
 const getCategoryVariant = (category: TemplateCategory): BadgeVariant => {
   const categoryVariantMap: Record<TemplateCategory, BadgeVariant> = {
@@ -64,8 +62,10 @@ const extractPlaceholders = (templateText: string): Array<string> => {
   return placeholders;
 };
 
-interface TemplateCardProps
-  extends Omit<ComponentPropsWithRef<"div">, "onClick"> {
+interface TemplateCardProps extends Omit<
+  ComponentPropsWithRef<"div">,
+  "onClick"
+> {
   onDelete?: (templateId: number) => void;
   onDuplicate?: (template: Template) => void;
   onEdit?: (templateId: number) => void;
@@ -112,10 +112,16 @@ export const TemplateCard = ({
       {/* Header */}
       <CardHeader>
         <div className={"flex items-start justify-between gap-2"}>
-          <CardTitle className={"line-clamp-1"} id={`template-title-${template.id}`}>
+          <CardTitle
+            className={"line-clamp-1"}
+            id={`template-title-${template.id}`}
+          >
             {template.name}
           </CardTitle>
-          <Badge aria-label={`Category: ${formatCategoryLabel(template.category)}`} variant={getCategoryVariant(template.category)}>
+          <Badge
+            aria-label={`Category: ${formatCategoryLabel(template.category)}`}
+            variant={getCategoryVariant(template.category)}
+          >
             {formatCategoryLabel(template.category)}
           </Badge>
         </div>
@@ -129,27 +135,44 @@ export const TemplateCard = ({
       {/* Content */}
       <CardContent className={"flex flex-1 flex-col gap-3"}>
         {/* Metrics Row */}
-        <div aria-label={"Template metrics"} className={"flex flex-wrap items-center gap-2"} role={"group"}>
+        <div
+          aria-label={"Template metrics"}
+          className={"flex flex-wrap items-center gap-2"}
+          role={"group"}
+        >
           {/* Placeholder Count */}
-          <Badge aria-label={`${placeholders.length} ${placeholders.length === 1 ? "placeholder" : "placeholders"}`} size={"sm"} variant={"default"}>
+          <Badge
+            aria-label={`${placeholders.length} ${placeholders.length === 1 ? "placeholder" : "placeholders"}`}
+            size={"sm"}
+            variant={"default"}
+          >
             {placeholders.length}{" "}
             {placeholders.length === 1 ? "placeholder" : "placeholders"}
           </Badge>
 
           {/* Usage Count */}
-          <span aria-label={`Used ${template.usageCount} ${template.usageCount === 1 ? "time" : "times"}`} className={"text-sm text-muted-foreground"}>
+          <span
+            aria-label={`Used ${template.usageCount} ${template.usageCount === 1 ? "time" : "times"}`}
+            className={"text-sm text-muted-foreground"}
+          >
             {template.usageCount} {template.usageCount === 1 ? "use" : "uses"}
           </span>
         </div>
 
         {/* Status Indicators */}
-        <div aria-label={"Template status"} className={"flex flex-wrap items-center gap-2"} role={"group"}>
+        <div
+          aria-label={"Template status"}
+          className={"flex flex-wrap items-center gap-2"}
+          role={"group"}
+        >
           {/* Active/Deactivated State */}
           <span
             aria-label={`Status: ${isActive ? "Active" : "Deactivated"}`}
             className={cn(
               "text-sm",
-              isActive ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+              isActive
+                ? "text-green-600 dark:text-green-400"
+                : "text-muted-foreground"
             )}
           >
             {isActive ? "Active" : "Deactivated"}
@@ -157,7 +180,11 @@ export const TemplateCard = ({
 
           {/* Built-in Indicator */}
           {isBuiltIn && (
-            <Badge aria-label={"Built-in template"} size={"sm"} variant={"category-builtin"}>
+            <Badge
+              aria-label={"Built-in template"}
+              size={"sm"}
+              variant={"category-builtin"}
+            >
               {"Built-in"}
             </Badge>
           )}
@@ -165,7 +192,11 @@ export const TemplateCard = ({
       </CardContent>
 
       {/* Actions */}
-      <CardFooter aria-label={"Template actions"} className={"gap-2"} role={"group"}>
+      <CardFooter
+        aria-label={"Template actions"}
+        className={"gap-2"}
+        role={"group"}
+      >
         <Button
           aria-describedby={`template-title-${template.id}`}
           aria-label={`Edit ${template.name} template`}

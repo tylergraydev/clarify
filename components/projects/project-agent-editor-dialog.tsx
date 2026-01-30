@@ -134,7 +134,9 @@ export const ProjectAgentEditorDialog = ({
             <div>
               <DialogTitle>{"Edit Project Agent"}</DialogTitle>
               <DialogDescription>
-                {"Customize the agent's configuration for this project. Changes only affect this project."}
+                {
+                  "Customize the agent's configuration for this project. Changes only affect this project."
+                }
               </DialogDescription>
             </div>
             <div className={"flex shrink-0 flex-wrap items-center gap-2"}>
@@ -158,9 +160,7 @@ export const ProjectAgentEditorDialog = ({
               xmlns={"http://www.w3.org/2000/svg"}
             >
               <path
-                d={
-                  "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                }
+                d={"M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"}
                 strokeLinecap={"round"}
                 strokeLinejoin={"round"}
               />
@@ -187,7 +187,9 @@ export const ProjectAgentEditorDialog = ({
                 <span className={"text-muted-foreground"}>
                   {"Internal name: "}
                 </span>
-                <span className={"font-mono text-foreground"}>{agent.name}</span>
+                <span className={"font-mono text-foreground"}>
+                  {agent.name}
+                </span>
               </div>
             </div>
           </div>
@@ -249,7 +251,9 @@ export const ProjectAgentEditorDialog = ({
                       type={"button"}
                       variant={"outline"}
                     >
-                      {isResetting ? "Resetting..." : "Reset to Global Defaults"}
+                      {isResetting
+                        ? "Resetting..."
+                        : "Reset to Global Defaults"}
                     </Button>
                   )}
                 </div>

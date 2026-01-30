@@ -26,6 +26,7 @@ Unblocks: Step editing, file discovery editing, step regeneration, real-time pro
 ## Codebase Exploration Summary
 
 The clarification agent examined:
+
 - CLAUDE.md for project structure and conventions
 - Database schema (workflow-steps.schema.ts) for step types and statuses
 - Existing TanStack Query hooks (use-workflows.ts, use-steps.ts)
@@ -37,12 +38,14 @@ The clarification agent examined:
 **Score**: 4/5 (Quite clear)
 
 **Reasoning**: The feature request is well-specified with:
+
 - Clear scope: Build `/workflows/[id]` page
 - Defined UI requirements: Pipeline visualization, step progress indicators, expandable detail panels
 - Explicit workflow controls: pause/resume/cancel
 - References to existing IPC handlers (`step:get`, `step:list`, `step:edit`) that are already implemented
 
 The codebase exploration confirmed all necessary infrastructure exists:
+
 - `workflow-steps.schema.ts` defines step statuses and types
 - `use-workflows.ts` and `use-steps.ts` provide TanStack Query hooks for all CRUD operations including pause/resume/cancel mutations
 - `Collapsible` component provides the expandable panel pattern

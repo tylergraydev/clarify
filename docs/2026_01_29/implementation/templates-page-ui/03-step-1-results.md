@@ -9,12 +9,12 @@
 
 ## Schemas Created
 
-| Schema | Type Export | Description |
-|--------|-------------|-------------|
-| `templatePlaceholderSchema` | `TemplatePlaceholderFormValues` | Validates individual placeholder fields |
-| `createTemplateSchema` | `CreateTemplateFormValues` | Validates template creation |
-| `updateTemplateSchema` | `UpdateTemplateFormValues` | Extends create schema with id and isActive |
-| `templateWithPlaceholdersSchema` | `TemplateWithPlaceholdersFormValues` | Combines create template with placeholders array |
+| Schema                                 | Type Export                                | Description                                      |
+| -------------------------------------- | ------------------------------------------ | ------------------------------------------------ |
+| `templatePlaceholderSchema`            | `TemplatePlaceholderFormValues`            | Validates individual placeholder fields          |
+| `createTemplateSchema`                 | `CreateTemplateFormValues`                 | Validates template creation                      |
+| `updateTemplateSchema`                 | `UpdateTemplateFormValues`                 | Extends create schema with id and isActive       |
+| `templateWithPlaceholdersSchema`       | `TemplateWithPlaceholdersFormValues`       | Combines create template with placeholders array |
 | `updateTemplateWithPlaceholdersSchema` | `UpdateTemplateWithPlaceholdersFormValues` | Combines update template with placeholders array |
 
 ## Key Validation Rules

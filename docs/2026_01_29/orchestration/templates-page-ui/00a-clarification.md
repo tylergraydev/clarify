@@ -26,6 +26,7 @@ Unblocks: Full workflow creation experience with template library
 ## Codebase Exploration Summary
 
 The clarification agent examined:
+
 - CLAUDE.md - Project overview and architecture
 - db/schema/ - Templates and template-placeholders schemas
 - db/repositories/ - Template repository implementation
@@ -62,4 +63,5 @@ The clarification agent examined:
 Since clarification was skipped, the original request passes unchanged to Step 1.
 
 ---
-*MILESTONE:STEP_0A_SKIPPED*
+
+_MILESTONE:STEP_0A_SKIPPED_

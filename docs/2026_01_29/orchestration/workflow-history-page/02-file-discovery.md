@@ -20,51 +20,51 @@ The Workflow History page at `/workflows/history` needs to be implemented to rep
 
 ### Critical (Must Create/Modify)
 
-| File Path | Status | Description |
-|-----------|--------|-------------|
-| `app/(app)/workflows/history/page.tsx` | **MODIFY** | Current placeholder page that must be replaced with the full implementation |
-| `hooks/queries/use-workflows.ts` | **MODIFY** | Needs new hooks for workflow history filtering (by terminal status, date range) and statistics queries |
-| `lib/queries/workflows.ts` | **MODIFY** | Query key factory needs new keys for `history` queries, `byStatuses` (plural), and `statistics` |
+| File Path                                 | Status     | Description                                                                                              |
+| ----------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| `app/(app)/workflows/history/page.tsx`    | **MODIFY** | Current placeholder page that must be replaced with the full implementation                              |
+| `hooks/queries/use-workflows.ts`          | **MODIFY** | Needs new hooks for workflow history filtering (by terminal status, date range) and statistics queries   |
+| `lib/queries/workflows.ts`                | **MODIFY** | Query key factory needs new keys for `history` queries, `byStatuses` (plural), and `statistics`          |
 | `db/repositories/workflows.repository.ts` | **MODIFY** | Needs new repository methods for filtering by multiple statuses, date ranges, pagination, and statistics |
-| `electron/ipc/workflow.handlers.ts` | **MODIFY** | Needs new IPC handlers for history listing with filters, statistics endpoint |
-| `electron/ipc/channels.ts` | **MODIFY** | Needs new channel constants for history and statistics endpoints |
-| `electron/preload.ts` | **MODIFY** | Needs to expose new workflow history and statistics methods to the renderer |
-| `types/electron.d.ts` | **MODIFY** | Needs type definitions for new workflow history API methods |
+| `electron/ipc/workflow.handlers.ts`       | **MODIFY** | Needs new IPC handlers for history listing with filters, statistics endpoint                             |
+| `electron/ipc/channels.ts`                | **MODIFY** | Needs new channel constants for history and statistics endpoints                                         |
+| `electron/preload.ts`                     | **MODIFY** | Needs to expose new workflow history and statistics methods to the renderer                              |
+| `types/electron.d.ts`                     | **MODIFY** | Needs type definitions for new workflow history API methods                                              |
 
 ### High Priority (Pattern Reference/May Need Updates)
 
-| File Path | Status | Description |
-|-----------|--------|-------------|
-| `app/(app)/workflows/page.tsx` | Reference | Main workflows page - excellent pattern for URL state via nuqs, view toggle, filtering, table/card views |
-| `app/(app)/templates/page.tsx` | Reference | Most comprehensive page - shows card/table toggle, bulk actions, selection, URL filtering patterns |
-| `components/workflows/workflow-table.tsx` | Reference | Existing table component - can be adapted or referenced for history table with additional columns |
-| `components/workflows/workflow-card.tsx` | Reference | Shows badge variants for status, date formatting with date-fns |
-| `hooks/queries/use-audit-logs.ts` | Reference | Pattern for `useExportAuditLog` mutation needed for row action export |
-| `db/schema/workflows.schema.ts` | Reference | Schema defines `workflowStatuses` array, `durationMs` field, `completedAt` timestamp |
-| `app/(app)/dashboard/_components/statistics-widget.tsx` | Reference | Shows statistics calculation patterns (completion rate, average duration) and stat card styling |
+| File Path                                               | Status    | Description                                                                                              |
+| ------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| `app/(app)/workflows/page.tsx`                          | Reference | Main workflows page - excellent pattern for URL state via nuqs, view toggle, filtering, table/card views |
+| `app/(app)/templates/page.tsx`                          | Reference | Most comprehensive page - shows card/table toggle, bulk actions, selection, URL filtering patterns       |
+| `components/workflows/workflow-table.tsx`               | Reference | Existing table component - can be adapted or referenced for history table with additional columns        |
+| `components/workflows/workflow-card.tsx`                | Reference | Shows badge variants for status, date formatting with date-fns                                           |
+| `hooks/queries/use-audit-logs.ts`                       | Reference | Pattern for `useExportAuditLog` mutation needed for row action export                                    |
+| `db/schema/workflows.schema.ts`                         | Reference | Schema defines `workflowStatuses` array, `durationMs` field, `completedAt` timestamp                     |
+| `app/(app)/dashboard/_components/statistics-widget.tsx` | Reference | Shows statistics calculation patterns (completion rate, average duration) and stat card styling          |
 
 ### Medium Priority (UI Components/Supporting)
 
-| File Path | Status | Description |
-|-----------|--------|-------------|
-| `components/ui/badge.tsx` | Reference | Badge component with status variants (completed, failed, stale for cancelled) already defined |
-| `components/ui/card.tsx` | Reference | Card components for metrics summary cards |
-| `components/ui/input.tsx` | Reference | Input component - will need for date inputs |
-| `components/ui/select.tsx` | Reference | Select component for status filter dropdown |
-| `components/ui/button.tsx` | Reference | Button component for actions |
-| `components/ui/empty-state.tsx` | Reference | Empty state component for when no history exists |
-| `components/data/query-error-boundary.tsx` | Reference | Error boundary for TanStack Query |
+| File Path                                  | Status    | Description                                                                                   |
+| ------------------------------------------ | --------- | --------------------------------------------------------------------------------------------- |
+| `components/ui/badge.tsx`                  | Reference | Badge component with status variants (completed, failed, stale for cancelled) already defined |
+| `components/ui/card.tsx`                   | Reference | Card components for metrics summary cards                                                     |
+| `components/ui/input.tsx`                  | Reference | Input component - will need for date inputs                                                   |
+| `components/ui/select.tsx`                 | Reference | Select component for status filter dropdown                                                   |
+| `components/ui/button.tsx`                 | Reference | Button component for actions                                                                  |
+| `components/ui/empty-state.tsx`            | Reference | Empty state component for when no history exists                                              |
+| `components/data/query-error-boundary.tsx` | Reference | Error boundary for TanStack Query                                                             |
 
 ### Low Priority (Reference/Context)
 
-| File Path | Status | Description |
-|-----------|--------|-------------|
-| `app/(app)/workflows/[id]/_components/step-status-badge.tsx` | Reference | Pattern for status-to-badge-variant mapping |
-| `electron/ipc/audit.handlers.ts` | Reference | Pattern for export handler implementation |
-| `lib/utils.ts` | Reference | Contains `cn()` utility for className merging |
-| `hooks/use-toast.ts` | Reference | Toast notifications for export success/error |
-| `hooks/use-electron.ts` | Reference | `useElectron` hook for API access pattern |
-| `types/component-types.ts` | Reference | Global type definitions (`ClassName`, `RequiredChildren`) |
+| File Path                                                    | Status    | Description                                               |
+| ------------------------------------------------------------ | --------- | --------------------------------------------------------- |
+| `app/(app)/workflows/[id]/_components/step-status-badge.tsx` | Reference | Pattern for status-to-badge-variant mapping               |
+| `electron/ipc/audit.handlers.ts`                             | Reference | Pattern for export handler implementation                 |
+| `lib/utils.ts`                                               | Reference | Contains `cn()` utility for className merging             |
+| `hooks/use-toast.ts`                                         | Reference | Toast notifications for export success/error              |
+| `hooks/use-electron.ts`                                      | Reference | `useElectron` hook for API access pattern                 |
+| `types/component-types.ts`                                   | Reference | Global type definitions (`ClassName`, `RequiredChildren`) |
 
 ## Architecture Insights
 
@@ -99,20 +99,20 @@ The Workflow History page at `/workflows/history` needs to be implemented to rep
 
 ## File Validation Results
 
-| File Path | Exists | Accessible |
-|-----------|--------|------------|
-| `app/(app)/workflows/history/page.tsx` | Yes | Yes |
-| `hooks/queries/use-workflows.ts` | Yes | Yes |
-| `lib/queries/workflows.ts` | Yes | Yes |
-| `db/repositories/workflows.repository.ts` | Yes | Yes |
-| `electron/ipc/workflow.handlers.ts` | Yes | Yes |
-| `electron/ipc/channels.ts` | Yes | Yes |
-| `electron/preload.ts` | Yes | Yes |
-| `types/electron.d.ts` | Yes | Yes |
-| `app/(app)/workflows/page.tsx` | Yes | Yes |
-| `components/workflows/workflow-table.tsx` | Yes | Yes |
-| `components/ui/badge.tsx` | Yes | Yes |
-| `db/schema/workflows.schema.ts` | Yes | Yes |
+| File Path                                 | Exists | Accessible |
+| ----------------------------------------- | ------ | ---------- |
+| `app/(app)/workflows/history/page.tsx`    | Yes    | Yes        |
+| `hooks/queries/use-workflows.ts`          | Yes    | Yes        |
+| `lib/queries/workflows.ts`                | Yes    | Yes        |
+| `db/repositories/workflows.repository.ts` | Yes    | Yes        |
+| `electron/ipc/workflow.handlers.ts`       | Yes    | Yes        |
+| `electron/ipc/channels.ts`                | Yes    | Yes        |
+| `electron/preload.ts`                     | Yes    | Yes        |
+| `types/electron.d.ts`                     | Yes    | Yes        |
+| `app/(app)/workflows/page.tsx`            | Yes    | Yes        |
+| `components/workflows/workflow-table.tsx` | Yes    | Yes        |
+| `components/ui/badge.tsx`                 | Yes    | Yes        |
+| `db/schema/workflows.schema.ts`           | Yes    | Yes        |
 
 All discovered files validated successfully.
 

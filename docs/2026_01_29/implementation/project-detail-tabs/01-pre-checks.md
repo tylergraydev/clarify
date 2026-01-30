@@ -11,15 +11,16 @@
 
 ## Plan Summary
 
-| Attribute | Value |
-|-----------|-------|
+| Attribute            | Value  |
+| -------------------- | ------ |
 | Estimated Complexity | Medium |
-| Risk Level | Low |
-| Total Steps | 9 |
+| Risk Level           | Low    |
+| Total Steps          | 9      |
 
 ## Prerequisites Validation
 
 The following prerequisites will be validated during implementation:
+
 - [ ] `useRepositoriesByProject`, `useWorkflowsByProject`, `useAgentsByProject` hooks
 - [ ] `useDeleteRepository`, `useSetDefaultRepository` mutations
 - [ ] `EmptyState` component availability

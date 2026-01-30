@@ -1,21 +1,28 @@
 // Re-export database types for renderer use
 export type {
   Agent,
+  AgentSkill,
+  AgentTool,
   AuditLog,
   DiscoveredFile,
   NewAgent,
+  NewAgentSkill,
+  NewAgentTool,
   NewAuditLog,
   NewDiscoveredFile,
   NewProject,
   NewRepository,
   NewSetting,
   NewTemplate,
+  NewTemplatePlaceholder,
   NewWorkflow,
   Project,
   Repository,
   Setting,
   Template,
+  TemplatePlaceholder,
   Workflow,
+  WorkflowRepository,
   WorkflowStep,
   Worktree,
 } from "../db/schema";
@@ -31,6 +38,34 @@ export interface ElectronAPI {
       id: number,
       data: Partial<import("../db/schema").NewAgent>
     ): Promise<import("../db/schema").Agent | undefined>;
+  };
+  agentSkill: {
+    create(
+      data: import("../db/schema").NewAgentSkill
+    ): Promise<import("../db/schema").AgentSkill>;
+    delete(id: number): Promise<void>;
+    list(agentId: number): Promise<Array<import("../db/schema").AgentSkill>>;
+    setRequired(
+      id: number,
+      required: boolean
+    ): Promise<import("../db/schema").AgentSkill | undefined>;
+    update(
+      id: number,
+      data: Partial<import("../db/schema").NewAgentSkill>
+    ): Promise<import("../db/schema").AgentSkill | undefined>;
+  };
+  agentTool: {
+    allow(id: number): Promise<import("../db/schema").AgentTool | undefined>;
+    create(
+      data: import("../db/schema").NewAgentTool
+    ): Promise<import("../db/schema").AgentTool>;
+    delete(id: number): Promise<void>;
+    disallow(id: number): Promise<import("../db/schema").AgentTool | undefined>;
+    list(agentId: number): Promise<Array<import("../db/schema").AgentTool>>;
+    update(
+      id: number,
+      data: Partial<import("../db/schema").NewAgentTool>
+    ): Promise<import("../db/schema").AgentTool | undefined>;
   };
   app: {
     getPath(
@@ -193,6 +228,7 @@ export interface ElectronAPI {
     regenerate(
       id: number
     ): Promise<import("../db/schema").WorkflowStep | undefined>;
+    skip(id: number): Promise<import("../db/schema").WorkflowStep | undefined>;
   };
   store: {
     delete(key: string): Promise<boolean>;
@@ -205,6 +241,9 @@ export interface ElectronAPI {
     ): Promise<import("../db/schema").Template>;
     delete(id: number): Promise<boolean>;
     get(id: number): Promise<import("../db/schema").Template | undefined>;
+    getPlaceholders(
+      templateId: number
+    ): Promise<Array<import("../db/schema").TemplatePlaceholder>>;
     incrementUsage(
       id: number
     ): Promise<import("../db/schema").Template | undefined>;
@@ -213,12 +252,19 @@ export interface ElectronAPI {
       id: number,
       data: Partial<import("../db/schema").NewTemplate>
     ): Promise<import("../db/schema").Template | undefined>;
+    updatePlaceholders(
+      templateId: number,
+      placeholders: Array<
+        Omit<import("../db/schema").NewTemplatePlaceholder, "templateId">
+      >
+    ): Promise<Array<import("../db/schema").TemplatePlaceholder>>;
   };
   workflow: {
     cancel(id: number): Promise<import("../db/schema").Workflow | undefined>;
     create(
       data: import("../db/schema").NewWorkflow
     ): Promise<import("../db/schema").Workflow>;
+    delete(id: number): Promise<boolean>;
     get(id: number): Promise<import("../db/schema").Workflow | undefined>;
     getStatistics(filters?: {
       dateFrom?: string;
@@ -226,10 +272,32 @@ export interface ElectronAPI {
       projectId?: number;
     }): Promise<WorkflowStatistics>;
     list(): Promise<Array<import("../db/schema").Workflow>>;
-    listHistory(filters?: WorkflowHistoryFilters): Promise<WorkflowHistoryResult>;
+    listHistory(
+      filters?: WorkflowHistoryFilters
+    ): Promise<WorkflowHistoryResult>;
     pause(id: number): Promise<import("../db/schema").Workflow | undefined>;
     resume(id: number): Promise<import("../db/schema").Workflow | undefined>;
     start(id: number): Promise<import("../db/schema").Workflow | undefined>;
+  };
+  workflowRepository: {
+    add(
+      workflowId: number,
+      repositoryId: number,
+      isPrimary?: boolean
+    ): Promise<import("../db/schema").WorkflowRepository>;
+    addMultiple(
+      workflowId: number,
+      repositoryIds: Array<number>,
+      primaryRepositoryId?: number
+    ): Promise<Array<import("../db/schema").WorkflowRepository>>;
+    list(
+      workflowId: number
+    ): Promise<Array<import("../db/schema").WorkflowRepository>>;
+    remove(workflowId: number, repositoryId: number): Promise<boolean>;
+    setPrimary(
+      workflowId: number,
+      repositoryId: number
+    ): Promise<import("../db/schema").WorkflowRepository | undefined>;
   };
   worktree: {
     get(id: number): Promise<import("../db/schema").Worktree | undefined>;

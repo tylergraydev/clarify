@@ -6,8 +6,8 @@
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
+| File                                                         | Purpose                                                  |
+| ------------------------------------------------------------ | -------------------------------------------------------- |
 | `app/(app)/workflows/[id]/_components/step-status-badge.tsx` | StepStatusBadge component with status-to-variant mapping |
 
 ## Implementation Summary
@@ -16,17 +16,18 @@ Created `StepStatusBadge` component that wraps the Badge component with step-spe
 
 ```typescript
 const stepStatusVariantMap: Record<StepStatus, BadgeVariant> = {
-  completed: "completed",  // green
-  editing: "clarifying",   // yellow
-  failed: "failed",        // red
-  paused: "draft",         // neutral gray
-  pending: "default",      // neutral gray
-  running: "planning",     // purple (indicates active work)
-  skipped: "stale",        // amber/muted
+  completed: "completed", // green
+  editing: "clarifying", // yellow
+  failed: "failed", // red
+  paused: "draft", // neutral gray
+  pending: "default", // neutral gray
+  running: "planning", // purple (indicates active work)
+  skipped: "stale", // amber/muted
 };
 ```
 
 ### Exports
+
 - `StepStatusBadge` - Component wrapping Badge with step-specific mapping
 - `getStepStatusVariant(status: StepStatus): BadgeVariant` - Helper function for external use
 

@@ -13,23 +13,25 @@ Refined Request: Implement a comprehensive dashboard UI at app/(app)/dashboard/p
 ## File Discovery Results
 
 ### Critical Priority (Must Modify/Use)
-| File | Purpose |
-|------|---------|
-| `app/(app)/dashboard/page.tsx` | Main dashboard page (placeholder → full implementation) |
-| `hooks/queries/use-workflows.ts` | Workflow data hooks for Active/Recent widgets |
-| `hooks/queries/use-projects.ts` | Project data hooks for Statistics widget |
-| `lib/queries/workflows.ts` | Query key factory for caching |
-| `lib/queries/projects.ts` | Query key factory for caching |
-| `components/ui/card.tsx` | Card component for widget containers |
-| `components/ui/button.tsx` | Button component for Quick Actions |
-| `components/ui/badge.tsx` | Badge component for status indicators |
+
+| File                             | Purpose                                                 |
+| -------------------------------- | ------------------------------------------------------- |
+| `app/(app)/dashboard/page.tsx`   | Main dashboard page (placeholder → full implementation) |
+| `hooks/queries/use-workflows.ts` | Workflow data hooks for Active/Recent widgets           |
+| `hooks/queries/use-projects.ts`  | Project data hooks for Statistics widget                |
+| `lib/queries/workflows.ts`       | Query key factory for caching                           |
+| `lib/queries/projects.ts`        | Query key factory for caching                           |
+| `components/ui/card.tsx`         | Card component for widget containers                    |
+| `components/ui/button.tsx`       | Button component for Quick Actions                      |
+| `components/ui/badge.tsx`        | Badge component for status indicators                   |
 
 ### High Priority (Patterns/Types)
-| File | Purpose |
-|------|---------|
+
+| File                            | Purpose                          |
+| ------------------------------- | -------------------------------- |
 | `db/schema/workflows.schema.ts` | Workflow status types and fields |
-| `db/schema/projects.schema.ts` | Project schema structure |
-| `types/electron.d.ts` | Type definitions for IPC |
+| `db/schema/projects.schema.ts`  | Project schema structure         |
+| `types/electron.d.ts`           | Type definitions for IPC         |
 
 ---
 
@@ -66,9 +68,11 @@ Refined Request: Implement a comprehensive dashboard UI at app/(app)/dashboard/p
 **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/dashboard/_components/active-workflows-widget.tsx` - Active workflows display component
 
 **Changes**:
+
 - Import useWorkflows hook with status filter capability
 - Import Card component for container styling
 - Import Badge component for status indicators
@@ -81,11 +85,13 @@ Refined Request: Implement a comprehensive dashboard UI at app/(app)/dashboard/p
 - Format progress percentage from current step index and total steps
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Component renders without TypeScript errors
 - [ ] Loading state displays appropriate skeleton UI
 - [ ] Error state integrates with QueryErrorBoundary
@@ -105,9 +111,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/dashboard/_components/recent-workflows-widget.tsx` - Recent workflows display component
 
 **Changes**:
+
 - Import useWorkflows hook with status filter for completed/failed/cancelled
 - Import Card and Badge components
 - Configure query to fetch 10 most recent workflows sorted by updated_at descending
@@ -120,11 +128,13 @@ pnpm lint && pnpm typecheck
 - Apply status-specific badge variants for visual distinction
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Component renders without TypeScript errors
 - [ ] Query correctly limits to 10 workflows with proper sorting
 - [ ] Status badges use appropriate variants for each status type
@@ -144,9 +154,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: Medium
 
 **Files to Create:**
+
 - `app/(app)/dashboard/_components/statistics-widget.tsx` - Statistics display component
 
 **Changes**:
+
 - Import useWorkflows and useProjects hooks
 - Import Card component
 - Fetch all workflows and all projects data
@@ -161,11 +173,13 @@ pnpm lint && pnpm typecheck
 - Handle edge cases like division by zero for completion rate
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Component renders without TypeScript errors
 - [ ] All four statistics calculate correctly from query data
 - [ ] Loading state displays skeleton UI for all metrics
@@ -185,9 +199,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/dashboard/_components/quick-actions-widget.tsx` - Quick actions component
 
 **Changes**:
+
 - Import Card and Button components
 - Import navigation utilities from next/navigation
 - Render Card container with appropriate styling
@@ -199,11 +215,13 @@ pnpm lint && pnpm typecheck
 - Apply proper spacing and alignment using Tailwind utilities
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Component renders without TypeScript errors
 - [ ] Both buttons display with correct variants and styling
 - [ ] Navigation handlers route to correct pages
@@ -222,9 +240,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/dashboard/page.tsx` - Update from placeholder to full implementation
 
 **Changes**:
+
 - Remove placeholder content
 - Import all four widget components
 - Import necessary layout utilities
@@ -238,11 +258,13 @@ pnpm lint && pnpm typecheck
 - Add page metadata using Next.js metadata API
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Dashboard page renders all widgets correctly
 - [ ] Layout is responsive and functional on all screen sizes
 - [ ] Spacing and alignment follow design system conventions
@@ -261,18 +283,22 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files to Create:**
+
 - `app/(app)/dashboard/_types/index.ts` - Shared dashboard types
 
 **Changes**:
+
 - Define WorkflowCardData type with fields needed for display
 - Define StatisticData type for statistics widget
 - Define WorkflowStatusFilter type for filtering workflows
 - Export all types for use across dashboard components
 
 **Files to Create:**
+
 - `app/(app)/dashboard/_utils/index.ts` - Shared dashboard utilities
 
 **Changes**:
+
 - Create calculateProgress function for workflow progress percentage
 - Create calculateElapsedTime function for time formatting
 - Create formatWorkflowDuration function for duration display
@@ -280,11 +306,13 @@ pnpm lint && pnpm typecheck
 - Export all utility functions
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] All types are properly defined and exported
 - [ ] Utility functions handle edge cases correctly
 - [ ] Functions are pure and testable
@@ -301,10 +329,12 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/dashboard/_components/active-workflows-widget.tsx` - Add navigation implementation
 - `app/(app)/dashboard/_components/recent-workflows-widget.tsx` - Add navigation implementation
 
 **Changes**:
+
 - Import useRouter from next/navigation
 - Add click handlers that navigate to workflow detail page using workflow ID
 - Implement cursor-pointer styling for clickable cards
@@ -313,11 +343,13 @@ pnpm lint && pnpm typecheck
 - Consider using next/link for better performance if applicable
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Navigation from dashboard to workflow details works correctly
 - [ ] Keyboard navigation is fully functional
 - [ ] Hover and focus states provide clear visual feedback
@@ -335,11 +367,13 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files to Modify:**
+
 - `app/(app)/dashboard/_components/active-workflows-widget.tsx` - Add loading/error states
 - `app/(app)/dashboard/_components/recent-workflows-widget.tsx` - Add loading/error states
 - `app/(app)/dashboard/_components/statistics-widget.tsx` - Add loading/error states
 
 **Changes**:
+
 - Import QueryErrorBoundary from components/data
 - Wrap each widget's content with QueryErrorBoundary
 - Implement skeleton loading states using Card component variants
@@ -349,11 +383,13 @@ pnpm lint && pnpm typecheck
 - Ensure loading states don't cause layout shift
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Loading skeletons match final content layout
 - [ ] Error states display helpful messages with retry options
 - [ ] Empty states guide users toward creating content
@@ -365,6 +401,7 @@ pnpm lint && pnpm typecheck
 ## Quality Gates
 
 ### Gate 1: Component Compilation and Type Safety
+
 - **Trigger**: After each component creation step (Steps 1-4, 6)
 - **Checks**:
   - TypeScript compilation passes without errors
@@ -373,6 +410,7 @@ pnpm lint && pnpm typecheck
 - **Pass Criteria**: `pnpm lint && pnpm typecheck` executes successfully
 
 ### Gate 2: Data Integration Verification
+
 - **Trigger**: After Step 5 (dashboard composition)
 - **Checks**:
   - useWorkflows hook returns expected data structure
@@ -382,6 +420,7 @@ pnpm lint && pnpm typecheck
 - **Pass Criteria**: Dashboard displays real data without runtime errors when queries return data
 
 ### Gate 3: UX and Accessibility
+
 - **Trigger**: After Steps 7-8 (navigation and states)
 - **Checks**:
   - Keyboard navigation works for all interactive elements
@@ -392,6 +431,7 @@ pnpm lint && pnpm typecheck
 - **Pass Criteria**: Manual testing confirms all interactive patterns work as expected
 
 ### Gate 4: Final Integration
+
 - **Trigger**: After all steps complete
 - **Checks**:
   - Dashboard page renders correctly in development mode

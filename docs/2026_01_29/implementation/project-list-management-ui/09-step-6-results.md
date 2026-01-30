@@ -12,11 +12,11 @@
 
 ```typescript
 interface ConfirmArchiveDialogProps {
-  isArchived: boolean;       // Determines archive vs unarchive action
-  isLoading?: boolean;       // Disables buttons during mutation
-  onConfirm: () => void;     // Callback when user confirms
-  projectName: string;       // Displayed in dialog description
-  trigger: ReactNode;        // Element that opens the dialog
+  isArchived: boolean; // Determines archive vs unarchive action
+  isLoading?: boolean; // Disables buttons during mutation
+  onConfirm: () => void; // Callback when user confirms
+  projectName: string; // Displayed in dialog description
+  trigger: ReactNode; // Element that opens the dialog
 }
 ```
 

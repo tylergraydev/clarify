@@ -5,11 +5,21 @@
  * - Listing templates with optional category filtering
  * - CRUD operations for templates
  * - Usage tracking for templates
+ * - Template placeholder management
  */
 import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { TemplatesRepository } from "../../db/repositories";
-import type { NewTemplate, Template, TemplateCategory } from "../../db/schema";
+import type {
+  TemplatePlaceholdersRepository,
+  TemplatesRepository,
+} from "../../db/repositories";
+import type {
+  NewTemplate,
+  NewTemplatePlaceholder,
+  Template,
+  TemplateCategory,
+  TemplatePlaceholder,
+} from "../../db/schema";
 
 import { IpcChannels } from "./channels";
 
@@ -25,9 +35,11 @@ interface TemplateListFilters {
  * Register all template-related IPC handlers.
  *
  * @param templatesRepository - The templates repository for database operations
+ * @param placeholdersRepository - The template placeholders repository for placeholder operations
  */
 export function registerTemplateHandlers(
-  templatesRepository: TemplatesRepository
+  templatesRepository: TemplatesRepository,
+  placeholdersRepository: TemplatePlaceholdersRepository
 ): void {
   // List templates with optional category filter
   ipcMain.handle(
@@ -81,6 +93,32 @@ export function registerTemplateHandlers(
     IpcChannels.template.incrementUsage,
     (_event: IpcMainInvokeEvent, id: number): Template | undefined => {
       return templatesRepository.incrementUsageCount(id);
+    }
+  );
+
+  // Get placeholders for a template
+  ipcMain.handle(
+    IpcChannels.template.getPlaceholders,
+    (
+      _event: IpcMainInvokeEvent,
+      templateId: number
+    ): Array<TemplatePlaceholder> => {
+      return placeholdersRepository.findByTemplateId(templateId);
+    }
+  );
+
+  // Update (replace) placeholders for a template
+  ipcMain.handle(
+    IpcChannels.template.updatePlaceholders,
+    (
+      _event: IpcMainInvokeEvent,
+      templateId: number,
+      placeholders: Array<Omit<NewTemplatePlaceholder, "templateId">>
+    ): Array<TemplatePlaceholder> => {
+      return placeholdersRepository.replaceForTemplate(
+        templateId,
+        placeholders
+      );
     }
   );
 }

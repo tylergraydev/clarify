@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import type { ReactElement } from 'react';
+import type { ReactElement } from "react";
 
-import { SettingsSection } from './settings-section';
+import { SettingsSection } from "./settings-section";
 
 interface LoggingSettingsSectionProps {
   form: SettingsFormApi;
@@ -42,13 +42,15 @@ export const LoggingSettingsSection = ({
   form,
 }: LoggingSettingsSectionProps): ReactElement => {
   return (
-    <SettingsSection title={'Logging & Audit'}>
+    <SettingsSection title={"Logging & Audit"}>
       {/* Log Retention Days */}
-      <form.AppField name={'logging.logRetentionDays'}>
+      <form.AppField name={"logging.logRetentionDays"}>
         {(field) => (
           <field.NumberField
-            description={'Number of days to retain workflow logs before automatic cleanup'}
-            label={'Log Retention (days)'}
+            description={
+              "Number of days to retain workflow logs before automatic cleanup"
+            }
+            label={"Log Retention (days)"}
             max={365}
             min={1}
             step={1}
@@ -57,33 +59,35 @@ export const LoggingSettingsSection = ({
       </form.AppField>
 
       {/* Export Logs With Database */}
-      <form.AppField name={'logging.exportLogsWithDatabase'}>
+      <form.AppField name={"logging.exportLogsWithDatabase"}>
         {(field) => (
           <field.SwitchField
-            description={'Include database records when exporting workflow logs'}
-            label={'Export Logs with Database'}
+            description={
+              "Include database records when exporting workflow logs"
+            }
+            label={"Export Logs with Database"}
           />
         )}
       </form.AppField>
 
       {/* Include CLI Output */}
-      <form.AppField name={'logging.includeCliOutput'}>
+      <form.AppField name={"logging.includeCliOutput"}>
         {(field) => (
           <field.SwitchField
-            description={'Include raw CLI output in exported log files'}
-            label={'Include CLI Output'}
+            description={"Include raw CLI output in exported log files"}
+            label={"Include CLI Output"}
           />
         )}
       </form.AppField>
 
       {/* Log Export Location */}
-      <form.AppField name={'logging.logExportLocation'}>
+      <form.AppField name={"logging.logExportLocation"}>
         {(field) => (
           <field.PathInputField
-            description={'Directory where exported log files will be saved'}
+            description={"Directory where exported log files will be saved"}
             isRequired={true}
-            label={'Log Export Location'}
-            placeholder={'Select a directory for log exports'}
+            label={"Log Export Location"}
+            placeholder={"Select a directory for log exports"}
           />
         )}
       </form.AppField>

@@ -24,12 +24,14 @@
 ## Component Features
 
 **Props**:
+
 - `agent` - Agent data to edit
 - `projectId` - Project ID for scoping changes
 - `trigger` - Trigger element for dialog
 - `onSuccess` - Callback on successful update
 
 **Features**:
+
 - Displays base agent info (name, type, color) as read-only reference
 - Shows project-level override indicator banner
 - Distinguishes between existing overrides and creating new ones

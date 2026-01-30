@@ -6,11 +6,13 @@
 ## Validation Commands
 
 ### pnpm lint
+
 **Status**: PASS
 
 No linting errors or warnings.
 
 ### pnpm typecheck
+
 **Status**: PASS
 
 No TypeScript errors.

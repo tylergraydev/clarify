@@ -22,9 +22,7 @@ import { cn } from "@/lib/utils";
 type AgentColor = Agent["color"];
 
 type AgentType = Agent["type"];
-type BadgeVariant = NonNullable<
-  Parameters<typeof badgeVariants>[0]
->["variant"];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
 
 const getTypeVariant = (type: AgentType): BadgeVariant => {
   const typeVariantMap: Record<string, BadgeVariant> = {
@@ -43,22 +41,22 @@ const formatTypeLabel = (type: AgentType): string => {
 };
 
 const getColorClasses = (color: AgentColor): string => {
+  // Only include colors from agentColors schema: ["green", "blue", "yellow", "cyan", "red"]
   const colorClassMap: Record<string, string> = {
     blue: "bg-blue-500",
     cyan: "bg-cyan-500",
-    gray: "bg-gray-500",
     green: "bg-green-500",
-    magenta: "bg-fuchsia-500",
-    orange: "bg-orange-500",
     red: "bg-red-500",
     yellow: "bg-yellow-500",
   };
 
-  return colorClassMap[color ?? ""] ?? "bg-gray-500";
+  return colorClassMap[color ?? ""] ?? "bg-blue-500";
 };
 
-interface AgentCardProps
-  extends Omit<ComponentPropsWithRef<"div">, "onClick" | "onReset"> {
+interface AgentCardProps extends Omit<
+  ComponentPropsWithRef<"div">,
+  "onClick" | "onReset"
+> {
   agent: Agent;
   isResetting?: boolean;
   isToggling?: boolean;

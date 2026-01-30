@@ -1,20 +1,22 @@
-'use client';
+"use client";
 
-import type { ComponentPropsWithRef, DragEvent } from 'react';
+import type { ComponentPropsWithRef, DragEvent } from "react";
 
-import { GripVertical, Plus, Trash2 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 
-import type { TemplatePlaceholderFormValues } from '@/lib/validations/template';
+import type { TemplatePlaceholderFormValues } from "@/lib/validations/template";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
-interface PlaceholderEditorProps
-  extends Omit<ComponentPropsWithRef<'div'>, 'onChange'> {
+interface PlaceholderEditorProps extends Omit<
+  ComponentPropsWithRef<"div">,
+  "onChange"
+> {
   onChange: (placeholders: Array<TemplatePlaceholderFormValues>) => void;
   placeholders: Array<TemplatePlaceholderFormValues>;
 }
@@ -32,13 +34,13 @@ const PLACEHOLDER_NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_]*$/;
 const createDefaultPlaceholder = (
   orderIndex: number
 ): TemplatePlaceholderFormValues => ({
-  defaultValue: '',
-  description: '',
-  displayName: '',
+  defaultValue: "",
+  description: "",
+  displayName: "",
   isRequired: false,
-  name: '',
+  name: "",
   orderIndex,
-  validationPattern: '',
+  validationPattern: "",
 });
 
 const validatePlaceholder = (
@@ -48,19 +50,19 @@ const validatePlaceholder = (
 
   // Validate name
   if (!placeholder.name) {
-    errors.name = 'Placeholder name is required';
+    errors.name = "Placeholder name is required";
   } else if (placeholder.name.length > 100) {
-    errors.name = 'Placeholder name is too long';
+    errors.name = "Placeholder name is too long";
   } else if (!PLACEHOLDER_NAME_REGEX.test(placeholder.name)) {
     errors.name =
-      'Name must start with a letter and contain only letters, numbers, and underscores';
+      "Name must start with a letter and contain only letters, numbers, and underscores";
   }
 
   // Validate displayName
   if (!placeholder.displayName) {
-    errors.displayName = 'Display name is required';
+    errors.displayName = "Display name is required";
   } else if (placeholder.displayName.length > 255) {
-    errors.displayName = 'Display name is too long';
+    errors.displayName = "Display name is too long";
   }
 
   // Validate validationPattern (regex)
@@ -68,7 +70,7 @@ const validatePlaceholder = (
     try {
       new RegExp(placeholder.validationPattern);
     } catch {
-      errors.validationPattern = 'Invalid regular expression pattern';
+      errors.validationPattern = "Invalid regular expression pattern";
     }
   }
 
@@ -185,10 +187,10 @@ export const PlaceholderEditor = ({
   }, []);
 
   return (
-    <div className={cn('flex flex-col gap-4', className)} ref={ref} {...props}>
+    <div className={cn("flex flex-col gap-4", className)} ref={ref} {...props}>
       {/* Placeholder List */}
       {placeholders.length > 0 && (
-        <div className={'flex flex-col gap-3'}>
+        <div className={"flex flex-col gap-3"}>
           {placeholders.map((placeholder, index) => {
             const errors = validationErrors.get(index) ?? {};
             const isDragging = draggedIndex === index;
@@ -199,9 +201,9 @@ export const PlaceholderEditor = ({
             return (
               <Card
                 className={cn(
-                  'transition-all',
-                  isDragging && 'opacity-50',
-                  isDragOver && 'border-accent'
+                  "transition-all",
+                  isDragging && "opacity-50",
+                  isDragOver && "border-accent"
                 )}
                 draggable
                 key={index}
@@ -211,85 +213,85 @@ export const PlaceholderEditor = ({
                 onDragStart={() => handleDragStart(index)}
               >
                 {/* Card Header with Drag Handle and Remove Button */}
-                <CardHeader className={'flex flex-row items-center gap-2 pb-3'}>
+                <CardHeader className={"flex flex-row items-center gap-2 pb-3"}>
                   {/* Drag Handle */}
                   <button
-                    aria-label={'Drag to reorder'}
+                    aria-label={"Drag to reorder"}
                     className={cn(
-                      'cursor-grab text-muted-foreground transition-colors',
-                      'hover:text-foreground',
-                      'focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none',
-                      'active:cursor-grabbing'
+                      "cursor-grab text-muted-foreground transition-colors",
+                      "hover:text-foreground",
+                      "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",
+                      "active:cursor-grabbing"
                     )}
-                    type={'button'}
+                    type={"button"}
                   >
-                    <GripVertical aria-hidden={'true'} className={'size-5'} />
+                    <GripVertical aria-hidden={"true"} className={"size-5"} />
                   </button>
 
                   {/* Title */}
-                  <CardTitle className={'flex-1 text-base'}>
+                  <CardTitle className={"flex-1 text-base"}>
                     {placeholderTitle}
                   </CardTitle>
 
                   {/* Remove Button */}
                   <Button
-                    aria-label={'Remove placeholder'}
+                    aria-label={"Remove placeholder"}
                     onClick={() => handleRemovePlaceholder(index)}
-                    size={'icon-sm'}
-                    type={'button'}
-                    variant={'ghost'}
+                    size={"icon-sm"}
+                    type={"button"}
+                    variant={"ghost"}
                   >
-                    <Trash2 aria-hidden={'true'} className={'size-4'} />
+                    <Trash2 aria-hidden={"true"} className={"size-4"} />
                   </Button>
                 </CardHeader>
 
                 {/* Card Content with Form Fields */}
-                <CardContent className={'flex flex-col gap-4'}>
+                <CardContent className={"flex flex-col gap-4"}>
                   {/* Name and Display Name Row */}
-                  <div className={'grid grid-cols-2 gap-4'}>
+                  <div className={"grid grid-cols-2 gap-4"}>
                     {/* Name Field */}
-                    <div className={'flex flex-col gap-1.5'}>
+                    <div className={"flex flex-col gap-1.5"}>
                       <label
-                        className={'text-sm font-medium text-foreground'}
+                        className={"text-sm font-medium text-foreground"}
                         htmlFor={`placeholder-${index}-name`}
                       >
-                        {'Name'}
+                        {"Name"}
                         <span
-                          aria-hidden={'true'}
-                          className={'ml-0.5 text-destructive'}
+                          aria-hidden={"true"}
+                          className={"ml-0.5 text-destructive"}
                         >
-                          {'*'}
+                          {"*"}
                         </span>
                       </label>
                       <Input
                         id={`placeholder-${index}-name`}
                         isInvalid={Boolean(errors.name)}
                         onChange={(e) =>
-                          handlePlaceholderChange(index, 'name', e.target.value)
+                          handlePlaceholderChange(index, "name", e.target.value)
                         }
-                        placeholder={'entityName'}
-                        size={'sm'}
+                        placeholder={"entityName"}
+                        size={"sm"}
                         value={placeholder.name}
                       />
                       {errors.name && (
-                        <span className={'text-sm text-destructive'}>
+                        <span className={"text-sm text-destructive"}>
                           {errors.name}
                         </span>
                       )}
                     </div>
 
                     {/* Display Name Field */}
-                    <div className={'flex flex-col gap-1.5'}>
+                    <div className={"flex flex-col gap-1.5"}>
                       <label
-                        className={'text-sm font-medium text-foreground'}
+                        className={"text-sm font-medium text-foreground"}
                         htmlFor={`placeholder-${index}-displayName`}
                       >
-                        {'Display Name'}
+                        {"Display Name"}
                         <span
-                          aria-hidden={'true'}
-                          className={'ml-0.5 text-destructive'}
+                          aria-hidden={"true"}
+                          className={"ml-0.5 text-destructive"}
                         >
-                          {'*'}
+                          {"*"}
                         </span>
                       </label>
                       <Input
@@ -298,16 +300,16 @@ export const PlaceholderEditor = ({
                         onChange={(e) =>
                           handlePlaceholderChange(
                             index,
-                            'displayName',
+                            "displayName",
                             e.target.value
                           )
                         }
-                        placeholder={'Entity Name'}
-                        size={'sm'}
+                        placeholder={"Entity Name"}
+                        size={"sm"}
                         value={placeholder.displayName}
                       />
                       {errors.displayName && (
-                        <span className={'text-sm text-destructive'}>
+                        <span className={"text-sm text-destructive"}>
                           {errors.displayName}
                         </span>
                       )}
@@ -315,12 +317,12 @@ export const PlaceholderEditor = ({
                   </div>
 
                   {/* Description Field */}
-                  <div className={'flex flex-col gap-1.5'}>
+                  <div className={"flex flex-col gap-1.5"}>
                     <label
-                      className={'text-sm font-medium text-foreground'}
+                      className={"text-sm font-medium text-foreground"}
                       htmlFor={`placeholder-${index}-description`}
                     >
-                      {'Description'}
+                      {"Description"}
                     </label>
                     <Textarea
                       id={`placeholder-${index}-description`}
@@ -328,31 +330,33 @@ export const PlaceholderEditor = ({
                       onChange={(e) =>
                         handlePlaceholderChange(
                           index,
-                          'description',
+                          "description",
                           e.target.value
                         )
                       }
-                      placeholder={'Describe what this placeholder is used for...'}
+                      placeholder={
+                        "Describe what this placeholder is used for..."
+                      }
                       rows={2}
-                      size={'sm'}
+                      size={"sm"}
                       value={placeholder.description}
                     />
                     {errors.description && (
-                      <span className={'text-sm text-destructive'}>
+                      <span className={"text-sm text-destructive"}>
                         {errors.description}
                       </span>
                     )}
                   </div>
 
                   {/* Default Value and Validation Pattern Row */}
-                  <div className={'grid grid-cols-2 gap-4'}>
+                  <div className={"grid grid-cols-2 gap-4"}>
                     {/* Default Value Field */}
-                    <div className={'flex flex-col gap-1.5'}>
+                    <div className={"flex flex-col gap-1.5"}>
                       <label
-                        className={'text-sm font-medium text-foreground'}
+                        className={"text-sm font-medium text-foreground"}
                         htmlFor={`placeholder-${index}-defaultValue`}
                       >
-                        {'Default Value'}
+                        {"Default Value"}
                       </label>
                       <Input
                         id={`placeholder-${index}-defaultValue`}
@@ -360,28 +364,28 @@ export const PlaceholderEditor = ({
                         onChange={(e) =>
                           handlePlaceholderChange(
                             index,
-                            'defaultValue',
+                            "defaultValue",
                             e.target.value
                           )
                         }
-                        placeholder={'Optional default'}
-                        size={'sm'}
+                        placeholder={"Optional default"}
+                        size={"sm"}
                         value={placeholder.defaultValue}
                       />
                       {errors.defaultValue && (
-                        <span className={'text-sm text-destructive'}>
+                        <span className={"text-sm text-destructive"}>
                           {errors.defaultValue}
                         </span>
                       )}
                     </div>
 
                     {/* Validation Pattern Field */}
-                    <div className={'flex flex-col gap-1.5'}>
+                    <div className={"flex flex-col gap-1.5"}>
                       <label
-                        className={'text-sm font-medium text-foreground'}
+                        className={"text-sm font-medium text-foreground"}
                         htmlFor={`placeholder-${index}-validationPattern`}
                       >
-                        {'Validation Pattern (Regex)'}
+                        {"Validation Pattern (Regex)"}
                       </label>
                       <Input
                         id={`placeholder-${index}-validationPattern`}
@@ -389,16 +393,16 @@ export const PlaceholderEditor = ({
                         onChange={(e) =>
                           handlePlaceholderChange(
                             index,
-                            'validationPattern',
+                            "validationPattern",
                             e.target.value
                           )
                         }
-                        placeholder={'^[a-zA-Z]+$'}
-                        size={'sm'}
+                        placeholder={"^[a-zA-Z]+$"}
+                        size={"sm"}
                         value={placeholder.validationPattern}
                       />
                       {errors.validationPattern && (
-                        <span className={'text-sm text-destructive'}>
+                        <span className={"text-sm text-destructive"}>
                           {errors.validationPattern}
                         </span>
                       )}
@@ -406,34 +410,34 @@ export const PlaceholderEditor = ({
                   </div>
 
                   {/* Required Toggle and Order Index Row */}
-                  <div className={'flex items-center justify-between'}>
+                  <div className={"flex items-center justify-between"}>
                     {/* Required Toggle */}
                     <label
                       className={
-                        'flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground'
+                        "flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
                       }
                     >
                       <input
                         checked={placeholder.isRequired}
                         className={cn(
-                          'size-4 rounded-sm border-border',
-                          'focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none'
+                          "size-4 rounded-sm border-border",
+                          "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
                         )}
                         onChange={(e) =>
                           handlePlaceholderChange(
                             index,
-                            'isRequired',
+                            "isRequired",
                             e.target.checked
                           )
                         }
-                        type={'checkbox'}
+                        type={"checkbox"}
                       />
-                      {'Required'}
+                      {"Required"}
                     </label>
 
                     {/* Order Index Display */}
-                    <span className={'text-sm text-muted-foreground'}>
-                      {'Order: '}
+                    <span className={"text-sm text-muted-foreground"}>
+                      {"Order: "}
                       {placeholder.orderIndex}
                     </span>
                   </div>
@@ -448,24 +452,24 @@ export const PlaceholderEditor = ({
       {placeholders.length === 0 && (
         <div
           className={
-            'rounded-lg border border-dashed border-border p-6 text-center'
+            "rounded-lg border border-dashed border-border p-6 text-center"
           }
         >
-          <p className={'text-sm text-muted-foreground'}>
-            {'No placeholders defined. Add one to get started.'}
+          <p className={"text-sm text-muted-foreground"}>
+            {"No placeholders defined. Add one to get started."}
           </p>
         </div>
       )}
 
       {/* Add Placeholder Button */}
       <Button
-        className={'w-full'}
+        className={"w-full"}
         onClick={handleAddPlaceholder}
-        type={'button'}
-        variant={'outline'}
+        type={"button"}
+        variant={"outline"}
       >
-        <Plus aria-hidden={'true'} className={'size-4'} />
-        {'Add Placeholder'}
+        <Plus aria-hidden={"true"} className={"size-4"} />
+        {"Add Placeholder"}
       </Button>
     </div>
   );

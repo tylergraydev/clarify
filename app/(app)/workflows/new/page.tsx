@@ -4,7 +4,13 @@ import { ArrowLeft, FileText } from "lucide-react";
 import { $path } from "next-typesafe-url";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
 
 import type { CreateWorkflowFormValues } from "@/lib/validations/workflow";
 
@@ -20,8 +26,10 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { TemplatePickerDialog } from "@/components/workflows/template-picker-dialog";
 import { pauseBehaviors, workflowTypes } from "@/db/schema/workflows.schema";
 import { useProjects } from "@/hooks/queries/use-projects";
+import { useRepositoriesByProject } from "@/hooks/queries/use-repositories";
 import { useActiveTemplates } from "@/hooks/queries/use-templates";
 import { useCreateWorkflow } from "@/hooks/queries/use-workflows";
+import { useElectron } from "@/hooks/use-electron";
 import { useAppForm } from "@/lib/forms/form-hook";
 import { createWorkflowSchema } from "@/lib/validations/workflow";
 
@@ -45,18 +53,24 @@ const defaultValues: CreateWorkflowFormValues = {
   featureRequest: "",
   pauseBehavior: "auto_pause",
   projectId: "",
+  repositoryIds: [],
+  skipClarification: false,
   templateId: "",
   type: "planning",
 };
 
 export default function NewWorkflowPage() {
   const router = useRouter();
+  const [selectedProjectId, setSelectedProjectId] = useState<number>(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const previousTemplateIdRef = useRef<string>("");
 
+  const { api } = useElectron();
   const { data: projects = [] } = useProjects();
   const { data: templates = [] } = useActiveTemplates();
-  const createWorkflowMutation = useCreateWorkflow();
+  const { data: repositories = [] } =
+    useRepositoriesByProject(selectedProjectId);
+  const createWorkflowMutation = useCreateWorkflow({ autoStart: true });
 
   const isSubmitting = createWorkflowMutation.isPending;
 
@@ -73,18 +87,38 @@ export default function NewWorkflowPage() {
     })),
   ];
 
+  const repositoryOptions = repositories.map((repo) => ({
+    label: repo.name,
+    value: repo.id,
+  }));
+
   const form = useAppForm({
     defaultValues,
     onSubmit: async ({ value }) => {
       try {
+        // Create the workflow (auto-started via hook option)
         const workflow = await createWorkflowMutation.mutateAsync({
           featureName: value.featureName,
           featureRequest: value.featureRequest,
           pauseBehavior: value.pauseBehavior,
           projectId: Number(value.projectId),
+          skipClarification: value.skipClarification,
           type: value.type,
         });
-        // Redirect to workflow detail page if it exists, otherwise to workflows list
+
+        // Add repository associations
+        if (api && value.repositoryIds.length > 0) {
+          const primaryRepositoryId = value.primaryRepositoryId
+            ? Number(value.primaryRepositoryId)
+            : value.repositoryIds[0];
+          await api.workflowRepository.addMultiple(
+            workflow.id,
+            value.repositoryIds,
+            primaryRepositoryId
+          );
+        }
+
+        // Redirect to workflow detail page
         router.push(
           $path({
             route: "/workflows/[id]",
@@ -104,6 +138,10 @@ export default function NewWorkflowPage() {
     },
   });
 
+  const updateSelectedProject = useEffectEvent((id: number) => {
+    setSelectedProjectId(id);
+  });
+
   // Set default project when projects load
   useEffect(() => {
     const firstProject = projects[0];
@@ -111,20 +149,31 @@ export default function NewWorkflowPage() {
       const currentProjectId = form.getFieldValue("projectId");
       if (currentProjectId === "") {
         form.setFieldValue("projectId", String(firstProject.id));
+        updateSelectedProject(firstProject.id);
       }
     }
   }, [projects, form]);
 
-  // Subscribe to template field changes using form subscription
+  // Subscribe to form field changes
   useEffect(() => {
     const unsubscribe = form.store.subscribe(() => {
+      // Track template changes
       const templateId = form.getFieldValue("templateId") ?? "";
       if (templateId !== selectedTemplateId) {
         setSelectedTemplateId(templateId);
       }
+
+      // Track project changes to fetch repositories
+      const projectId = form.getFieldValue("projectId");
+      const numericProjectId = projectId ? Number(projectId) : 0;
+      if (numericProjectId !== selectedProjectId) {
+        setSelectedProjectId(numericProjectId);
+        // Reset repository selection when project changes
+        form.setFieldValue("repositoryIds", []);
+      }
     });
     return () => unsubscribe();
-  }, [form, selectedTemplateId]);
+  }, [form, selectedTemplateId, selectedProjectId]);
 
   // Handle template selection - populate feature request with template text
   useEffect(() => {
@@ -151,9 +200,7 @@ export default function NewWorkflowPage() {
     (content: string) => {
       const currentValue = form.getFieldValue("featureRequest") ?? "";
       // Append template content to existing content, with a newline separator if needed
-      const newValue = currentValue
-        ? `${currentValue}\n\n${content}`
-        : content;
+      const newValue = currentValue ? `${currentValue}\n\n${content}` : content;
       form.setFieldValue("featureRequest", newValue);
     },
     [form]
@@ -209,6 +256,22 @@ export default function NewWorkflowPage() {
                   />
                 )}
               </form.AppField>
+
+              {/* Repository Selection */}
+              {repositoryOptions.length > 0 && (
+                <form.AppField name={"repositoryIds"}>
+                  {(field) => (
+                    <field.MultiSelectField
+                      description={
+                        "Select the repositories this workflow will work with"
+                      }
+                      isRequired
+                      label={"Repositories"}
+                      options={repositoryOptions}
+                    />
+                  )}
+                </form.AppField>
+              )}
 
               {/* Feature Name */}
               <form.AppField name={"featureName"}>
@@ -301,6 +364,18 @@ export default function NewWorkflowPage() {
                     label={"Pause Behavior"}
                     options={pauseBehaviorOptions}
                     placeholder={"Select pause behavior"}
+                  />
+                )}
+              </form.AppField>
+
+              {/* Skip Clarification */}
+              <form.AppField name={"skipClarification"}>
+                {(field) => (
+                  <field.SwitchField
+                    description={
+                      "Skip the clarification step and proceed directly to refinement"
+                    }
+                    label={"Skip Clarification"}
                   />
                 )}
               </form.AppField>

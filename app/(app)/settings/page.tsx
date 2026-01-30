@@ -62,7 +62,7 @@ export default function SettingsPage() {
  * "workflow.defaultPauseBehavior" or "worktree.autoCleanup". This function
  * transforms them into the nested structure:
  * {
- *   workflow: { defaultPauseBehavior: "...", stepTimeoutSeconds: 300 },
+ *   workflow: { defaultPauseBehavior: "...", clarificationTimeoutSeconds: 60, ... },
  *   worktree: { autoCleanup: true, ... },
  *   logging: { ... }
  * }
@@ -98,17 +98,36 @@ function transformSettingsToFormValues(
 
   return {
     logging: {
-      exportLogsWithDatabase: getBoolean("logging.exportLogsWithDatabase", true),
+      exportLogsWithDatabase: getBoolean(
+        "logging.exportLogsWithDatabase",
+        true
+      ),
       includeCliOutput: getBoolean("logging.includeCliOutput", true),
       logExportLocation: getString("logging.logExportLocation", ""),
       logRetentionDays: getNumber("logging.logRetentionDays", 30),
     },
     workflow: {
+      clarificationTimeoutSeconds: getNumber(
+        "workflow.clarificationTimeoutSeconds",
+        60
+      ),
       defaultPauseBehavior: getString(
         "workflow.defaultPauseBehavior",
         "auto-pause"
       ) as "auto-pause" | "continuous" | "quality-gates",
-      stepTimeoutSeconds: getNumber("workflow.stepTimeoutSeconds", 300),
+      discoveryTimeoutSeconds: getNumber(
+        "workflow.discoveryTimeoutSeconds",
+        120
+      ),
+      implementationTimeoutSeconds: getNumber(
+        "workflow.implementationTimeoutSeconds",
+        300
+      ),
+      planningTimeoutSeconds: getNumber("workflow.planningTimeoutSeconds", 180),
+      refinementTimeoutSeconds: getNumber(
+        "workflow.refinementTimeoutSeconds",
+        30
+      ),
     },
     worktree: {
       autoCleanup: getBoolean("worktree.autoCleanup", true),

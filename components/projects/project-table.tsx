@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import type { ComponentPropsWithRef } from 'react';
+import type { ComponentPropsWithRef } from "react";
 
-import { format } from 'date-fns';
-import { Archive, ArchiveRestore, ExternalLink } from 'lucide-react';
+import { format } from "date-fns";
+import { Archive, ArchiveRestore, ExternalLink } from "lucide-react";
 
-import type { Project } from '@/db/schema/projects.schema';
+import type { Project } from "@/db/schema/projects.schema";
 
-import { ConfirmArchiveDialog } from '@/components/projects/confirm-archive-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { ConfirmArchiveDialog } from "@/components/projects/confirm-archive-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
+interface ProjectTableProps extends ComponentPropsWithRef<"div"> {
   /** Whether an archive mutation is in progress */
   isArchiving?: boolean;
   /** Callback when the user confirms archiving a project */
@@ -53,112 +53,136 @@ export const ProjectTable = ({
 
   return (
     <div
-      className={cn('overflow-x-auto rounded-lg border border-border', className)}
+      className={cn(
+        "overflow-x-auto rounded-lg border border-border",
+        className
+      )}
       ref={ref}
       {...props}
     >
-      <table className={'w-full border-collapse text-sm'}>
+      <table className={"w-full border-collapse text-sm"}>
         {/* Table Header */}
-        <thead className={'border-b border-border bg-muted/50'}>
+        <thead className={"border-b border-border bg-muted/50"}>
           <tr>
             <th
-              className={'px-4 py-3 text-left font-medium text-muted-foreground'}
-              scope={'col'}
+              className={
+                "px-4 py-3 text-left font-medium text-muted-foreground"
+              }
+              scope={"col"}
             >
-              {'Name'}
+              {"Name"}
             </th>
             <th
-              className={'px-4 py-3 text-left font-medium text-muted-foreground'}
-              scope={'col'}
+              className={
+                "px-4 py-3 text-left font-medium text-muted-foreground"
+              }
+              scope={"col"}
             >
-              {'Description'}
+              {"Description"}
             </th>
             <th
-              className={'px-4 py-3 text-left font-medium text-muted-foreground'}
-              scope={'col'}
+              className={
+                "px-4 py-3 text-left font-medium text-muted-foreground"
+              }
+              scope={"col"}
             >
-              {'Created'}
+              {"Created"}
             </th>
             <th
-              className={'px-4 py-3 text-left font-medium text-muted-foreground'}
-              scope={'col'}
+              className={
+                "px-4 py-3 text-left font-medium text-muted-foreground"
+              }
+              scope={"col"}
             >
-              {'Status'}
+              {"Status"}
             </th>
             <th
-              className={'px-4 py-3 text-right font-medium text-muted-foreground'}
-              scope={'col'}
+              className={
+                "px-4 py-3 text-right font-medium text-muted-foreground"
+              }
+              scope={"col"}
             >
-              {'Actions'}
+              {"Actions"}
             </th>
           </tr>
         </thead>
 
         {/* Table Body */}
-        <tbody className={'divide-y divide-border'}>
+        <tbody className={"divide-y divide-border"}>
           {projects.map((project) => {
             const isArchived = project.archivedAt !== null;
-            const formattedDate = format(new Date(project.createdAt), 'MMM d, yyyy');
+            const formattedDate = format(
+              new Date(project.createdAt),
+              "MMM d, yyyy"
+            );
 
             return (
               <tr
                 className={cn(
-                  'cursor-pointer transition-colors hover:bg-muted/30',
-                  isArchived && 'opacity-60'
+                  "cursor-pointer transition-colors hover:bg-muted/30",
+                  isArchived && "opacity-60"
                 )}
                 key={project.id}
                 onClick={() => handleRowClick(project.id)}
               >
                 {/* Name Cell */}
-                <td className={'px-4 py-3'}>
+                <td className={"px-4 py-3"}>
                   <button
                     className={cn(
-                      'text-left font-medium text-foreground hover:text-accent',
-                      'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
-                      'focus-visible:outline-none'
+                      "text-left font-medium text-foreground hover:text-accent",
+                      "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0",
+                      "focus-visible:outline-none"
                     )}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleViewDetailsClick(project.id);
                     }}
-                    type={'button'}
+                    type={"button"}
                   >
                     {project.name}
                   </button>
                 </td>
 
                 {/* Description Cell */}
-                <td className={'max-w-xs truncate px-4 py-3 text-muted-foreground'}>
-                  {project.description || '-'}
+                <td
+                  className={
+                    "max-w-xs truncate px-4 py-3 text-muted-foreground"
+                  }
+                >
+                  {project.description || "-"}
                 </td>
 
                 {/* Created Cell */}
-                <td className={'px-4 py-3 whitespace-nowrap text-muted-foreground'}>
+                <td
+                  className={
+                    "px-4 py-3 whitespace-nowrap text-muted-foreground"
+                  }
+                >
                   {formattedDate}
                 </td>
 
                 {/* Status Cell */}
-                <td className={'px-4 py-3'}>
-                  <Badge variant={isArchived ? 'stale' : 'completed'}>
-                    {isArchived ? 'Archived' : 'Active'}
+                <td className={"px-4 py-3"}>
+                  <Badge variant={isArchived ? "stale" : "completed"}>
+                    {isArchived ? "Archived" : "Active"}
                   </Badge>
                 </td>
 
                 {/* Actions Cell */}
-                <td className={'px-4 py-3'}>
+                <td className={"px-4 py-3"}>
                   <div
-                    className={'flex items-center justify-end gap-2'}
+                    className={"flex items-center justify-end gap-2"}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {/* View Details */}
                     <Button
                       aria-label={`View details for ${project.name}`}
                       onClick={() => handleViewDetailsClick(project.id)}
-                      size={'sm'}
-                      variant={'ghost'}
+                      size={"sm"}
+                      variant={"ghost"}
                     >
-                      <ExternalLink aria-hidden={'true'} className={'size-4'} />
-                      {'View'}
+                      <ExternalLink aria-hidden={"true"} className={"size-4"} />
+                      {"View"}
                     </Button>
 
                     {/* Archive/Unarchive */}
@@ -171,11 +195,14 @@ export const ProjectTable = ({
                         trigger={
                           <Button
                             aria-label={`Unarchive ${project.name}`}
-                            size={'sm'}
-                            variant={'ghost'}
+                            size={"sm"}
+                            variant={"ghost"}
                           >
-                            <ArchiveRestore aria-hidden={'true'} className={'size-4'} />
-                            {'Unarchive'}
+                            <ArchiveRestore
+                              aria-hidden={"true"}
+                              className={"size-4"}
+                            />
+                            {"Unarchive"}
                           </Button>
                         }
                       />
@@ -188,11 +215,14 @@ export const ProjectTable = ({
                         trigger={
                           <Button
                             aria-label={`Archive ${project.name}`}
-                            size={'sm'}
-                            variant={'ghost'}
+                            size={"sm"}
+                            variant={"ghost"}
                           >
-                            <Archive aria-hidden={'true'} className={'size-4'} />
-                            {'Archive'}
+                            <Archive
+                              aria-hidden={"true"}
+                              className={"size-4"}
+                            />
+                            {"Archive"}
                           </Button>
                         }
                       />

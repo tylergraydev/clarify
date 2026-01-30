@@ -25,6 +25,7 @@ export interface WorkflowStepsRepository {
   ): undefined | WorkflowStep;
   findByWorkflowId(workflowId: number): Array<WorkflowStep>;
   markEdited(id: number, outputText: string): undefined | WorkflowStep;
+  skip(id: number): undefined | WorkflowStep;
   start(id: number): undefined | WorkflowStep;
   update(id: number, data: Partial<NewWorkflowStep>): undefined | WorkflowStep;
   updateStatus(
@@ -144,6 +145,19 @@ export function createWorkflowStepsRepository(
         .set({
           outputEditedAt: sql`(CURRENT_TIMESTAMP)`,
           outputText,
+          updatedAt: sql`(CURRENT_TIMESTAMP)`,
+        })
+        .where(eq(workflowSteps.id, id))
+        .returning()
+        .get();
+    },
+
+    skip(id: number): undefined | WorkflowStep {
+      return db
+        .update(workflowSteps)
+        .set({
+          completedAt: sql`(CURRENT_TIMESTAMP)`,
+          status: "skipped",
           updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
         .where(eq(workflowSteps.id, id))

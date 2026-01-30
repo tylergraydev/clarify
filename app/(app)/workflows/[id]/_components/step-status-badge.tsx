@@ -6,9 +6,7 @@ import type { stepStatuses } from "@/db/schema/workflow-steps.schema";
 
 import { Badge, type badgeVariants } from "@/components/ui/badge";
 
-type BadgeVariant = NonNullable<
-  Parameters<typeof badgeVariants>[0]
->["variant"];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
 
 type StepStatus = (typeof stepStatuses)[number];
 
@@ -40,8 +38,10 @@ const formatStepStatusLabel = (status: StepStatus): string => {
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
-interface StepStatusBadgeProps
-  extends Omit<ComponentPropsWithRef<typeof Badge>, "variant"> {
+interface StepStatusBadgeProps extends Omit<
+  ComponentPropsWithRef<typeof Badge>,
+  "variant"
+> {
   status: StepStatus;
 }
 

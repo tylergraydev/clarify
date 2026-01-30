@@ -19,8 +19,10 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-interface ProjectCardProps
-  extends Omit<ComponentPropsWithRef<"div">, "onClick"> {
+interface ProjectCardProps extends Omit<
+  ComponentPropsWithRef<"div">,
+  "onClick"
+> {
   onArchive?: (projectId: number) => void;
   onUnarchive?: (projectId: number) => void;
   onViewDetails?: (projectId: number) => void;

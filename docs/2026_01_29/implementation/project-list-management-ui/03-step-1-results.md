@@ -29,6 +29,7 @@
 ## Notes
 
 Components can access selected project via:
+
 ```tsx
 const { selectedProjectId, setSelectedProject } = useShellStore();
 ```

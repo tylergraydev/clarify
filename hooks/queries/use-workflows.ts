@@ -2,10 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type {
-  NewWorkflow,
-  WorkflowHistoryFilters,
-} from "@/types/electron";
+import type { NewWorkflow, WorkflowHistoryFilters } from "@/types/electron";
 
 import { workflowKeys } from "@/lib/queries/workflows";
 
@@ -51,23 +48,63 @@ export function useCancelWorkflow() {
 }
 
 /**
- * Create a new workflow
+ * Create a new workflow with optional auto-start
  */
-export function useCreateWorkflow() {
+export function useCreateWorkflow(options?: { autoStart?: boolean }) {
   const queryClient = useQueryClient();
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: (data: NewWorkflow) => api!.workflow.create(data),
-    onSuccess: (workflow) => {
-      // Invalidate list queries
-      void queryClient.invalidateQueries({ queryKey: workflowKeys.list._def });
-      // Invalidate project-specific queries if workflow has projectId
-      if (workflow.projectId) {
-        void queryClient.invalidateQueries({
-          queryKey: workflowKeys.byProject(workflow.projectId).queryKey,
-        });
+    mutationFn: async (data: NewWorkflow) => {
+      const workflow = await api!.workflow.create(data);
+      if (options?.autoStart) {
+        const startedWorkflow = await api!.workflow.start(workflow.id);
+        return startedWorkflow ?? workflow;
       }
+      return workflow;
+    },
+    onSuccess: (workflow) => {
+      if (workflow) {
+        // Update detail cache directly
+        queryClient.setQueryData(
+          workflowKeys.detail(workflow.id).queryKey,
+          workflow
+        );
+        // Invalidate list queries
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
+        // Invalidate running workflows query (relevant if auto-started)
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.running.queryKey,
+        });
+        // Invalidate project-specific queries if workflow has projectId
+        if (workflow.projectId) {
+          void queryClient.invalidateQueries({
+            queryKey: workflowKeys.byProject(workflow.projectId).queryKey,
+          });
+        }
+      }
+    },
+  });
+}
+
+/**
+ * Delete a workflow
+ */
+export function useDeleteWorkflow() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+
+  return useMutation({
+    mutationFn: (id: number) => api!.workflow.delete(id),
+    onSuccess: (_result, id) => {
+      // Remove from detail cache
+      queryClient.removeQueries({
+        queryKey: workflowKeys.detail(id).queryKey,
+      });
+      // Invalidate all list queries
+      void queryClient.invalidateQueries({ queryKey: workflowKeys._def });
     },
   });
 }

@@ -4,11 +4,11 @@ Generated: 2026-01-29
 
 ## Overview
 
-| Field | Value |
-|-------|-------|
+| Field              | Value     |
+| ------------------ | --------- |
 | Estimated Duration | 4-6 hours |
-| Complexity | Medium |
-| Risk Level | Low |
+| Complexity         | Medium    |
+| Risk Level         | Low       |
 
 ## Quick Summary
 
@@ -30,32 +30,34 @@ Implement a comprehensive Settings page that consolidates all user configuration
 ## File Discovery Results
 
 ### Critical Files (11 files)
-| File | Action |
-|------|--------|
-| `app/(app)/settings/page.tsx` | Modify (complete rewrite) |
-| `hooks/queries/use-settings.ts` | Create |
-| `lib/queries/settings.ts` | Create |
-| `lib/validations/settings.ts` | Create |
-| `electron/ipc/settings.handlers.ts` | Create |
-| `electron/ipc/channels.ts` | Modify |
-| `electron/ipc/index.ts` | Modify |
-| `electron/preload.ts` | Modify |
-| `types/electron.d.ts` | Modify |
-| `lib/queries/index.ts` | Modify |
-| `hooks/queries/index.ts` | Modify |
+
+| File                                | Action                    |
+| ----------------------------------- | ------------------------- |
+| `app/(app)/settings/page.tsx`       | Modify (complete rewrite) |
+| `hooks/queries/use-settings.ts`     | Create                    |
+| `lib/queries/settings.ts`           | Create                    |
+| `lib/validations/settings.ts`       | Create                    |
+| `electron/ipc/settings.handlers.ts` | Create                    |
+| `electron/ipc/channels.ts`          | Modify                    |
+| `electron/ipc/index.ts`             | Modify                    |
+| `electron/preload.ts`               | Modify                    |
+| `types/electron.d.ts`               | Modify                    |
+| `lib/queries/index.ts`              | Modify                    |
+| `hooks/queries/index.ts`            | Modify                    |
 
 ### New Components to Create (8 files)
-| File | Purpose |
-|------|---------|
-| `components/settings/settings-section.tsx` | Reusable section card component |
-| `components/settings/path-input-field.tsx` | Directory path input with browse |
-| `components/settings/workflow-settings-section.tsx` | Workflow execution settings |
-| `components/settings/worktree-settings-section.tsx` | Git worktree settings |
-| `components/settings/logging-settings-section.tsx` | Logging & audit settings |
-| `components/settings/ui-settings-section.tsx` | UI settings with theme |
-| `components/settings/settings-form.tsx` | Main form component |
-| `components/settings/settings-skeleton.tsx` | Loading skeleton |
-| `components/settings/index.ts` | Barrel export |
+
+| File                                                | Purpose                          |
+| --------------------------------------------------- | -------------------------------- |
+| `components/settings/settings-section.tsx`          | Reusable section card component  |
+| `components/settings/path-input-field.tsx`          | Directory path input with browse |
+| `components/settings/workflow-settings-section.tsx` | Workflow execution settings      |
+| `components/settings/worktree-settings-section.tsx` | Git worktree settings            |
+| `components/settings/logging-settings-section.tsx`  | Logging & audit settings         |
+| `components/settings/ui-settings-section.tsx`       | UI settings with theme           |
+| `components/settings/settings-form.tsx`             | Main form component              |
+| `components/settings/settings-skeleton.tsx`         | Loading skeleton                 |
+| `components/settings/index.ts`                      | Barrel export                    |
 
 ## Implementation Steps
 
@@ -68,19 +70,23 @@ Implement a comprehensive Settings page that consolidates all user configuration
 **Confidence**: High
 
 **Files**:
+
 - `electron/ipc/channels.ts` (modify)
 
 **Changes**:
+
 1. Add `settings` object to `IpcChannels` constant with the following channels: `list`, `get`, `getByKey`, `getByCategory`, `setValue`, `resetToDefault`, `bulkUpdate`
 2. Maintain alphabetical ordering within the file (place after `step` object)
 3. Follow existing naming pattern using `settings:{action}` format
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Settings channels defined in IpcChannels object
 - [ ] TypeScript compiles without errors
 - [ ] All validation commands pass
@@ -96,20 +102,24 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `electron/ipc/settings.handlers.ts` (create)
 
 **Changes**:
+
 1. Create handler registration function `registerSettingsHandlers` accepting `SettingsRepository`
 2. Implement handlers for: list (with optional category filter), get by ID, get by key, get by category, setValue, resetToDefault, bulkUpdate (for saving all settings at once)
 3. Follow pattern established in `electron/ipc/agent.handlers.ts`
 4. Include proper TypeScript types for all handler parameters and return values
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Handler file created with all required operations
 - [ ] Type-safe handler signatures matching repository interface
 - [ ] All validation commands pass
@@ -125,9 +135,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `electron/ipc/index.ts` (modify)
 
 **Changes**:
+
 1. Import `registerSettingsHandlers` from `./settings.handlers`
 2. Import `createSettingsRepository` from repositories
 3. Instantiate settings repository using the database instance
@@ -135,11 +147,13 @@ pnpm lint && pnpm typecheck
 5. Place registration after the audit handlers section (maintaining logical grouping)
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Settings handlers imported and registered
 - [ ] Repository created and passed to handler registration
 - [ ] All validation commands pass
@@ -155,20 +169,24 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `electron/preload.ts` (modify)
 
 **Changes**:
+
 1. Add settings channels to the local `IpcChannels` constant (mirroring Step 1)
 2. Add `settings` object to `ElectronAPI` interface with typed method signatures
 3. Add `settings` implementation to `electronAPI` object with ipcRenderer.invoke calls
 4. Import `Setting`, `NewSetting` types from db/schema if needed for typing
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Settings API added to ElectronAPI interface
 - [ ] All methods properly typed with Setting types
 - [ ] IPC invoke calls use correct channel names
@@ -185,20 +203,24 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `types/electron.d.ts` (modify)
 
 **Changes**:
+
 1. Add `Setting` and `NewSetting` to the type exports from db/schema
 2. Add `settings` object to `ElectronAPI` interface with all method signatures
 3. Include methods: `list`, `get`, `getByKey`, `getByCategory`, `setValue`, `resetToDefault`, `bulkUpdate`
 4. Ensure return types match the repository interface
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Setting types exported for renderer use
 - [ ] ElectronAPI interface includes settings object
 - [ ] All method signatures properly typed
@@ -215,19 +237,23 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `lib/queries/settings.ts` (create)
 
 **Changes**:
+
 1. Import `createQueryKeys` from `@lukemorales/query-key-factory`
 2. Create and export `settingKeys` with queries for: `all`, `list` (with optional category filter), `detail` (by ID), `byKey` (by setting key), `byCategory`
 3. Follow pattern from `lib/queries/agents.ts`
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Query key factory created with all necessary keys
 - [ ] Keys support filtering by category
 - [ ] All validation commands pass
@@ -243,19 +269,23 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `lib/queries/index.ts` (modify)
 
 **Changes**:
+
 1. Import `settingKeys` from `./settings`
 2. Add `settingKeys` to the `mergeQueryKeys` call
 3. Add re-export for `settingKeys` in the individual exports section
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Settings keys imported and merged
 - [ ] Settings keys re-exported for direct access
 - [ ] All validation commands pass
@@ -271,9 +301,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `lib/validations/settings.ts` (create)
 
 **Changes**:
+
 1. Import Zod and define schemas for each settings category
 2. Create `workflowSettingsSchema` with fields: `defaultPauseBehavior` (enum: continuous, auto-pause, quality-gates), step timeout fields (numbers with min/max constraints)
 3. Create `worktreeSettingsSchema` with fields: `worktreeLocation` (string), `autoCleanup` (boolean), `createFeatureBranch` (boolean), `pushOnCompletion` (boolean)
@@ -282,11 +314,13 @@ pnpm lint && pnpm typecheck
 6. Export form value types derived from schemas
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] All category schemas defined with appropriate constraints
 - [ ] Combined schema created for full form validation
 - [ ] TypeScript types exported for form usage
@@ -303,9 +337,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `hooks/queries/use-settings.ts` (create)
 
 **Changes**:
+
 1. Create `useSettings` hook that fetches all settings, optionally filtered by category
 2. Create `useSettingByKey` hook for fetching individual settings by key
 3. Create `useSettingsByCategory` hook for fetching settings grouped by category
@@ -315,11 +351,13 @@ pnpm lint && pnpm typecheck
 7. Follow patterns from `hooks/queries/use-agents.ts`
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] All query and mutation hooks created
 - [ ] Proper cache invalidation on mutations
 - [ ] Hooks enabled only when Electron API available
@@ -336,19 +374,23 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `hooks/queries/index.ts` (modify)
 
 **Changes**:
+
 1. Add Settings Hooks section header comment
 2. Export all settings hooks from `./use-settings`
 3. Add `settingKeys` to the query keys re-export if not already included via lib/queries
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] All settings hooks exported
 - [ ] Section follows alphabetical ordering pattern
 - [ ] All validation commands pass
@@ -364,9 +406,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/settings/settings-section.tsx` (create)
 
 **Changes**:
+
 1. Create `SettingsSection` component that wraps content in a styled container
 2. Accept props for `title` (string) and `children` (ReactNode)
 3. Include a separator/divider below the title as shown in the mockup
@@ -374,11 +418,13 @@ pnpm lint && pnpm typecheck
 5. Apply appropriate spacing and typography consistent with other pages
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Component renders title with divider
 - [ ] Children render within the section body
 - [ ] Consistent styling with application design
@@ -395,9 +441,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: Medium
 
 **Files**:
+
 - `components/settings/path-input-field.tsx` (create)
 
 **Changes**:
+
 1. Create `PathInputField` component that combines a text input with a browse button
 2. Accept standard field props plus optional `dialogTitle` for the directory picker
 3. Use existing `Input` component for the text display
@@ -406,11 +454,13 @@ pnpm lint && pnpm typecheck
 6. Integrate with TanStack Form field context using `useFieldContext`
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Text input displays current path value
 - [ ] Browse button opens native directory picker
 - [ ] Selected path updates form field
@@ -428,9 +478,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/settings/workflow-settings-section.tsx` (create)
 
 **Changes**:
+
 1. Create `WorkflowSettingsSection` component using `SettingsSection` wrapper
 2. Include `RadioField` for default pause behavior with three options (continuous, auto-pause, quality-gates)
 3. Add `NumberField` inputs for each step timeout (clarification, refinement, file discovery, planning, implementation)
@@ -438,11 +490,13 @@ pnpm lint && pnpm typecheck
 5. Use form field context to bind to parent form state
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Radio group renders three pause behavior options
 - [ ] All five timeout fields render with proper labels
 - [ ] Fields properly bound to form state
@@ -459,9 +513,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/settings/worktree-settings-section.tsx` (create)
 
 **Changes**:
+
 1. Create `WorktreeSettingsSection` component using `SettingsSection` wrapper
 2. Include `PathInputField` for worktree location with browse capability
 3. Add three `CheckboxField` components for auto-cleanup, create feature branch, push on completion
@@ -469,11 +525,13 @@ pnpm lint && pnpm typecheck
 5. Bind all fields to parent form state
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Path input with browse button renders correctly
 - [ ] All three checkbox options render
 - [ ] Fields properly bound to form state
@@ -490,9 +548,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/settings/logging-settings-section.tsx` (create)
 
 **Changes**:
+
 1. Create `LoggingSettingsSection` component using `SettingsSection` wrapper
 2. Include `NumberField` for log retention days with appropriate min/max
 3. Add two `CheckboxField` components for export logs with database and include CLI output
@@ -500,11 +560,13 @@ pnpm lint && pnpm typecheck
 5. Bind all fields to parent form state
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Retention days input renders correctly
 - [ ] Both checkbox options render
 - [ ] Path input with browse button works
@@ -522,20 +584,24 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/settings/ui-settings-section.tsx` (create)
 
 **Changes**:
+
 1. Create `UISettingsSection` component using `SettingsSection` wrapper
 2. Import and include the existing `ThemeSelector` component
 3. Add any additional UI preference controls as needed
 4. Ensure theme changes are persisted (theme selector already handles this via ThemeProvider)
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Theme selector integrated and functional
 - [ ] Section follows consistent styling
 - [ ] Theme changes persist correctly
@@ -552,9 +618,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: Medium
 
 **Files**:
+
 - `components/settings/settings-form.tsx` (create)
 
 **Changes**:
+
 1. Create `SettingsForm` component using `useAppForm` hook with Zod validation
 2. Initialize form with current settings values (from props or query)
 3. Compose all four section components within the form
@@ -564,11 +632,13 @@ pnpm lint && pnpm typecheck
 7. Handle loading and error states appropriately
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Form initializes with existing settings values
 - [ ] All sections render within form context
 - [ ] Submit button triggers save operation
@@ -586,9 +656,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/settings/settings-skeleton.tsx` (create)
 
 **Changes**:
+
 1. Create `SettingsSkeleton` component with animated placeholders
 2. Mirror the structure of the settings form with four section areas
 3. Include placeholder elements for radio groups, inputs, and checkboxes
@@ -596,11 +668,13 @@ pnpm lint && pnpm typecheck
 5. Follow pattern from `AgentCardSkeleton` in agents page
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Skeleton matches settings form structure
 - [ ] Proper animation applied
 - [ ] Visual consistency with other skeletons
@@ -617,18 +691,22 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `components/settings/index.ts` (create)
 
 **Changes**:
+
 1. Export all settings components from the directory
 2. Include: `SettingsSection`, `PathInputField`, `WorkflowSettingsSection`, `WorktreeSettingsSection`, `LoggingSettingsSection`, `UISettingsSection`, `SettingsForm`, `SettingsSkeleton`
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] All components exported
 - [ ] No circular dependency issues
 - [ ] All validation commands pass
@@ -644,9 +722,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - `app/(app)/settings/page.tsx` (modify - complete rewrite)
 
 **Changes**:
+
 1. Add "use client" directive for client-side rendering
 2. Import settings components and hooks
 3. Add `QueryErrorBoundary` wrapper for error handling
@@ -657,11 +737,13 @@ pnpm lint && pnpm typecheck
 8. Ensure proper keyboard navigation and accessibility
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 ```
 
 **Success Criteria**:
+
 - [ ] Page heading and description render correctly
 - [ ] Loading skeleton shows during data fetch
 - [ ] Settings form renders with current values
@@ -679,9 +761,11 @@ pnpm lint && pnpm typecheck
 **Confidence**: High
 
 **Files**:
+
 - No new files (verification step)
 
 **Changes**:
+
 1. Run the full application in development mode
 2. Navigate to the Settings page via sidebar
 3. Verify all four sections render correctly
@@ -692,12 +776,14 @@ pnpm lint && pnpm typecheck
 8. Test path input browse dialogs
 
 **Validation Commands**:
+
 ```bash
 pnpm lint && pnpm typecheck
 pnpm electron:dev
 ```
 
 **Success Criteria**:
+
 - [ ] Settings page accessible via sidebar navigation
 - [ ] All form sections render correctly
 - [ ] Settings changes persist across sessions
@@ -711,18 +797,22 @@ pnpm electron:dev
 ## Quality Gates
 
 ### Gate 1: IPC Layer Complete
+
 - **Check**: Verify all settings IPC channels are defined and handlers registered
 - **Command**: `pnpm lint && pnpm typecheck`
 
 ### Gate 2: Query Layer Complete
+
 - **Check**: Verify settings query keys and hooks export correctly
 - **Command**: `pnpm lint && pnpm typecheck`
 
 ### Gate 3: Component Layer Complete
+
 - **Check**: Verify all settings components render without errors
 - **Command**: `pnpm lint && pnpm typecheck`
 
 ### Gate 4: Full Integration
+
 - **Check**: Verify settings page loads, displays data, and persists changes
 - **Command**: `pnpm electron:dev` (manual verification)
 

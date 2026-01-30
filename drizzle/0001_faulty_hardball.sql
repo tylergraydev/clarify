@@ -1,0 +1,1 @@
+ALTER TABLE `workflows` ADD `skip_clarification` integer DEFAULT false NOT NULL;

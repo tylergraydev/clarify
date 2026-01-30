@@ -2,13 +2,13 @@
 
 ## Step Metadata
 
-| Field | Value |
-|-------|-------|
-| Step | 0a - Clarification |
-| Started | 2026-01-29T00:00:00Z |
+| Field     | Value                |
+| --------- | -------------------- |
+| Step      | 0a - Clarification   |
+| Started   | 2026-01-29T00:00:00Z |
 | Completed | 2026-01-29T00:00:30Z |
-| Duration | ~30 seconds |
-| Status | Skipped (Score >= 4) |
+| Duration  | ~30 seconds          |
+| Status    | Skipped (Score >= 4) |
 
 ## Original Request
 

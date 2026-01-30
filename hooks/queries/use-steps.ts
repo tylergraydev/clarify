@@ -146,6 +146,40 @@ export function useRegenerateStep() {
 }
 
 /**
+ * Skip a step
+ */
+export function useSkipStep() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+
+  return useMutation({
+    mutationFn: (id: number) => api!.step.skip(id),
+    onSuccess: (step) => {
+      if (step) {
+        // Update detail cache directly
+        queryClient.setQueryData(stepKeys.detail(step.id).queryKey, step);
+        // Invalidate step list queries
+        void queryClient.invalidateQueries({ queryKey: stepKeys.list._def });
+        // Invalidate workflow-specific step queries
+        void queryClient.invalidateQueries({
+          queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
+        });
+        // Invalidate workflow queries since skipping may affect workflow state
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.detail(step.workflowId).queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.running.queryKey,
+        });
+      }
+    },
+  });
+}
+
+/**
  * Fetch a single step by ID
  */
 export function useStep(id: number) {

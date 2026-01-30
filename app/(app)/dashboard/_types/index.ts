@@ -1,8 +1,8 @@
-import type { VariantProps } from 'class-variance-authority';
-import type { ReactNode } from 'react';
+import type { VariantProps } from "class-variance-authority";
+import type { ReactNode } from "react";
 
-import type { badgeVariants } from '@/components/ui/badge';
-import type { Workflow } from '@/types/electron';
+import type { badgeVariants } from "@/components/ui/badge";
+import type { Workflow } from "@/types/electron";
 
 // ============================================================================
 // Workflow Status Types
@@ -12,13 +12,13 @@ import type { Workflow } from '@/types/electron';
  * All possible workflow status values from the database schema
  */
 export const WORKFLOW_STATUSES = [
-  'created',
-  'running',
-  'paused',
-  'editing',
-  'completed',
-  'failed',
-  'cancelled',
+  "created",
+  "running",
+  "paused",
+  "editing",
+  "completed",
+  "failed",
+  "cancelled",
 ] as const;
 
 export type WorkflowStatus = (typeof WORKFLOW_STATUSES)[number];
@@ -26,16 +26,25 @@ export type WorkflowStatus = (typeof WORKFLOW_STATUSES)[number];
 /**
  * Active workflow statuses - workflows that are currently in progress
  */
-export const ACTIVE_WORKFLOW_STATUSES = ['running', 'paused', 'editing'] as const;
+export const ACTIVE_WORKFLOW_STATUSES = [
+  "running",
+  "paused",
+  "editing",
+] as const;
 
 export type ActiveWorkflowStatus = (typeof ACTIVE_WORKFLOW_STATUSES)[number];
 
 /**
  * Terminal workflow statuses - workflows that have finished
  */
-export const TERMINAL_WORKFLOW_STATUSES = ['completed', 'failed', 'cancelled'] as const;
+export const TERMINAL_WORKFLOW_STATUSES = [
+  "completed",
+  "failed",
+  "cancelled",
+] as const;
 
-export type TerminalWorkflowStatus = (typeof TERMINAL_WORKFLOW_STATUSES)[number];
+export type TerminalWorkflowStatus =
+  (typeof TERMINAL_WORKFLOW_STATUSES)[number];
 
 // ============================================================================
 // Workflow Type Types
@@ -44,12 +53,14 @@ export type TerminalWorkflowStatus = (typeof TERMINAL_WORKFLOW_STATUSES)[number]
 /**
  * All possible workflow type values from the database schema
  */
-export const WORKFLOW_TYPES = ['planning', 'implementation'] as const;
+export const WORKFLOW_TYPES = ["planning", "implementation"] as const;
 
 /**
  * Available badge variants extracted from the Badge component
  */
-export type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
+export type BadgeVariant = NonNullable<
+  VariantProps<typeof badgeVariants>["variant"]
+>;
 
 // ============================================================================
 // Filter Types
@@ -106,7 +117,7 @@ export interface WorkflowCardData {
  */
 export type WorkflowDurationData = Pick<
   Workflow,
-  'completedAt' | 'durationMs' | 'startedAt' | 'status'
+  "completedAt" | "durationMs" | "startedAt" | "status"
 >;
 
 // ============================================================================
@@ -116,17 +127,20 @@ export type WorkflowDurationData = Pick<
 /**
  * Minimal workflow data required for progress calculations
  */
-export type WorkflowProgressData = Pick<Workflow, 'currentStepNumber' | 'totalSteps'>;
+export type WorkflowProgressData = Pick<
+  Workflow,
+  "currentStepNumber" | "totalSteps"
+>;
 
 /**
  * Badge variants that are used for workflow status display
  */
 export type WorkflowStatusBadgeVariant =
-  | 'clarifying'
-  | 'completed'
-  | 'default'
-  | 'failed'
-  | 'planning';
+  | "clarifying"
+  | "completed"
+  | "default"
+  | "failed"
+  | "planning";
 
 // ============================================================================
 // Workflow Utility Types
@@ -135,6 +149,11 @@ export type WorkflowStatusBadgeVariant =
 /**
  * Filter options for workflow status filtering
  */
-export type WorkflowStatusFilter = 'active' | 'all' | 'completed' | 'failed' | WorkflowStatus;
+export type WorkflowStatusFilter =
+  | "active"
+  | "all"
+  | "completed"
+  | "failed"
+  | WorkflowStatus;
 
 export type WorkflowType = (typeof WORKFLOW_TYPES)[number];

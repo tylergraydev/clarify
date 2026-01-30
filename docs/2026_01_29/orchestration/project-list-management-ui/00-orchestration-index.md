@@ -34,26 +34,26 @@ Unblocks: Repository management, workflow creation (both require a project conte
 
 ## Execution Summary
 
-| Metric | Value |
-|--------|-------|
-| Total Duration | ~3 minutes |
-| Clarification | Skipped (4/5 clarity) |
-| Refinement | 345 words (3.6x expansion) |
-| Files Discovered | 45 |
-| Implementation Steps | 12 |
-| Quality Gates | 3 |
-| Estimated Duration | 3-4 days |
-| Complexity | Medium |
-| Risk Level | Low |
+| Metric               | Value                      |
+| -------------------- | -------------------------- |
+| Total Duration       | ~3 minutes                 |
+| Clarification        | Skipped (4/5 clarity)      |
+| Refinement           | 345 words (3.6x expansion) |
+| Files Discovered     | 45                         |
+| Implementation Steps | 12                         |
+| Quality Gates        | 3                          |
+| Estimated Duration   | 3-4 days                   |
+| Complexity           | Medium                     |
+| Risk Level           | Low                        |
 
 ## Step Logs
 
-| Step | File | Status | Duration |
-|------|------|--------|----------|
-| 0a - Clarification | [00a-clarification.md](./00a-clarification.md) | Skipped | ~30s |
-| 1 - Refinement | [01-feature-refinement.md](./01-feature-refinement.md) | Completed | ~30s |
-| 2 - File Discovery | [02-file-discovery.md](./02-file-discovery.md) | Completed | ~60s |
-| 3 - Implementation Planning | [03-implementation-planning.md](./03-implementation-planning.md) | Completed | ~60s |
+| Step                        | File                                                             | Status    | Duration |
+| --------------------------- | ---------------------------------------------------------------- | --------- | -------- |
+| 0a - Clarification          | [00a-clarification.md](./00a-clarification.md)                   | Skipped   | ~30s     |
+| 1 - Refinement              | [01-feature-refinement.md](./01-feature-refinement.md)           | Completed | ~30s     |
+| 2 - File Discovery          | [02-file-discovery.md](./02-file-discovery.md)                   | Completed | ~60s     |
+| 3 - Implementation Planning | [03-implementation-planning.md](./03-implementation-planning.md) | Completed | ~60s     |
 
 ## Final Output
 
@@ -62,6 +62,7 @@ Unblocks: Repository management, workflow creation (both require a project conte
 ## Key Deliverables
 
 ### Files to Create (6)
+
 - `app/(app)/projects/page.tsx` - Project list page
 - `app/(app)/projects/[id]/page.tsx` - Project detail page
 - `components/projects/project-card.tsx` - Card view component
@@ -70,6 +71,7 @@ Unblocks: Repository management, workflow creation (both require a project conte
 - `components/projects/confirm-archive-dialog.tsx` - Confirmation dialog
 
 ### Files to Modify (5)
+
 - `lib/stores/shell-store.ts` - Add selectedProjectId state
 - `lib/queries/projects.ts` - Extend for archived filters
 - `hooks/queries/use-projects.ts` - Add archive/unarchive hooks

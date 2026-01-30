@@ -44,6 +44,9 @@ export const workflows = sqliteTable(
     projectId: integer("project_id")
       .notNull()
       .references(() => projects.id, { onDelete: "cascade" }),
+    skipClarification: integer("skip_clarification", { mode: "boolean" })
+      .notNull()
+      .default(false),
     startedAt: text("started_at"),
     status: text("status").notNull().default("created"),
     totalSteps: integer("total_steps"),

@@ -11,10 +11,12 @@
 ## Changes Summary
 
 ### Step 6: Query Keys
+
 - `workflowKeys.history(filters?)` - Key for paginated history queries with filter parameters
 - `workflowKeys.historyStatistics(filters?)` - Key for aggregate statistics queries
 
 ### Step 7: React Query Hooks
+
 - `useWorkflowHistory(filters?: WorkflowHistoryFilters)` - Returns `WorkflowHistoryResult` with pagination
 - `useWorkflowStatistics(filters?)` - Returns `WorkflowStatistics` with counts and rates
 

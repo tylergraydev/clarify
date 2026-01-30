@@ -23,12 +23,14 @@
 ## Component Summary
 
 **Props Interface**:
+
 - `repository: Repository` - Repository data to display
 - `isDefault?: boolean` - Shows badge, disables Set Default when true
 - `onSetDefault?: (repositoryId: number) => void` - Set Default callback
 - `onDelete?: (repositoryId: number) => void` - Remove callback
 
 **UI Structure**:
+
 - Header: Name with folder icon, default badge, path as description
 - Content: Default branch in code styling, creation date
 - Footer: "Set Default" and "Remove" buttons

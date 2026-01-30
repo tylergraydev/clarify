@@ -11,6 +11,7 @@
 Implement the Project List & Management UI to provide users with a centralized interface for managing projects, which serve as the organizational container for all workflows and repositories in Clarify. The implementation leverages the complete data layer already in place with full CRUD operations, IPC handlers via the project domain, and React hooks (useProjects, useCreateProject, useUpdateProject, useDeleteProject, useProject), making this a low-risk, high-visibility feature that unblocks downstream work on repository management and workflow creation. The project list page should support both card and table view layouts using existing Card and Table UI components built on Base UI primitives with Tailwind CSS 4 and CVA styling, displaying project name, description, creation date, and archive status with visual indicators for archived projects. Implement a create project dialog using existing TanStack Form field components (TextField, Textarea) that validates project names are unique and non-empty, integrating with the useCreateProject hook for optimistic updates via TanStack Query with proper cache invalidation through the query key factory pattern. Add archive/unarchive functionality as inline actions in both views that toggle the archivedAt timestamp field, with confirmation dialogs to prevent accidental operations. Create a project detail page with a tabbed layout placeholder using the existing Tabs component, structured to accommodate future tabs for repositories, workflows, and settings, with breadcrumb navigation returning to the list. Ensure all list and detail views are responsive, support keyboard navigation and screen reader accessibility through Base UI's unstyled primitives, display loading and error states using existing data display components, and utilize URL query state synchronization via nuqs for view preferences (list vs card view) and filtering. Wire the project context throughout by passing the selected project ID through route parameters and storing it in the Zustand shell store for sidebar navigation updates, ensuring the project selector in the app header reflects the currently active project context.
 
 **Discovered Files Summary:**
+
 - 6 critical files (create/modify)
 - 9 high priority files (modify/reference)
 - 13 medium priority files (reference)
@@ -35,6 +36,7 @@ Constraints: Include lint/typecheck validation for every step, no code examples
 **Format Validation**: PASS - Markdown format with all required sections
 
 **Template Compliance**:
+
 - [x] Overview section with Duration/Complexity/Risk
 - [x] Quick Summary
 - [x] Prerequisites
@@ -45,6 +47,7 @@ Constraints: Include lint/typecheck validation for every step, no code examples
 **Validation Commands Check**: PASS - All 12 steps include `pnpm run lint:fix && pnpm run typecheck`
 
 **Content Quality**:
+
 - [x] No code examples included
 - [x] Steps are actionable and focused
 - [x] Ordered by dependency (foundational work first)
@@ -52,15 +55,15 @@ Constraints: Include lint/typecheck validation for every step, no code examples
 
 ## Plan Statistics
 
-| Metric | Value |
-|--------|-------|
-| Total Steps | 12 |
-| Files to Create | 6 |
-| Files to Modify | 5 |
-| Quality Gates | 3 |
+| Metric             | Value    |
+| ------------------ | -------- |
+| Total Steps        | 12       |
+| Files to Create    | 6        |
+| Files to Modify    | 5        |
+| Quality Gates      | 3        |
 | Estimated Duration | 3-4 days |
-| Complexity | Medium |
-| Risk Level | Low |
+| Complexity         | Medium   |
+| Risk Level         | Low      |
 
 ## Step Summary
 
@@ -86,12 +89,14 @@ Constraints: Include lint/typecheck validation for every step, no code examples
 ## Complexity Assessment
 
 **Low Risk Factors:**
+
 - Data layer 100% complete (IPC, repositories, hooks)
 - All UI primitives exist (Card, Dialog, Tabs, Button)
 - Follows established project patterns
 - No schema migrations required
 
 **Medium Complexity Factors:**
+
 - Multiple new components to create
 - URL state synchronization with nuqs
 - Shell store integration across components

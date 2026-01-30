@@ -6,8 +6,8 @@
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
+| File                                                         | Purpose                                                                              |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | `app/(app)/workflows/[id]/_components/step-detail-panel.tsx` | Step detail panel for displaying workflow step input/output data, timing, and errors |
 
 ## Implementation Summary
@@ -15,6 +15,7 @@
 Created `StepDetailPanel` component with the following features:
 
 ### Features
+
 - Accepts a `step` prop with a `Pick` of relevant `WorkflowStep` fields
 - Displays timing metadata: `startedAt`, `completedAt`, `durationMs` with proper formatting using date-fns
 - Input and Output sections use `Card`/`CardContent` patterns with scrollable content areas
@@ -24,6 +25,7 @@ Created `StepDetailPanel` component with the following features:
 - Helper components `ContentSection` and `TimingInfo` extracted for reusability within the file
 
 ### Sections Displayed
+
 - **Error Alert**: Destructive styled alert for error messages
 - **Timing Info**: Started at, completed at, duration
 - **Input Section**: Scrollable content area with `inputText`

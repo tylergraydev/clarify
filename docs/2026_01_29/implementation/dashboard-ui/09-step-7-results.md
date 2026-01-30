@@ -10,6 +10,7 @@
 ## Implementation Details
 
 ### Active Workflows Widget Enhancements
+
 - Enhanced `aria-label` from "Workflow:" to "View workflow:" for clearer action intent
 - Changed `transition-colors` to `transition-all duration-150` for smoother animations
 - Added `hover:shadow-sm` for subtle depth on hover
@@ -18,6 +19,7 @@
 - Added JSDoc comment documenting navigation dependency
 
 ### Recent Workflows Widget Enhancements
+
 - Enhanced `aria-label` from "Workflow:" to "View workflow:" for clearer action intent
 - Changed `transition-colors` to `transition-all duration-150` for smoother animations
 - Added `active:bg-muted/70` for tactile press feedback
@@ -25,6 +27,7 @@
 - Added JSDoc comment documenting navigation dependency
 
 ### Navigation Features Verified
+
 - `useRouter` from `next/navigation` properly imported
 - Click handlers navigate to `/workflows/${workflowId}`
 - `cursor-pointer` styling present

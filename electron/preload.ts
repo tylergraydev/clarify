@@ -2,20 +2,27 @@ import { contextBridge, ipcRenderer } from "electron";
 
 import type {
   Agent,
+  AgentSkill,
+  AgentTool,
   AuditLog,
   DiscoveredFile,
   NewAgent,
+  NewAgentSkill,
+  NewAgentTool,
   NewAuditLog,
   NewDiscoveredFile,
   NewProject,
   NewRepository,
   NewTemplate,
+  NewTemplatePlaceholder,
   NewWorkflow,
   Project,
   Repository,
   Setting,
   Template,
+  TemplatePlaceholder,
   Workflow,
+  WorkflowRepository,
   WorkflowStep,
   Worktree,
 } from "../db/schema";
@@ -30,6 +37,21 @@ const IpcChannels = {
     list: "agent:list",
     reset: "agent:reset",
     update: "agent:update",
+  },
+  agentSkill: {
+    create: "agentSkill:create",
+    delete: "agentSkill:delete",
+    list: "agentSkill:list",
+    setRequired: "agentSkill:setRequired",
+    update: "agentSkill:update",
+  },
+  agentTool: {
+    allow: "agentTool:allow",
+    create: "agentTool:create",
+    delete: "agentTool:delete",
+    disallow: "agentTool:disallow",
+    list: "agentTool:list",
+    update: "agentTool:update",
   },
   app: {
     getPath: "app:getPath",
@@ -97,6 +119,7 @@ const IpcChannels = {
     get: "step:get",
     list: "step:list",
     regenerate: "step:regenerate",
+    skip: "step:skip",
   },
   store: {
     delete: "store:delete",
@@ -107,13 +130,16 @@ const IpcChannels = {
     create: "template:create",
     delete: "template:delete",
     get: "template:get",
+    getPlaceholders: "template:getPlaceholders",
     incrementUsage: "template:incrementUsage",
     list: "template:list",
     update: "template:update",
+    updatePlaceholders: "template:updatePlaceholders",
   },
   workflow: {
     cancel: "workflow:cancel",
     create: "workflow:create",
+    delete: "workflow:delete",
     get: "workflow:get",
     getStatistics: "workflow:getStatistics",
     list: "workflow:list",
@@ -121,6 +147,13 @@ const IpcChannels = {
     pause: "workflow:pause",
     resume: "workflow:resume",
     start: "workflow:start",
+  },
+  workflowRepository: {
+    add: "workflowRepository:add",
+    addMultiple: "workflowRepository:addMultiple",
+    list: "workflowRepository:list",
+    remove: "workflowRepository:remove",
+    setPrimary: "workflowRepository:setPrimary",
   },
   worktree: {
     get: "worktree:get",
@@ -137,6 +170,27 @@ export interface ElectronAPI {
     list(): Promise<Array<Agent>>;
     reset(id: number): Promise<Agent | undefined>;
     update(id: number, data: Partial<NewAgent>): Promise<Agent | undefined>;
+  };
+  agentSkill: {
+    create(data: NewAgentSkill): Promise<AgentSkill>;
+    delete(id: number): Promise<void>;
+    list(agentId: number): Promise<Array<AgentSkill>>;
+    setRequired(id: number, required: boolean): Promise<AgentSkill | undefined>;
+    update(
+      id: number,
+      data: Partial<NewAgentSkill>
+    ): Promise<AgentSkill | undefined>;
+  };
+  agentTool: {
+    allow(id: number): Promise<AgentTool | undefined>;
+    create(data: NewAgentTool): Promise<AgentTool>;
+    delete(id: number): Promise<void>;
+    disallow(id: number): Promise<AgentTool | undefined>;
+    list(agentId: number): Promise<Array<AgentTool>>;
+    update(
+      id: number,
+      data: Partial<NewAgentTool>
+    ): Promise<AgentTool | undefined>;
   };
   app: {
     getPath(
@@ -250,6 +304,7 @@ export interface ElectronAPI {
     get(id: number): Promise<undefined | WorkflowStep>;
     list(workflowId: number): Promise<Array<WorkflowStep>>;
     regenerate(id: number): Promise<undefined | WorkflowStep>;
+    skip(id: number): Promise<undefined | WorkflowStep>;
   };
   store: {
     delete(key: string): Promise<boolean>;
@@ -260,16 +315,22 @@ export interface ElectronAPI {
     create(data: NewTemplate): Promise<Template>;
     delete(id: number): Promise<boolean>;
     get(id: number): Promise<Template | undefined>;
+    getPlaceholders(templateId: number): Promise<Array<TemplatePlaceholder>>;
     incrementUsage(id: number): Promise<Template | undefined>;
     list(): Promise<Array<Template>>;
     update(
       id: number,
       data: Partial<NewTemplate>
     ): Promise<Template | undefined>;
+    updatePlaceholders(
+      templateId: number,
+      placeholders: Array<Omit<NewTemplatePlaceholder, "templateId">>
+    ): Promise<Array<TemplatePlaceholder>>;
   };
   workflow: {
     cancel(id: number): Promise<undefined | Workflow>;
     create(data: NewWorkflow): Promise<Workflow>;
+    delete(id: number): Promise<boolean>;
     get(id: number): Promise<undefined | Workflow>;
     getStatistics(filters?: {
       dateFrom?: string;
@@ -277,15 +338,38 @@ export interface ElectronAPI {
       projectId?: number;
     }): Promise<WorkflowStatistics>;
     list(): Promise<Array<Workflow>>;
-    listHistory(filters?: WorkflowHistoryFilters): Promise<WorkflowHistoryResult>;
+    listHistory(
+      filters?: WorkflowHistoryFilters
+    ): Promise<WorkflowHistoryResult>;
     pause(id: number): Promise<undefined | Workflow>;
     resume(id: number): Promise<undefined | Workflow>;
     start(id: number): Promise<undefined | Workflow>;
   };
+  workflowRepository: {
+    add(
+      workflowId: number,
+      repositoryId: number,
+      isPrimary?: boolean
+    ): Promise<WorkflowRepository>;
+    addMultiple(
+      workflowId: number,
+      repositoryIds: Array<number>,
+      primaryRepositoryId?: number
+    ): Promise<Array<WorkflowRepository>>;
+    list(workflowId: number): Promise<Array<WorkflowRepository>>;
+    remove(workflowId: number, repositoryId: number): Promise<boolean>;
+    setPrimary(
+      workflowId: number,
+      repositoryId: number
+    ): Promise<undefined | WorkflowRepository>;
+  };
   worktree: {
     get(id: number): Promise<undefined | Worktree>;
     getByWorkflowId(workflowId: number): Promise<undefined | Worktree>;
-    list(options?: { repositoryId?: number; status?: string }): Promise<Array<Worktree>>;
+    list(options?: {
+      repositoryId?: number;
+      status?: string;
+    }): Promise<Array<Worktree>>;
   };
 }
 
@@ -354,6 +438,24 @@ const electronAPI: ElectronAPI = {
     reset: (id) => ipcRenderer.invoke(IpcChannels.agent.reset, id),
     update: (id, data) =>
       ipcRenderer.invoke(IpcChannels.agent.update, id, data),
+  },
+  agentSkill: {
+    create: (data) => ipcRenderer.invoke(IpcChannels.agentSkill.create, data),
+    delete: (id) => ipcRenderer.invoke(IpcChannels.agentSkill.delete, id),
+    list: (agentId) => ipcRenderer.invoke(IpcChannels.agentSkill.list, agentId),
+    setRequired: (id, required) =>
+      ipcRenderer.invoke(IpcChannels.agentSkill.setRequired, id, required),
+    update: (id, data) =>
+      ipcRenderer.invoke(IpcChannels.agentSkill.update, id, data),
+  },
+  agentTool: {
+    allow: (id) => ipcRenderer.invoke(IpcChannels.agentTool.allow, id),
+    create: (data) => ipcRenderer.invoke(IpcChannels.agentTool.create, data),
+    delete: (id) => ipcRenderer.invoke(IpcChannels.agentTool.delete, id),
+    disallow: (id) => ipcRenderer.invoke(IpcChannels.agentTool.disallow, id),
+    list: (agentId) => ipcRenderer.invoke(IpcChannels.agentTool.list, agentId),
+    update: (id, data) =>
+      ipcRenderer.invoke(IpcChannels.agentTool.update, id, data),
   },
   app: {
     getPath: (name) => ipcRenderer.invoke(IpcChannels.app.getPath, name),
@@ -445,6 +547,7 @@ const electronAPI: ElectronAPI = {
     get: (id) => ipcRenderer.invoke(IpcChannels.step.get, id),
     list: (workflowId) => ipcRenderer.invoke(IpcChannels.step.list, workflowId),
     regenerate: (id) => ipcRenderer.invoke(IpcChannels.step.regenerate, id),
+    skip: (id) => ipcRenderer.invoke(IpcChannels.step.skip, id),
   },
   store: {
     delete: (key) => ipcRenderer.invoke(IpcChannels.store.delete, key),
@@ -456,15 +559,24 @@ const electronAPI: ElectronAPI = {
     create: (data) => ipcRenderer.invoke(IpcChannels.template.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.template.delete, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.template.get, id),
+    getPlaceholders: (templateId) =>
+      ipcRenderer.invoke(IpcChannels.template.getPlaceholders, templateId),
     incrementUsage: (id) =>
       ipcRenderer.invoke(IpcChannels.template.incrementUsage, id),
     list: () => ipcRenderer.invoke(IpcChannels.template.list),
     update: (id, data) =>
       ipcRenderer.invoke(IpcChannels.template.update, id, data),
+    updatePlaceholders: (templateId, placeholders) =>
+      ipcRenderer.invoke(
+        IpcChannels.template.updatePlaceholders,
+        templateId,
+        placeholders
+      ),
   },
   workflow: {
     cancel: (id) => ipcRenderer.invoke(IpcChannels.workflow.cancel, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.workflow.create, data),
+    delete: (id) => ipcRenderer.invoke(IpcChannels.workflow.delete, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.workflow.get, id),
     getStatistics: (filters) =>
       ipcRenderer.invoke(IpcChannels.workflow.getStatistics, filters),
@@ -474,6 +586,36 @@ const electronAPI: ElectronAPI = {
     pause: (id) => ipcRenderer.invoke(IpcChannels.workflow.pause, id),
     resume: (id) => ipcRenderer.invoke(IpcChannels.workflow.resume, id),
     start: (id) => ipcRenderer.invoke(IpcChannels.workflow.start, id),
+  },
+  workflowRepository: {
+    add: (workflowId, repositoryId, isPrimary) =>
+      ipcRenderer.invoke(
+        IpcChannels.workflowRepository.add,
+        workflowId,
+        repositoryId,
+        isPrimary
+      ),
+    addMultiple: (workflowId, repositoryIds, primaryRepositoryId) =>
+      ipcRenderer.invoke(
+        IpcChannels.workflowRepository.addMultiple,
+        workflowId,
+        repositoryIds,
+        primaryRepositoryId
+      ),
+    list: (workflowId) =>
+      ipcRenderer.invoke(IpcChannels.workflowRepository.list, workflowId),
+    remove: (workflowId, repositoryId) =>
+      ipcRenderer.invoke(
+        IpcChannels.workflowRepository.remove,
+        workflowId,
+        repositoryId
+      ),
+    setPrimary: (workflowId, repositoryId) =>
+      ipcRenderer.invoke(
+        IpcChannels.workflowRepository.setPrimary,
+        workflowId,
+        repositoryId
+      ),
   },
   worktree: {
     get: (id) => ipcRenderer.invoke(IpcChannels.worktree.get, id),

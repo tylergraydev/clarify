@@ -95,4 +95,12 @@ export function registerStepHandlers(
       return workflowStepsRepository.updateStatus(id, "pending");
     }
   );
+
+  // Skip a step (mark as skipped)
+  ipcMain.handle(
+    IpcChannels.step.skip,
+    (_event: IpcMainInvokeEvent, id: number): undefined | WorkflowStep => {
+      return workflowStepsRepository.skip(id);
+    }
+  );
 }

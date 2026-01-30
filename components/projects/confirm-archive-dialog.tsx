@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   DialogBackdrop,
   DialogClose,
@@ -12,7 +12,7 @@ import {
   DialogRoot,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
 interface ConfirmArchiveDialogProps {
   /** Whether the project is currently archived (determines action direction) */
@@ -34,11 +34,11 @@ export const ConfirmArchiveDialog = ({
   projectName,
   trigger,
 }: ConfirmArchiveDialogProps) => {
-  const title = isArchived ? 'Unarchive Project' : 'Archive Project';
+  const title = isArchived ? "Unarchive Project" : "Archive Project";
   const description = isArchived
     ? `Are you sure you want to unarchive "${projectName}"? The project will be restored to your active projects list.`
     : `Are you sure you want to archive "${projectName}"? Archived projects can be restored later.`;
-  const confirmButtonText = isArchived ? 'Unarchive' : 'Archive';
+  const confirmButtonText = isArchived ? "Unarchive" : "Archive";
 
   const handleConfirmClick = () => {
     onConfirm();
@@ -58,18 +58,18 @@ export const ConfirmArchiveDialog = ({
           <DialogDescription>{description}</DialogDescription>
 
           {/* Actions */}
-          <div className={'mt-6 flex justify-end gap-3'}>
+          <div className={"mt-6 flex justify-end gap-3"}>
             <DialogClose>
-              <Button disabled={isLoading} variant={'outline'}>
-                {'Cancel'}
+              <Button disabled={isLoading} variant={"outline"}>
+                {"Cancel"}
               </Button>
             </DialogClose>
             <Button
               disabled={isLoading}
               onClick={handleConfirmClick}
-              variant={'destructive'}
+              variant={"destructive"}
             >
-              {isLoading ? 'Processing...' : confirmButtonText}
+              {isLoading ? "Processing..." : confirmButtonText}
             </Button>
           </div>
         </DialogPopup>

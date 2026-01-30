@@ -6,8 +6,8 @@
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
+| File                                                            | Purpose                                                                |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `app/(app)/workflows/[id]/_components/workflow-control-bar.tsx` | Control bar with Pause, Resume, Cancel buttons for workflow management |
 
 ## Implementation Summary
@@ -15,6 +15,7 @@
 Created `WorkflowControlBar` component with the following features:
 
 ### Props Interface
+
 - `status: WorkflowStatus` - Current workflow status (required)
 - `onPause?: () => void` - Handler for pause action
 - `onResume?: () => void` - Handler for resume action
@@ -24,13 +25,15 @@ Created `WorkflowControlBar` component with the following features:
 - `isCancelPending?: boolean` - Loading state for cancel
 
 ### Button Behavior
-| Button | Enabled When | Variant | Icon |
-|--------|--------------|---------|------|
-| Pause | status === 'running' | outline | Pause |
-| Resume | status === 'paused' | outline | Play |
+
+| Button | Enabled When                               | Variant     | Icon    |
+| ------ | ------------------------------------------ | ----------- | ------- |
+| Pause  | status === 'running'                       | outline     | Pause   |
+| Resume | status === 'paused'                        | outline     | Play    |
 | Cancel | status in ['created', 'running', 'paused'] | destructive | XCircle |
 
 ### Features
+
 - All buttons use `sm` size
 - Buttons disable and show loading text during mutations
 - Does NOT import mutations directly - receives handlers as props

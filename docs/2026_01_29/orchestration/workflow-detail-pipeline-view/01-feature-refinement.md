@@ -60,13 +60,13 @@ The Workflow Detail and Pipeline View feature implements the /workflows/[id] dyn
 
 ## Validation Results
 
-| Check | Status | Details |
-|-------|--------|---------|
-| Format | Pass | Single paragraph, no headers or sections |
-| Length | Pass | 424 words (within 200-500 range) |
-| Expansion Ratio | Pass | ~7x original length (reasonable expansion) |
-| Intent Preservation | Pass | Core scope items all addressed |
-| Technical Context | Pass | Relevant project patterns incorporated |
+| Check               | Status | Details                                    |
+| ------------------- | ------ | ------------------------------------------ |
+| Format              | Pass   | Single paragraph, no headers or sections   |
+| Length              | Pass   | 424 words (within 200-500 range)           |
+| Expansion Ratio     | Pass   | ~7x original length (reasonable expansion) |
+| Intent Preservation | Pass   | Core scope items all addressed             |
+| Technical Context   | Pass   | Relevant project patterns incorporated     |
 
 ## Length Analysis
 
@@ -77,12 +77,14 @@ The Workflow Detail and Pipeline View feature implements the /workflows/[id] dyn
 ## Scope Analysis
 
 All original scope items addressed in refined request:
+
 - Build /workflows/[id] page with pipeline visualization
 - Display step progress indicators (pending/running/completed/failed)
 - Show step input/output with expandable detail panels
 - Implement pause/resume/cancel workflow controls
 
 Additional technical context appropriately added:
+
 - IPC handler integration details
 - TanStack Query patterns for state management
 - CVA component patterns for UI consistency

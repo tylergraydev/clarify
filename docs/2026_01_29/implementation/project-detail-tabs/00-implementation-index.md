@@ -23,6 +23,7 @@
 ## Quick Summary
 
 Implemented comprehensive project detail tabs by creating:
+
 - Repository validation schema and add dialog
 - Repository card component with default/delete actions
 - Tab content components for Repositories, Workflows, and Settings tabs

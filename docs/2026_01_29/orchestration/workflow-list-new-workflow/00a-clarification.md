@@ -44,6 +44,7 @@ The feature request is sufficiently detailed for refinement because:
 ## Codebase Exploration Summary
 
 ### Existing Backend Infrastructure Verified:
+
 - `db/schema/workflows.schema.ts` - Complete schema with:
   - Status types: `created`, `running`, `paused`, `editing`, `completed`, `failed`, `cancelled`
   - Workflow types: `planning`, `implementation`
@@ -54,10 +55,12 @@ The feature request is sufficiently detailed for refinement because:
 - `types/electron.d.ts` - ElectronAPI workflow methods fully typed
 
 ### Current Page State:
+
 - `app/(app)/workflows/page.tsx` - Bare placeholder stub
 - `app/(app)/workflows/new/page.tsx` - Bare placeholder stub
 
 ### Reference Implementation Found:
+
 - `app/(app)/projects/page.tsx` - Excellent reference for list page patterns:
   - Card/table view toggle with URL state persistence via nuqs
   - Filter controls (show archived toggle)
@@ -68,6 +71,7 @@ The feature request is sufficiently detailed for refinement because:
 - `components/projects/create-project-dialog.tsx` - Dialog with TanStack Form pattern
 
 ### UI Component Library Available:
+
 - Full suite of Base UI primitives with CVA patterns in `components/ui/`
 - Form components in `components/ui/form/`
 - Dialog, Badge, Button, Card, EmptyState, Switch, Tabs components all present
@@ -95,4 +99,5 @@ planning pipeline
 ```
 
 ---
+
 **MILESTONE:STEP_0A_SKIPPED**

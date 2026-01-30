@@ -6,6 +6,7 @@
 ## Files Modified
 
 **`hooks/queries/use-templates.ts`** - Added optimistic updates with rollback:
+
 - `useCreateTemplate`: Creates optimistic template with temporary ID, adds to lists immediately
 - `useDeleteTemplate`: Removes template from all caches optimistically
 - `useUpdateTemplate`: Updates template in place, handles state changes
@@ -15,6 +16,7 @@
 **`components/ui/form/submit-button.tsx`** - Added Loader2 spinner during form submission
 
 **`app/(app)/templates/page.tsx`** - Updated skeletons:
+
 - `TemplateCardSkeleton`: Added second button placeholder for Edit + Delete layout
 - `TemplateTableSkeleton`: Added second button placeholder in actions column
 

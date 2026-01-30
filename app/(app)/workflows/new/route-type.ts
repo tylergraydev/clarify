@@ -1,6 +1,6 @@
-import type { DynamicRoute } from 'next-typesafe-url';
+import type { DynamicRoute } from "next-typesafe-url";
 
-import { z } from 'zod';
+import { z } from "zod";
 
 export const Route = {
   searchParams: z.object({

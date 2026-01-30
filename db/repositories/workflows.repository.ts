@@ -46,7 +46,8 @@ export interface WorkflowHistoryResult {
   workflows: Array<Workflow>;
 }
 
-export type WorkflowHistorySortField = (typeof workflowHistorySortFields)[number];
+export type WorkflowHistorySortField =
+  (typeof workflowHistorySortFields)[number];
 
 /**
  * Sort order for workflow history queries
@@ -213,7 +214,10 @@ export function createWorkflowsRepository(
       }
 
       // Search term filter (searches feature name and feature request)
-      if (filters?.searchTerm !== undefined && filters.searchTerm.trim() !== "") {
+      if (
+        filters?.searchTerm !== undefined &&
+        filters.searchTerm.trim() !== ""
+      ) {
         const searchPattern = `%${filters.searchTerm}%`;
         conditions.push(
           sql`(${workflows.featureName} LIKE ${searchPattern} OR ${workflows.featureRequest} LIKE ${searchPattern})`
@@ -313,7 +317,8 @@ export function createWorkflowsRepository(
       const totalCount = result?.totalCount ?? 0;
 
       // Calculate success rate (completed / total * 100), handle division by zero
-      const successRate = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+      const successRate =
+        totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
       return {
         averageDurationMs: result?.averageDurationMs ?? null,

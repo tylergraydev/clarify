@@ -6,8 +6,8 @@
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
+| File                                            | Purpose                                               |
+| ----------------------------------------------- | ----------------------------------------------------- |
 | `app/(app)/workflows/[id]/_components/index.ts` | Barrel export file for all workflow detail components |
 
 ## Implementation Summary
@@ -15,13 +15,16 @@
 Created barrel export file with the following exports:
 
 ```typescript
-export { PipelineStepNode, pipelineStepNodeVariants } from './pipeline-step-node';
-export { PipelineView } from './pipeline-view';
-export { StepDetailPanel } from './step-detail-panel';
-export { getStepStatusVariant, StepStatusBadge } from './step-status-badge';
-export { WorkflowControlBar } from './workflow-control-bar';
-export { WorkflowDetailSkeleton } from './workflow-detail-skeleton';
-export { WorkflowNotFound } from './workflow-not-found';
+export {
+  PipelineStepNode,
+  pipelineStepNodeVariants,
+} from "./pipeline-step-node";
+export { PipelineView } from "./pipeline-view";
+export { StepDetailPanel } from "./step-detail-panel";
+export { getStepStatusVariant, StepStatusBadge } from "./step-status-badge";
+export { WorkflowControlBar } from "./workflow-control-bar";
+export { WorkflowDetailSkeleton } from "./workflow-detail-skeleton";
+export { WorkflowNotFound } from "./workflow-not-found";
 ```
 
 ## Validation Results
@@ -38,11 +41,12 @@ export { WorkflowNotFound } from './workflow-not-found';
 ## Notes
 
 Usage in page file:
+
 ```typescript
 import {
   PipelineView,
   WorkflowControlBar,
   WorkflowDetailSkeleton,
   WorkflowNotFound,
-} from './_components';
+} from "./_components";
 ```

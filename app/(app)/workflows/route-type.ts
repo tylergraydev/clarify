@@ -1,17 +1,17 @@
-import type { DynamicRoute } from 'next-typesafe-url';
+import type { DynamicRoute } from "next-typesafe-url";
 
-import { z } from 'zod';
+import { z } from "zod";
 
-import { workflowStatuses } from '@/db/schema/workflows.schema';
+import { workflowStatuses } from "@/db/schema/workflows.schema";
 
-const VIEW_OPTIONS = ['card', 'table'] as const;
+const VIEW_OPTIONS = ["card", "table"] as const;
 
 export const Route = {
   searchParams: z.object({
     projectId: z.coerce.number().optional(),
     search: z.string().optional(),
     status: z.enum(workflowStatuses).optional(),
-    view: z.enum(VIEW_OPTIONS).optional().default('card'),
+    view: z.enum(VIEW_OPTIONS).optional().default("card"),
   }),
 } satisfies DynamicRoute;
 

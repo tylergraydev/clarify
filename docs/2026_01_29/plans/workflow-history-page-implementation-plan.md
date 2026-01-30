@@ -14,36 +14,36 @@
 
 ### Critical Files (Must Modify)
 
-| File | Status | Description |
-|------|--------|-------------|
-| `app/(app)/workflows/history/page.tsx` | MODIFY | Replace placeholder with full implementation |
-| `hooks/queries/use-workflows.ts` | MODIFY | Add history and statistics hooks |
-| `lib/queries/workflows.ts` | MODIFY | Add history query keys |
-| `db/repositories/workflows.repository.ts` | MODIFY | Add history query methods |
-| `electron/ipc/workflow.handlers.ts` | MODIFY | Add history IPC handlers |
-| `electron/ipc/channels.ts` | MODIFY | Add channel constants |
-| `electron/preload.ts` | MODIFY | Expose new API methods |
-| `types/electron.d.ts` | MODIFY | Add type definitions |
+| File                                      | Status | Description                                  |
+| ----------------------------------------- | ------ | -------------------------------------------- |
+| `app/(app)/workflows/history/page.tsx`    | MODIFY | Replace placeholder with full implementation |
+| `hooks/queries/use-workflows.ts`          | MODIFY | Add history and statistics hooks             |
+| `lib/queries/workflows.ts`                | MODIFY | Add history query keys                       |
+| `db/repositories/workflows.repository.ts` | MODIFY | Add history query methods                    |
+| `electron/ipc/workflow.handlers.ts`       | MODIFY | Add history IPC handlers                     |
+| `electron/ipc/channels.ts`                | MODIFY | Add channel constants                        |
+| `electron/preload.ts`                     | MODIFY | Expose new API methods                       |
+| `types/electron.d.ts`                     | MODIFY | Add type definitions                         |
 
 ### New Files to Create
 
-| File | Description |
-|------|-------------|
+| File                                                | Description                  |
+| --------------------------------------------------- | ---------------------------- |
 | `components/workflows/history-statistics-cards.tsx` | Statistics summary component |
-| `components/workflows/workflow-history-table.tsx` | History table component |
-| `components/workflows/date-range-filter.tsx` | Date range filter component |
-| `components/ui/pagination.tsx` | Generic pagination component |
-| `app/(app)/workflows/history/route-type.ts` | URL route type definition |
+| `components/workflows/workflow-history-table.tsx`   | History table component      |
+| `components/workflows/date-range-filter.tsx`        | Date range filter component  |
+| `components/ui/pagination.tsx`                      | Generic pagination component |
+| `app/(app)/workflows/history/route-type.ts`         | URL route type definition    |
 
 ### Reference Files
 
-| File | Purpose |
-|------|---------|
-| `app/(app)/workflows/page.tsx` | URL state pattern via nuqs |
-| `app/(app)/templates/page.tsx` | Table/filter patterns |
-| `components/workflows/workflow-table.tsx` | Table structure reference |
-| `app/(app)/dashboard/_components/statistics-widget.tsx` | Statistics calculation |
-| `components/ui/badge.tsx` | Status badge variants |
+| File                                                    | Purpose                    |
+| ------------------------------------------------------- | -------------------------- |
+| `app/(app)/workflows/page.tsx`                          | URL state pattern via nuqs |
+| `app/(app)/templates/page.tsx`                          | Table/filter patterns      |
+| `components/workflows/workflow-table.tsx`               | Table structure reference  |
+| `app/(app)/dashboard/_components/statistics-widget.tsx` | Statistics calculation     |
+| `components/ui/badge.tsx`                               | Status badge variants      |
 
 ---
 

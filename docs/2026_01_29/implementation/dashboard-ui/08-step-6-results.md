@@ -10,6 +10,7 @@
 ## Implementation Details
 
 ### Types (`_types/index.ts`)
+
 - `WorkflowStatus` - Union type of all workflow statuses
 - `ActiveWorkflowStatus` - Subset for active workflows (running, paused, editing)
 - `TerminalWorkflowStatus` - Subset for terminal workflows (completed, failed, cancelled)
@@ -23,6 +24,7 @@
 - `WorkflowProgressData` - Pick type for progress calculations
 
 ### Utilities (`_utils/index.ts`)
+
 - `calculateProgress` - Calculate percentage from step numbers
 - `calculateWorkflowProgress` - Wrapper for workflow objects
 - `calculateElapsedTime` - Format elapsed time from startedAt timestamp

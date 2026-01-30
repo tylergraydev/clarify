@@ -15,6 +15,7 @@
 ## Features Implemented
 
 **ConfirmDeleteDialog**:
+
 - Controlled dialog with `isOpen` and `onOpenChange` props
 - Shows template name and confirmation message
 - Displays warning when template has usageCount > 0
@@ -22,11 +23,13 @@
 - Uses destructive button variant
 
 **TemplateCard Updates**:
+
 - Added `onDelete` prop
 - Delete button with Trash2 icon
 - Delete button hidden for built-in templates
 
 **Page Updates**:
+
 - State for delete dialog (`templateToDelete`, `isDeleteDialogOpen`)
 - `handleDeleteClick` and `handleConfirmDelete` handlers
 - Toast notifications on delete success/error

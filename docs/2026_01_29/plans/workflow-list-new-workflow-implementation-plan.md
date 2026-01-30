@@ -17,15 +17,15 @@
 
 ### Critical Files (Must modify/create)
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `app/(app)/workflows/page.tsx` | Modify | Main workflow list page |
-| `app/(app)/workflows/new/page.tsx` | Modify | New workflow creation page |
+| File                                              | Action | Purpose                       |
+| ------------------------------------------------- | ------ | ----------------------------- |
+| `app/(app)/workflows/page.tsx`                    | Modify | Main workflow list page       |
+| `app/(app)/workflows/new/page.tsx`                | Modify | New workflow creation page    |
 | `components/workflows/create-workflow-dialog.tsx` | Create | Multi-section creation dialog |
-| `components/workflows/workflow-card.tsx` | Create | Card view component |
-| `components/workflows/workflow-table.tsx` | Create | Table view component |
-| `app/(app)/workflows/route-type.ts` | Create | Type-safe route parameters |
-| `lib/validations/workflow.ts` | Create | Zod validation schema |
+| `components/workflows/workflow-card.tsx`          | Create | Card view component           |
+| `components/workflows/workflow-table.tsx`         | Create | Table view component          |
+| `app/(app)/workflows/route-type.ts`               | Create | Type-safe route parameters    |
+| `lib/validations/workflow.ts`                     | Create | Zod validation schema         |
 
 ### Key Reference Files
 

@@ -24,15 +24,18 @@
 ## Changes Made
 
 **Imports Added**:
+
 - `RepositoriesTabContent`, `SettingsTabContent`, `WorkflowsTabContent`
 - `useRepositoriesByProject`, `useWorkflowsByProject` hooks
 
 **Tab Content Replacements**:
+
 - Repositories tab: `<RepositoriesTabContent projectId={projectId} />`
 - Workflows tab: `<WorkflowsTabContent projectId={projectId} projectName={project.name} />`
 - Settings tab: `<SettingsTabContent projectId={projectId} />`
 
 **Overview Tab Updates**:
+
 - Repositories card shows actual count with icon and summary
 - Recent Workflows card shows count and up to 3 recent workflow names
 

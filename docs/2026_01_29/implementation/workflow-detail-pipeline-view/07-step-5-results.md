@@ -6,8 +6,8 @@
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
+| File                                                     | Purpose                                                                               |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `app/(app)/workflows/[id]/_components/pipeline-view.tsx` | Container component orchestrating workflow step rendering in vertical pipeline layout |
 
 ## Implementation Summary
@@ -15,11 +15,13 @@
 Created `PipelineView` component with the following features:
 
 ### Props Interface
+
 - `steps: Array<WorkflowStep>` - Array of workflow steps to display
 - `isLoading?: boolean` - Loading state
 - `className?: string` - Optional className for container
 
 ### Key Features
+
 1. **Sorting**: Steps sorted by `stepNumber` using memoized computation
 2. **Visual Connectors**: Vertical line on left side with colored dots indicating step status:
    - Purple: Running/Editing (active)
@@ -31,6 +33,7 @@ Created `PipelineView` component with the following features:
 5. **Empty State**: Uses project's EmptyState component pattern
 
 ### Components Used
+
 - `PipelineStepNode` - For rendering each step node
 - `StepDetailPanel` - As children inside each step node
 - `EmptyState` - For empty state display

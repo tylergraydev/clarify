@@ -24,6 +24,7 @@ through projects.
 ## Codebase Exploration Summary
 
 The clarification agent examined:
+
 - CLAUDE.md for project conventions
 - Existing workflow-related code structure
 - Query key factories and existing patterns
@@ -35,6 +36,7 @@ The clarification agent examined:
 
 **Reasoning**:
 The feature request is well-specified with:
+
 1. Clear scope: Filter by completed/failed/cancelled statuses, date range filtering, completion metrics
 2. References existing infrastructure: Query key factory with `byStatus` already exists
 3. Clear UI pattern: Existing `/workflows/page.tsx` implements status filtering, view modes, and `WorkflowTable` component

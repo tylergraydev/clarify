@@ -8,4 +8,5 @@ export const templateKeys = createQueryKeys("templates", {
   list: (filters?: { category?: string; includeDeactivated?: boolean }) => [
     { filters },
   ],
+  placeholders: (templateId: number) => [templateId],
 });

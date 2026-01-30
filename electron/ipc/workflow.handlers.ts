@@ -75,6 +75,14 @@ export function registerWorkflowHandlers(
     }
   );
 
+  // Delete a workflow permanently
+  ipcMain.handle(
+    IpcChannels.workflow.delete,
+    (_event: IpcMainInvokeEvent, id: number): boolean => {
+      return workflowsRepository.delete(id);
+    }
+  );
+
   // Get a workflow by ID
   ipcMain.handle(
     IpcChannels.workflow.get,

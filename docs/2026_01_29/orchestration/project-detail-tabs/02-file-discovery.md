@@ -13,72 +13,72 @@ Implement comprehensive project detail tabs (Repositories, Workflows, Settings) 
 
 ### Critical Priority (Must Modify)
 
-| File | Reason |
-|------|--------|
+| File                               | Reason                                                                             |
+| ---------------------------------- | ---------------------------------------------------------------------------------- |
 | `app/(app)/projects/[id]/page.tsx` | Main project detail page with tabbed interface - currently has placeholder content |
 
 ### High Priority (Likely Changes)
 
-| File | Reason |
-|------|--------|
-| `hooks/queries/use-workflows.ts` | Contains `useWorkflowsByProject` hook - may need enhancements |
-| `hooks/queries/use-repositories.ts` | Contains repository query hooks - core for Repositories tab |
-| `hooks/queries/use-agents.ts` | Contains agent hooks - needed for Settings tab |
-| `hooks/queries/use-projects.ts` | Contains `useAddRepositoryToProject` - may need additional hooks |
-| `lib/queries/repositories.ts` | Query key factory - may need new keys |
-| `lib/queries/workflows.ts` | Query key factory with `byProject` key |
-| `lib/queries/agents.ts` | Query key factory with `byProject` and `active` keys |
+| File                                | Reason                                                           |
+| ----------------------------------- | ---------------------------------------------------------------- |
+| `hooks/queries/use-workflows.ts`    | Contains `useWorkflowsByProject` hook - may need enhancements    |
+| `hooks/queries/use-repositories.ts` | Contains repository query hooks - core for Repositories tab      |
+| `hooks/queries/use-agents.ts`       | Contains agent hooks - needed for Settings tab                   |
+| `hooks/queries/use-projects.ts`     | Contains `useAddRepositoryToProject` - may need additional hooks |
+| `lib/queries/repositories.ts`       | Query key factory - may need new keys                            |
+| `lib/queries/workflows.ts`          | Query key factory with `byProject` key                           |
+| `lib/queries/agents.ts`             | Query key factory with `byProject` and `active` keys             |
 
 ### Medium Priority (Reference/Patterns)
 
-| File | Purpose |
-|------|---------|
-| `components/workflows/workflow-card.tsx` | Reusable workflow card for Workflows tab |
-| `components/workflows/workflow-table.tsx` | Reusable workflow table component |
-| `components/agents/agent-card.tsx` | Agent card pattern for Settings tab |
-| `components/agents/agent-editor-dialog.tsx` | Dialog pattern for agent customization |
-| `components/projects/create-project-dialog.tsx` | Create dialog pattern with TanStack Form |
-| `components/projects/edit-project-dialog.tsx` | Edit dialog pattern with form reset |
-| `app/(app)/workflows/page.tsx` | Workflows list page - pattern for filtering/search |
-| `app/(app)/agents/page.tsx` | Agents page - pattern for grid layout/filtering |
-| `components/ui/tabs.tsx` | Tabs UI component (already used in project page) |
-| `components/ui/dialog.tsx` | Dialog UI component pattern |
-| `components/ui/empty-state.tsx` | Empty state component for empty lists |
-| `components/ui/card.tsx` | Card components for displaying items |
-| `lib/forms/form-hook.ts` | TanStack Form configuration |
-| `lib/validations/agent.ts` | Zod validation schema pattern |
+| File                                            | Purpose                                            |
+| ----------------------------------------------- | -------------------------------------------------- |
+| `components/workflows/workflow-card.tsx`        | Reusable workflow card for Workflows tab           |
+| `components/workflows/workflow-table.tsx`       | Reusable workflow table component                  |
+| `components/agents/agent-card.tsx`              | Agent card pattern for Settings tab                |
+| `components/agents/agent-editor-dialog.tsx`     | Dialog pattern for agent customization             |
+| `components/projects/create-project-dialog.tsx` | Create dialog pattern with TanStack Form           |
+| `components/projects/edit-project-dialog.tsx`   | Edit dialog pattern with form reset                |
+| `app/(app)/workflows/page.tsx`                  | Workflows list page - pattern for filtering/search |
+| `app/(app)/agents/page.tsx`                     | Agents page - pattern for grid layout/filtering    |
+| `components/ui/tabs.tsx`                        | Tabs UI component (already used in project page)   |
+| `components/ui/dialog.tsx`                      | Dialog UI component pattern                        |
+| `components/ui/empty-state.tsx`                 | Empty state component for empty lists              |
+| `components/ui/card.tsx`                        | Card components for displaying items               |
+| `lib/forms/form-hook.ts`                        | TanStack Form configuration                        |
+| `lib/validations/agent.ts`                      | Zod validation schema pattern                      |
 
 ### Low Priority (Context)
 
-| File | Context Provided |
-|------|------------------|
-| `db/schema/repositories.schema.ts` | Repository table structure |
-| `db/schema/agents.schema.ts` | Agent table structure with projectId |
-| `db/schema/workflows.schema.ts` | Workflow table structure |
-| `db/repositories/repositories.repository.ts` | Repository data access methods |
-| `db/repositories/workflows.repository.ts` | Workflow data access methods |
-| `db/repositories/agents.repository.ts` | Agent data access methods |
-| `electron/ipc/repository.handlers.ts` | Repository IPC handlers |
-| `electron/ipc/workflow.handlers.ts` | Workflow IPC handlers |
-| `electron/ipc/agent.handlers.ts` | Agent IPC handlers |
-| `electron/ipc/channels.ts` | IPC channel definitions |
-| `electron/preload.ts` | ElectronAPI exposure |
-| `types/electron.d.ts` | TypeScript type definitions |
-| `hooks/use-electron.ts` | ElectronAPI access hook |
-| `components/ui/button.tsx` | Button component variants |
-| `components/ui/badge.tsx` | Badge component for status display |
-| `components/ui/form/text-field.tsx` | TextField form component |
-| `components/ui/form/textarea-field.tsx` | TextareaField form component |
-| `lib/queries/projects.ts` | Projects query key factory |
+| File                                         | Context Provided                     |
+| -------------------------------------------- | ------------------------------------ |
+| `db/schema/repositories.schema.ts`           | Repository table structure           |
+| `db/schema/agents.schema.ts`                 | Agent table structure with projectId |
+| `db/schema/workflows.schema.ts`              | Workflow table structure             |
+| `db/repositories/repositories.repository.ts` | Repository data access methods       |
+| `db/repositories/workflows.repository.ts`    | Workflow data access methods         |
+| `db/repositories/agents.repository.ts`       | Agent data access methods            |
+| `electron/ipc/repository.handlers.ts`        | Repository IPC handlers              |
+| `electron/ipc/workflow.handlers.ts`          | Workflow IPC handlers                |
+| `electron/ipc/agent.handlers.ts`             | Agent IPC handlers                   |
+| `electron/ipc/channels.ts`                   | IPC channel definitions              |
+| `electron/preload.ts`                        | ElectronAPI exposure                 |
+| `types/electron.d.ts`                        | TypeScript type definitions          |
+| `hooks/use-electron.ts`                      | ElectronAPI access hook              |
+| `components/ui/button.tsx`                   | Button component variants            |
+| `components/ui/badge.tsx`                    | Badge component for status display   |
+| `components/ui/form/text-field.tsx`          | TextField form component             |
+| `components/ui/form/textarea-field.tsx`      | TextareaField form component         |
+| `lib/queries/projects.ts`                    | Projects query key factory           |
 
 ## Discovery Summary
 
-| Category | Count |
-|----------|-------|
-| Critical | 1 |
-| High | 7 |
-| Medium | 15 |
-| Low | 18 |
+| Category  | Count  |
+| --------- | ------ |
+| Critical  | 1      |
+| High      | 7      |
+| Medium    | 15     |
+| Low       | 18     |
 | **Total** | **41** |
 
 ## Architecture Insights

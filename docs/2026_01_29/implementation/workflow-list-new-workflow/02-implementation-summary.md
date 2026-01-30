@@ -6,16 +6,16 @@
 
 ## Steps Completed
 
-| Step | Title | Specialist | Status |
-|------|-------|------------|--------|
-| 1 | Create Workflow Validation Schema | tanstack-form | ✅ Complete |
-| 2 | Create Route Type Definition | general-purpose | ✅ Complete |
-| 3 | Create Workflow Card Component | frontend-component | ✅ Complete |
-| 4 | Create Workflow Table Component | frontend-component | ✅ Complete |
-| 5 | Create Workflow Creation Dialog | tanstack-form | ✅ Complete |
-| 6 | Implement Workflows List Page | frontend-component | ✅ Complete |
-| 7 | Update New Workflow Page | frontend-component | ✅ Complete |
-| 8 | Run Type Generation and Final Validation | general-purpose | ✅ Complete |
+| Step | Title                                    | Specialist         | Status      |
+| ---- | ---------------------------------------- | ------------------ | ----------- |
+| 1    | Create Workflow Validation Schema        | tanstack-form      | ✅ Complete |
+| 2    | Create Route Type Definition             | general-purpose    | ✅ Complete |
+| 3    | Create Workflow Card Component           | frontend-component | ✅ Complete |
+| 4    | Create Workflow Table Component          | frontend-component | ✅ Complete |
+| 5    | Create Workflow Creation Dialog          | tanstack-form      | ✅ Complete |
+| 6    | Implement Workflows List Page            | frontend-component | ✅ Complete |
+| 7    | Update New Workflow Page                 | frontend-component | ✅ Complete |
+| 8    | Run Type Generation and Final Validation | general-purpose    | ✅ Complete |
 
 ## Quality Gates
 
@@ -39,6 +39,7 @@
 ## Features Implemented
 
 ### Workflow List Page (`/workflows`)
+
 - Dual card/table view toggle (persisted to URL)
 - Status filter dropdown (all workflow statuses)
 - Text search (filters by feature name)
@@ -49,6 +50,7 @@
 - Workflow cancellation support
 
 ### Create Workflow Dialog
+
 - Project selection
 - Feature name and request inputs
 - Template selection with auto-population
@@ -58,6 +60,7 @@
 - Loading states during submission
 
 ### New Workflow Page (`/workflows/new`)
+
 - Full-page form with same fields as dialog
 - Back navigation to workflows list
 - Success redirect to workflow detail

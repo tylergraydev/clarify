@@ -1,14 +1,17 @@
 "use client";
 
-import type { ReactNode } from "react";
-
+import { ReactNode, useEffectEvent } from "react";
 import { useEffect, useState } from "react";
 
-import type { UpdateAgentFormValues } from "@/lib/validations/agent";
 import type { Agent } from "@/types/electron";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   DialogBackdrop,
   DialogClose,
@@ -19,9 +22,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { agentColors } from "@/db/schema/agents.schema";
 import { useResetAgent, useUpdateAgent } from "@/hooks/queries/use-agents";
 import { useAppForm } from "@/lib/forms/form-hook";
 import { updateAgentSchema } from "@/lib/validations/agent";
+
+import { AgentColorPicker } from "./agent-color-picker";
+import { AgentSkillsManager } from "./agent-skills-manager";
+import { AgentToolsManager } from "./agent-tools-manager";
+
+type AgentColor = (typeof agentColors)[number];
 
 interface AgentEditorDialogProps {
   /** The agent to edit */
@@ -38,6 +48,9 @@ export const AgentEditorDialog = ({
   trigger,
 }: AgentEditorDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<AgentColor | null>(
+    (agent.color as AgentColor) ?? null
+  );
 
   const updateAgentMutation = useUpdateAgent();
   const resetAgentMutation = useResetAgent();
@@ -52,11 +65,12 @@ export const AgentEditorDialog = ({
       description: agent.description ?? "",
       displayName: agent.displayName,
       systemPrompt: agent.systemPrompt,
-    } satisfies UpdateAgentFormValues,
+    },
     onSubmit: async ({ value }) => {
       try {
         await updateAgentMutation.mutateAsync({
           data: {
+            color: selectedColor,
             description: value.description,
             displayName: value.displayName,
             systemPrompt: value.systemPrompt,
@@ -78,24 +92,33 @@ export const AgentEditorDialog = ({
     },
   });
 
-  // Reset form when agent changes
+  const updateSelectedColor = useEffectEvent(
+    (agentColor: AgentColor | null) => {
+      setSelectedColor(agentColor);
+    }
+  );
+
+  // Reset form and color when agent changes
   useEffect(() => {
     form.reset({
       description: agent.description ?? "",
       displayName: agent.displayName,
       systemPrompt: agent.systemPrompt,
     });
+    updateSelectedColor((agent.color as AgentColor) ?? null);
   }, [agent, form]);
 
   const handleClose = () => {
     setIsOpen(false);
     form.reset();
+    setSelectedColor((agent.color as AgentColor) ?? null);
   };
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
       form.reset();
+      setSelectedColor((agent.color as AgentColor) ?? null);
     }
   };
 
@@ -124,33 +147,56 @@ export const AgentEditorDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup className={"max-w-2xl"}>
+        <DialogPopup className={"max-h-[90vh] max-w-2xl overflow-y-auto"}>
           {/* Header */}
           <div className={"flex items-start justify-between gap-4"}>
             <div>
               <DialogTitle>{"Edit Agent"}</DialogTitle>
               <DialogDescription>
-                {"Customize the agent's display name, description, and system prompt."}
+                {
+                  "Customize the agent's display name, description, and system prompt."
+                }
               </DialogDescription>
             </div>
             <div className={"flex shrink-0 items-center gap-2"}>
-              {isBuiltIn && <Badge variant={"default"}>{"Built-in Agent"}</Badge>}
+              {isBuiltIn && (
+                <Badge variant={"default"}>{"Built-in Agent"}</Badge>
+              )}
               <Badge variant={"default"}>{agentTypeLabel}</Badge>
             </div>
           </div>
 
           {/* Agent Info Display */}
-          <div className={"mt-4 rounded-md border border-border bg-muted/50 p-3"}>
+          <div
+            className={"mt-4 rounded-md border border-border bg-muted/50 p-3"}
+          >
             <div className={"flex items-center gap-3"}>
-              {agent.color && (
+              {selectedColor && (
                 <div
                   className={"size-4 rounded-full"}
-                  style={{ backgroundColor: agent.color }}
+                  style={{
+                    backgroundColor:
+                      selectedColor === "blue"
+                        ? "#3b82f6"
+                        : selectedColor === "cyan"
+                          ? "#06b6d4"
+                          : selectedColor === "green"
+                            ? "#22c55e"
+                            : selectedColor === "red"
+                              ? "#ef4444"
+                              : selectedColor === "yellow"
+                                ? "#eab308"
+                                : "#6b7280",
+                  }}
                 />
               )}
               <div className={"text-sm"}>
-                <span className={"text-muted-foreground"}>{"Internal name: "}</span>
-                <span className={"font-mono text-foreground"}>{agent.name}</span>
+                <span className={"text-muted-foreground"}>
+                  {"Internal name: "}
+                </span>
+                <span className={"font-mono text-foreground"}>
+                  {agent.name}
+                </span>
               </div>
             </div>
           </div>
@@ -187,6 +233,13 @@ export const AgentEditorDialog = ({
                 )}
               </form.AppField>
 
+              {/* Color Picker */}
+              <AgentColorPicker
+                disabled={isSubmitting || isResetting}
+                onChange={setSelectedColor}
+                value={selectedColor}
+              />
+
               {/* System Prompt */}
               <form.AppField name={"systemPrompt"}>
                 {(field) => (
@@ -200,6 +253,40 @@ export const AgentEditorDialog = ({
                   />
                 )}
               </form.AppField>
+
+              {/* Tools Section */}
+              <Collapsible className={"rounded-md border border-border"}>
+                <CollapsibleTrigger
+                  className={"w-full justify-start px-3 py-2"}
+                >
+                  {"Allowed Tools"}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className={"border-t border-border p-3"}>
+                    <AgentToolsManager
+                      agentId={agent.id}
+                      disabled={isSubmitting || isResetting}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* Skills Section */}
+              <Collapsible className={"rounded-md border border-border"}>
+                <CollapsibleTrigger
+                  className={"w-full justify-start px-3 py-2"}
+                >
+                  {"Referenced Skills"}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className={"border-t border-border p-3"}>
+                    <AgentSkillsManager
+                      agentId={agent.id}
+                      disabled={isSubmitting || isResetting}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Action Buttons */}
               <div className={"mt-2 flex justify-between"}>

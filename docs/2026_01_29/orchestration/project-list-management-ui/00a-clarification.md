@@ -27,6 +27,7 @@ Unblocks: Repository management, workflow creation (both require a project conte
 ## Codebase Exploration Summary
 
 The clarification agent examined:
+
 - CLAUDE.md for project structure and tech stack
 - `components/ui/` for available UI primitives (Card, Dialog, Tabs, Button, form components)
 - `hooks/queries/use-projects.ts` for existing query hooks
@@ -38,6 +39,7 @@ The clarification agent examined:
 **Score**: 4/5 (Mostly clear, minor details could be clarified but not essential)
 
 **Reasoning**: The feature request clearly specifies:
+
 - Page structure (project list page with cards/table view)
 - Dialog pattern ("using existing form components")
 - Detail page with tabs placeholder
@@ -58,6 +60,7 @@ The clarification agent examined:
 6. **Data Schema**: Project schema is minimal (id, name, description, archivedAt, timestamps)
 
 **Codebase Confirms Readiness**:
+
 - All query hooks exist with proper cache invalidation
 - UI primitives available: Card, Dialog, Tabs, Button, form field components
 - Existing page patterns show consistent structure

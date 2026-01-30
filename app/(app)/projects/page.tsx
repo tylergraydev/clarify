@@ -163,7 +163,9 @@ function ProjectsPageContent() {
   };
 
   const handleViewDetails = (projectId: number) => {
-    router.push($path({ route: "/projects/[id]", routeParams: { id: projectId } }));
+    router.push(
+      $path({ route: "/projects/[id]", routeParams: { id: projectId } })
+    );
   };
 
   // Check if there are no projects at all (not just filtered)

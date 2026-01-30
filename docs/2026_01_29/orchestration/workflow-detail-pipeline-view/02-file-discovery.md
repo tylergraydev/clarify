@@ -15,63 +15,63 @@ The Workflow Detail and Pipeline View feature implements the /workflows/[id] dyn
 
 ### Critical Priority (Must Modify/Create)
 
-| # | File | Reason | Expected Changes |
-|---|------|--------|-----------------|
-| 1 | `app/(app)/workflows/[id]/page.tsx` | Main page file, currently placeholder | Complete rewrite - implement full pipeline visualization, step display, workflow controls (pause/resume/cancel), and step detail panels |
-| 2 | `app/(app)/workflows/[id]/route-type.ts` | Route type definition | May need to update to use `z.coerce.number().int().positive()` pattern like projects/[id] for consistent numeric ID handling |
+| #   | File                                     | Reason                                | Expected Changes                                                                                                                        |
+| --- | ---------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `app/(app)/workflows/[id]/page.tsx`      | Main page file, currently placeholder | Complete rewrite - implement full pipeline visualization, step display, workflow controls (pause/resume/cancel), and step detail panels |
+| 2   | `app/(app)/workflows/[id]/route-type.ts` | Route type definition                 | May need to update to use `z.coerce.number().int().positive()` pattern like projects/[id] for consistent numeric ID handling            |
 
 ### High Priority (Likely Changes)
 
-| # | File | Reason | Expected Changes |
-|---|------|--------|-----------------|
-| 1 | `hooks/queries/use-workflows.ts` | Contains useWorkflow, usePauseWorkflow, useResumeWorkflow, useCancelWorkflow hooks | May need to add optimistic update patterns or polling configuration for real-time status updates |
-| 2 | `hooks/queries/use-steps.ts` | Contains useStepsByWorkflow, useStep, useEditStep, etc. | Will be used directly; may need polling or refetch configuration |
-| 3 | `lib/queries/steps.ts` | Query key factory for steps | May need to ensure key patterns support the page's caching needs |
-| 4 | `lib/queries/workflows.ts` | Query key factory for workflows | Will be used for cache invalidation patterns |
-| 5 | `components/ui/badge.tsx` | Has existing status variants | May need additional variants for step-specific statuses (pending, running, paused, editing, skipped) |
+| #   | File                             | Reason                                                                             | Expected Changes                                                                                     |
+| --- | -------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 1   | `hooks/queries/use-workflows.ts` | Contains useWorkflow, usePauseWorkflow, useResumeWorkflow, useCancelWorkflow hooks | May need to add optimistic update patterns or polling configuration for real-time status updates     |
+| 2   | `hooks/queries/use-steps.ts`     | Contains useStepsByWorkflow, useStep, useEditStep, etc.                            | Will be used directly; may need polling or refetch configuration                                     |
+| 3   | `lib/queries/steps.ts`           | Query key factory for steps                                                        | May need to ensure key patterns support the page's caching needs                                     |
+| 4   | `lib/queries/workflows.ts`       | Query key factory for workflows                                                    | Will be used for cache invalidation patterns                                                         |
+| 5   | `components/ui/badge.tsx`        | Has existing status variants                                                       | May need additional variants for step-specific statuses (pending, running, paused, editing, skipped) |
 
 ### Medium Priority (May Need Changes/Reference)
 
-| # | File | Reason |
-|---|------|--------|
-| 1 | `db/schema/workflow-steps.schema.ts` | Defines step statuses and types - essential reference |
-| 2 | `db/schema/workflows.schema.ts` | Defines workflow statuses and types - essential reference |
-| 3 | `electron/ipc/step.handlers.ts` | IPC handlers for step operations - reference for available operations |
-| 4 | `electron/ipc/workflow.handlers.ts` | IPC handlers for workflow operations - reference for control actions |
-| 5 | `electron/preload.ts` | Defines ElectronAPI interface - reference for API contract |
-| 6 | `types/electron.d.ts` | TypeScript declarations for ElectronAPI - exports Workflow, WorkflowStep types |
-| 7 | `components/data/query-error-boundary.tsx` | Error boundary component - should wrap page content |
-| 8 | `components/ui/collapsible.tsx` | Collapsible component for expandable step detail panels |
-| 9 | `components/ui/card.tsx` | Card components for containing step details |
-| 10 | `components/ui/button.tsx` | Button component for workflow control actions |
-| 11 | `components/ui/tabs.tsx` | Tabs component - could be used for step input/output switching |
-| 12 | `components/ui/empty-state.tsx` | Empty state component for when workflow has no steps |
-| 13 | `components/ui/tooltip.tsx` | Tooltip component for additional context on step statuses |
-| 14 | `components/ui/alert.tsx` | Alert component for displaying workflow errors/warnings |
-| 15 | `components/ui/separator.tsx` | Separator component for visual division |
-| 16 | `hooks/use-electron.ts` | Hook for accessing ElectronAPI |
-| 17 | `hooks/use-toast.ts` | Toast hook for success/error notifications |
+| #   | File                                       | Reason                                                                         |
+| --- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| 1   | `db/schema/workflow-steps.schema.ts`       | Defines step statuses and types - essential reference                          |
+| 2   | `db/schema/workflows.schema.ts`            | Defines workflow statuses and types - essential reference                      |
+| 3   | `electron/ipc/step.handlers.ts`            | IPC handlers for step operations - reference for available operations          |
+| 4   | `electron/ipc/workflow.handlers.ts`        | IPC handlers for workflow operations - reference for control actions           |
+| 5   | `electron/preload.ts`                      | Defines ElectronAPI interface - reference for API contract                     |
+| 6   | `types/electron.d.ts`                      | TypeScript declarations for ElectronAPI - exports Workflow, WorkflowStep types |
+| 7   | `components/data/query-error-boundary.tsx` | Error boundary component - should wrap page content                            |
+| 8   | `components/ui/collapsible.tsx`            | Collapsible component for expandable step detail panels                        |
+| 9   | `components/ui/card.tsx`                   | Card components for containing step details                                    |
+| 10  | `components/ui/button.tsx`                 | Button component for workflow control actions                                  |
+| 11  | `components/ui/tabs.tsx`                   | Tabs component - could be used for step input/output switching                 |
+| 12  | `components/ui/empty-state.tsx`            | Empty state component for when workflow has no steps                           |
+| 13  | `components/ui/tooltip.tsx`                | Tooltip component for additional context on step statuses                      |
+| 14  | `components/ui/alert.tsx`                  | Alert component for displaying workflow errors/warnings                        |
+| 15  | `components/ui/separator.tsx`              | Separator component for visual division                                        |
+| 16  | `hooks/use-electron.ts`                    | Hook for accessing ElectronAPI                                                 |
+| 17  | `hooks/use-toast.ts`                       | Toast hook for success/error notifications                                     |
 
 ### Low Priority (Reference Only)
 
-| # | File | Reason |
-|---|------|--------|
-| 1 | `app/(app)/projects/[id]/page.tsx` | Reference for dynamic route pattern, breadcrumbs, loading/error states, tabs |
-| 2 | `app/(app)/projects/[id]/route-type.ts` | Reference for numeric ID validation pattern |
-| 3 | `components/workflows/workflow-card.tsx` | Reference for status variant mapping, progress calculation |
-| 4 | `components/workflows/workflow-table.tsx` | Reference for status handling and action button patterns |
-| 5 | `app/(app)/dashboard/_components/active-workflows-widget.tsx` | Reference for workflow progress display, elapsed time formatting |
-| 6 | `app/(app)/layout.tsx` | App shell layout - reference for four-region layout |
-| 7 | `app/layout.tsx` | Root layout with providers - reference for provider composition |
-| 8 | `app/globals.css` | CSS variables including workflow-specific dimensions |
-| 9 | `lib/utils.ts` | Utility function cn() for className composition |
-| 10 | `lib/stores/shell-store.ts` | Zustand store for shell state |
-| 11 | `db/repositories/workflow-steps.repository.ts` | Repository implementation - reference for data structure |
-| 12 | `db/repositories/workflows.repository.ts` | Repository implementation - reference for data operations |
-| 13 | `components/providers/query-provider.tsx` | TanStack Query provider configuration |
-| 14 | `electron/ipc/channels.ts` | IPC channel constants |
-| 15 | `hooks/queries/index.ts` | Barrel export for query hooks |
-| 16 | `lib/queries/index.ts` | Barrel export for query key factories |
+| #   | File                                                          | Reason                                                                       |
+| --- | ------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| 1   | `app/(app)/projects/[id]/page.tsx`                            | Reference for dynamic route pattern, breadcrumbs, loading/error states, tabs |
+| 2   | `app/(app)/projects/[id]/route-type.ts`                       | Reference for numeric ID validation pattern                                  |
+| 3   | `components/workflows/workflow-card.tsx`                      | Reference for status variant mapping, progress calculation                   |
+| 4   | `components/workflows/workflow-table.tsx`                     | Reference for status handling and action button patterns                     |
+| 5   | `app/(app)/dashboard/_components/active-workflows-widget.tsx` | Reference for workflow progress display, elapsed time formatting             |
+| 6   | `app/(app)/layout.tsx`                                        | App shell layout - reference for four-region layout                          |
+| 7   | `app/layout.tsx`                                              | Root layout with providers - reference for provider composition              |
+| 8   | `app/globals.css`                                             | CSS variables including workflow-specific dimensions                         |
+| 9   | `lib/utils.ts`                                                | Utility function cn() for className composition                              |
+| 10  | `lib/stores/shell-store.ts`                                   | Zustand store for shell state                                                |
+| 11  | `db/repositories/workflow-steps.repository.ts`                | Repository implementation - reference for data structure                     |
+| 12  | `db/repositories/workflows.repository.ts`                     | Repository implementation - reference for data operations                    |
+| 13  | `components/providers/query-provider.tsx`                     | TanStack Query provider configuration                                        |
+| 14  | `electron/ipc/channels.ts`                                    | IPC channel constants                                                        |
+| 15  | `hooks/queries/index.ts`                                      | Barrel export for query hooks                                                |
+| 16  | `lib/queries/index.ts`                                        | Barrel export for query key factories                                        |
 
 ## Discovery Statistics
 
@@ -116,6 +116,7 @@ The Workflow Detail and Pipeline View feature implements the /workflows/[id] dyn
 ## File Validation
 
 All discovered file paths were validated to exist in the codebase. The discovery covers:
+
 - Database layer (schemas, repositories)
 - Electron layer (IPC handlers, preload, channels)
 - Query layer (hooks, key factories)

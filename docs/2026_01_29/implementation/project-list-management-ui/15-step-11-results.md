@@ -22,6 +22,7 @@
 ## Backward Compatibility
 
 The integration maintains backward compatibility:
+
 - Consumers can still pass explicit `value` and `onProjectChange` props
 - Shell store is used as fallback when no explicit value provided
 

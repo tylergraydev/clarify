@@ -15,6 +15,7 @@ Output: "Generated route types"
 ## Route Types Generated
 
 The type-safe route definitions now include:
+
 - `/projects` - Project list page
 - `/projects/[id]` - Project detail page with dynamic route parameter
 
@@ -34,5 +35,6 @@ Note: The worktrees directory (`.worktrees/`) contains lint errors from compiled
 ## Notes
 
 The `$path` function can now be used with:
+
 - `$path({ route: "/projects" })` - for projects list
 - Navigation to project detail uses direct string `/projects/${id}` format

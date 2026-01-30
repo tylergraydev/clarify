@@ -19,12 +19,14 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 ## 3. Tech Stack
 
 ### Core Framework
+
 - **Next.js** 16.1.6 - React framework with App Router (static export for Electron)
 - **Electron** 35.1.0 - Desktop application runtime
 - **React** 19.2.4 - UI library
 - **TypeScript** 5.x - Type-safe development with strict mode
 
 ### Database & Backend
+
 - **better-sqlite3** 12.6.0 - SQLite database driver
 - **Drizzle ORM** 0.45.1 - TypeScript ORM with migrations
 - **drizzle-kit** 0.31.8 - Schema migration tooling
@@ -32,6 +34,7 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 - **electron-store** 10.0.1 - Persistent key-value storage
 
 ### UI Components & Styling
+
 - **@base-ui/react** 1.1.0 - Unstyled accessible component primitives
 - **Tailwind CSS** 4.x - Utility-first CSS framework
 - **class-variance-authority (CVA)** 0.7.1 - Variant-based component styling
@@ -40,6 +43,7 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 - **Geist** - Primary font family (sans and mono)
 
 ### State Management & Data Fetching
+
 - **TanStack Query** 5.90.18 - Server state management with devtools
 - **TanStack Form** 1.27.7 - Type-safe form management
 - **Zustand** 5.0.10 - Client state management
@@ -47,6 +51,7 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 - **nuqs** 2.8.6 - URL query state synchronization
 
 ### Validation & Utilities
+
 - **Zod** 4.3.5 - Schema validation
 - **zod-validation-error** 5.0.0 - Human-readable validation errors
 - **date-fns** 4.1.0 - Date manipulation
@@ -54,12 +59,14 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 - **next-typesafe-url** 6.1.0 - Type-safe routing
 
 ### Development Tools
+
 - **ESLint** 9.x with eslint-config-next, prettier, perfectionist, better-tailwindcss, react-snob plugins
 - **Prettier** 3.8.0 - Code formatting
 - **electron-builder** 25.1.8 - Application packaging
 - **concurrently** 9.1.2 - Parallel script execution
 
 ### Additional Features
+
 - **shiki** 3.21.0 - Syntax highlighting
 - **streamdown** 2.0.1 - Markdown streaming
 - **react-error-boundary** 6.1.0 - Error handling
@@ -157,18 +164,18 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 
 ## 7. Development Commands
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start Next.js development server on port 3000 |
-| `pnpm build` | Build Next.js production bundle |
-| `pnpm start` | Start Next.js production server |
-| `pnpm electron:dev` | Run full Electron dev environment (Next.js + Electron concurrently) |
-| `pnpm electron:compile` | Compile Electron TypeScript to JavaScript |
-| `pnpm electron:build` | Build both Next.js and Electron for production |
-| `pnpm electron:dist` | Package Electron app for distribution using electron-builder |
-| `pnpm typecheck` | Run TypeScript type checking without emit |
-| `pnpm lint` | Run ESLint with auto-fix and caching |
-| `pnpm format` | Format all files with Prettier |
-| `pnpm db:generate` | Generate Drizzle migrations from schema changes |
-| `pnpm db:migrate` | Apply pending database migrations |
-| `pnpm next-typesafe-url` | Generate type-safe route definitions |
+| Command                  | Description                                                         |
+| ------------------------ | ------------------------------------------------------------------- |
+| `pnpm dev`               | Start Next.js development server on port 3000                       |
+| `pnpm build`             | Build Next.js production bundle                                     |
+| `pnpm start`             | Start Next.js production server                                     |
+| `pnpm electron:dev`      | Run full Electron dev environment (Next.js + Electron concurrently) |
+| `pnpm electron:compile`  | Compile Electron TypeScript to JavaScript                           |
+| `pnpm electron:build`    | Build both Next.js and Electron for production                      |
+| `pnpm electron:dist`     | Package Electron app for distribution using electron-builder        |
+| `pnpm typecheck`         | Run TypeScript type checking without emit                           |
+| `pnpm lint`              | Run ESLint with auto-fix and caching                                |
+| `pnpm format`            | Format all files with Prettier                                      |
+| `pnpm db:generate`       | Generate Drizzle migrations from schema changes                     |
+| `pnpm db:migrate`        | Apply pending database migrations                                   |
+| `pnpm next-typesafe-url` | Generate type-safe route definitions                                |

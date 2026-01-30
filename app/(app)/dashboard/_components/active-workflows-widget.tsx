@@ -1,24 +1,39 @@
-'use client';
+"use client";
 
-import { differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
-import { Activity, Clock, Eye, GitBranch, Pause, Play, Plus, X } from 'lucide-react';
-import { $path } from 'next-typesafe-url';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Fragment, type KeyboardEvent, type MouseEvent, useMemo, useState } from 'react';
+import { differenceInHours, differenceInMinutes, parseISO } from "date-fns";
+import {
+  Activity,
+  Clock,
+  Eye,
+  GitBranch,
+  Pause,
+  Play,
+  Plus,
+  X,
+} from "lucide-react";
+import { $path } from "next-typesafe-url";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  Fragment,
+  type KeyboardEvent,
+  type MouseEvent,
+  useMemo,
+  useState,
+} from "react";
 
-import type { Project, Workflow } from '@/types/electron';
+import type { Project, Workflow } from "@/types/electron";
 
-import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
-import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { QueryErrorBoundary } from "@/components/data/query-error-boundary";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   DialogBackdrop,
   DialogClose,
@@ -27,17 +42,17 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { EmptyState } from '@/components/ui/empty-state';
-import { useProjects } from '@/hooks/queries/use-projects';
+} from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useProjects } from "@/hooks/queries/use-projects";
 import {
   useCancelWorkflow,
   usePauseWorkflow,
   useResumeWorkflow,
   useWorkflows,
-} from '@/hooks/queries/use-workflows';
-import { useWorktreeByWorkflowId } from '@/hooks/queries/use-worktrees';
-import { cn } from '@/lib/utils';
+} from "@/hooks/queries/use-workflows";
+import { useWorktreeByWorkflowId } from "@/hooks/queries/use-worktrees";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types
@@ -57,15 +72,19 @@ type WorkflowCardProps = ClassName<{
   workflow: Workflow;
 }>;
 
-type WorkflowStatus = Workflow['status'];
+type WorkflowStatus = Workflow["status"];
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'paused', 'running'];
-const PAUSABLE_STATUSES: Array<WorkflowStatus> = ['running'];
-const RESUMABLE_STATUSES: Array<WorkflowStatus> = ['paused'];
+const CANCELLABLE_STATUSES: Array<WorkflowStatus> = [
+  "created",
+  "paused",
+  "running",
+];
+const PAUSABLE_STATUSES: Array<WorkflowStatus> = ["running"];
+const RESUMABLE_STATUSES: Array<WorkflowStatus> = ["paused"];
 
 // ============================================================================
 // Utility Functions
@@ -76,7 +95,7 @@ const RESUMABLE_STATUSES: Array<WorkflowStatus> = ['paused'];
  */
 const formatElapsedTime = (startedAt: null | string): string => {
   if (!startedAt) {
-    return 'Not started';
+    return "Not started";
   }
 
   const startDate = parseISO(startedAt);
@@ -110,20 +129,20 @@ const calculateProgress = (
  */
 const getStatusVariant = (
   status: string
-): 'clarifying' | 'completed' | 'default' | 'failed' | 'planning' => {
+): "clarifying" | "completed" | "default" | "failed" | "planning" => {
   switch (status) {
-    case 'cancelled':
-    case 'failed':
-      return 'failed';
-    case 'completed':
-      return 'completed';
-    case 'editing':
-    case 'paused':
-      return 'clarifying';
-    case 'running':
-      return 'planning';
+    case "cancelled":
+    case "failed":
+      return "failed";
+    case "completed":
+      return "completed";
+    case "editing":
+    case "paused":
+      return "clarifying";
+    case "running":
+      return "planning";
     default:
-      return 'default';
+      return "default";
   }
 };
 
@@ -141,38 +160,38 @@ const formatStatus = (status: string): string => {
 const WorkflowCardSkeleton = () => {
   return (
     <div
-      aria-busy={'true'}
-      aria-label={'Loading workflow'}
+      aria-busy={"true"}
+      aria-label={"Loading workflow"}
       className={`
         animate-pulse rounded-lg border border-card-border bg-card p-4
       `}
-      role={'article'}
+      role={"article"}
     >
       {/* Header - matches h4 (font-medium ~20px) + p (text-sm 14px) + gap */}
-      <div className={'flex items-start justify-between gap-2'}>
-        <div className={'min-w-0 flex-1 space-y-1'}>
-          <div className={'h-5 w-32 rounded-sm bg-muted'} />
-          <div className={'h-4 w-24 rounded-sm bg-muted'} />
+      <div className={"flex items-start justify-between gap-2"}>
+        <div className={"min-w-0 flex-1 space-y-1"}>
+          <div className={"h-5 w-32 rounded-sm bg-muted"} />
+          <div className={"h-4 w-24 rounded-sm bg-muted"} />
         </div>
-        <div className={'h-5 w-16 rounded-full bg-muted'} />
+        <div className={"h-5 w-16 rounded-full bg-muted"} />
       </div>
 
       {/* Progress Bar - matches exact h-2 bar + mt-1 text */}
-      <div className={'mt-4'}>
-        <div className={'h-2 w-full rounded-full bg-muted'} />
-        <div className={'mt-1 flex items-center justify-between'}>
-          <div className={'h-3 w-20 rounded-sm bg-muted'} />
-          <div className={'h-3 w-8 rounded-sm bg-muted'} />
+      <div className={"mt-4"}>
+        <div className={"h-2 w-full rounded-full bg-muted"} />
+        <div className={"mt-1 flex items-center justify-between"}>
+          <div className={"h-3 w-20 rounded-sm bg-muted"} />
+          <div className={"h-3 w-8 rounded-sm bg-muted"} />
         </div>
       </div>
 
       {/* Footer - matches mt-3 text-xs layout */}
-      <div className={'mt-3 flex items-center justify-between'}>
-        <div className={'flex items-center gap-1'}>
-          <div className={'size-3 rounded-sm bg-muted'} />
-          <div className={'h-3 w-12 rounded-sm bg-muted'} />
+      <div className={"mt-3 flex items-center justify-between"}>
+        <div className={"flex items-center gap-1"}>
+          <div className={"size-3 rounded-sm bg-muted"} />
+          <div className={"h-3 w-12 rounded-sm bg-muted"} />
         </div>
-        <div className={'h-3 w-16 rounded-sm bg-muted'} />
+        <div className={"h-3 w-16 rounded-sm bg-muted"} />
       </div>
     </div>
   );
@@ -181,11 +200,11 @@ const WorkflowCardSkeleton = () => {
 const LoadingSkeleton = () => {
   return (
     <div
-      aria-busy={'true'}
-      aria-label={'Loading active workflows'}
-      aria-live={'polite'}
-      className={'space-y-3'}
-      role={'status'}
+      aria-busy={"true"}
+      aria-label={"Loading active workflows"}
+      aria-live={"polite"}
+      className={"space-y-3"}
+      role={"status"}
     >
       <WorkflowCardSkeleton />
       <WorkflowCardSkeleton />
@@ -210,9 +229,9 @@ const WorkflowBranchName = ({ workflowId }: { workflowId: number }) => {
   }
 
   return (
-    <span className={'flex items-center gap-1 text-xs text-muted-foreground'}>
-      <GitBranch aria-hidden={'true'} className={'size-3'} />
-      <span className={'truncate'}>{worktree.branchName}</span>
+    <span className={"flex items-center gap-1 text-xs text-muted-foreground"}>
+      <GitBranch aria-hidden={"true"} className={"size-3"} />
+      <span className={"truncate"}>{worktree.branchName}</span>
     </span>
   );
 };
@@ -241,16 +260,22 @@ const WorkflowCard = ({
   const statusVariant = getStatusVariant(workflow.status);
   const formattedStatus = formatStatus(workflow.status);
 
-  const isPausable = PAUSABLE_STATUSES.includes(workflow.status as WorkflowStatus);
-  const isResumable = RESUMABLE_STATUSES.includes(workflow.status as WorkflowStatus);
-  const isCancellable = CANCELLABLE_STATUSES.includes(workflow.status as WorkflowStatus);
+  const isPausable = PAUSABLE_STATUSES.includes(
+    workflow.status as WorkflowStatus
+  );
+  const isResumable = RESUMABLE_STATUSES.includes(
+    workflow.status as WorkflowStatus
+  );
+  const isCancellable = CANCELLABLE_STATUSES.includes(
+    workflow.status as WorkflowStatus
+  );
 
   const handleClick = () => {
     onClick();
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       onClick();
     }
@@ -290,42 +315,46 @@ const WorkflowCard = ({
       )}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      role={'button'}
+      role={"button"}
       tabIndex={0}
     >
       {/* Header */}
-      <div className={'flex items-start justify-between gap-2'}>
-        <div className={'min-w-0 flex-1'}>
-          <h4 className={'truncate font-medium'}>{workflow.featureName}</h4>
-          <p className={'text-sm text-muted-foreground'}>{projectName}</p>
+      <div className={"flex items-start justify-between gap-2"}>
+        <div className={"min-w-0 flex-1"}>
+          <h4 className={"truncate font-medium"}>{workflow.featureName}</h4>
+          <p className={"text-sm text-muted-foreground"}>{projectName}</p>
           {/* Branch name for implementation workflows */}
           {workflow.worktreeId && (
             <WorkflowBranchName workflowId={workflow.id} />
           )}
         </div>
-        <Badge size={'sm'} variant={statusVariant}>
+        <Badge size={"sm"} variant={statusVariant}>
           {formattedStatus}
         </Badge>
       </div>
 
       {/* Progress Bar */}
-      <div className={'mt-4'}>
-        <div className={'h-2 w-full overflow-hidden rounded-full bg-muted'}>
+      <div className={"mt-4"}>
+        <div className={"h-2 w-full overflow-hidden rounded-full bg-muted"}>
           <div
             className={cn(
-              'h-full rounded-full transition-all',
-              workflow.status === 'running' && 'bg-accent',
-              workflow.status === 'paused' && 'bg-yellow-500',
-              workflow.status === 'completed' && 'bg-green-500',
-              workflow.status === 'failed' && 'bg-destructive',
-              !['completed', 'failed', 'paused', 'running'].includes(
+              "h-full rounded-full transition-all",
+              workflow.status === "running" && "bg-accent",
+              workflow.status === "paused" && "bg-yellow-500",
+              workflow.status === "completed" && "bg-green-500",
+              workflow.status === "failed" && "bg-destructive",
+              !["completed", "failed", "paused", "running"].includes(
                 workflow.status
-              ) && 'bg-accent'
+              ) && "bg-accent"
             )}
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className={'mt-1 flex items-center justify-between text-xs text-muted-foreground'}>
+        <div
+          className={
+            "mt-1 flex items-center justify-between text-xs text-muted-foreground"
+          }
+        >
           <span>
             Step {workflow.currentStepNumber ?? 0} of {workflow.totalSteps ?? 0}
           </span>
@@ -334,60 +363,62 @@ const WorkflowCard = ({
       </div>
 
       {/* Footer with Info and Actions */}
-      <div className={'mt-3 flex items-center justify-between'}>
-        <div className={'flex items-center gap-3 text-xs text-muted-foreground'}>
-          <span className={'flex items-center gap-1'}>
-            <Clock aria-hidden={'true'} className={'size-3'} />
+      <div className={"mt-3 flex items-center justify-between"}>
+        <div
+          className={"flex items-center gap-3 text-xs text-muted-foreground"}
+        >
+          <span className={"flex items-center gap-1"}>
+            <Clock aria-hidden={"true"} className={"size-3"} />
             {elapsedTime}
           </span>
-          <span className={'capitalize'}>{workflow.type}</span>
+          <span className={"capitalize"}>{workflow.type}</span>
         </div>
 
         {/* Action Buttons - Icons Only */}
-        <div className={'flex items-center gap-1'}>
+        <div className={"flex items-center gap-1"}>
           <Button
-            aria-label={'View workflow'}
+            aria-label={"View workflow"}
             onClick={handleViewClick}
-            size={'icon-sm'}
-            variant={'ghost'}
+            size={"icon-sm"}
+            variant={"ghost"}
           >
-            <Eye aria-hidden={'true'} className={'size-4'} />
+            <Eye aria-hidden={"true"} className={"size-4"} />
           </Button>
 
           {isPausable && (
             <Button
-              aria-label={'Pause workflow'}
+              aria-label={"Pause workflow"}
               disabled={isPausePending}
               onClick={handlePauseClick}
-              size={'icon-sm'}
-              variant={'ghost'}
+              size={"icon-sm"}
+              variant={"ghost"}
             >
-              <Pause aria-hidden={'true'} className={'size-4'} />
+              <Pause aria-hidden={"true"} className={"size-4"} />
             </Button>
           )}
 
           {isResumable && (
             <Button
-              aria-label={'Resume workflow'}
+              aria-label={"Resume workflow"}
               disabled={isResumePending}
               onClick={handleResumeClick}
-              size={'icon-sm'}
-              variant={'ghost'}
+              size={"icon-sm"}
+              variant={"ghost"}
             >
-              <Play aria-hidden={'true'} className={'size-4'} />
+              <Play aria-hidden={"true"} className={"size-4"} />
             </Button>
           )}
 
           {isCancellable && (
             <Button
-              aria-label={'Cancel workflow'}
-              className={'hover:bg-destructive/10 hover:text-destructive'}
+              aria-label={"Cancel workflow"}
+              className={"hover:bg-destructive/10 hover:text-destructive"}
               disabled={isCancelPending}
               onClick={handleCancelClick}
-              size={'icon-sm'}
-              variant={'ghost'}
+              size={"icon-sm"}
+              variant={"ghost"}
             >
-              <X aria-hidden={'true'} className={'size-4'} />
+              <X aria-hidden={"true"} className={"size-4"} />
             </Button>
           )}
         </div>
@@ -402,7 +433,8 @@ const WorkflowCard = ({
 
 const ActiveWorkflowsContent = () => {
   const router = useRouter();
-  const { data: workflows = [], isLoading: isWorkflowsLoading } = useWorkflows();
+  const { data: workflows = [], isLoading: isWorkflowsLoading } =
+    useWorkflows();
   const { data: projects = [], isLoading: isProjectsLoading } = useProjects();
 
   // Mutations
@@ -411,7 +443,9 @@ const ActiveWorkflowsContent = () => {
   const cancelMutation = useCancelWorkflow();
 
   // Cancel confirmation dialog state
-  const [workflowToCancel, setWorkflowToCancel] = useState<null | Workflow>(null);
+  const [workflowToCancel, setWorkflowToCancel] = useState<null | Workflow>(
+    null
+  );
 
   const isLoading = isWorkflowsLoading || isProjectsLoading;
 
@@ -419,9 +453,9 @@ const ActiveWorkflowsContent = () => {
   const activeWorkflows = useMemo(() => {
     return workflows.filter(
       (workflow) =>
-        workflow.status === 'running' ||
-        workflow.status === 'paused' ||
-        workflow.status === 'editing'
+        workflow.status === "running" ||
+        workflow.status === "paused" ||
+        workflow.status === "editing"
     );
   }, [workflows]);
 
@@ -437,7 +471,12 @@ const ActiveWorkflowsContent = () => {
    * Navigate to workflow detail page
    */
   const handleWorkflowClick = (workflowId: number) => {
-    router.push($path({ route: '/workflows/[id]', routeParams: { id: String(workflowId) } }));
+    router.push(
+      $path({
+        route: "/workflows/[id]",
+        routeParams: { id: String(workflowId) },
+      })
+    );
   };
 
   const handlePauseWorkflow = (workflowId: number) => {
@@ -472,16 +511,16 @@ const ActiveWorkflowsContent = () => {
       <EmptyState
         action={
           <Link
-            className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
-            href={$path({ route: '/workflows/new' })}
+            className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
+            href={$path({ route: "/workflows/new" })}
           >
-            <Plus aria-hidden={'true'} className={'size-4'} />
+            <Plus aria-hidden={"true"} className={"size-4"} />
             Start Workflow
           </Link>
         }
-        description={'Start a new workflow to see it here.'}
-        icon={<Play aria-hidden={'true'} className={'size-6'} />}
-        title={'No active workflows'}
+        description={"Start a new workflow to see it here."}
+        icon={<Play aria-hidden={"true"} className={"size-6"} />}
+        title={"No active workflows"}
       />
     );
   }
@@ -489,18 +528,28 @@ const ActiveWorkflowsContent = () => {
   // Workflows List
   return (
     <Fragment>
-      <div aria-live={'polite'} className={'space-y-3'}>
+      <div aria-live={"polite"} className={"space-y-3"}>
         {activeWorkflows.map((workflow) => (
           <WorkflowCard
-            isCancelPending={cancelMutation.isPending && cancelMutation.variables === workflow.id}
-            isPausePending={pauseMutation.isPending && pauseMutation.variables === workflow.id}
-            isResumePending={resumeMutation.isPending && resumeMutation.variables === workflow.id}
+            isCancelPending={
+              cancelMutation.isPending &&
+              cancelMutation.variables === workflow.id
+            }
+            isPausePending={
+              pauseMutation.isPending && pauseMutation.variables === workflow.id
+            }
+            isResumePending={
+              resumeMutation.isPending &&
+              resumeMutation.variables === workflow.id
+            }
             key={workflow.id}
             onCancel={() => handleCancelRequest(workflow)}
             onClick={() => handleWorkflowClick(workflow.id)}
             onPause={() => handlePauseWorkflow(workflow.id)}
             onResume={() => handleResumeWorkflow(workflow.id)}
-            projectName={projectMap[workflow.projectId]?.name ?? 'Unknown Project'}
+            projectName={
+              projectMap[workflow.projectId]?.name ?? "Unknown Project"
+            }
             workflow={workflow}
           />
         ))}
@@ -513,20 +562,20 @@ const ActiveWorkflowsContent = () => {
       >
         <DialogPortal>
           <DialogBackdrop />
-          <DialogPopup size={'sm'}>
+          <DialogPopup size={"sm"}>
             <DialogTitle>Cancel Workflow</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel{' '}
-              <span className={'font-medium text-foreground'}>
+              Are you sure you want to cancel{" "}
+              <span className={"font-medium text-foreground"}>
                 {workflowToCancel?.featureName}
               </span>
               ? This action cannot be undone.
             </DialogDescription>
-            <div className={'mt-6 flex justify-end gap-3'}>
-              <DialogClose render={<Button variant={'outline'} />}>
+            <div className={"mt-6 flex justify-end gap-3"}>
+              <DialogClose render={<Button variant={"outline"} />}>
                 Keep Running
               </DialogClose>
-              <Button onClick={handleConfirmCancel} variant={'destructive'}>
+              <Button onClick={handleConfirmCancel} variant={"destructive"}>
                 Cancel Workflow
               </Button>
             </div>
@@ -541,17 +590,20 @@ const ActiveWorkflowsContent = () => {
 // Main Export
 // ============================================================================
 
-export const ActiveWorkflowsWidget = ({ className }: ActiveWorkflowsWidgetProps) => {
+export const ActiveWorkflowsWidget = ({
+  className,
+}: ActiveWorkflowsWidgetProps) => {
   return (
     <Card className={className}>
       <CardHeader>
-        <div className={'flex items-center gap-2'}>
-          <Activity aria-hidden={'true'} className={'size-5 text-muted-foreground'} />
+        <div className={"flex items-center gap-2"}>
+          <Activity
+            aria-hidden={"true"}
+            className={"size-5 text-muted-foreground"}
+          />
           <CardTitle>Active Workflows</CardTitle>
         </div>
-        <CardDescription>
-          Currently running or paused workflows
-        </CardDescription>
+        <CardDescription>Currently running or paused workflows</CardDescription>
       </CardHeader>
       <CardContent>
         <QueryErrorBoundary>
