@@ -18,7 +18,7 @@ interface AgentColorPickerProps extends Omit<
 > {
   disabled?: boolean;
   onChange?: (color: AgentColor) => void;
-  value?: AgentColor | null;
+  value?: AgentColor | "" | null;
 }
 
 export const AgentColorPicker = ({
@@ -37,7 +37,7 @@ export const AgentColorPicker = ({
         disabled={disabled}
         onValueChange={(newValue) => onChange?.(newValue as AgentColor)}
         orientation={"horizontal"}
-        value={value ?? undefined}
+        value={value ?? ""}
       >
         {agentColors.map((color) => (
           <label

@@ -89,7 +89,7 @@ export const AgentEditorDialog = ({
 }: AgentEditorDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState<AgentColor | null>(null);
+  const [selectedColor, setSelectedColor] = useState<AgentColor | "">("");
 
   const createAgentMutation = useCreateAgent();
   const updateAgentMutation = useUpdateAgent();
@@ -144,7 +144,7 @@ export const AgentEditorDialog = ({
         // Update existing agent
         await updateAgentMutation.mutateAsync({
           data: {
-            color: selectedColor,
+            color: selectedColor === "" ? null : selectedColor,
             description: (value as UpdateAgentFormValues).description,
             displayName: (value as UpdateAgentFormValues).displayName,
             systemPrompt: (value as UpdateAgentFormValues).systemPrompt,
@@ -155,7 +155,7 @@ export const AgentEditorDialog = ({
         // Create new agent
         const createValue = value as CreateAgentFormData;
         await createAgentMutation.mutateAsync({
-          color: selectedColor,
+          color: selectedColor === "" ? null : selectedColor,
           description: createValue.description,
           displayName: createValue.displayName,
           name: createValue.name,
@@ -172,7 +172,7 @@ export const AgentEditorDialog = ({
   });
 
   const updateSelectedColor = useEffectEvent(
-    (agentColor: AgentColor | null) => {
+    (agentColor: AgentColor | "") => {
       setSelectedColor(agentColor);
     }
   );
@@ -181,22 +181,22 @@ export const AgentEditorDialog = ({
   useEffect(() => {
     form.reset(getDefaultValues());
     if (isEditMode && agent) {
-      updateSelectedColor((agent.color as AgentColor) ?? null);
+      updateSelectedColor((agent.color as AgentColor) ?? "");
     } else if (initialData) {
-      updateSelectedColor(initialData.color ?? null);
+      updateSelectedColor(initialData.color ?? "");
     } else {
-      updateSelectedColor(null);
+      updateSelectedColor("");
     }
   }, [agent, initialData, form, getDefaultValues, isEditMode]);
 
-  const getInitialColor = useCallback((): AgentColor | null => {
+  const getInitialColor = useCallback((): AgentColor | "" => {
     if (isEditMode && agent) {
-      return (agent.color as AgentColor) ?? null;
+      return (agent.color as AgentColor) ?? "";
     }
     if (initialData) {
-      return initialData.color ?? null;
+      return initialData.color ?? "";
     }
-    return null;
+    return "";
   }, [isEditMode, agent, initialData]);
 
   const resetFormAndColor = useCallback(() => {
