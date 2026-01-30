@@ -5,17 +5,20 @@ import { Fragment, useState } from 'react';
 
 import type { Agent } from '@/types/electron';
 
-import { AgentCard } from '@/components/agents/agent-card';
 import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
+import { AgentLayoutRenderer } from '@/components/agents/agent-layout-renderer';
 import { ConfirmDeleteAgentDialog } from '@/components/agents/confirm-delete-agent-dialog';
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { Button } from '@/components/ui/button';
+import { AgentListSkeleton } from '@/components/agents/agent-list-skeleton';
+import { AgentTableSkeleton } from '@/components/agents/agent-table-skeleton';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
+import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
   useActivateAgent,
@@ -90,73 +93,6 @@ const AgentCardSkeleton = () => {
   );
 };
 
-interface AgentGridItemProps {
-  agent: Agent;
-  isCreatingOverride: boolean;
-  isDeleting: boolean;
-  isDuplicating: boolean;
-  isResetting: boolean;
-  isToggling: boolean;
-  onCreateOverride: (agent: Agent) => void;
-  onDelete: (agentId: number) => void;
-  onDuplicate: (agent: Agent) => void;
-  onReset: (agentId: number) => void;
-  onToggleActive: (agentId: number, isActive: boolean) => void;
-  selectedProjectId: null | number;
-}
-
-/**
- * Renders an AgentCard with an AgentEditorDialog.
- * Uses controlled state to open the dialog when Edit is clicked.
- */
-const AgentGridItem = ({
-  agent,
-  isCreatingOverride,
-  isDeleting,
-  isDuplicating,
-  isResetting,
-  isToggling,
-  onCreateOverride,
-  onDelete,
-  onDuplicate,
-  onReset,
-  onToggleActive,
-  selectedProjectId,
-}: AgentGridItemProps) => {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  const handleEditClick = () => {
-    setIsEditDialogOpen(true);
-  };
-
-  return (
-    <div>
-      <AgentCard
-        agent={agent}
-        isCreatingOverride={isCreatingOverride}
-        isDeleting={isDeleting}
-        isDuplicating={isDuplicating}
-        isResetting={isResetting}
-        isToggling={isToggling}
-        onCreateOverride={onCreateOverride}
-        onDelete={onDelete}
-        onDuplicate={onDuplicate}
-        onEdit={handleEditClick}
-        onReset={onReset}
-        onToggleActive={onToggleActive}
-        selectedProjectId={selectedProjectId}
-      />
-      {/* Edit dialog with controlled state */}
-      <AgentEditorDialog
-        agent={agent}
-        isOpen={isEditDialogOpen}
-        mode={'edit'}
-        onOpenChange={setIsEditDialogOpen}
-      />
-    </div>
-  );
-};
-
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -179,6 +115,7 @@ export const GlobalAgentsTabContent = ({
 }: GlobalAgentsTabContentProps) => {
   const [agentToDelete, setAgentToDelete] = useState<Agent | null>(null);
 
+  const { layout } = useAgentLayoutStore();
   const selectedProjectId = useShellStore((state) => state.selectedProjectId);
 
   const isDeleteDialogOpen = agentToDelete !== null;
@@ -291,17 +228,23 @@ export const GlobalAgentsTabContent = ({
     <Fragment>
       <QueryErrorBoundary>
         {isLoading ? (
-          // Loading skeletons
-          <div
-            aria-busy={'true'}
-            aria-label={'Loading global agents'}
-            className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}
-            role={'status'}
-          >
-            {Array.from({ length: 6 }).map((_, index) => (
-              <AgentCardSkeleton key={index} />
-            ))}
-          </div>
+          // Loading skeletons - render appropriate skeleton based on current layout
+          layout === 'list' ? (
+            <AgentListSkeleton count={6} />
+          ) : layout === 'table' ? (
+            <AgentTableSkeleton count={6} />
+          ) : (
+            <div
+              aria-busy={'true'}
+              aria-label={'Loading global agents'}
+              className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}
+              role={'status'}
+            >
+              {Array.from({ length: 6 }).map((_, index) => (
+                <AgentCardSkeleton key={index} />
+              ))}
+            </div>
+          )
         ) : hasNoAgents ? (
           // Empty state when no global agents exist
           <EmptyState
@@ -332,31 +275,22 @@ export const GlobalAgentsTabContent = ({
             title={'No matching global agents'}
           />
         ) : (
-          // Agent grid
-          <ul
+          // Agent layout (card/list/table based on user preference)
+          <AgentLayoutRenderer
+            agents={filteredAgents ?? []}
             aria-label={`${filteredCount} global agents`}
-            className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}
-            role={'list'}
-          >
-            {filteredAgents?.map((agent) => (
-              <li key={agent.id}>
-                <AgentGridItem
-                  agent={agent}
-                  isCreatingOverride={isCreatingOverrideAgent}
-                  isDeleting={isDeletingAgent}
-                  isDuplicating={isDuplicatingAgent}
-                  isResetting={isResettingAgent}
-                  isToggling={isTogglingAgent}
-                  onCreateOverride={handleCreateOverrideClick}
-                  onDelete={handleDeleteClick}
-                  onDuplicate={handleDuplicateClick}
-                  onReset={handleReset}
-                  onToggleActive={handleToggleActive}
-                  selectedProjectId={selectedProjectId}
-                />
-              </li>
-            ))}
-          </ul>
+            isCreatingOverride={isCreatingOverrideAgent}
+            isDeleting={isDeletingAgent}
+            isDuplicating={isDuplicatingAgent}
+            isResetting={isResettingAgent}
+            isToggling={isTogglingAgent}
+            onCreateOverride={handleCreateOverrideClick}
+            onDelete={handleDeleteClick}
+            onDuplicate={handleDuplicateClick}
+            onReset={handleReset}
+            onToggleActive={handleToggleActive}
+            selectedProjectId={selectedProjectId}
+          />
         )}
       </QueryErrorBoundary>
 
