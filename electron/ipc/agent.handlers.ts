@@ -127,6 +127,61 @@ export function registerAgentHandlers(
     }
   );
 
+  // Duplicate an agent (creates a copy with modified name)
+  ipcMain.handle(
+    IpcChannels.agent.duplicate,
+    async (
+      _event: IpcMainInvokeEvent,
+      id: number
+    ): Promise<AgentOperationResult> => {
+      try {
+        // Fetch the source agent by ID
+        const sourceAgent = await agentsRepository.findById(id);
+        if (!sourceAgent) {
+          return { error: "Agent not found", success: false };
+        }
+
+        // Generate a unique name by appending " (Copy)" and checking for conflicts
+        let copyNumber = 1;
+        let newName = `${sourceAgent.name} (Copy)`;
+        let newDisplayName = `${sourceAgent.displayName} (Copy)`;
+
+        // Check if a copy already exists and increment the number if needed
+        let existingAgent = await agentsRepository.findByName(newName);
+        while (existingAgent) {
+          copyNumber++;
+          newName = `${sourceAgent.name} (Copy ${copyNumber})`;
+          newDisplayName = `${sourceAgent.displayName} (Copy ${copyNumber})`;
+          existingAgent = await agentsRepository.findByName(newName);
+        }
+
+        // Create the duplicate agent with copied data
+        const newAgentData: NewAgent = {
+          builtInAt: null, // Custom agent, not built-in
+          color: sourceAgent.color,
+          description: sourceAgent.description,
+          displayName: newDisplayName,
+          name: newName,
+          parentAgentId: null, // No parent for duplicated agents
+          projectId: sourceAgent.projectId,
+          systemPrompt: sourceAgent.systemPrompt,
+          type: sourceAgent.type,
+          version: 1, // Reset version to 1 for the new copy
+        };
+
+        const duplicatedAgent = await agentsRepository.create(newAgentData);
+        return { agent: duplicatedAgent, success: true };
+      } catch (error) {
+        console.error("[IPC Error] agent:duplicate:", error);
+        return {
+          error:
+            error instanceof Error ? error.message : "Failed to duplicate agent",
+          success: false,
+        };
+      }
+    }
+  );
+
   // List agents with optional filters
   ipcMain.handle(
     IpcChannels.agent.list,

@@ -2,20 +2,22 @@
 
 import type { RefObject } from "react";
 
-import { Bot, Search } from "lucide-react";
+import { Bot, Plus, Search } from "lucide-react";
 import {
   parseAsBoolean,
   parseAsString,
   parseAsStringLiteral,
   useQueryState,
 } from "nuqs";
-import { useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import type { Agent } from "@/types/electron";
 
 import { AgentCard } from "@/components/agents/agent-card";
 import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
+import { ConfirmDeleteAgentDialog } from "@/components/agents/confirm-delete-agent-dialog";
 import { QueryErrorBoundary } from "@/components/data/query-error-boundary";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,8 +43,11 @@ import {
   useActivateAgent,
   useAgents,
   useDeactivateAgent,
+  useDeleteAgent,
+  useDuplicateAgent,
   useResetAgent,
 } from "@/hooks/queries/use-agents";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcut";
 import { cn } from "@/lib/utils";
 
 /**
@@ -100,8 +105,12 @@ const formatTypeLabel = (type: string): string => {
 
 interface AgentGridItemProps {
   agent: Agent;
+  isDeleting: boolean;
+  isDuplicating: boolean;
   isResetting: boolean;
   isToggling: boolean;
+  onDelete: (agentId: number) => void;
+  onDuplicate: (agent: Agent) => void;
   onReset: (agentId: number) => void;
   onToggleActive: (agentId: number, isActive: boolean) => void;
 }
@@ -112,8 +121,12 @@ interface AgentGridItemProps {
  */
 const AgentGridItem = ({
   agent,
+  isDeleting,
+  isDuplicating,
   isResetting,
   isToggling,
+  onDelete,
+  onDuplicate,
   onReset,
   onToggleActive,
 }: AgentGridItemProps) => {
@@ -128,8 +141,12 @@ const AgentGridItem = ({
     <div>
       <AgentCard
         agent={agent}
+        isDeleting={isDeleting}
+        isDuplicating={isDuplicating}
         isResetting={isResetting}
         isToggling={isToggling}
+        onDelete={onDelete}
+        onDuplicate={onDuplicate}
         onEdit={handleEditClick}
         onReset={onReset}
         onToggleActive={onToggleActive}
@@ -137,6 +154,7 @@ const AgentGridItem = ({
       {/* Hidden dialog trigger */}
       <AgentEditorDialog
         agent={agent}
+        mode={"edit"}
         trigger={
           <button
             aria-hidden={"true"}
@@ -180,6 +198,13 @@ export default function AgentsPage() {
     parseAsBoolean.withDefault(false)
   );
 
+  // Create agent dialog control
+  const createDialogTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // Delete confirmation dialog state
+  const [agentToDelete, setAgentToDelete] = useState<Agent | null>(null);
+  const isDeleteDialogOpen = agentToDelete !== null;
+
   // Data fetching - pass both includeDeactivated and type filters to the server
   const { data: agents, isLoading } = useAgents({
     includeDeactivated: isShowDeactivated,
@@ -189,7 +214,19 @@ export default function AgentsPage() {
   // Mutations
   const activateAgentMutation = useActivateAgent();
   const deactivateAgentMutation = useDeactivateAgent();
+  const deleteAgentMutation = useDeleteAgent();
+  const duplicateAgentMutation = useDuplicateAgent();
   const resetAgentMutation = useResetAgent();
+
+  // Keyboard shortcut handlers
+  const openCreateDialog = useCallback(() => {
+    createDialogTriggerRef.current?.click();
+  }, []);
+
+  // Register keyboard shortcuts
+  useKeyboardShortcuts([
+    { callback: openCreateDialog, options: { key: "n", modifiers: ["ctrl"] } },
+  ]);
 
   // Client-side filtering by search only (type filtering is handled server-side)
   const filteredAgents = agents?.filter((agent) => {
@@ -238,6 +275,33 @@ export default function AgentsPage() {
     resetAgentMutation.mutate(agentId);
   };
 
+  const handleDeleteClick = (agentId: number) => {
+    const agent = agents?.find((a) => a.id === agentId);
+    if (agent) {
+      setAgentToDelete(agent);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (agentToDelete) {
+      deleteAgentMutation.mutate(agentToDelete.id, {
+        onSettled: () => {
+          setAgentToDelete(null);
+        },
+      });
+    }
+  };
+
+  const handleDeleteDialogOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setAgentToDelete(null);
+    }
+  };
+
+  const handleDuplicateClick = (agent: Agent) => {
+    duplicateAgentMutation.mutate(agent.id);
+  };
+
   // Derived state
   const hasActiveFilters = Boolean(typeFilter) || Boolean(search);
   const hasNoAgents =
@@ -245,21 +309,71 @@ export default function AgentsPage() {
   const hasNoFilteredAgents =
     !isLoading &&
     agents &&
-    agents.length === 0 &&
-    hasActiveFilters;
+    agents.length > 0 &&
+    filteredAgents &&
+    filteredAgents.length === 0;
+  const isDeletingAgent = deleteAgentMutation.isPending;
+  const isDuplicatingAgent = duplicateAgentMutation.isPending;
+  const isResettingAgent = resetAgentMutation.isPending;
   const isTogglingAgent =
     activateAgentMutation.isPending || deactivateAgentMutation.isPending;
-  const isResettingAgent = resetAgentMutation.isPending;
+
+  // Result counts for display
+  const totalCount = agents?.length ?? 0;
+  const filteredCount = filteredAgents?.length ?? 0;
+  const isFiltered = hasActiveFilters && filteredCount !== totalCount;
 
   return (
-    <div className={"space-y-6"}>
+    <main aria-label={"Agent management"} className={"space-y-6"}>
+      {/* Skip link for keyboard navigation */}
+      <a
+        className={cn(
+          "sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4",
+          "z-50 rounded-md bg-background px-4 py-2 text-sm font-medium",
+          "ring-2 ring-accent ring-offset-2"
+        )}
+        href={"#agent-content"}
+      >
+        {"Skip to agent content"}
+      </a>
+
       {/* Page heading */}
-      <div className={"space-y-1"}>
-        <h1 className={"text-2xl font-semibold tracking-tight"}>{"Agents"}</h1>
-        <p className={"text-muted-foreground"}>
-          {"Configure and customize AI agents for your workflows."}
-        </p>
-      </div>
+      <header className={"flex items-start justify-between gap-4"}>
+        <div className={"space-y-1"}>
+          <div className={"flex items-center gap-3"}>
+            <h1 className={"text-2xl font-semibold tracking-tight"}>
+              {"Agents"}
+            </h1>
+            {/* Result count badge */}
+            {!isLoading && !hasNoAgents && (
+              <Badge size={"sm"} variant={"default"}>
+                {isFiltered
+                  ? `${filteredCount} of ${totalCount}`
+                  : `${totalCount}`}
+              </Badge>
+            )}
+          </div>
+          <p className={"text-muted-foreground"}>
+            {"Configure and customize AI agents for your workflows."}
+          </p>
+        </div>
+        <AgentEditorDialog
+          mode={"create"}
+          trigger={
+            <Button ref={createDialogTriggerRef}>
+              <Plus aria-hidden={"true"} className={"size-4"} />
+              {"Create Agent"}
+              <kbd
+                className={
+                  "ml-2 hidden rounded-sm bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground md:inline-block"
+                }
+              >
+                {"Ctrl+N"}
+              </kbd>
+            </Button>
+          }
+        />
+      </header>
 
       {/* Filters - show when there are agents OR when filters are active (so users can clear them) */}
       {(!hasNoAgents || hasActiveFilters) && (
@@ -330,59 +444,99 @@ export default function AgentsPage() {
       )}
 
       {/* Agents content */}
-      <QueryErrorBoundary>
-        {isLoading ? (
-          // Loading skeletons
-          <div className={"grid gap-4 md:grid-cols-2 lg:grid-cols-3"}>
-            {Array.from({ length: 6 }).map((_, index) => (
-              <AgentCardSkeleton key={index} />
-            ))}
-          </div>
-        ) : hasNoAgents ? (
-          // Empty state when no agents exist
-          <EmptyState
-            description={
-              "No agents have been configured yet. Agents will appear here once they are set up."
-            }
-            icon={<Bot aria-hidden={"true"} className={"size-6"} />}
-            title={"No agents yet"}
-          />
-        ) : hasNoFilteredAgents ? (
-          // Empty state when filters hide all agents
-          <EmptyState
-            action={
-              <Button
-                onClick={() => {
-                  void setSearch(null);
-                  void setTypeFilter(null);
-                }}
-                variant={"outline"}
-              >
-                {"Clear filters"}
-              </Button>
-            }
-            description={
-              "No agents match your current filters. Try adjusting your search criteria."
-            }
-            icon={<Search aria-hidden={"true"} className={"size-6"} />}
-            title={"No matching agents"}
-          />
-        ) : (
-          // Agent grid
-          <div className={"grid gap-4 md:grid-cols-2 lg:grid-cols-3"}>
-            {filteredAgents?.map((agent) => (
-              <AgentGridItem
-                agent={agent}
-                isResetting={isResettingAgent}
-                isToggling={isTogglingAgent}
-                key={agent.id}
-                onReset={handleReset}
-                onToggleActive={handleToggleActive}
-              />
-            ))}
-          </div>
-        )}
-      </QueryErrorBoundary>
-    </div>
+      <section
+        aria-label={"Agents list"}
+        aria-live={"polite"}
+        id={"agent-content"}
+      >
+        <QueryErrorBoundary>
+          {isLoading ? (
+            // Loading skeletons
+            <div
+              aria-busy={"true"}
+              aria-label={"Loading agents"}
+              className={"grid gap-4 md:grid-cols-2 lg:grid-cols-3"}
+              role={"status"}
+            >
+              {Array.from({ length: 6 }).map((_, index) => (
+                <AgentCardSkeleton key={index} />
+              ))}
+            </div>
+          ) : hasNoAgents ? (
+            // Empty state when no agents exist
+            <EmptyState
+              action={
+                <AgentEditorDialog
+                  mode={"create"}
+                  trigger={
+                    <Button>
+                      <Plus aria-hidden={"true"} className={"size-4"} />
+                      {"Create your first agent"}
+                    </Button>
+                  }
+                />
+              }
+              description={
+                "Get started by creating your first agent to customize your workflows."
+              }
+              icon={<Bot aria-hidden={"true"} className={"size-6"} />}
+              title={"No agents yet"}
+            />
+          ) : hasNoFilteredAgents ? (
+            // Empty state when filters hide all agents
+            <EmptyState
+              action={
+                <Button
+                  onClick={() => {
+                    void setSearch(null);
+                    void setTypeFilter(null);
+                  }}
+                  variant={"outline"}
+                >
+                  {"Clear filters"}
+                </Button>
+              }
+              description={
+                "No agents match your current filters. Try adjusting your search criteria."
+              }
+              icon={<Search aria-hidden={"true"} className={"size-6"} />}
+              title={"No matching agents"}
+            />
+          ) : (
+            // Agent grid
+            <ul
+              aria-label={`${filteredCount} agents`}
+              className={"grid gap-4 md:grid-cols-2 lg:grid-cols-3"}
+              role={"list"}
+            >
+              {filteredAgents?.map((agent) => (
+                <li key={agent.id}>
+                  <AgentGridItem
+                    agent={agent}
+                    isDeleting={isDeletingAgent}
+                    isDuplicating={isDuplicatingAgent}
+                    isResetting={isResettingAgent}
+                    isToggling={isTogglingAgent}
+                    onDelete={handleDeleteClick}
+                    onDuplicate={handleDuplicateClick}
+                    onReset={handleReset}
+                    onToggleActive={handleToggleActive}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </QueryErrorBoundary>
+      </section>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDeleteAgentDialog
+        agentName={agentToDelete?.displayName ?? ""}
+        isLoading={isDeletingAgent}
+        isOpen={isDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        onOpenChange={handleDeleteDialogOpenChange}
+      />
+    </main>
   );
 }

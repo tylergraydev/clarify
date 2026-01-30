@@ -2,7 +2,7 @@
 
 import type { ComponentPropsWithRef } from "react";
 
-import { Pencil, RotateCcw } from "lucide-react";
+import { Copy, Pencil, RotateCcw, Trash2 } from "lucide-react";
 
 import type { Agent } from "@/db/schema";
 
@@ -44,8 +44,12 @@ interface AgentCardProps extends Omit<
   "onClick" | "onReset"
 > {
   agent: Agent;
+  isDeleting?: boolean;
+  isDuplicating?: boolean;
   isResetting?: boolean;
   isToggling?: boolean;
+  onDelete?: (agentId: number) => void;
+  onDuplicate?: (agent: Agent) => void;
   onEdit?: (agentId: number) => void;
   onReset?: (agentId: number) => void;
   onToggleActive?: (agentId: number, isActive: boolean) => void;
@@ -54,8 +58,12 @@ interface AgentCardProps extends Omit<
 export const AgentCard = ({
   agent,
   className,
+  isDeleting = false,
+  isDuplicating = false,
   isResetting = false,
   isToggling = false,
+  onDelete,
+  onDuplicate,
   onEdit,
   onReset,
   onToggleActive,
@@ -63,7 +71,16 @@ export const AgentCard = ({
   ...props
 }: AgentCardProps) => {
   const isActive = agent.deactivatedAt === null;
+  const isCustomAgent = agent.builtInAt === null;
   const isCustomized = agent.parentAgentId !== null;
+
+  const handleDeleteClick = () => {
+    onDelete?.(agent.id);
+  };
+
+  const handleDuplicateClick = () => {
+    onDuplicate?.(agent);
+  };
 
   const handleEditClick = () => {
     onEdit?.(agent.id);
@@ -76,6 +93,8 @@ export const AgentCard = ({
   const handleToggleChange = (checked: boolean) => {
     onToggleActive?.(agent.id, checked);
   };
+
+  const isActionDisabled = isDeleting || isDuplicating || isResetting || isToggling;
 
   return (
     <Card
@@ -130,21 +149,26 @@ export const AgentCard = ({
           />
         </div>
 
-        {/* Customization Indicator */}
-        {isCustomized && (
-          <div className={"flex items-center gap-1"}>
+        {/* Agent Origin Indicator */}
+        <div className={"flex items-center gap-1"}>
+          {isCustomAgent && (
+            <Badge size={"sm"} variant={"custom"}>
+              {"Custom"}
+            </Badge>
+          )}
+          {isCustomized && (
             <Badge size={"sm"} variant={"default"}>
               {"Customized"}
             </Badge>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
 
       {/* Actions */}
       <CardFooter className={"gap-2"}>
         <Button
           aria-label={"Edit agent"}
-          disabled={isToggling || isResetting}
+          disabled={isActionDisabled}
           onClick={handleEditClick}
           size={"sm"}
           variant={"outline"}
@@ -152,16 +176,38 @@ export const AgentCard = ({
           <Pencil aria-hidden={"true"} className={"size-4"} />
           {"Edit"}
         </Button>
+        <Button
+          aria-label={"Duplicate agent"}
+          disabled={isActionDisabled}
+          onClick={handleDuplicateClick}
+          size={"sm"}
+          variant={"ghost"}
+        >
+          <Copy aria-hidden={"true"} className={"size-4"} />
+          {"Duplicate"}
+        </Button>
         {isCustomized && (
           <Button
             aria-label={"Reset agent to default"}
-            disabled={isToggling || isResetting}
+            disabled={isActionDisabled}
             onClick={handleResetClick}
             size={"sm"}
             variant={"ghost"}
           >
             <RotateCcw aria-hidden={"true"} className={"size-4"} />
             {"Reset"}
+          </Button>
+        )}
+        {isCustomAgent && (
+          <Button
+            aria-label={"Delete agent"}
+            disabled={isActionDisabled}
+            onClick={handleDeleteClick}
+            size={"sm"}
+            variant={"ghost"}
+          >
+            <Trash2 aria-hidden={"true"} className={"size-4 text-destructive"} />
+            {"Delete"}
           </Button>
         )}
       </CardFooter>
