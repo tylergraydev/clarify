@@ -110,11 +110,12 @@ export function registerAllHandlers(
   // Agent skills - skills referenced by agents
   const agentSkillsRepository = createAgentSkillsRepository(db);
 
-  // Register agent handlers (needs tools and skills repos for duplication)
+  // Register agent handlers (needs tools, skills, and projects repos for duplication/move/copy)
   registerAgentHandlers(
     agentsRepository,
     agentToolsRepository,
-    agentSkillsRepository
+    agentSkillsRepository,
+    projectsRepository
   );
 
   // Register tool and skill handlers

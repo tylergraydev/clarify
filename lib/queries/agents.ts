@@ -5,6 +5,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
  *
  * All keys are actively used:
  * - active: Active agents optionally filtered by project
+ * - all: All agents regardless of scope (for unified table view)
  * - builtIn: Built-in system agents
  * - byProject: Agents scoped to a specific project
  * - byType: Agents filtered by type
@@ -16,6 +17,10 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const agentKeys = createQueryKeys("agents", {
   /** Active agents, optionally filtered by project */
   active: (projectId?: number) => [{ projectId }],
+  /** All agents regardless of scope (for unified table view) */
+  all: (filters?: { includeBuiltIn?: boolean; includeDeactivated?: boolean }) => [
+    { filters },
+  ],
   /** Built-in system agents */
   builtIn: null,
   /** Agents scoped to a specific project */

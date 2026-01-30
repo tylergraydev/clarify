@@ -36,6 +36,8 @@ export function useActivateAgent() {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
         // Invalidate general list queries
         void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+        // Invalidate all queries (unified view)
+        void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
         // Invalidate active queries
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
 
@@ -134,6 +136,25 @@ export function useAgentsByType(type: "planning" | "review" | "specialist") {
 }
 
 /**
+ * Fetch all agents regardless of project scope (for unified table view)
+ */
+export function useAllAgents(filters?: {
+  includeBuiltIn?: boolean;
+  includeDeactivated?: boolean;
+}) {
+  const { api, isElectron } = useElectron();
+
+  return useQuery({
+    ...agentKeys.all(filters),
+    enabled: isElectron,
+    queryFn: () =>
+      api!.agent.list({
+        includeDeactivated: filters?.includeDeactivated,
+      }),
+  });
+}
+
+/**
  * Fetch built-in agents
  */
 export function useBuiltInAgents() {
@@ -146,6 +167,69 @@ export function useBuiltInAgents() {
       const agents = await api!.agent.list();
       // Agent is built-in if builtInAt is not null
       return agents.filter((agent) => agent.builtInAt !== null);
+    },
+  });
+}
+
+/**
+ * Copy an agent to a specific project (creates a project-scoped copy)
+ */
+export function useCopyAgentToProject() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: ({
+      agentId,
+      targetProjectId,
+    }: {
+      agentId: number;
+      targetProjectId: number;
+    }) => api!.agent.copyToProject(agentId, targetProjectId),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to copy agent",
+        title: "Copy Failed",
+      });
+    },
+    onSuccess: (result, variables) => {
+      if (!result.success) {
+        toast.error({
+          description: result.error ?? "Failed to copy agent",
+          title: "Copy Failed",
+        });
+        return;
+      }
+
+      const agent = result.agent;
+
+      // Invalidate all agent-related queries to ensure UI consistency
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.projectScoped._def,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.byProject(variables.targetProjectId).queryKey,
+      });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+
+      // Update detail cache if we have the agent
+      if (agent) {
+        queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
+        // Invalidate type-specific queries
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byType(agent.type).queryKey,
+        });
+      }
+
+      toast.success({
+        description: "Agent copied to project successfully",
+        title: "Agent Copied",
+      });
     },
   });
 }
@@ -178,6 +262,8 @@ export function useCreateAgent() {
       const agent = result.agent;
       // Invalidate general list queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      // Invalidate all queries (unified view)
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
       // Invalidate active queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
 
@@ -202,6 +288,10 @@ export function useCreateAgent() {
     },
   });
 }
+
+// ============================================================================
+// Mutation Hooks
+// ============================================================================
 
 /**
  * Create a project-specific override of a global agent
@@ -240,6 +330,8 @@ export function useCreateAgentOverride() {
 
       // Invalidate general list queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      // Invalidate all queries (unified view)
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
       // Invalidate active queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
       // Invalidate global queries (source agent)
@@ -266,10 +358,6 @@ export function useCreateAgentOverride() {
   });
 }
 
-// ============================================================================
-// Mutation Hooks
-// ============================================================================
-
 /**
  * Deactivate an agent
  */
@@ -293,6 +381,8 @@ export function useDeactivateAgent() {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
         // Invalidate general list queries
         void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+        // Invalidate all queries (unified view)
+        void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
         // Invalidate active queries
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
 
@@ -353,6 +443,8 @@ export function useDeleteAgent() {
 
       // Invalidate general list queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      // Invalidate all queries (unified view)
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
       // Invalidate active queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
       // Invalidate builtIn queries (in case this was related to a built-in override)
@@ -417,6 +509,8 @@ export function useDuplicateAgent() {
 
       // Invalidate general list queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      // Invalidate all queries (unified view)
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
       // Invalidate active queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
 
@@ -471,6 +565,68 @@ export function useGlobalAgents(filters?: {
 }
 
 /**
+ * Move an agent to a different project or make it global
+ * @param targetProjectId - The project ID to move to, or null to make it global
+ */
+export function useMoveAgent() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: ({
+      agentId,
+      targetProjectId,
+    }: {
+      agentId: number;
+      targetProjectId: null | number;
+    }) => api!.agent.move(agentId, targetProjectId),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to move agent",
+        title: "Move Failed",
+      });
+    },
+    onSuccess: (result) => {
+      if (!result.success) {
+        toast.error({
+          description: result.error ?? "Failed to move agent",
+          title: "Move Failed",
+        });
+        return;
+      }
+
+      const agent = result.agent;
+
+      // Invalidate all agent-related queries to ensure UI consistency
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.projectScoped._def,
+      });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+
+      // Update detail cache if we have the agent
+      if (agent) {
+        queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
+        // Invalidate type-specific queries
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byType(agent.type).queryKey,
+        });
+      }
+
+      toast.success({
+        description: "Agent moved successfully",
+        title: "Agent Moved",
+      });
+    },
+  });
+}
+
+/**
  * Fetch project-scoped agents for a specific project
  */
 export function useProjectAgents(
@@ -518,6 +674,8 @@ export function useResetAgent() {
     onSuccess: (agent, variables) => {
       // Invalidate general list queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      // Invalidate all queries (unified view)
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
       // Invalidate active queries
       void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
       // Invalidate builtIn queries
@@ -596,6 +754,8 @@ export function useUpdateAgent() {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
         // Invalidate list queries
         void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+        // Invalidate all queries (unified view)
+        void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
         // Invalidate active queries
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
 

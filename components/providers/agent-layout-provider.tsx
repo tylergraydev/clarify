@@ -5,10 +5,8 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import {
-  AGENT_LAYOUT_STORAGE_KEY,
   AGENT_SHOW_BUILTIN_STORAGE_KEY,
   AGENT_SHOW_DEACTIVATED_STORAGE_KEY,
-  type AgentLayout,
 } from "@/lib/layout/constants";
 import { useAgentLayoutStore } from "@/lib/stores/agent-layout-store";
 
@@ -17,9 +15,9 @@ interface AgentLayoutProviderProps {
 }
 
 /**
- * Provider component that hydrates the agent layout store from electron-store
- * on mount. This ensures layout and filter preferences are loaded from
- * persistent storage before rendering, preventing flash of default values.
+ * Provider component that hydrates the agent filter store from electron-store
+ * on mount. This ensures filter preferences are loaded from persistent storage
+ * before rendering, preventing flash of default values.
  *
  * @example
  * ```tsx
@@ -35,11 +33,6 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
     const hydrateStore = async () => {
       // Check if running in Electron environment
       if (typeof window !== "undefined" && window.electronAPI?.store) {
-        // Hydrate layout preference
-        const persistedLayout = await window.electronAPI.store.get<AgentLayout>(
-          AGENT_LAYOUT_STORAGE_KEY
-        );
-
         // Hydrate show built-in preference
         const persistedShowBuiltIn =
           await window.electronAPI.store.get<boolean>(
@@ -54,18 +47,9 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
 
         // Build state update object
         const stateUpdate: Partial<{
-          layout: AgentLayout;
           showBuiltIn: boolean;
           showDeactivated: boolean;
         }> = {};
-
-        // Validate and add layout to update
-        if (
-          persistedLayout &&
-          ["card", "list", "table"].includes(persistedLayout)
-        ) {
-          stateUpdate.layout = persistedLayout;
-        }
 
         // Validate and add showBuiltIn to update
         if (typeof persistedShowBuiltIn === "boolean") {

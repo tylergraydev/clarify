@@ -40,6 +40,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  descriptionVariants,
+  fieldWrapperVariants,
+  labelVariants,
+} from "@/components/ui/form/field-wrapper";
+import {
+  SelectItem,
+  SelectList,
+  SelectPopup,
+  SelectPortal,
+  SelectPositioner,
+  SelectRoot,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { agentColors, agentTypes } from "@/db/schema/agents.schema";
 import {
   useCreateAgentSkill,
@@ -54,10 +69,11 @@ import {
 } from "@/hooks/queries/use-agent-tools";
 import {
   useCreateAgent,
+  useMoveAgent,
   useResetAgent,
   useUpdateAgent,
 } from "@/hooks/queries/use-agents";
-import { useProject } from "@/hooks/queries/use-projects";
+import { useProject, useProjects } from "@/hooks/queries/use-projects";
 import { getAgentColorHex } from "@/lib/colors/agent-colors";
 import {
   CLAUDE_BUILTIN_TOOLS,
@@ -117,6 +133,9 @@ const AGENT_TYPE_OPTIONS = agentTypes.map((type) => ({
   value: type,
 }));
 
+// Constant for global project option value
+const GLOBAL_PROJECT_VALUE = "__global__";
+
 export const AgentEditorDialog = ({
   agent,
   initialData,
@@ -141,6 +160,9 @@ export const AgentEditorDialog = ({
   );
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<"" | AgentColor>("");
+  const [selectedProjectId, setSelectedProjectId] = useState<null | number>(
+    null
+  );
 
   // Tool state for both create and edit modes
   const [toolSelections, setToolSelections] = useState<Array<ToolSelection>>(
@@ -167,15 +189,42 @@ export const AgentEditorDialog = ({
   const createSkillMutation = useCreateAgentSkill();
   const setSkillRequiredMutation = useSetAgentSkillRequired();
 
+  // Move agent mutation for edit mode
+  const moveAgentMutation = useMoveAgent();
+
   // Fetch existing tools for edit mode
   const existingToolsQuery = useAgentTools(agent?.id ?? 0);
   const existingTools = existingToolsQuery.data;
 
+  // Fetch all projects for the project assignment dropdown
+  const projectsQuery = useProjects();
+
   // Fetch project data when projectId is provided (for displaying project context)
   const projectQuery = useProject(projectId ?? 0);
 
+  // Build project options for the SelectField
+  const projectOptions = useMemo(() => {
+    const projectsData = projectsQuery.data ?? [];
+    const options = [
+      { label: "Global (all projects)", value: GLOBAL_PROJECT_VALUE },
+    ];
+
+    // Add active (non-archived) projects
+    for (const project of projectsData) {
+      if (!project.archivedAt) {
+        options.push({
+          label: project.name,
+          value: String(project.id),
+        });
+      }
+    }
+
+    return options;
+  }, [projectsQuery.data]);
+
   const isSubmitting =
     createAgentMutation.isPending || updateAgentMutation.isPending;
+  const isMoving = moveAgentMutation.isPending;
   const isResetting = resetAgentMutation.isPending;
   const isEditMode = mode === "edit";
   const isBuiltIn = agent?.builtInAt !== null;
@@ -186,6 +235,10 @@ export const AgentEditorDialog = ({
   const isViewMode = isEditMode && isBuiltIn && !isCustomized;
   // Show reset button only for customized agents in edit mode, but not in view mode
   const isResetButtonVisible = isEditMode && isCustomized && !isViewMode;
+  // Disabled state for project selector
+  const isProjectSelectorDisabled = isEditMode
+    ? isSubmitting || isResetting || isMoving || isViewMode
+    : isSubmitting || isResetting;
 
   // Determine validation schema based on mode
   const validationSchema = isEditMode
@@ -277,12 +330,15 @@ export const AgentEditorDialog = ({
       } else {
         // Create new agent with tools
         const createValue = value as CreateAgentFormData;
+        // Use selectedProjectId state which tracks the dropdown value
+        // This allows users to override the initial projectId prop via the dropdown
+        const effectiveProjectId = selectedProjectId;
         const result = await createAgentMutation.mutateAsync({
           color: createValue.color,
           description: createValue.description,
           displayName: createValue.displayName,
           name: createValue.name,
-          projectId: projectId ?? null,
+          projectId: effectiveProjectId,
           systemPrompt: createValue.systemPrompt,
           type: createValue.type,
         });
@@ -340,17 +396,28 @@ export const AgentEditorDialog = ({
     setCustomTools(tools);
   });
 
-  // Reset form and color when agent or initialData changes
+  const updateSelectedProjectId = useEffectEvent(
+    (newProjectId: null | number) => {
+      setSelectedProjectId(newProjectId);
+    }
+  );
+
+  // Reset form, color, and project when agent or initialData changes
   useEffect(() => {
     form.reset(getDefaultValues());
     if (isEditMode && agent) {
       updateSelectedColor((agent.color as AgentColor) ?? "");
+      updateSelectedProjectId(agent.projectId ?? null);
     } else if (initialData) {
       updateSelectedColor(initialData.color ?? "");
+      // For create mode (including duplicate), initialize with projectId prop or null
+      updateSelectedProjectId(projectId ?? null);
     } else {
       updateSelectedColor("");
+      // For create mode, initialize with projectId prop or null
+      updateSelectedProjectId(projectId ?? null);
     }
-  }, [agent, initialData, form, getDefaultValues, isEditMode]);
+  }, [agent, initialData, form, getDefaultValues, isEditMode, projectId]);
 
   // Initialize tools when dialog opens
   useEffect(() => {
@@ -413,9 +480,18 @@ export const AgentEditorDialog = ({
     return "";
   }, [isEditMode, agent, initialData]);
 
-  const resetFormAndColor = useCallback(() => {
+  const getInitialProjectId = useCallback((): null | number => {
+    if (isEditMode && agent) {
+      return agent.projectId ?? null;
+    }
+    // For create mode, use the projectId prop if provided
+    return projectId ?? null;
+  }, [isEditMode, agent, projectId]);
+
+  const resetFormState = useCallback(() => {
     form.reset(getDefaultValues());
     setSelectedColor(getInitialColor());
+    setSelectedProjectId(getInitialProjectId());
     // Reset tools and skills state
     if (!isEditMode) {
       const type = initialData?.type ?? "specialist";
@@ -426,6 +502,7 @@ export const AgentEditorDialog = ({
     form,
     getDefaultValues,
     getInitialColor,
+    getInitialProjectId,
     isEditMode,
     initialData,
     initializeToolDefaults,
@@ -433,8 +510,8 @@ export const AgentEditorDialog = ({
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
-    resetFormAndColor();
-  }, [resetFormAndColor, setIsOpen]);
+    resetFormState();
+  }, [resetFormState, setIsOpen]);
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -443,6 +520,7 @@ export const AgentEditorDialog = ({
         // Reset form to ensure it has latest values
         form.reset(getDefaultValues());
         setSelectedColor(getInitialColor());
+        setSelectedProjectId(getInitialProjectId());
         // Reset tools and skills for create mode
         if (!isEditMode) {
           const type = initialData?.type ?? "specialist";
@@ -450,14 +528,15 @@ export const AgentEditorDialog = ({
           setPendingSkills([]);
         }
       } else {
-        resetFormAndColor();
+        resetFormState();
       }
     },
     [
       setIsOpen,
-      resetFormAndColor,
+      resetFormState,
       getDefaultValues,
       getInitialColor,
+      getInitialProjectId,
       form,
       isEditMode,
       initialData,
@@ -491,6 +570,27 @@ export const AgentEditorDialog = ({
       initializeToolDefaults(type);
     },
     [initializeToolDefaults]
+  );
+
+  // Handle project change in edit mode - call move mutation
+  const handleProjectChange = useCallback(
+    async (newValue: string) => {
+      if (!agent) return;
+
+      // Convert the string value to the appropriate type
+      const newProjectId =
+        newValue === GLOBAL_PROJECT_VALUE ? null : Number(newValue);
+
+      // Update local state immediately for UI responsiveness
+      setSelectedProjectId(newProjectId);
+
+      // Call the move mutation
+      await moveAgentMutation.mutateAsync({
+        agentId: agent.id,
+        targetProjectId: newProjectId,
+      });
+    },
+    [agent, moveAgentMutation]
   );
 
   // Handle tool changes in edit mode - sync to database
@@ -724,6 +824,58 @@ export const AgentEditorDialog = ({
                     )}
                   </form.AppField>
                 )}
+
+                {/* Project Assignment Field */}
+                <div className={fieldWrapperVariants()}>
+                  <label className={labelVariants()}>{"Project Assignment"}</label>
+                  <SelectRoot
+                    disabled={isProjectSelectorDisabled}
+                    onValueChange={
+                      isEditMode
+                        ? (newValue: null | string) => {
+                            if (newValue !== null) {
+                              void handleProjectChange(newValue);
+                            }
+                          }
+                        : (newValue: null | string) => {
+                            // For create mode, update local state
+                            if (newValue === null) return;
+                            const newProjectId =
+                              newValue === GLOBAL_PROJECT_VALUE
+                                ? null
+                                : Number(newValue);
+                            setSelectedProjectId(newProjectId);
+                          }
+                    }
+                    value={
+                      selectedProjectId === null
+                        ? GLOBAL_PROJECT_VALUE
+                        : String(selectedProjectId)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={"Select project"} />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectPositioner>
+                        <SelectPopup>
+                          <SelectList>
+                            {projectOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectList>
+                        </SelectPopup>
+                      </SelectPositioner>
+                    </SelectPortal>
+                  </SelectRoot>
+                  <span className={descriptionVariants()}>
+                    {isEditMode
+                      ? "Move this agent to a different project or make it global"
+                      : "Assign this agent to a specific project or make it available globally"}
+                  </span>
+                </div>
 
                 {/* Display Name */}
                 <form.AppField name={"displayName"}>

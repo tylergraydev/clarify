@@ -16,6 +16,7 @@ import type {
   AgentSkillsRepository,
   AgentsRepository,
   AgentToolsRepository,
+  ProjectsRepository,
 } from "../../db/repositories";
 import type { Agent, NewAgent } from "../../db/schema";
 
@@ -62,11 +63,13 @@ const BUILT_IN_PROTECTED_FIELDS = new Set(["name", "systemPrompt", "type"]);
  * @param agentsRepository - The agents repository for database operations
  * @param agentToolsRepository - The agent tools repository for duplication
  * @param agentSkillsRepository - The agent skills repository for duplication
+ * @param projectsRepository - The projects repository for move/copy validation
  */
 export function registerAgentHandlers(
   agentsRepository: AgentsRepository,
   agentToolsRepository: AgentToolsRepository,
-  agentSkillsRepository: AgentSkillsRepository
+  agentSkillsRepository: AgentSkillsRepository,
+  projectsRepository: ProjectsRepository
 ): void {
   // Create a new agent
   ipcMain.handle(
@@ -462,6 +465,169 @@ export function registerAgentHandlers(
       } catch (error) {
         console.error("[IPC Error] agent:deactivate:", error);
         throw error;
+      }
+    }
+  );
+
+  // Move an agent to a different project (reassign projectId)
+  ipcMain.handle(
+    IpcChannels.agent.move,
+    async (
+      _event: IpcMainInvokeEvent,
+      agentId: number,
+      targetProjectId: null | number
+    ): Promise<AgentOperationResult> => {
+      try {
+        // Validate agent exists
+        const agent = await agentsRepository.findById(agentId);
+        if (!agent) {
+          return { error: "Agent not found", success: false };
+        }
+
+        // Built-in agents cannot be moved (they should remain global)
+        if (isBuiltInAgent(agent)) {
+          return {
+            error: "Cannot move built-in agents. Create an override instead.",
+            success: false,
+          };
+        }
+
+        // If moving to a project, validate the project exists
+        if (targetProjectId !== null) {
+          const project = await projectsRepository.findById(targetProjectId);
+          if (!project) {
+            return { error: "Target project not found", success: false };
+          }
+
+          // Check if project is archived
+          if (project.archivedAt !== null) {
+            return {
+              error: "Cannot move agent to an archived project",
+              success: false,
+            };
+          }
+        }
+
+        // Update the agent's projectId
+        const updatedAgent = await agentsRepository.update(agentId, {
+          projectId: targetProjectId,
+        });
+        if (!updatedAgent) {
+          return { error: "Failed to move agent", success: false };
+        }
+
+        return { agent: updatedAgent, success: true };
+      } catch (error) {
+        console.error("[IPC Error] agent:move:", error);
+        return {
+          error: error instanceof Error ? error.message : "Failed to move agent",
+          success: false,
+        };
+      }
+    }
+  );
+
+  // Copy an agent to a specific project (creates a new agent with tools and skills)
+  ipcMain.handle(
+    IpcChannels.agent.copyToProject,
+    async (
+      _event: IpcMainInvokeEvent,
+      agentId: number,
+      targetProjectId: number
+    ): Promise<AgentOperationResult> => {
+      try {
+        // Validate agent exists
+        const sourceAgent = await agentsRepository.findById(agentId);
+        if (!sourceAgent) {
+          return { error: "Agent not found", success: false };
+        }
+
+        // Validate projectId is provided and valid
+        if (!targetProjectId || targetProjectId <= 0) {
+          return {
+            error: "A valid target project ID is required",
+            success: false,
+          };
+        }
+
+        // Validate the target project exists
+        const project = await projectsRepository.findById(targetProjectId);
+        if (!project) {
+          return { error: "Target project not found", success: false };
+        }
+
+        // Check if project is archived
+        if (project.archivedAt !== null) {
+          return {
+            error: "Cannot copy agent to an archived project",
+            success: false,
+          };
+        }
+
+        // Generate a unique name for the copy
+        // Name uses kebab-case to comply with the agent name regex pattern
+        let copyNumber = 1;
+        let newName = `${sourceAgent.name}-project-${targetProjectId}`;
+        let newDisplayName = `${sourceAgent.displayName} (${project.name})`;
+
+        // Check if a copy already exists and increment the number if needed
+        let existingAgent = await agentsRepository.findByName(newName);
+        while (existingAgent) {
+          copyNumber++;
+          newName = `${sourceAgent.name}-project-${targetProjectId}-${copyNumber}`;
+          newDisplayName = `${sourceAgent.displayName} (${project.name} ${copyNumber})`;
+          existingAgent = await agentsRepository.findByName(newName);
+        }
+
+        // Create the copy with the target projectId
+        const newAgentData: NewAgent = {
+          builtInAt: null, // Custom agent, not built-in
+          color: sourceAgent.color,
+          description: sourceAgent.description,
+          displayName: newDisplayName,
+          name: newName,
+          parentAgentId: sourceAgent.id, // Link to source agent for reference
+          projectId: targetProjectId,
+          systemPrompt: sourceAgent.systemPrompt,
+          type: sourceAgent.type,
+          version: 1, // Reset version to 1 for the new copy
+        };
+
+        const copiedAgent = await agentsRepository.create(newAgentData);
+
+        // Copy tools from source agent to the new agent
+        const sourceTools = await agentToolsRepository.findByAgentId(agentId);
+        for (const tool of sourceTools) {
+          await agentToolsRepository.create({
+            agentId: copiedAgent.id,
+            disallowedAt: tool.disallowedAt,
+            orderIndex: tool.orderIndex,
+            toolName: tool.toolName,
+            toolPattern: tool.toolPattern,
+          });
+        }
+
+        // Copy skills from source agent to the new agent
+        const sourceSkills = await agentSkillsRepository.findByAgentId(agentId);
+        for (const skill of sourceSkills) {
+          await agentSkillsRepository.create({
+            agentId: copiedAgent.id,
+            orderIndex: skill.orderIndex,
+            requiredAt: skill.requiredAt,
+            skillName: skill.skillName,
+          });
+        }
+
+        return { agent: copiedAgent, success: true };
+      } catch (error) {
+        console.error("[IPC Error] agent:copyToProject:", error);
+        return {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to copy agent to project",
+          success: false,
+        };
       }
     }
   );

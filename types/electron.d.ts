@@ -59,6 +59,10 @@ export interface AgentOperationResult {
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<import("../db/schema").Agent | undefined>;
+    copyToProject(
+      agentId: number,
+      targetProjectId: number
+    ): Promise<AgentOperationResult>;
     create(
       data: import("../db/schema").NewAgent
     ): Promise<AgentOperationResult>;
@@ -73,6 +77,10 @@ export interface ElectronAPI {
     list(
       filters?: AgentListFilters
     ): Promise<Array<import("../db/schema").Agent>>;
+    move(
+      agentId: number,
+      targetProjectId: null | number
+    ): Promise<AgentOperationResult>;
     reset(id: number): Promise<import("../db/schema").Agent | undefined>;
     update(
       id: number,

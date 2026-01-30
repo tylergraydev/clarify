@@ -39,6 +39,7 @@ import type {
 const IpcChannels = {
   agent: {
     activate: "agent:activate",
+    copyToProject: "agent:copyToProject",
     create: "agent:create",
     createOverride: "agent:createOverride",
     deactivate: "agent:deactivate",
@@ -46,6 +47,7 @@ const IpcChannels = {
     duplicate: "agent:duplicate",
     get: "agent:get",
     list: "agent:list",
+    move: "agent:move",
     reset: "agent:reset",
     update: "agent:update",
   },
@@ -206,6 +208,10 @@ export interface AgentOperationResult {
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<Agent | undefined>;
+    copyToProject(
+      agentId: number,
+      targetProjectId: number
+    ): Promise<AgentOperationResult>;
     create(data: NewAgent): Promise<AgentOperationResult>;
     createOverride(
       agentId: number,
@@ -216,6 +222,10 @@ export interface ElectronAPI {
     duplicate(id: number): Promise<AgentOperationResult>;
     get(id: number): Promise<Agent | undefined>;
     list(filters?: AgentListFilters): Promise<Array<Agent>>;
+    move(
+      agentId: number,
+      targetProjectId: null | number
+    ): Promise<AgentOperationResult>;
     reset(id: number): Promise<Agent | undefined>;
     update(id: number, data: Partial<NewAgent>): Promise<AgentOperationResult>;
   };
@@ -493,6 +503,12 @@ type WorkflowHistorySortOrder = "asc" | "desc";
 const electronAPI: ElectronAPI = {
   agent: {
     activate: (id) => ipcRenderer.invoke(IpcChannels.agent.activate, id),
+    copyToProject: (agentId, targetProjectId) =>
+      ipcRenderer.invoke(
+        IpcChannels.agent.copyToProject,
+        agentId,
+        targetProjectId
+      ),
     create: (data) => ipcRenderer.invoke(IpcChannels.agent.create, data),
     createOverride: (agentId, projectId) =>
       ipcRenderer.invoke(IpcChannels.agent.createOverride, agentId, projectId),
@@ -501,6 +517,8 @@ const electronAPI: ElectronAPI = {
     duplicate: (id) => ipcRenderer.invoke(IpcChannels.agent.duplicate, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.agent.get, id),
     list: (filters) => ipcRenderer.invoke(IpcChannels.agent.list, filters),
+    move: (agentId, targetProjectId) =>
+      ipcRenderer.invoke(IpcChannels.agent.move, agentId, targetProjectId),
     reset: (id) => ipcRenderer.invoke(IpcChannels.agent.reset, id),
     update: (id, data) =>
       ipcRenderer.invoke(IpcChannels.agent.update, id, data),

@@ -18,6 +18,7 @@
 export const IpcChannels = {
   agent: {
     activate: "agent:activate",
+    copyToProject: "agent:copyToProject",
     create: "agent:create",
     createOverride: "agent:createOverride",
     deactivate: "agent:deactivate",
@@ -25,6 +26,7 @@ export const IpcChannels = {
     duplicate: "agent:duplicate",
     get: "agent:get",
     list: "agent:list",
+    move: "agent:move",
     reset: "agent:reset",
     update: "agent:update",
   },
