@@ -16,6 +16,7 @@ import {
   useDisallowAgentTool,
 } from "@/hooks/queries/use-agent-tools";
 import { cn } from "@/lib/utils";
+import { agentToolInputSchema } from "@/lib/validations/agent";
 
 interface AgentToolsManagerProps {
   agentId: number;
@@ -29,6 +30,7 @@ export const AgentToolsManager = ({
   const [newToolName, setNewToolName] = useState("");
   const [newToolPattern, setNewToolPattern] = useState("*");
   const [isAdding, setIsAdding] = useState(false);
+  const [validationError, setValidationError] = useState<null | string>(null);
 
   const { data: tools = [], isLoading } = useAgentTools(agentId);
   const createMutation = useCreateAgentTool();
@@ -37,17 +39,32 @@ export const AgentToolsManager = ({
   const disallowMutation = useDisallowAgentTool();
 
   const handleAddTool = async () => {
-    if (!newToolName.trim()) return;
+    // Clear previous validation error
+    setValidationError(null);
+
+    // Validate input with Zod schema
+    const result = agentToolInputSchema.safeParse({
+      name: newToolName.trim(),
+      pattern: newToolPattern.trim() || undefined,
+    });
+
+    if (!result.success) {
+      // Get the first error message from Zod issues
+      const firstIssue = result.error.issues[0];
+      setValidationError(firstIssue?.message ?? "Invalid input");
+      return;
+    }
 
     try {
       await createMutation.mutateAsync({
         agentId,
-        toolName: newToolName.trim(),
-        toolPattern: newToolPattern.trim() || "*",
+        toolName: result.data.name,
+        toolPattern: result.data.pattern ?? "*",
       });
       setNewToolName("");
       setNewToolPattern("*");
       setIsAdding(false);
+      setValidationError(null);
     } catch {
       // Error handled by mutation
     }
@@ -153,27 +170,41 @@ export const AgentToolsManager = ({
         <div
           className={"flex flex-col gap-2 rounded-md border border-border p-3"}
         >
-          <div className={"flex gap-2"}>
-            <Input
-              autoFocus
-              className={"flex-1"}
-              disabled={disabled || createMutation.isPending}
-              onChange={(e) => setNewToolName(e.target.value)}
-              placeholder={"Tool name (e.g., Read, Write, Bash)"}
-              value={newToolName}
-            />
-            <Input
-              className={"w-32"}
-              disabled={disabled || createMutation.isPending}
-              onChange={(e) => setNewToolPattern(e.target.value)}
-              placeholder={"Pattern"}
-              value={newToolPattern}
-            />
+          <div className={"flex flex-col gap-1"}>
+            <div className={"flex gap-2"}>
+              <Input
+                autoFocus
+                className={"flex-1"}
+                disabled={disabled || createMutation.isPending}
+                onChange={(e) => {
+                  setNewToolName(e.target.value);
+                  setValidationError(null);
+                }}
+                placeholder={"Tool name (e.g., Read, Write, Bash)"}
+                value={newToolName}
+              />
+              <Input
+                className={"w-32"}
+                disabled={disabled || createMutation.isPending}
+                onChange={(e) => {
+                  setNewToolPattern(e.target.value);
+                  setValidationError(null);
+                }}
+                placeholder={"Pattern"}
+                value={newToolPattern}
+              />
+            </div>
+            {validationError && (
+              <p className={"text-xs text-destructive"}>{validationError}</p>
+            )}
           </div>
           <div className={"flex justify-end gap-2"}>
             <Button
               disabled={createMutation.isPending}
-              onClick={() => setIsAdding(false)}
+              onClick={() => {
+                setIsAdding(false);
+                setValidationError(null);
+              }}
               size={"sm"}
               variant={"ghost"}
             >

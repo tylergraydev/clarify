@@ -2,9 +2,11 @@
  * Agent IPC Handlers
  *
  * Handles all agent management operations including:
+ * - Creating new agents
  * - Listing agents with optional filters
  * - Getting agent details by ID
  * - Updating agent configuration (prompts, settings)
+ * - Deleting agents (with built-in protection)
  * - Activating and deactivating agents
  * - Resetting agents to built-in defaults
  */
@@ -25,6 +27,21 @@ interface AgentListFilters {
 }
 
 /**
+ * Result type for operations that can fail due to validation or protection rules
+ */
+interface AgentOperationResult {
+  agent?: Agent;
+  error?: string;
+  success: boolean;
+}
+
+/**
+ * Core properties that cannot be modified on built-in agents.
+ * Only displayName, description, and color are allowed to be changed.
+ */
+const BUILT_IN_PROTECTED_FIELDS = new Set(["name", "systemPrompt", "type"]);
+
+/**
  * Register all agent-related IPC handlers.
  *
  * @param agentsRepository - The agents repository for database operations
@@ -32,6 +49,84 @@ interface AgentListFilters {
 export function registerAgentHandlers(
   agentsRepository: AgentsRepository
 ): void {
+  // Create a new agent
+  ipcMain.handle(
+    IpcChannels.agent.create,
+    async (
+      _event: IpcMainInvokeEvent,
+      data: NewAgent
+    ): Promise<AgentOperationResult> => {
+      try {
+        // Validate required fields
+        if (!data.name || !data.name.trim()) {
+          return { error: "Agent name is required", success: false };
+        }
+        if (!data.displayName || !data.displayName.trim()) {
+          return { error: "Agent display name is required", success: false };
+        }
+        if (!data.systemPrompt || !data.systemPrompt.trim()) {
+          return { error: "Agent system prompt is required", success: false };
+        }
+        if (!data.type || !data.type.trim()) {
+          return { error: "Agent type is required", success: false };
+        }
+
+        // Check for duplicate names
+        const existingAgent = await agentsRepository.findByName(data.name);
+        if (existingAgent) {
+          return {
+            error: `An agent with the name "${data.name}" already exists`,
+            success: false,
+          };
+        }
+
+        const agent = await agentsRepository.create(data);
+        return { agent, success: true };
+      } catch (error) {
+        console.error("[IPC Error] agent:create:", error);
+        return {
+          error: error instanceof Error ? error.message : "Failed to create agent",
+          success: false,
+        };
+      }
+    }
+  );
+
+  // Delete an agent (with built-in protection)
+  ipcMain.handle(
+    IpcChannels.agent.delete,
+    async (
+      _event: IpcMainInvokeEvent,
+      id: number
+    ): Promise<AgentOperationResult> => {
+      try {
+        // Get the agent to check if it's built-in
+        const agent = await agentsRepository.findById(id);
+        if (!agent) {
+          return { error: "Agent not found", success: false };
+        }
+
+        // Protect built-in agents from deletion
+        if (isBuiltInAgent(agent)) {
+          return {
+            error: "Cannot delete built-in agents. You can only deactivate them.",
+            success: false,
+          };
+        }
+
+        // Delete the custom agent
+        await agentsRepository.delete(id);
+        return { success: true };
+      } catch (error) {
+        console.error("[IPC Error] agent:delete:", error);
+        return {
+          error: error instanceof Error ? error.message : "Failed to delete agent",
+          success: false,
+        };
+      }
+    }
+  );
+
   // List agents with optional filters
   ipcMain.handle(
     IpcChannels.agent.list,
@@ -64,25 +159,52 @@ export function registerAgentHandlers(
     }
   );
 
-  // Update an agent's configuration
+  // Update an agent's configuration (with built-in protection)
   ipcMain.handle(
     IpcChannels.agent.update,
     async (
       _event: IpcMainInvokeEvent,
       id: number,
       data: Partial<Omit<NewAgent, "createdAt" | "id">>
-    ): Promise<Agent | undefined> => {
+    ): Promise<AgentOperationResult> => {
       try {
-        return agentsRepository.update(id, data);
+        // Get the agent to check if it's built-in
+        const agent = await agentsRepository.findById(id);
+        if (!agent) {
+          return { error: "Agent not found", success: false };
+        }
+
+        // For built-in agents, restrict which fields can be modified
+        if (isBuiltInAgent(agent)) {
+          const protectedFields = getProtectedFieldsInUpdate(data);
+          if (protectedFields.length > 0) {
+            return {
+              error: `Cannot modify protected properties of built-in agents: ${protectedFields.join(", ")}. Only displayName, description, and color can be changed.`,
+              success: false,
+            };
+          }
+        }
+
+        // Perform the update
+        const updatedAgent = await agentsRepository.update(id, data);
+        if (!updatedAgent) {
+          return { error: "Failed to update agent", success: false };
+        }
+
+        return { agent: updatedAgent, success: true };
       } catch (error) {
         console.error("[IPC Error] agent:update:", error);
-        throw error;
+        return {
+          error: error instanceof Error ? error.message : "Failed to update agent",
+          success: false,
+        };
       }
     }
   );
 
   // Reset an agent to built-in defaults
-  // This deactivates any custom agent and activates the built-in version
+  // This deletes any custom agent and activates the built-in version
+  // Properly cascades to clean up orphaned records
   ipcMain.handle(
     IpcChannels.agent.reset,
     async (
@@ -96,12 +218,15 @@ export function registerAgentHandlers(
           return undefined;
         }
 
-        // If this is a custom agent with a parent, deactivate it and activate the parent
+        // If this is a custom agent with a parent, delete it entirely and activate the parent
+        // This prevents orphaned records from accumulating in the database
         if (agent.parentAgentId !== null) {
-          // Deactivate the custom agent
-          await agentsRepository.deactivate(id);
+          // Store the parent ID before deletion
+          const parentId = agent.parentAgentId;
+          // Delete the custom agent entirely (not just deactivate)
+          await agentsRepository.delete(id);
           // Activate the parent (built-in) agent
-          return agentsRepository.activate(agent.parentAgentId);
+          return agentsRepository.activate(parentId);
         }
 
         // If this is a built-in agent, just ensure it's active
@@ -144,4 +269,26 @@ export function registerAgentHandlers(
       }
     }
   );
+}
+
+/**
+ * Get the protected fields that are being modified in an update.
+ *
+ * @param data - The update data
+ * @returns Array of protected field names being modified
+ */
+function getProtectedFieldsInUpdate(
+  data: Partial<Omit<NewAgent, "createdAt" | "id">>
+): Array<string> {
+  return Object.keys(data).filter((key) => BUILT_IN_PROTECTED_FIELDS.has(key));
+}
+
+/**
+ * Check if an agent is a built-in agent.
+ *
+ * @param agent - The agent to check
+ * @returns true if the agent is built-in (has builtInAt set)
+ */
+function isBuiltInAgent(agent: Agent): boolean {
+  return agent.builtInAt !== null;
 }

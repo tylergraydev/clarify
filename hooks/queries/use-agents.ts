@@ -2,11 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { NewAgent } from "@/types/electron";
+import type { AgentListFilters, NewAgent } from "@/types/electron";
 
 import { agentKeys } from "@/lib/queries/agents";
 
 import { useElectron } from "../use-electron";
+import { useToast } from "../use-toast";
 
 // ============================================================================
 // Query Hooks
@@ -18,9 +19,17 @@ import { useElectron } from "../use-electron";
 export function useActivateAgent() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id: number) => api!.agent.activate(id),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to activate agent",
+        title: "Activation Failed",
+      });
+    },
     onSuccess: (agent) => {
       if (agent) {
         // Update detail cache directly
@@ -41,15 +50,11 @@ export function useActiveAgents(projectId?: number) {
   return useQuery({
     ...agentKeys.active(projectId),
     enabled: isElectron,
-    queryFn: async () => {
-      const agents = await api!.agent.list();
-      return agents.filter((agent) => {
-        // Agent is active if deactivatedAt is null
-        if (agent.deactivatedAt !== null) return false;
-        if (projectId && agent.projectId !== projectId) return false;
-        return true;
-      });
-    },
+    queryFn: () =>
+      api!.agent.list({
+        includeDeactivated: false,
+        projectId,
+      }),
   });
 }
 
@@ -67,35 +72,15 @@ export function useAgent(id: number) {
 }
 
 /**
- * Fetch all agents
+ * Fetch all agents with optional filters
  */
-export function useAgents(filters?: {
-  includeDeactivated?: boolean;
-  projectId?: number;
-  type?: string;
-}) {
+export function useAgents(filters?: AgentListFilters) {
   const { api, isElectron } = useElectron();
 
   return useQuery({
     ...agentKeys.list(filters),
     enabled: isElectron,
-    queryFn: async () => {
-      const agents = await api!.agent.list();
-      // Apply client-side filtering since API returns all agents
-      return agents.filter((agent) => {
-        // Agent is active if deactivatedAt is null
-        if (!filters?.includeDeactivated && agent.deactivatedAt !== null) {
-          return false;
-        }
-        if (filters?.projectId && agent.projectId !== filters.projectId) {
-          return false;
-        }
-        if (filters?.type && agent.type !== filters.type) {
-          return false;
-        }
-        return true;
-      });
-    },
+    queryFn: () => api!.agent.list(filters),
   });
 }
 
@@ -108,26 +93,20 @@ export function useAgentsByProject(projectId: number) {
   return useQuery({
     ...agentKeys.byProject(projectId),
     enabled: isElectron && projectId > 0,
-    queryFn: async () => {
-      const agents = await api!.agent.list();
-      return agents.filter((agent) => agent.projectId === projectId);
-    },
+    queryFn: () => api!.agent.list({ projectId }),
   });
 }
 
 /**
  * Fetch agents filtered by type
  */
-export function useAgentsByType(type: string) {
+export function useAgentsByType(type: "planning" | "review" | "specialist") {
   const { api, isElectron } = useElectron();
 
   return useQuery({
     ...agentKeys.byType(type),
     enabled: isElectron && Boolean(type),
-    queryFn: async () => {
-      const agents = await api!.agent.list();
-      return agents.filter((agent) => agent.type === type);
-    },
+    queryFn: () => api!.agent.list({ type }),
   });
 }
 
@@ -153,14 +132,58 @@ export function useBuiltInAgents() {
 }
 
 /**
+ * Create a new agent
+ */
+export function useCreateAgent() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: (data: NewAgent) => api!.agent.create(data),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to create agent",
+        title: "Create Failed",
+      });
+    },
+    onSuccess: (result) => {
+      if (!result.success) {
+        toast.error({
+          description: result.error ?? "Failed to create agent",
+          title: "Create Failed",
+        });
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: agentKeys._def });
+      toast.success({
+        description: "Agent created successfully",
+        title: "Agent Created",
+      });
+    },
+  });
+}
+
+/**
  * Deactivate an agent
  */
 export function useDeactivateAgent() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id: number) => api!.agent.deactivate(id),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to deactivate agent",
+        title: "Deactivation Failed",
+      });
+    },
     onSuccess: (agent) => {
       if (agent) {
         // Update detail cache directly
@@ -173,14 +196,56 @@ export function useDeactivateAgent() {
 }
 
 /**
+ * Delete an agent
+ */
+export function useDeleteAgent() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: (id: number) => api!.agent.delete(id),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to delete agent",
+        title: "Delete Failed",
+      });
+    },
+    onSuccess: (result) => {
+      if (!result.success) {
+        toast.error({
+          description: result.error ?? "Failed to delete agent",
+          title: "Delete Failed",
+        });
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: agentKeys._def });
+      toast.success({
+        description: "Agent deleted successfully",
+        title: "Agent Deleted",
+      });
+    },
+  });
+}
+
+/**
  * Reset an agent to its default configuration
  */
 export function useResetAgent() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id: number) => api!.agent.reset(id),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to reset agent",
+        title: "Reset Failed",
+      });
+    },
     onSuccess: (agent) => {
       if (agent) {
         // Update detail cache directly
@@ -198,11 +263,27 @@ export function useResetAgent() {
 export function useUpdateAgent() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ data, id }: { data: Partial<NewAgent>; id: number }) =>
       api!.agent.update(id, data),
-    onSuccess: (agent) => {
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to update agent",
+        title: "Update Failed",
+      });
+    },
+    onSuccess: (result) => {
+      if (!result.success) {
+        toast.error({
+          description: result.error ?? "Failed to update agent",
+          title: "Update Failed",
+        });
+        return;
+      }
+      const agent = result.agent;
       if (agent) {
         // Update detail cache directly
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);

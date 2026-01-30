@@ -15,6 +15,7 @@ import {
   useSetAgentSkillRequired,
 } from "@/hooks/queries/use-agent-skills";
 import { cn } from "@/lib/utils";
+import { agentSkillInputSchema } from "@/lib/validations/agent";
 
 interface AgentSkillsManagerProps {
   agentId: number;
@@ -27,6 +28,7 @@ export const AgentSkillsManager = ({
 }: AgentSkillsManagerProps) => {
   const [newSkillName, setNewSkillName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [validationError, setValidationError] = useState<null | string>(null);
 
   const { data: skills = [], isLoading } = useAgentSkills(agentId);
   const createMutation = useCreateAgentSkill();
@@ -34,15 +36,29 @@ export const AgentSkillsManager = ({
   const setRequiredMutation = useSetAgentSkillRequired();
 
   const handleAddSkill = async () => {
-    if (!newSkillName.trim()) return;
+    // Clear previous validation error
+    setValidationError(null);
+
+    // Validate input with Zod schema
+    const result = agentSkillInputSchema.safeParse({
+      name: newSkillName.trim(),
+    });
+
+    if (!result.success) {
+      // Get the first error message from Zod issues
+      const firstIssue = result.error.issues[0];
+      setValidationError(firstIssue?.message ?? "Invalid input");
+      return;
+    }
 
     try {
       await createMutation.mutateAsync({
         agentId,
-        skillName: newSkillName.trim(),
+        skillName: result.data.name,
       });
       setNewSkillName("");
       setIsAdding(false);
+      setValidationError(null);
     } catch {
       // Error handled by mutation
     }
@@ -146,17 +162,28 @@ export const AgentSkillsManager = ({
         <div
           className={"flex flex-col gap-2 rounded-md border border-border p-3"}
         >
-          <Input
-            autoFocus
-            disabled={disabled || createMutation.isPending}
-            onChange={(e) => setNewSkillName(e.target.value)}
-            placeholder={"Skill name (e.g., react-coding-conventions)"}
-            value={newSkillName}
-          />
+          <div className={"flex flex-col gap-1"}>
+            <Input
+              autoFocus
+              disabled={disabled || createMutation.isPending}
+              onChange={(e) => {
+                setNewSkillName(e.target.value);
+                setValidationError(null);
+              }}
+              placeholder={"Skill name (e.g., react-coding-conventions)"}
+              value={newSkillName}
+            />
+            {validationError && (
+              <p className={"text-xs text-destructive"}>{validationError}</p>
+            )}
+          </div>
           <div className={"flex justify-end gap-2"}>
             <Button
               disabled={createMutation.isPending}
-              onClick={() => setIsAdding(false)}
+              onClick={() => {
+                setIsAdding(false);
+                setValidationError(null);
+              }}
               size={"sm"}
               variant={"ghost"}
             >

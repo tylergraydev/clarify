@@ -1,5 +1,7 @@
 import { and, asc, eq, isNotNull } from "drizzle-orm";
 
+import { agentSkillInputSchema } from "@/lib/validations/agent";
+
 import type { DrizzleDatabase } from "../index";
 
 import { type AgentSkill, agentSkills, type NewAgentSkill } from "../schema";
@@ -23,6 +25,11 @@ export function createAgentSkillsRepository(
 ): AgentSkillsRepository {
   return {
     async create(data: NewAgentSkill): Promise<AgentSkill> {
+      // Validate skill name
+      agentSkillInputSchema.parse({
+        name: data.skillName,
+      });
+
       const result = await db.insert(agentSkills).values(data).returning();
       if (!result[0]) {
         throw new Error("Failed to create agent skill");
@@ -87,6 +94,13 @@ export function createAgentSkillsRepository(
       id: number,
       data: Partial<Omit<NewAgentSkill, "createdAt" | "id">>
     ): Promise<AgentSkill | undefined> {
+      // Validate skill name if present
+      if (data.skillName !== undefined) {
+        agentSkillInputSchema.parse({
+          name: data.skillName,
+        });
+      }
+
       const now = new Date().toISOString();
       const result = await db
         .update(agentSkills)

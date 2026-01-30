@@ -27,17 +27,37 @@ export type {
   Worktree,
 } from "../db/schema";
 
+/**
+ * Filters for querying agents
+ */
+export interface AgentListFilters {
+  includeDeactivated?: boolean;
+  projectId?: number;
+  type?: "planning" | "review" | "specialist";
+}
+
+/**
+ * Result type for agent operations that can fail due to validation or protection rules
+ */
+export interface AgentOperationResult {
+  agent?: import("../db/schema").Agent;
+  error?: string;
+  success: boolean;
+}
+
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<import("../db/schema").Agent | undefined>;
+    create(data: import("../db/schema").NewAgent): Promise<AgentOperationResult>;
     deactivate(id: number): Promise<import("../db/schema").Agent | undefined>;
+    delete(id: number): Promise<AgentOperationResult>;
     get(id: number): Promise<import("../db/schema").Agent | undefined>;
-    list(): Promise<Array<import("../db/schema").Agent>>;
+    list(filters?: AgentListFilters): Promise<Array<import("../db/schema").Agent>>;
     reset(id: number): Promise<import("../db/schema").Agent | undefined>;
     update(
       id: number,
       data: Partial<import("../db/schema").NewAgent>
-    ): Promise<import("../db/schema").Agent | undefined>;
+    ): Promise<AgentOperationResult>;
   };
   agentSkill: {
     create(

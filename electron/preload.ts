@@ -39,7 +39,9 @@ import type {
 const IpcChannels = {
   agent: {
     activate: "agent:activate",
+    create: "agent:create",
     deactivate: "agent:deactivate",
+    delete: "agent:delete",
     get: "agent:get",
     list: "agent:list",
     reset: "agent:reset",
@@ -169,14 +171,34 @@ const IpcChannels = {
   },
 } as const;
 
+/**
+ * Filters for querying agents
+ */
+export interface AgentListFilters {
+  includeDeactivated?: boolean;
+  projectId?: number;
+  type?: "planning" | "review" | "specialist";
+}
+
+/**
+ * Result type for agent operations that can fail due to validation or protection rules
+ */
+export interface AgentOperationResult {
+  agent?: Agent;
+  error?: string;
+  success: boolean;
+}
+
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<Agent | undefined>;
+    create(data: NewAgent): Promise<AgentOperationResult>;
     deactivate(id: number): Promise<Agent | undefined>;
+    delete(id: number): Promise<AgentOperationResult>;
     get(id: number): Promise<Agent | undefined>;
-    list(): Promise<Array<Agent>>;
+    list(filters?: AgentListFilters): Promise<Array<Agent>>;
     reset(id: number): Promise<Agent | undefined>;
-    update(id: number, data: Partial<NewAgent>): Promise<Agent | undefined>;
+    update(id: number, data: Partial<NewAgent>): Promise<AgentOperationResult>;
   };
   agentSkill: {
     create(data: NewAgentSkill): Promise<AgentSkill>;
@@ -439,9 +461,11 @@ type WorkflowHistorySortOrder = "asc" | "desc";
 const electronAPI: ElectronAPI = {
   agent: {
     activate: (id) => ipcRenderer.invoke(IpcChannels.agent.activate, id),
+    create: (data) => ipcRenderer.invoke(IpcChannels.agent.create, data),
     deactivate: (id) => ipcRenderer.invoke(IpcChannels.agent.deactivate, id),
+    delete: (id) => ipcRenderer.invoke(IpcChannels.agent.delete, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.agent.get, id),
-    list: () => ipcRenderer.invoke(IpcChannels.agent.list),
+    list: (filters) => ipcRenderer.invoke(IpcChannels.agent.list, filters),
     reset: (id) => ipcRenderer.invoke(IpcChannels.agent.reset, id),
     update: (id, data) =>
       ipcRenderer.invoke(IpcChannels.agent.update, id, data),

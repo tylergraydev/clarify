@@ -6,7 +6,7 @@ import { Bot, Search } from "lucide-react";
 import { parseAsBoolean, parseAsString, useQueryState } from "nuqs";
 import { useRef } from "react";
 
-import type { Agent } from "@/types/electron";
+import type { Agent, AgentListFilters } from "@/types/electron";
 
 import { AgentCard } from "@/components/agents/agent-card";
 import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
@@ -172,9 +172,10 @@ export default function AgentsPage() {
     parseAsBoolean.withDefault(false)
   );
 
-  // Data fetching
+  // Data fetching - pass both includeDeactivated and type filters to the server
   const { data: agents, isLoading } = useAgents({
     includeDeactivated: isShowDeactivated,
+    type: typeFilter as AgentListFilters["type"],
   });
 
   // Mutations
@@ -182,7 +183,7 @@ export default function AgentsPage() {
   const deactivateAgentMutation = useDeactivateAgent();
   const resetAgentMutation = useResetAgent();
 
-  // Client-side filtering by search and type
+  // Client-side filtering by search only (type filtering is handled server-side)
   const filteredAgents = agents?.filter((agent) => {
     // Filter by search term (case-insensitive, matches displayName and description)
     if (search) {
@@ -195,11 +196,6 @@ export default function AgentsPage() {
       if (!isMatchesName && !isMatchesDescription) {
         return false;
       }
-    }
-
-    // Filter by type
-    if (typeFilter && agent.type !== typeFilter) {
-      return false;
     }
 
     return true;

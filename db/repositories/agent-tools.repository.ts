@@ -1,5 +1,7 @@
 import { and, asc, eq, isNull } from "drizzle-orm";
 
+import { agentToolInputSchema } from "@/lib/validations/agent";
+
 import type { DrizzleDatabase } from "../index";
 
 import { type AgentTool, agentTools, type NewAgentTool } from "../schema";
@@ -34,6 +36,12 @@ export function createAgentToolsRepository(
     },
 
     async create(data: NewAgentTool): Promise<AgentTool> {
+      // Validate tool name and pattern
+      agentToolInputSchema.parse({
+        name: data.toolName,
+        pattern: data.toolPattern,
+      });
+
       const result = await db.insert(agentTools).values(data).returning();
       if (!result[0]) {
         throw new Error("Failed to create agent tool");
@@ -89,6 +97,14 @@ export function createAgentToolsRepository(
       id: number,
       data: Partial<Omit<NewAgentTool, "createdAt" | "id">>
     ): Promise<AgentTool | undefined> {
+      // Validate tool name and pattern if present
+      if (data.toolName !== undefined || data.toolPattern !== undefined) {
+        agentToolInputSchema.partial().parse({
+          name: data.toolName,
+          pattern: data.toolPattern,
+        });
+      }
+
       const now = new Date().toISOString();
       const result = await db
         .update(agentTools)

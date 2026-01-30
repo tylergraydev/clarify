@@ -67,25 +67,17 @@ export const AgentEditorDialog = ({
       systemPrompt: agent.systemPrompt,
     },
     onSubmit: async ({ value }) => {
-      try {
-        await updateAgentMutation.mutateAsync({
-          data: {
-            color: selectedColor,
-            description: value.description,
-            displayName: value.displayName,
-            systemPrompt: value.systemPrompt,
-          },
-          id: agent.id,
-        });
-        handleClose();
-        onSuccess?.();
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to update agent. Please try again.";
-        throw new Error(message);
-      }
+      await updateAgentMutation.mutateAsync({
+        data: {
+          color: selectedColor,
+          description: value.description,
+          displayName: value.displayName,
+          systemPrompt: value.systemPrompt,
+        },
+        id: agent.id,
+      });
+      handleClose();
+      onSuccess?.();
     },
     validators: {
       onSubmit: updateAgentSchema,
@@ -99,6 +91,7 @@ export const AgentEditorDialog = ({
   );
 
   // Reset form and color when agent changes
+  // Note: updateSelectedColor is excluded from deps because it's a useEffectEvent (stable identity)
   useEffect(() => {
     form.reset({
       description: agent.description ?? "",

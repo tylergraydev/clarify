@@ -18,7 +18,9 @@
 export const IpcChannels = {
   agent: {
     activate: "agent:activate",
+    create: "agent:create",
     deactivate: "agent:deactivate",
+    delete: "agent:delete",
     get: "agent:get",
     list: "agent:list",
     reset: "agent:reset",

@@ -1,4 +1,9 @@
-import { and, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+
+import {
+  createAgentSchema,
+  updateAgentRepositorySchema,
+} from "@/lib/validations/agent";
 
 import type { DrizzleDatabase } from "../index";
 
@@ -39,7 +44,9 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
     },
 
     async create(data: NewAgent): Promise<Agent> {
-      const result = await db.insert(agents).values(data).returning();
+      // Validate input data through Zod schema
+      const validatedData = createAgentSchema.parse(data);
+      const result = await db.insert(agents).values(validatedData).returning();
       if (!result[0]) {
         throw new Error("Failed to create agent");
       }
@@ -130,10 +137,16 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       id: number,
       data: Partial<Omit<NewAgent, "createdAt" | "id">>
     ): Promise<Agent | undefined> {
+      // Validate input data through Zod schema
+      const validatedData = updateAgentRepositorySchema.parse(data);
       const now = new Date().toISOString();
       const result = await db
         .update(agents)
-        .set({ ...data, updatedAt: now })
+        .set({
+          ...validatedData,
+          updatedAt: now,
+          version: sql`${agents.version} + 1`,
+        })
         .where(eq(agents.id, id))
         .returning();
       return result[0];

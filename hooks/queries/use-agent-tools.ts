@@ -7,6 +7,7 @@ import type { NewAgentTool } from "@/types/electron";
 import { agentToolKeys } from "@/lib/queries/agent-tools";
 
 import { useElectron } from "../use-electron";
+import { useToast } from "../use-toast";
 
 // ============================================================================
 // Query Hooks
@@ -35,9 +36,17 @@ export function useAgentTools(agentId: number) {
 export function useAllowAgentTool() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id: number) => api!.agentTool.allow(id),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to allow tool",
+        title: "Allow Tool Failed",
+      });
+    },
     onSuccess: (tool) => {
       if (tool) {
         // Invalidate the agent's tools list
@@ -55,9 +64,17 @@ export function useAllowAgentTool() {
 export function useCreateAgentTool() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (data: NewAgentTool) => api!.agentTool.create(data),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to create tool",
+        title: "Create Tool Failed",
+      });
+    },
     onSuccess: (tool) => {
       if (tool) {
         // Invalidate the agent's tools list
@@ -75,10 +92,18 @@ export function useCreateAgentTool() {
 export function useDeleteAgentTool() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ agentId, id }: { agentId: number; id: number }) =>
       api!.agentTool.delete(id).then(() => agentId),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to delete tool",
+        title: "Delete Tool Failed",
+      });
+    },
     onSuccess: (agentId) => {
       // Invalidate the agent's tools list
       void queryClient.invalidateQueries({
@@ -94,9 +119,17 @@ export function useDeleteAgentTool() {
 export function useDisallowAgentTool() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id: number) => api!.agentTool.disallow(id),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to disallow tool",
+        title: "Disallow Tool Failed",
+      });
+    },
     onSuccess: (tool) => {
       if (tool) {
         // Invalidate the agent's tools list
@@ -114,10 +147,18 @@ export function useDisallowAgentTool() {
 export function useUpdateAgentTool() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ data, id }: { data: Partial<NewAgentTool>; id: number }) =>
       api!.agentTool.update(id, data),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to update tool",
+        title: "Update Tool Failed",
+      });
+    },
     onSuccess: (tool) => {
       if (tool) {
         // Invalidate the agent's tools list
