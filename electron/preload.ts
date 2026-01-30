@@ -113,7 +113,9 @@ const IpcChannels = {
     cancel: "workflow:cancel",
     create: "workflow:create",
     get: "workflow:get",
+    getStatistics: "workflow:getStatistics",
     list: "workflow:list",
+    listHistory: "workflow:listHistory",
     pause: "workflow:pause",
     resume: "workflow:resume",
     start: "workflow:start",
@@ -261,12 +263,74 @@ export interface ElectronAPI {
     cancel(id: number): Promise<undefined | Workflow>;
     create(data: NewWorkflow): Promise<Workflow>;
     get(id: number): Promise<undefined | Workflow>;
+    getStatistics(filters?: {
+      dateFrom?: string;
+      dateTo?: string;
+      projectId?: number;
+    }): Promise<WorkflowStatistics>;
     list(): Promise<Array<Workflow>>;
+    listHistory(filters?: WorkflowHistoryFilters): Promise<WorkflowHistoryResult>;
     pause(id: number): Promise<undefined | Workflow>;
     resume(id: number): Promise<undefined | Workflow>;
     start(id: number): Promise<undefined | Workflow>;
   };
 }
+
+/**
+ * Filters for querying workflow history
+ */
+export interface WorkflowHistoryFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+  offset?: number;
+  projectId?: number;
+  searchTerm?: string;
+  sortBy?: WorkflowHistorySortField;
+  sortOrder?: WorkflowHistorySortOrder;
+  statuses?: Array<TerminalStatus>;
+}
+
+/**
+ * Paginated result for workflow history queries
+ */
+export interface WorkflowHistoryResult {
+  page: number;
+  pageSize: number;
+  total: number;
+  workflows: Array<Workflow>;
+}
+
+/**
+ * Aggregate statistics for terminal-status workflows
+ */
+export interface WorkflowStatistics {
+  averageDurationMs: null | number;
+  cancelledCount: number;
+  completedCount: number;
+  failedCount: number;
+  successRate: number;
+}
+
+/**
+ * Terminal workflow statuses that indicate a workflow has finished execution
+ */
+type TerminalStatus = "cancelled" | "completed" | "failed";
+
+/**
+ * Valid sort fields for workflow history queries
+ */
+type WorkflowHistorySortField =
+  | "completedAt"
+  | "createdAt"
+  | "durationMs"
+  | "featureName"
+  | "status";
+
+/**
+ * Sort order for workflow history queries
+ */
+type WorkflowHistorySortOrder = "asc" | "desc";
 
 const electronAPI: ElectronAPI = {
   agent: {
@@ -387,7 +451,11 @@ const electronAPI: ElectronAPI = {
     cancel: (id) => ipcRenderer.invoke(IpcChannels.workflow.cancel, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.workflow.create, data),
     get: (id) => ipcRenderer.invoke(IpcChannels.workflow.get, id),
+    getStatistics: (filters) =>
+      ipcRenderer.invoke(IpcChannels.workflow.getStatistics, filters),
     list: () => ipcRenderer.invoke(IpcChannels.workflow.list),
+    listHistory: (filters) =>
+      ipcRenderer.invoke(IpcChannels.workflow.listHistory, filters),
     pause: (id) => ipcRenderer.invoke(IpcChannels.workflow.pause, id),
     resume: (id) => ipcRenderer.invoke(IpcChannels.workflow.resume, id),
     start: (id) => ipcRenderer.invoke(IpcChannels.workflow.start, id),

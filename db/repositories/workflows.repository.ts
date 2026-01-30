@@ -1,9 +1,57 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 import type { DrizzleDatabase } from "../index";
 import type { NewWorkflow, Workflow } from "../schema";
 
 import { workflows } from "../schema";
+
+/**
+ * Terminal workflow statuses that indicate a workflow has finished execution
+ */
+export const terminalStatuses = ["completed", "failed", "cancelled"] as const;
+export type TerminalStatus = (typeof terminalStatuses)[number];
+
+/**
+ * Valid sort fields for workflow history queries
+ */
+export const workflowHistorySortFields = [
+  "createdAt",
+  "completedAt",
+  "featureName",
+  "status",
+  "durationMs",
+] as const;
+/**
+ * Filters for querying workflow history
+ */
+export interface WorkflowHistoryFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+  offset?: number;
+  projectId?: number;
+  searchTerm?: string;
+  sortBy?: WorkflowHistorySortField;
+  sortOrder?: WorkflowHistorySortOrder;
+  statuses?: Array<TerminalStatus>;
+}
+
+/**
+ * Paginated result for workflow history queries
+ */
+export interface WorkflowHistoryResult {
+  page: number;
+  pageSize: number;
+  total: number;
+  workflows: Array<Workflow>;
+}
+
+export type WorkflowHistorySortField = (typeof workflowHistorySortFields)[number];
+
+/**
+ * Sort order for workflow history queries
+ */
+export type WorkflowHistorySortOrder = "asc" | "desc";
 
 export interface WorkflowsRepository {
   complete(id: number, durationMs: number): undefined | Workflow;
@@ -19,7 +67,13 @@ export interface WorkflowsRepository {
   findByProjectId(projectId: number): Array<Workflow>;
   findByStatus(status: string): Array<Workflow>;
   findByType(type: string): Array<Workflow>;
+  findHistory(filters?: WorkflowHistoryFilters): WorkflowHistoryResult;
   findRunning(): Array<Workflow>;
+  getHistoryStatistics(filters?: {
+    dateFrom?: string;
+    dateTo?: string;
+    projectId?: number;
+  }): WorkflowStatistics;
   start(id: number): undefined | Workflow;
   update(id: number, data: Partial<NewWorkflow>): undefined | Workflow;
   updateStatus(
@@ -27,6 +81,17 @@ export interface WorkflowsRepository {
     status: string,
     errorMessage?: string
   ): undefined | Workflow;
+}
+
+/**
+ * Aggregate statistics for terminal-status workflows
+ */
+export interface WorkflowStatistics {
+  averageDurationMs: null | number;
+  cancelledCount: number;
+  completedCount: number;
+  failedCount: number;
+  successRate: number;
 }
 
 export function createWorkflowsRepository(
@@ -121,12 +186,142 @@ export function createWorkflowsRepository(
       return db.select().from(workflows).where(eq(workflows.type, type)).all();
     },
 
+    findHistory(filters?: WorkflowHistoryFilters): WorkflowHistoryResult {
+      const limit = filters?.limit ?? 20;
+      const offset = filters?.offset ?? 0;
+      const sortBy = filters?.sortBy ?? "completedAt";
+      const sortOrder = filters?.sortOrder ?? "desc";
+      const statuses = filters?.statuses ?? [...terminalStatuses];
+
+      // Build conditions array
+      const conditions = [];
+
+      // Always filter by terminal statuses (or user-specified subset)
+      conditions.push(inArray(workflows.status, statuses));
+
+      // Date range filtering
+      if (filters?.dateFrom !== undefined) {
+        conditions.push(gte(workflows.completedAt, filters.dateFrom));
+      }
+      if (filters?.dateTo !== undefined) {
+        conditions.push(lte(workflows.completedAt, filters.dateTo));
+      }
+
+      // Project filter
+      if (filters?.projectId !== undefined) {
+        conditions.push(eq(workflows.projectId, filters.projectId));
+      }
+
+      // Search term filter (searches feature name and feature request)
+      if (filters?.searchTerm !== undefined && filters.searchTerm.trim() !== "") {
+        const searchPattern = `%${filters.searchTerm}%`;
+        conditions.push(
+          sql`(${workflows.featureName} LIKE ${searchPattern} OR ${workflows.featureRequest} LIKE ${searchPattern})`
+        );
+      }
+
+      // Determine sort column
+      const getSortColumn = () => {
+        switch (sortBy) {
+          case "completedAt":
+            return workflows.completedAt;
+          case "createdAt":
+            return workflows.createdAt;
+          case "durationMs":
+            return workflows.durationMs;
+          case "featureName":
+            return workflows.featureName;
+          case "status":
+            return workflows.status;
+        }
+      };
+      const sortColumn = getSortColumn();
+      const orderFn = sortOrder === "asc" ? asc : desc;
+
+      // Get total count for pagination
+      const countResult = db
+        .select({ count: count() })
+        .from(workflows)
+        .where(and(...conditions))
+        .get();
+      const total = countResult?.count ?? 0;
+
+      // Get paginated results
+      const results = db
+        .select()
+        .from(workflows)
+        .where(and(...conditions))
+        .orderBy(orderFn(sortColumn))
+        .limit(limit)
+        .offset(offset)
+        .all();
+
+      return {
+        page: Math.floor(offset / limit) + 1,
+        pageSize: limit,
+        total,
+        workflows: results,
+      };
+    },
+
     findRunning(): Array<Workflow> {
       return db
         .select()
         .from(workflows)
         .where(eq(workflows.status, "running"))
         .all();
+    },
+
+    getHistoryStatistics(filters?: {
+      dateFrom?: string;
+      dateTo?: string;
+      projectId?: number;
+    }): WorkflowStatistics {
+      // Build conditions array for terminal statuses
+      const conditions = [];
+      conditions.push(inArray(workflows.status, [...terminalStatuses]));
+
+      // Date range filtering
+      if (filters?.dateFrom !== undefined) {
+        conditions.push(gte(workflows.completedAt, filters.dateFrom));
+      }
+      if (filters?.dateTo !== undefined) {
+        conditions.push(lte(workflows.completedAt, filters.dateTo));
+      }
+
+      // Project filter
+      if (filters?.projectId !== undefined) {
+        conditions.push(eq(workflows.projectId, filters.projectId));
+      }
+
+      // Use SQL aggregation for efficient statistics calculation
+      const result = db
+        .select({
+          averageDurationMs: sql<null | number>`AVG(${workflows.durationMs})`,
+          cancelledCount: sql<number>`SUM(CASE WHEN ${workflows.status} = 'cancelled' THEN 1 ELSE 0 END)`,
+          completedCount: sql<number>`SUM(CASE WHEN ${workflows.status} = 'completed' THEN 1 ELSE 0 END)`,
+          failedCount: sql<number>`SUM(CASE WHEN ${workflows.status} = 'failed' THEN 1 ELSE 0 END)`,
+          totalCount: count(),
+        })
+        .from(workflows)
+        .where(and(...conditions))
+        .get();
+
+      const completedCount = result?.completedCount ?? 0;
+      const failedCount = result?.failedCount ?? 0;
+      const cancelledCount = result?.cancelledCount ?? 0;
+      const totalCount = result?.totalCount ?? 0;
+
+      // Calculate success rate (completed / total * 100), handle division by zero
+      const successRate = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+
+      return {
+        averageDurationMs: result?.averageDurationMs ?? null,
+        cancelledCount,
+        completedCount,
+        failedCount,
+        successRate,
+      };
     },
 
     start(id: number): undefined | Workflow {

@@ -216,11 +216,73 @@ export interface ElectronAPI {
       data: import("../db/schema").NewWorkflow
     ): Promise<import("../db/schema").Workflow>;
     get(id: number): Promise<import("../db/schema").Workflow | undefined>;
+    getStatistics(filters?: {
+      dateFrom?: string;
+      dateTo?: string;
+      projectId?: number;
+    }): Promise<WorkflowStatistics>;
     list(): Promise<Array<import("../db/schema").Workflow>>;
+    listHistory(filters?: WorkflowHistoryFilters): Promise<WorkflowHistoryResult>;
     pause(id: number): Promise<import("../db/schema").Workflow | undefined>;
     resume(id: number): Promise<import("../db/schema").Workflow | undefined>;
     start(id: number): Promise<import("../db/schema").Workflow | undefined>;
   };
+}
+
+/**
+ * Terminal workflow statuses that indicate a workflow has finished execution
+ */
+export type TerminalStatus = "cancelled" | "completed" | "failed";
+
+/**
+ * Filters for querying workflow history
+ */
+export interface WorkflowHistoryFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+  offset?: number;
+  projectId?: number;
+  searchTerm?: string;
+  sortBy?: WorkflowHistorySortField;
+  sortOrder?: WorkflowHistorySortOrder;
+  statuses?: Array<TerminalStatus>;
+}
+
+/**
+ * Paginated result for workflow history queries
+ */
+export interface WorkflowHistoryResult {
+  page: number;
+  pageSize: number;
+  total: number;
+  workflows: Array<import("../db/schema").Workflow>;
+}
+
+/**
+ * Valid sort fields for workflow history queries
+ */
+export type WorkflowHistorySortField =
+  | "completedAt"
+  | "createdAt"
+  | "durationMs"
+  | "featureName"
+  | "status";
+
+/**
+ * Sort order for workflow history queries
+ */
+export type WorkflowHistorySortOrder = "asc" | "desc";
+
+/**
+ * Aggregate statistics for terminal-status workflows
+ */
+export interface WorkflowStatistics {
+  averageDurationMs: null | number;
+  cancelledCount: number;
+  completedCount: number;
+  failedCount: number;
+  successRate: number;
 }
 
 declare global {

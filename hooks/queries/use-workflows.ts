@@ -2,7 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { NewWorkflow } from "@/types/electron";
+import type {
+  NewWorkflow,
+  WorkflowHistoryFilters,
+} from "@/types/electron";
 
 import { workflowKeys } from "@/lib/queries/workflows";
 
@@ -244,5 +247,37 @@ export function useActiveWorkflows(options?: { enabled?: boolean }) {
       );
     },
     refetchInterval: 5000,
+  });
+}
+
+/**
+ * Fetch workflow history with pagination, filtering, and sorting
+ * Returns terminal-status workflows (completed, failed, cancelled)
+ */
+export function useWorkflowHistory(filters?: WorkflowHistoryFilters) {
+  const { api, isElectron } = useElectron();
+
+  return useQuery({
+    ...workflowKeys.history(filters),
+    enabled: isElectron,
+    queryFn: () => api!.workflow.listHistory(filters),
+  });
+}
+
+/**
+ * Fetch aggregate statistics for terminal-status workflows
+ * Includes completion rates, average duration, and status counts
+ */
+export function useWorkflowStatistics(filters?: {
+  dateFrom?: string;
+  dateTo?: string;
+  projectId?: number;
+}) {
+  const { api, isElectron } = useElectron();
+
+  return useQuery({
+    ...workflowKeys.historyStatistics(filters),
+    enabled: isElectron,
+    queryFn: () => api!.workflow.getStatistics(filters),
   });
 }

@@ -8,7 +8,12 @@
  */
 import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
-import type { WorkflowsRepository } from "../../db/repositories";
+import type {
+  WorkflowHistoryFilters,
+  WorkflowHistoryResult,
+  WorkflowsRepository,
+  WorkflowStatistics,
+} from "../../db/repositories";
 import type { NewWorkflow, Workflow } from "../../db/schema";
 
 import { IpcChannels } from "./channels";
@@ -86,6 +91,28 @@ export function registerWorkflowHandlers(
       filters?: WorkflowListFilters
     ): Array<Workflow> => {
       return workflowsRepository.findAll(filters);
+    }
+  );
+
+  // List workflow history (terminal statuses only) with filters and pagination
+  ipcMain.handle(
+    IpcChannels.workflow.listHistory,
+    (
+      _event: IpcMainInvokeEvent,
+      filters?: WorkflowHistoryFilters
+    ): WorkflowHistoryResult => {
+      return workflowsRepository.findHistory(filters);
+    }
+  );
+
+  // Get workflow statistics for history view
+  ipcMain.handle(
+    IpcChannels.workflow.getStatistics,
+    (
+      _event: IpcMainInvokeEvent,
+      filters?: { dateFrom?: string; dateTo?: string; projectId?: number }
+    ): WorkflowStatistics => {
+      return workflowsRepository.getHistoryStatistics(filters);
     }
   );
 }
