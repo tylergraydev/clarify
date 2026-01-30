@@ -115,6 +115,7 @@ export const IpcChannels = {
     set: "store:set",
   },
   template: {
+    activate: "template:activate",
     create: "template:create",
     delete: "template:delete",
     get: "template:get",

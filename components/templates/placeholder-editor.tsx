@@ -40,6 +40,7 @@ const createDefaultPlaceholder = (
   isRequired: false,
   name: "",
   orderIndex,
+  uid: crypto.randomUUID(),
   validationPattern: "",
 });
 
@@ -85,7 +86,7 @@ export const PlaceholderEditor = ({
   ...props
 }: PlaceholderEditorProps) => {
   const [validationErrors, setValidationErrors] = useState<
-    Map<number, PlaceholderValidationErrors>
+    Map<string, PlaceholderValidationErrors>
   >(new Map());
   const [draggedIndex, setDraggedIndex] = useState<null | number>(null);
   const [dragOverIndex, setDragOverIndex] = useState<null | number>(null);
@@ -101,8 +102,8 @@ export const PlaceholderEditor = ({
   }, [nextOrderIndex, onChange, placeholders]);
 
   const handleRemovePlaceholder = useCallback(
-    (index: number) => {
-      const newPlaceholders = placeholders.filter((_, i) => i !== index);
+    (uid: string) => {
+      const newPlaceholders = placeholders.filter((p) => p.uid !== uid);
       // Reindex orderIndex values after removal
       const reindexedPlaceholders = newPlaceholders.map((p, i) => ({
         ...p,
@@ -113,7 +114,7 @@ export const PlaceholderEditor = ({
       // Clear validation errors for removed item
       setValidationErrors((prev) => {
         const newErrors = new Map(prev);
-        newErrors.delete(index);
+        newErrors.delete(uid);
         return newErrors;
       });
     },
@@ -122,24 +123,24 @@ export const PlaceholderEditor = ({
 
   const handlePlaceholderChange = useCallback(
     (
-      index: number,
+      uid: string,
       field: keyof TemplatePlaceholderFormValues,
       value: boolean | number | string
     ) => {
-      const newPlaceholders = placeholders.map((p, i) =>
-        i === index ? { ...p, [field]: value } : p
+      const newPlaceholders = placeholders.map((p) =>
+        p.uid === uid ? { ...p, [field]: value } : p
       );
 
       // Validate the changed placeholder
-      const updatedPlaceholder = newPlaceholders[index];
+      const updatedPlaceholder = newPlaceholders.find((p) => p.uid === uid);
       if (updatedPlaceholder) {
         const errors = validatePlaceholder(updatedPlaceholder);
         setValidationErrors((prev) => {
           const newErrors = new Map(prev);
           if (Object.keys(errors).length > 0) {
-            newErrors.set(index, errors);
+            newErrors.set(uid, errors);
           } else {
-            newErrors.delete(index);
+            newErrors.delete(uid);
           }
           return newErrors;
         });
@@ -192,7 +193,7 @@ export const PlaceholderEditor = ({
       {placeholders.length > 0 && (
         <div className={"flex flex-col gap-3"}>
           {placeholders.map((placeholder, index) => {
-            const errors = validationErrors.get(index) ?? {};
+            const errors = validationErrors.get(placeholder.uid) ?? {};
             const isDragging = draggedIndex === index;
             const isDragOver = dragOverIndex === index;
             const placeholderTitle =
@@ -206,7 +207,7 @@ export const PlaceholderEditor = ({
                   isDragOver && "border-accent"
                 )}
                 draggable
-                key={index}
+                key={placeholder.uid}
                 onDragEnd={handleDragEnd}
                 onDragLeave={handleDragLeave}
                 onDragOver={(e) => handleDragOver(e, index)}
@@ -236,7 +237,7 @@ export const PlaceholderEditor = ({
                   {/* Remove Button */}
                   <Button
                     aria-label={"Remove placeholder"}
-                    onClick={() => handleRemovePlaceholder(index)}
+                    onClick={() => handleRemovePlaceholder(placeholder.uid)}
                     size={"icon-sm"}
                     type={"button"}
                     variant={"ghost"}
@@ -253,7 +254,7 @@ export const PlaceholderEditor = ({
                     <div className={"flex flex-col gap-1.5"}>
                       <label
                         className={"text-sm font-medium text-foreground"}
-                        htmlFor={`placeholder-${index}-name`}
+                        htmlFor={`placeholder-${placeholder.uid}-name`}
                       >
                         {"Name"}
                         <span
@@ -264,10 +265,14 @@ export const PlaceholderEditor = ({
                         </span>
                       </label>
                       <Input
-                        id={`placeholder-${index}-name`}
+                        id={`placeholder-${placeholder.uid}-name`}
                         isInvalid={Boolean(errors.name)}
                         onChange={(e) =>
-                          handlePlaceholderChange(index, "name", e.target.value)
+                          handlePlaceholderChange(
+                            placeholder.uid,
+                            "name",
+                            e.target.value
+                          )
                         }
                         placeholder={"entityName"}
                         size={"sm"}
@@ -284,7 +289,7 @@ export const PlaceholderEditor = ({
                     <div className={"flex flex-col gap-1.5"}>
                       <label
                         className={"text-sm font-medium text-foreground"}
-                        htmlFor={`placeholder-${index}-displayName`}
+                        htmlFor={`placeholder-${placeholder.uid}-displayName`}
                       >
                         {"Display Name"}
                         <span
@@ -295,11 +300,11 @@ export const PlaceholderEditor = ({
                         </span>
                       </label>
                       <Input
-                        id={`placeholder-${index}-displayName`}
+                        id={`placeholder-${placeholder.uid}-displayName`}
                         isInvalid={Boolean(errors.displayName)}
                         onChange={(e) =>
                           handlePlaceholderChange(
-                            index,
+                            placeholder.uid,
                             "displayName",
                             e.target.value
                           )
@@ -320,16 +325,16 @@ export const PlaceholderEditor = ({
                   <div className={"flex flex-col gap-1.5"}>
                     <label
                       className={"text-sm font-medium text-foreground"}
-                      htmlFor={`placeholder-${index}-description`}
+                      htmlFor={`placeholder-${placeholder.uid}-description`}
                     >
                       {"Description"}
                     </label>
                     <Textarea
-                      id={`placeholder-${index}-description`}
+                      id={`placeholder-${placeholder.uid}-description`}
                       isInvalid={Boolean(errors.description)}
                       onChange={(e) =>
                         handlePlaceholderChange(
-                          index,
+                          placeholder.uid,
                           "description",
                           e.target.value
                         )
@@ -354,16 +359,16 @@ export const PlaceholderEditor = ({
                     <div className={"flex flex-col gap-1.5"}>
                       <label
                         className={"text-sm font-medium text-foreground"}
-                        htmlFor={`placeholder-${index}-defaultValue`}
+                        htmlFor={`placeholder-${placeholder.uid}-defaultValue`}
                       >
                         {"Default Value"}
                       </label>
                       <Input
-                        id={`placeholder-${index}-defaultValue`}
+                        id={`placeholder-${placeholder.uid}-defaultValue`}
                         isInvalid={Boolean(errors.defaultValue)}
                         onChange={(e) =>
                           handlePlaceholderChange(
-                            index,
+                            placeholder.uid,
                             "defaultValue",
                             e.target.value
                           )
@@ -383,16 +388,16 @@ export const PlaceholderEditor = ({
                     <div className={"flex flex-col gap-1.5"}>
                       <label
                         className={"text-sm font-medium text-foreground"}
-                        htmlFor={`placeholder-${index}-validationPattern`}
+                        htmlFor={`placeholder-${placeholder.uid}-validationPattern`}
                       >
                         {"Validation Pattern (Regex)"}
                       </label>
                       <Input
-                        id={`placeholder-${index}-validationPattern`}
+                        id={`placeholder-${placeholder.uid}-validationPattern`}
                         isInvalid={Boolean(errors.validationPattern)}
                         onChange={(e) =>
                           handlePlaceholderChange(
-                            index,
+                            placeholder.uid,
                             "validationPattern",
                             e.target.value
                           )
@@ -425,7 +430,7 @@ export const PlaceholderEditor = ({
                         )}
                         onChange={(e) =>
                           handlePlaceholderChange(
-                            index,
+                            placeholder.uid,
                             "isRequired",
                             e.target.checked
                           )

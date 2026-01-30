@@ -17,18 +17,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { getAgentColorClass } from "@/lib/colors/agent-colors";
 import { cn } from "@/lib/utils";
-
-type AgentColor = Agent["color"];
 
 type AgentType = Agent["type"];
 type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
-
-/**
- * Default color used when an agent has an undefined or invalid color.
- * This provides a consistent fallback rather than failing silently.
- */
-const DEFAULT_AGENT_COLOR = "blue" as const;
 
 const getTypeVariant = (type: AgentType): BadgeVariant => {
   const typeVariantMap: Record<string, BadgeVariant> = {
@@ -44,34 +37,6 @@ const getTypeVariant = (type: AgentType): BadgeVariant => {
 const formatTypeLabel = (type: AgentType): string => {
   if (!type) return "Unknown";
   return type.charAt(0).toUpperCase() + type.slice(1);
-};
-
-const getColorClasses = (color: AgentColor): string => {
-  // Only include colors from agentColors schema: ["green", "blue", "yellow", "cyan", "red"]
-  const colorClassMap = {
-    blue: "bg-blue-500",
-    cyan: "bg-cyan-500",
-    green: "bg-green-500",
-    red: "bg-red-500",
-    yellow: "bg-yellow-500",
-  } as const;
-
-  const defaultColorClass = colorClassMap[DEFAULT_AGENT_COLOR];
-  const normalizedColor = color ?? DEFAULT_AGENT_COLOR;
-  const colorClass = colorClassMap[normalizedColor as keyof typeof colorClassMap];
-
-  // Explicit fallback: if color is not in the valid set, use the default color
-  // This handles both undefined colors and invalid color values
-  if (!colorClass) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        `[AgentCard] Invalid agent color "${color}" - falling back to "${DEFAULT_AGENT_COLOR}"`
-      );
-    }
-    return defaultColorClass;
-  }
-
-  return colorClass;
 };
 
 interface AgentCardProps extends Omit<
@@ -131,7 +96,7 @@ export const AgentCard = ({
               aria-hidden={"true"}
               className={cn(
                 "size-3 shrink-0 rounded-full",
-                getColorClasses(agent.color)
+                getAgentColorClass(agent.color)
               )}
             />
             <CardTitle className={"line-clamp-1"}>

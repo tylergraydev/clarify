@@ -60,6 +60,7 @@ interface TemplateInitialData {
   category: string;
   description?: string;
   name: string;
+  placeholders?: Array<TemplatePlaceholderFormValues>;
   templateText: string;
 }
 
@@ -239,10 +240,24 @@ export const TemplateEditorDialog = ({
               isRequired: p.requiredAt !== null,
               name: p.name,
               orderIndex: p.orderIndex,
+              uid: crypto.randomUUID(),
               validationPattern: p.validationPattern ?? "",
             }));
           setPlaceholders(loadedPlaceholders);
           form.setFieldValue("placeholders", loadedPlaceholders);
+        } else if (
+          isDuplicateMode &&
+          initialData?.placeholders &&
+          initialData.placeholders.length > 0
+        ) {
+          // Load placeholders from initialData when duplicating a template
+          const duplicatedPlaceholders: Array<TemplatePlaceholderFormValues> =
+            initialData.placeholders.map((p) => ({
+              ...p,
+              uid: crypto.randomUUID(),
+            }));
+          setPlaceholders(duplicatedPlaceholders);
+          form.setFieldValue("placeholders", duplicatedPlaceholders);
         } else {
           setPlaceholders([]);
         }
@@ -255,7 +270,9 @@ export const TemplateEditorDialog = ({
       getDefaultValues,
       form,
       isEditMode,
+      isDuplicateMode,
       existingPlaceholders,
+      initialData,
     ]
   );
 

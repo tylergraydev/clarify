@@ -6,6 +6,7 @@ import type {
   NewTemplate,
   NewTemplatePlaceholder,
   Template,
+  TemplateListFilters,
   TemplatePlaceholder,
 } from "@/types/electron";
 
@@ -40,7 +41,7 @@ interface UpdateTemplateMutationContext {
 // ============================================================================
 
 /**
- * Fetch active templates
+ * Fetch active templates using server-side filtering
  */
 export function useActiveTemplates() {
   const { api, isElectron } = useElectron();
@@ -48,16 +49,13 @@ export function useActiveTemplates() {
   return useQuery({
     ...templateKeys.active,
     enabled: isElectron,
-    queryFn: async () => {
-      const templates = await api!.template.list();
-      // Template is active if deactivatedAt is null
-      return templates.filter((template) => template.deactivatedAt === null);
-    },
+    queryFn: () => api!.template.list({ includeDeactivated: false }),
   });
 }
 
 /**
  * Fetch built-in templates
+ * Note: builtInAt filter is not supported server-side, so client-side filtering is required
  */
 export function useBuiltInTemplates() {
   const { api, isElectron } = useElectron();
@@ -66,8 +64,8 @@ export function useBuiltInTemplates() {
     ...templateKeys.builtIn,
     enabled: isElectron,
     queryFn: async () => {
-      const templates = await api!.template.list();
-      // Template is built-in if builtInAt is not null
+      // Fetch active templates (using server-side filter), then filter by builtInAt client-side
+      const templates = await api!.template.list({ includeDeactivated: false });
       return templates.filter((template) => template.builtInAt !== null);
     },
   });
@@ -305,51 +303,31 @@ export function useTemplatePlaceholders(templateId: number) {
 }
 
 /**
- * Fetch all templates
+ * Fetch all templates with server-side filtering
  */
-export function useTemplates(filters?: {
-  category?: string;
-  includeDeactivated?: boolean;
-}) {
+export function useTemplates(filters?: TemplateListFilters) {
   const { api, isElectron } = useElectron();
 
   return useQuery({
     ...templateKeys.list(filters),
     enabled: isElectron,
-    queryFn: async () => {
-      const templates = await api!.template.list();
-      // Apply client-side filtering since API returns all templates
-      return templates.filter((template) => {
-        // Template is active if deactivatedAt is null
-        if (!filters?.includeDeactivated && template.deactivatedAt !== null) {
-          return false;
-        }
-        if (filters?.category && template.category !== filters.category) {
-          return false;
-        }
-        return true;
-      });
-    },
+    queryFn: () => api!.template.list(filters),
   });
 }
 
 /**
- * Fetch templates filtered by category
+ * Fetch templates filtered by category using server-side filtering
  */
-export function useTemplatesByCategory(category: string) {
+export function useTemplatesByCategory(
+  category: TemplateListFilters["category"]
+) {
   const { api, isElectron } = useElectron();
 
   return useQuery({
     ...templateKeys.byCategory(category),
     enabled: isElectron && Boolean(category),
-    queryFn: async () => {
-      const templates = await api!.template.list();
-      // Template is active if deactivatedAt is null
-      return templates.filter(
-        (template) =>
-          template.category === category && template.deactivatedAt === null
-      );
-    },
+    queryFn: () =>
+      api!.template.list({ category, includeDeactivated: false }),
   });
 }
 

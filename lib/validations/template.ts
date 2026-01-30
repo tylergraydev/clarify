@@ -20,6 +20,7 @@ export const templatePlaceholderSchema = z.object({
       "Placeholder name must start with a letter and contain only letters, numbers, and underscores"
     ),
   orderIndex: z.number().int().min(0, "Order index must be non-negative"),
+  uid: z.string().min(1, "Unique identifier is required"),
   validationPattern: z.string(),
 });
 

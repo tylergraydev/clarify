@@ -136,6 +136,7 @@ const IpcChannels = {
     set: "store:set",
   },
   template: {
+    activate: "template:activate",
     create: "template:create",
     delete: "template:delete",
     get: "template:get",
@@ -341,12 +342,13 @@ export interface ElectronAPI {
     set(key: string, value: unknown): Promise<boolean>;
   };
   template: {
+    activate(id: number): Promise<Template | undefined>;
     create(data: NewTemplate): Promise<Template>;
     delete(id: number): Promise<boolean>;
     get(id: number): Promise<Template | undefined>;
     getPlaceholders(templateId: number): Promise<Array<TemplatePlaceholder>>;
     incrementUsage(id: number): Promise<Template | undefined>;
-    list(): Promise<Array<Template>>;
+    list(filters?: TemplateListFilters): Promise<Array<Template>>;
     update(
       id: number,
       data: Partial<NewTemplate>
@@ -400,6 +402,14 @@ export interface ElectronAPI {
       status?: string;
     }): Promise<Array<Worktree>>;
   };
+}
+
+/**
+ * Filters for querying templates
+ */
+export interface TemplateListFilters {
+  category?: "backend" | "data" | "electron" | "security" | "ui";
+  includeDeactivated?: boolean;
 }
 
 /**
@@ -587,6 +597,7 @@ const electronAPI: ElectronAPI = {
     set: (key, value) => ipcRenderer.invoke(IpcChannels.store.set, key, value),
   },
   template: {
+    activate: (id) => ipcRenderer.invoke(IpcChannels.template.activate, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.template.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.template.delete, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.template.get, id),
@@ -594,7 +605,7 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke(IpcChannels.template.getPlaceholders, templateId),
     incrementUsage: (id) =>
       ipcRenderer.invoke(IpcChannels.template.incrementUsage, id),
-    list: () => ipcRenderer.invoke(IpcChannels.template.list),
+    list: (filters) => ipcRenderer.invoke(IpcChannels.template.list, filters),
     update: (id, data) =>
       ipcRenderer.invoke(IpcChannels.template.update, id, data),
     updatePlaceholders: (templateId, placeholders) =>

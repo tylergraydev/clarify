@@ -252,6 +252,10 @@ export function useResetAgent() {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
         // Invalidate all agent queries to refresh all views
         void queryClient.invalidateQueries({ queryKey: agentKeys._def });
+        toast.success({
+          description: "Agent reset to default successfully",
+          title: "Agent Reset",
+        });
       }
     },
   });
@@ -300,6 +304,10 @@ export function useUpdateAgent() {
         // Invalidate type-specific queries
         void queryClient.invalidateQueries({
           queryKey: agentKeys.byType(agent.type).queryKey,
+        });
+        toast.success({
+          description: "Agent updated successfully",
+          title: "Agent Updated",
         });
       }
     },

@@ -67,26 +67,30 @@ export function createTemplatePlaceholdersRepository(
       templateId: number,
       placeholders: Array<Omit<NewTemplatePlaceholder, "templateId">>
     ): Array<TemplatePlaceholder> {
-      // Delete existing placeholders for this template
-      db.delete(templatePlaceholders)
-        .where(eq(templatePlaceholders.templateId, templateId))
-        .run();
+      // Wrap delete and insert in a transaction for atomicity
+      // If insert fails after delete, the transaction rolls back preserving existing data
+      return db.transaction((tx) => {
+        // Delete existing placeholders for this template
+        tx.delete(templatePlaceholders)
+          .where(eq(templatePlaceholders.templateId, templateId))
+          .run();
 
-      // Insert new placeholders if any
-      if (placeholders.length === 0) {
-        return [];
-      }
+        // Insert new placeholders if any
+        if (placeholders.length === 0) {
+          return [];
+        }
 
-      const dataWithTemplateId = placeholders.map((p) => ({
-        ...p,
-        templateId,
-      }));
+        const dataWithTemplateId = placeholders.map((p) => ({
+          ...p,
+          templateId,
+        }));
 
-      return db
-        .insert(templatePlaceholders)
-        .values(dataWithTemplateId)
-        .returning()
-        .all();
+        return tx
+          .insert(templatePlaceholders)
+          .values(dataWithTemplateId)
+          .returning()
+          .all();
+      });
     },
 
     update(

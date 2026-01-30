@@ -24,6 +24,7 @@ import {
 } from "nuqs";
 import { Fragment, useCallback, useMemo, useRef, useState } from "react";
 
+import type { TemplatePlaceholderFormValues } from "@/lib/validations/template";
 import type { Template } from "@/types/electron";
 
 import { QueryErrorBoundary } from "@/components/data/query-error-boundary";
@@ -71,6 +72,7 @@ import {
   useTemplates,
   useUpdateTemplate,
 } from "@/hooks/queries/use-templates";
+import { useElectron } from "@/hooks/use-electron";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcut";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -392,6 +394,7 @@ interface DuplicateTemplateData {
   category: string;
   description?: string;
   name: string;
+  placeholders?: Array<TemplatePlaceholderFormValues>;
   templateText: string;
 }
 
@@ -415,6 +418,7 @@ const TemplateGridItem = ({
   template,
 }: TemplateGridItemProps) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const { api } = useElectron();
   const isBuiltIn = template.builtInAt !== null;
 
   const handleEditClick = () => {
@@ -426,11 +430,36 @@ const TemplateGridItem = ({
     onDelete(template);
   };
 
-  const handleDuplicateClick = (templateToDuplicate: Template) => {
+  const handleDuplicateClick = async (templateToDuplicate: Template) => {
+    // Fetch placeholders for the template being duplicated
+    let placeholders: Array<TemplatePlaceholderFormValues> | undefined;
+    if (api) {
+      try {
+        const fetchedPlaceholders = await api.template.getPlaceholders(
+          templateToDuplicate.id
+        );
+        if (fetchedPlaceholders && fetchedPlaceholders.length > 0) {
+          placeholders = fetchedPlaceholders.map((p) => ({
+            defaultValue: p.defaultValue ?? "",
+            description: p.description ?? "",
+            displayName: p.displayName,
+            isRequired: p.requiredAt !== null,
+            name: p.name,
+            orderIndex: p.orderIndex,
+            uid: crypto.randomUUID(),
+            validationPattern: p.validationPattern ?? "",
+          }));
+        }
+      } catch {
+        // If fetching placeholders fails, continue without them
+      }
+    }
+
     onDuplicate({
       category: templateToDuplicate.category,
       description: templateToDuplicate.description ?? undefined,
       name: `${templateToDuplicate.name} (Copy)`,
+      placeholders,
       templateText: templateToDuplicate.templateText,
     });
   };
@@ -509,6 +538,7 @@ const TemplateTableRow = ({
   template,
 }: TemplateTableRowProps) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const { api } = useElectron();
   const isActive = template.deactivatedAt === null;
   const isBuiltIn = template.builtInAt !== null;
   const placeholders = extractPlaceholders(template.templateText);
@@ -527,12 +557,38 @@ const TemplateTableRow = ({
     onDelete(template);
   };
 
-  const handleDuplicateClick = (e: MouseEvent) => {
+  const handleDuplicateClick = async (e: MouseEvent) => {
     e.stopPropagation();
+
+    // Fetch placeholders for the template being duplicated
+    let templatePlaceholders: Array<TemplatePlaceholderFormValues> | undefined;
+    if (api) {
+      try {
+        const fetchedPlaceholders = await api.template.getPlaceholders(
+          template.id
+        );
+        if (fetchedPlaceholders && fetchedPlaceholders.length > 0) {
+          templatePlaceholders = fetchedPlaceholders.map((p) => ({
+            defaultValue: p.defaultValue ?? "",
+            description: p.description ?? "",
+            displayName: p.displayName,
+            isRequired: p.requiredAt !== null,
+            name: p.name,
+            orderIndex: p.orderIndex,
+            uid: crypto.randomUUID(),
+            validationPattern: p.validationPattern ?? "",
+          }));
+        }
+      } catch {
+        // If fetching placeholders fails, continue without them
+      }
+    }
+
     onDuplicate({
       category: template.category,
       description: template.description ?? undefined,
       name: `${template.name} (Copy)`,
+      placeholders: templatePlaceholders,
       templateText: template.templateText,
     });
   };
@@ -930,6 +986,27 @@ export default function TemplatesPage() {
   }, []);
 
   /**
+   * Count fulfilled and rejected results from Promise.allSettled.
+   */
+  const countSettledResults = useCallback(
+    (results: Array<PromiseSettledResult<unknown>>) => {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      }
+
+      return { failCount, successCount };
+    },
+    []
+  );
+
+  /**
    * Bulk activate selected templates.
    */
   const handleBulkActivate = useCallback(async () => {
@@ -942,20 +1019,16 @@ export default function TemplatesPage() {
       return;
     }
 
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const template of templatesToActivate) {
-      try {
-        await updateTemplateMutation.mutateAsync({
+    const results = await Promise.allSettled(
+      templatesToActivate.map((template) =>
+        updateTemplateMutation.mutateAsync({
           data: { deactivatedAt: null },
           id: template.id,
-        });
-        successCount++;
-      } catch {
-        failCount++;
-      }
-    }
+        })
+      )
+    );
+
+    const { failCount, successCount } = countSettledResults(results);
 
     if (failCount === 0) {
       toast.success({
@@ -972,7 +1045,13 @@ export default function TemplatesPage() {
     }
 
     handleClearSelection();
-  }, [selectedTemplates, updateTemplateMutation, toast, handleClearSelection]);
+  }, [
+    selectedTemplates,
+    updateTemplateMutation,
+    toast,
+    handleClearSelection,
+    countSettledResults,
+  ]);
 
   /**
    * Bulk deactivate selected templates.
@@ -989,20 +1068,18 @@ export default function TemplatesPage() {
       return;
     }
 
-    let successCount = 0;
-    let failCount = 0;
+    const deactivatedAt = new Date().toISOString();
 
-    for (const template of templatesToDeactivate) {
-      try {
-        await updateTemplateMutation.mutateAsync({
-          data: { deactivatedAt: new Date().toISOString() },
+    const results = await Promise.allSettled(
+      templatesToDeactivate.map((template) =>
+        updateTemplateMutation.mutateAsync({
+          data: { deactivatedAt },
           id: template.id,
-        });
-        successCount++;
-      } catch {
-        failCount++;
-      }
-    }
+        })
+      )
+    );
+
+    const { failCount, successCount } = countSettledResults(results);
 
     if (failCount === 0) {
       toast.success({
@@ -1019,7 +1096,13 @@ export default function TemplatesPage() {
     }
 
     handleClearSelection();
-  }, [selectedTemplates, updateTemplateMutation, toast, handleClearSelection]);
+  }, [
+    selectedTemplates,
+    updateTemplateMutation,
+    toast,
+    handleClearSelection,
+    countSettledResults,
+  ]);
 
   /**
    * Open bulk delete confirmation dialog.
@@ -1043,17 +1126,13 @@ export default function TemplatesPage() {
    * Confirm bulk delete of selected templates.
    */
   const handleConfirmBulkDelete = useCallback(async () => {
-    let successCount = 0;
-    let failCount = 0;
+    const results = await Promise.allSettled(
+      selectedTemplates.map((template) =>
+        deleteTemplateMutation.mutateAsync(template.id)
+      )
+    );
 
-    for (const template of selectedTemplates) {
-      try {
-        await deleteTemplateMutation.mutateAsync(template.id);
-        successCount++;
-      } catch {
-        failCount++;
-      }
-    }
+    const { failCount, successCount } = countSettledResults(results);
 
     if (failCount === 0) {
       toast.success({
@@ -1071,7 +1150,13 @@ export default function TemplatesPage() {
 
     setIsBulkDeleteDialogOpen(false);
     handleClearSelection();
-  }, [selectedTemplates, deleteTemplateMutation, toast, handleClearSelection]);
+  }, [
+    selectedTemplates,
+    deleteTemplateMutation,
+    toast,
+    handleClearSelection,
+    countSettledResults,
+  ]);
 
   /**
    * Count of active templates in selection.

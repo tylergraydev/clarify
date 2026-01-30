@@ -257,6 +257,7 @@ export interface ElectronAPI {
     set(key: string, value: unknown): Promise<boolean>;
   };
   template: {
+    activate(id: number): Promise<import("../db/schema").Template | undefined>;
     create(
       data: import("../db/schema").NewTemplate
     ): Promise<import("../db/schema").Template>;
@@ -268,7 +269,9 @@ export interface ElectronAPI {
     incrementUsage(
       id: number
     ): Promise<import("../db/schema").Template | undefined>;
-    list(): Promise<Array<import("../db/schema").Template>>;
+    list(
+      filters?: TemplateListFilters
+    ): Promise<Array<import("../db/schema").Template>>;
     update(
       id: number,
       data: Partial<import("../db/schema").NewTemplate>
@@ -330,6 +333,14 @@ export interface ElectronAPI {
       status?: string;
     }): Promise<Array<import("../db/schema").Worktree>>;
   };
+}
+
+/**
+ * Filters for querying templates
+ */
+export interface TemplateListFilters {
+  category?: "backend" | "data" | "electron" | "security" | "ui";
+  includeDeactivated?: boolean;
 }
 
 /**

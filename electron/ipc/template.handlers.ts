@@ -41,6 +41,19 @@ export function registerTemplateHandlers(
   templatesRepository: TemplatesRepository,
   placeholdersRepository: TemplatePlaceholdersRepository
 ): void {
+  // Activate a template
+  ipcMain.handle(
+    IpcChannels.template.activate,
+    (_event: IpcMainInvokeEvent, id: number): Template | undefined => {
+      try {
+        return templatesRepository.activate(id);
+      } catch (error) {
+        console.error("[IPC Error] template:activate:", error);
+        throw error;
+      }
+    }
+  );
+
   // List templates with optional category filter
   ipcMain.handle(
     IpcChannels.template.list,
@@ -100,12 +113,12 @@ export function registerTemplateHandlers(
     }
   );
 
-  // Delete (deactivate) a template
+  // Delete a template
   ipcMain.handle(
     IpcChannels.template.delete,
-    (_event: IpcMainInvokeEvent, id: number): Template | undefined => {
+    (_event: IpcMainInvokeEvent, id: number): boolean => {
       try {
-        return templatesRepository.deactivate(id);
+        return templatesRepository.delete(id);
       } catch (error) {
         console.error("[IPC Error] template:delete:", error);
         throw error;

@@ -24,12 +24,14 @@ import {
 } from "@/components/ui/dialog";
 import { agentColors } from "@/db/schema/agents.schema";
 import { useResetAgent, useUpdateAgent } from "@/hooks/queries/use-agents";
+import { getAgentColorHex } from "@/lib/colors/agent-colors";
 import { useAppForm } from "@/lib/forms/form-hook";
 import { updateAgentSchema } from "@/lib/validations/agent";
 
 import { AgentColorPicker } from "./agent-color-picker";
 import { AgentSkillsManager } from "./agent-skills-manager";
 import { AgentToolsManager } from "./agent-tools-manager";
+import { ConfirmResetAgentDialog } from "./confirm-reset-agent-dialog";
 
 type AgentColor = (typeof agentColors)[number];
 
@@ -48,6 +50,7 @@ export const AgentEditorDialog = ({
   trigger,
 }: AgentEditorDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<AgentColor | null>(
     (agent.color as AgentColor) ?? null
   );
@@ -115,9 +118,14 @@ export const AgentEditorDialog = ({
     }
   };
 
-  const handleResetToDefault = async () => {
+  const handleResetClick = () => {
+    setIsResetDialogOpen(true);
+  };
+
+  const handleConfirmReset = async () => {
     try {
       await resetAgentMutation.mutateAsync(agent.id);
+      setIsResetDialogOpen(false);
       handleClose();
       onSuccess?.();
     } catch {
@@ -167,20 +175,7 @@ export const AgentEditorDialog = ({
               {selectedColor && (
                 <div
                   className={"size-4 rounded-full"}
-                  style={{
-                    backgroundColor:
-                      selectedColor === "blue"
-                        ? "#3b82f6"
-                        : selectedColor === "cyan"
-                          ? "#06b6d4"
-                          : selectedColor === "green"
-                            ? "#22c55e"
-                            : selectedColor === "red"
-                              ? "#ef4444"
-                              : selectedColor === "yellow"
-                                ? "#eab308"
-                                : "#6b7280",
-                  }}
+                  style={{ backgroundColor: getAgentColorHex(selectedColor) }}
                 />
               )}
               <div className={"text-sm"}>
@@ -288,11 +283,11 @@ export const AgentEditorDialog = ({
                   {isCustomized && (
                     <Button
                       disabled={isSubmitting || isResetting}
-                      onClick={handleResetToDefault}
+                      onClick={handleResetClick}
                       type={"button"}
                       variant={"outline"}
                     >
-                      {isResetting ? "Resetting..." : "Reset to Default"}
+                      {"Reset to Default"}
                     </Button>
                   )}
                 </div>
@@ -319,6 +314,15 @@ export const AgentEditorDialog = ({
           </form>
         </DialogPopup>
       </DialogPortal>
+
+      {/* Reset Confirmation Dialog */}
+      <ConfirmResetAgentDialog
+        agentName={agent.displayName}
+        isLoading={isResetting}
+        isOpen={isResetDialogOpen}
+        onConfirm={handleConfirmReset}
+        onOpenChange={setIsResetDialogOpen}
+      />
     </DialogRoot>
   );
 };

@@ -7,8 +7,15 @@ import { useEffect, useState } from "react";
 import type { UpdateAgentFormValues } from "@/lib/validations/agent";
 import type { Agent } from "@/types/electron";
 
+import { AgentSkillsManager } from "@/components/agents/agent-skills-manager";
+import { AgentToolsManager } from "@/components/agents/agent-tools-manager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   DialogBackdrop,
   DialogClose,
@@ -20,6 +27,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useResetAgent, useUpdateAgent } from "@/hooks/queries/use-agents";
+import { getAgentColorHex } from "@/lib/colors/agent-colors";
 import { useAppForm } from "@/lib/forms/form-hook";
 import { updateAgentSchema } from "@/lib/validations/agent";
 
@@ -128,7 +136,7 @@ export const ProjectAgentEditorDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup className={"max-w-2xl"}>
+        <DialogPopup className={"max-h-[90vh] max-w-2xl overflow-y-auto"}>
           {/* Header */}
           <div className={"flex items-start justify-between gap-4"}>
             <div>
@@ -180,7 +188,7 @@ export const ProjectAgentEditorDialog = ({
               {agent.color && (
                 <div
                   className={"size-4 rounded-full"}
-                  style={{ backgroundColor: agent.color }}
+                  style={{ backgroundColor: getAgentColorHex(agent.color) }}
                 />
               )}
               <div className={"text-sm"}>
@@ -239,6 +247,40 @@ export const ProjectAgentEditorDialog = ({
                   />
                 )}
               </form.AppField>
+
+              {/* Tools Section */}
+              <Collapsible className={"rounded-md border border-border"}>
+                <CollapsibleTrigger
+                  className={"w-full justify-start px-3 py-2"}
+                >
+                  {"Allowed Tools"}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className={"border-t border-border p-3"}>
+                    <AgentToolsManager
+                      agentId={agent.id}
+                      disabled={isSubmitting || isResetting}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* Skills Section */}
+              <Collapsible className={"rounded-md border border-border"}>
+                <CollapsibleTrigger
+                  className={"w-full justify-start px-3 py-2"}
+                >
+                  {"Referenced Skills"}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className={"border-t border-border p-3"}>
+                    <AgentSkillsManager
+                      agentId={agent.id}
+                      disabled={isSubmitting || isResetting}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Action Buttons */}
               <div className={"mt-2 flex justify-between"}>

@@ -6,6 +6,7 @@ import { FileText, Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
 import type { Template } from "@/types/electron";
+import type { TemplatePlaceholder } from "@/types/electron";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import {
   useActiveTemplates,
   useIncrementTemplateUsage,
+  useTemplatePlaceholders,
 } from "@/hooks/queries/use-templates";
 import { cn } from "@/lib/utils";
 
@@ -55,8 +57,40 @@ interface TemplatePickerDialogProps {
 // ============================================================================
 
 /**
- * Parses placeholders from template text.
- * Supports format: {{placeholderName}} or {{placeholderName:displayName}}
+ * Maps an array of database placeholders to ParsedPlaceholder format,
+ * sorted by orderIndex for consistent display order.
+ */
+function mapDatabasePlaceholdersToParsed(
+  dbPlaceholders: Array<TemplatePlaceholder>
+): Array<ParsedPlaceholder> {
+  return [...dbPlaceholders]
+    .sort((a, b) => a.orderIndex - b.orderIndex)
+    .map(mapDatabasePlaceholderToParsed);
+}
+
+/**
+ * Maps a database TemplatePlaceholder to the component's ParsedPlaceholder format.
+ * This ensures validation patterns, descriptions, and other metadata from the database
+ * are properly applied to the form fields.
+ */
+function mapDatabasePlaceholderToParsed(
+  dbPlaceholder: TemplatePlaceholder
+): ParsedPlaceholder {
+  return {
+    defaultValue: dbPlaceholder.defaultValue ?? "",
+    description: dbPlaceholder.description ?? "",
+    displayName: dbPlaceholder.displayName,
+    // requiredAt is null for optional, contains a datetime string for required
+    isRequired: dbPlaceholder.requiredAt !== null,
+    name: dbPlaceholder.name,
+    validationPattern: dbPlaceholder.validationPattern ?? "",
+  };
+}
+
+/**
+ * Parses placeholders from template text using regex.
+ * Used as a fallback when no stored placeholders exist in the database.
+ * Supports format: {{placeholderName}}
  */
 function parsePlaceholdersFromText(
   templateText: string
@@ -154,11 +188,26 @@ export const TemplatePickerDialog = ({
   const activeTemplatesQuery = useActiveTemplates();
   const incrementUsageMutation = useIncrementTemplateUsage();
 
-  // Parse placeholders from selected template
+  // Fetch placeholders from database when a template is selected
+  const templatePlaceholdersQuery = useTemplatePlaceholders(
+    selectedTemplate?.id ?? 0
+  );
+
+  // Get placeholders from database or fall back to regex parsing
+  // Uses stored placeholders when available (which include validation patterns,
+  // descriptions, and other metadata), otherwise falls back to parsing from text
   const parsedPlaceholders = useMemo(() => {
     if (!selectedTemplate) return [];
+
+    // Use database placeholders if available
+    const dbPlaceholders = templatePlaceholdersQuery.data;
+    if (dbPlaceholders && dbPlaceholders.length > 0) {
+      return mapDatabasePlaceholdersToParsed(dbPlaceholders);
+    }
+
+    // Fallback to regex parsing for templates without stored placeholders
     return parsePlaceholdersFromText(selectedTemplate.templateText);
-  }, [selectedTemplate]);
+  }, [selectedTemplate, templatePlaceholdersQuery.data]);
 
   // Filter templates based on search query
   const filteredTemplates = useMemo(() => {
