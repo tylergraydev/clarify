@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import type {
   ColumnFiltersState,
@@ -10,8 +10,8 @@ import type {
   RowSelectionState,
   SortingState,
   VisibilityState,
-} from '@tanstack/react-table';
-import type { ComponentPropsWithRef, CSSProperties, ReactNode } from 'react';
+} from "@tanstack/react-table";
+import type { ComponentPropsWithRef, CSSProperties, ReactNode } from "react";
 
 import {
   flexRender,
@@ -20,17 +20,17 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { useCallback, useMemo, useRef } from 'react';
+} from "@tanstack/react-table";
+import { cva, type VariantProps } from "class-variance-authority";
+import { useCallback, useMemo, useRef } from "react";
 
-import { Checkbox } from '@/components/ui/checkbox';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Checkbox } from "@/components/ui/checkbox";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   useTablePersistence,
   type UseTablePersistenceOptions,
-} from '@/hooks/use-table-persistence';
-import { cn } from '@/lib/utils';
+} from "@/hooks/use-table-persistence";
+import { cn } from "@/lib/utils";
 
 import type {
   DataTableColumnDef,
@@ -40,13 +40,13 @@ import type {
   DataTablePersistenceConfig,
   DataTableRowAction,
   DataTableRowStyleCallback,
-} from './types';
+} from "./types";
 
-import { DataTableDraggableHeader } from './data-table-draggable-header';
-import { DataTablePagination } from './data-table-pagination';
-import { DataTableResizeHandle } from './data-table-resize-handle';
-import { DataTableSkeleton } from './data-table-skeleton';
-import { DataTableToolbar } from './data-table-toolbar';
+import { DataTableDraggableHeader } from "./data-table-draggable-header";
+import { DataTablePagination } from "./data-table-pagination";
+import { DataTableResizeHandle } from "./data-table-resize-handle";
+import { DataTableSkeleton } from "./data-table-skeleton";
+import { DataTableToolbar } from "./data-table-toolbar";
 
 // =============================================================================
 // CVA Variants
@@ -58,13 +58,13 @@ export const dataTableContainerVariants = cva(
   `,
   {
     defaultVariants: {
-      density: 'default',
+      density: "default",
     },
     variants: {
       density: {
-        comfortable: '',
-        compact: '',
-        default: '',
+        comfortable: "",
+        compact: "",
+        default: "",
       },
     },
   }
@@ -76,13 +76,13 @@ export const dataTableVariants = cva(
   `,
   {
     defaultVariants: {
-      density: 'default',
+      density: "default",
     },
     variants: {
       density: {
-        comfortable: '',
-        compact: '',
-        default: '',
+        comfortable: "",
+        compact: "",
+        default: "",
       },
     },
   }
@@ -95,13 +95,13 @@ export const dataTableHeaderCellVariants = cva(
   `,
   {
     defaultVariants: {
-      density: 'default',
+      density: "default",
     },
     variants: {
       density: {
-        comfortable: 'h-12 px-4',
-        compact: 'h-9 px-3',
-        default: 'h-10 px-4',
+        comfortable: "h-12 px-4",
+        compact: "h-9 px-3",
+        default: "h-10 px-4",
       },
     },
   }
@@ -113,13 +113,13 @@ export const dataTableCellVariants = cva(
   `,
   {
     defaultVariants: {
-      density: 'default',
+      density: "default",
     },
     variants: {
       density: {
-        comfortable: 'h-14 p-4',
-        compact: 'h-10 px-3 py-2',
-        default: 'h-12 px-4 py-3',
+        comfortable: "h-14 p-4",
+        compact: "h-10 px-3 py-2",
+        default: "h-12 px-4 py-3",
       },
     },
   }
@@ -136,12 +136,12 @@ export const dataTableRowVariants = cva(
     },
     variants: {
       isClickable: {
-        false: '',
-        true: 'cursor-pointer',
+        false: "",
+        true: "cursor-pointer",
       },
       isSelected: {
-        false: 'hover:bg-muted/50',
-        true: 'bg-muted',
+        false: "hover:bg-muted/50",
+        true: "bg-muted",
       },
     },
   }
@@ -152,7 +152,8 @@ export const dataTableRowVariants = cva(
 // =============================================================================
 
 interface DataTableProps<TData, TValue>
-  extends ComponentPropsWithRef<'div'>,
+  extends
+    ComponentPropsWithRef<"div">,
     VariantProps<typeof dataTableContainerVariants> {
   /**
    * Array of actions to display for each row.
@@ -335,7 +336,7 @@ function createSelectionColumn<TData>(): DataTableColumnDef<TData, unknown> {
   return {
     cell: ({ row }) => (
       <Checkbox
-        aria-label={'Select row'}
+        aria-label={"Select row"}
         checked={row.getIsSelected()}
         onCheckedChange={(checked) => row.toggleSelected(!!checked)}
       />
@@ -346,13 +347,17 @@ function createSelectionColumn<TData>(): DataTableColumnDef<TData, unknown> {
     enableSorting: false,
     header: ({ table }) => (
       <Checkbox
-        aria-label={'Select all rows'}
+        aria-label={"Select all rows"}
         checked={table.getIsAllPageRowsSelected()}
-        indeterminate={table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()}
-        onCheckedChange={(checked) => table.toggleAllPageRowsSelected(!!checked)}
+        indeterminate={
+          table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()
+        }
+        onCheckedChange={(checked) =>
+          table.toggleAllPageRowsSelected(!!checked)
+        }
       />
     ),
-    id: 'select',
+    id: "select",
     size: 40,
   };
 }
@@ -431,7 +436,7 @@ export const DataTable = <TData, TValue>({
   className,
   columns: columnsProp,
   data,
-  density = 'default',
+  density = "default",
   emptyState,
   isColumnReorderEnabled = false,
   isColumnResizingEnabled = true,
@@ -463,20 +468,26 @@ export const DataTable = <TData, TValue>({
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Determine if persistence is enabled
-  const isPersistenceEnabled = persistence?.enabled !== false && !!persistence?.tableId;
+  const isPersistenceEnabled =
+    persistence?.enabled !== false && !!persistence?.tableId;
 
   // Set up persistence hook if enabled
-  const persistenceOptions: null | UseTablePersistenceOptions = isPersistenceEnabled
-    ? {
-        initialState: {
-          columnOrder: controlledState?.columnOrder ?? [],
-          columnSizing: controlledState?.columnSizing ?? {},
-          columnVisibility: controlledState?.columnVisibility ?? {},
-        },
-        persistedKeys: persistence?.persistedKeys ?? ['columnOrder', 'columnVisibility', 'columnSizing'],
-        tableId: persistence!.tableId,
-      }
-    : null;
+  const persistenceOptions: null | UseTablePersistenceOptions =
+    isPersistenceEnabled
+      ? {
+          initialState: {
+            columnOrder: controlledState?.columnOrder ?? [],
+            columnSizing: controlledState?.columnSizing ?? {},
+            columnVisibility: controlledState?.columnVisibility ?? {},
+          },
+          persistedKeys: persistence?.persistedKeys ?? [
+            "columnOrder",
+            "columnVisibility",
+            "columnSizing",
+          ],
+          tableId: persistence!.tableId,
+        }
+      : null;
 
   const {
     isLoaded: isPersistenceLoaded,
@@ -485,7 +496,7 @@ export const DataTable = <TData, TValue>({
   } = useTablePersistence(
     persistenceOptions ?? {
       initialState: {},
-      tableId: '__disabled__',
+      tableId: "__disabled__",
     }
   );
 
@@ -502,47 +513,109 @@ export const DataTable = <TData, TValue>({
     (updaterOrValue) => {
       if (isPersistenceEnabled) {
         const newValue =
-          typeof updaterOrValue === 'function'
+          typeof updaterOrValue === "function"
             ? updaterOrValue(persistedState.columnSizing ?? {})
             : updaterOrValue;
         setPersistenceState({ columnSizing: newValue });
       }
       onColumnSizingChange?.(updaterOrValue);
     },
-    [isPersistenceEnabled, onColumnSizingChange, persistedState.columnSizing, setPersistenceState]
+    [
+      isPersistenceEnabled,
+      onColumnSizingChange,
+      persistedState.columnSizing,
+      setPersistenceState,
+    ]
   );
 
   const handleColumnVisibilityChange = useCallback<OnChangeFn<VisibilityState>>(
     (updaterOrValue) => {
       if (isPersistenceEnabled) {
         const newValue =
-          typeof updaterOrValue === 'function'
+          typeof updaterOrValue === "function"
             ? updaterOrValue(persistedState.columnVisibility ?? {})
             : updaterOrValue;
         setPersistenceState({ columnVisibility: newValue });
       }
       onColumnVisibilityChange?.(updaterOrValue);
     },
-    [isPersistenceEnabled, onColumnVisibilityChange, persistedState.columnVisibility, setPersistenceState]
+    [
+      isPersistenceEnabled,
+      onColumnVisibilityChange,
+      persistedState.columnVisibility,
+      setPersistenceState,
+    ]
   );
 
   const handleColumnOrderChange = useCallback<OnChangeFn<ColumnOrderState>>(
     (updaterOrValue) => {
       if (isPersistenceEnabled) {
         const newValue =
-          typeof updaterOrValue === 'function'
+          typeof updaterOrValue === "function"
             ? updaterOrValue(persistedState.columnOrder ?? [])
             : updaterOrValue;
         setPersistenceState({ columnOrder: newValue });
       }
       onColumnOrderChange?.(updaterOrValue);
     },
-    [isPersistenceEnabled, onColumnOrderChange, persistedState.columnOrder, setPersistenceState]
+    [
+      isPersistenceEnabled,
+      onColumnOrderChange,
+      persistedState.columnOrder,
+      setPersistenceState,
+    ]
   );
 
   // Initialize TanStack Table
+  const resolvedColumnOrder =
+    isPersistenceEnabled && persistedState.columnOrder
+      ? persistedState.columnOrder
+      : controlledState?.columnOrder;
+  const resolvedColumnSizing =
+    isPersistenceEnabled && persistedState.columnSizing
+      ? persistedState.columnSizing
+      : controlledState?.columnSizing;
+  const resolvedColumnVisibility =
+    isPersistenceEnabled && persistedState.columnVisibility
+      ? persistedState.columnVisibility
+      : controlledState?.columnVisibility;
+
+  const tableState: {
+    columnFilters?: ColumnFiltersState;
+    columnOrder?: ColumnOrderState;
+    columnSizing?: ColumnSizingState;
+    columnVisibility?: VisibilityState;
+    globalFilter?: string;
+    pagination?: PaginationState;
+    rowSelection?: RowSelectionState;
+    sorting?: SortingState;
+  } = {
+    ...(controlledState?.columnFilters !== undefined && {
+      columnFilters: controlledState.columnFilters,
+    }),
+    ...(controlledState?.globalFilter !== undefined && {
+      globalFilter: controlledState.globalFilter,
+    }),
+    ...(controlledState?.pagination !== undefined && {
+      pagination: controlledState.pagination,
+    }),
+    ...(controlledState?.sorting !== undefined && {
+      sorting: controlledState.sorting,
+    }),
+    ...(controlledState?.rowSelection !== undefined && {
+      rowSelection: controlledState.rowSelection,
+    }),
+    ...(resolvedColumnOrder !== undefined && { columnOrder: resolvedColumnOrder }),
+    ...(resolvedColumnSizing !== undefined && {
+      columnSizing: resolvedColumnSizing,
+    }),
+    ...(resolvedColumnVisibility !== undefined && {
+      columnVisibility: resolvedColumnVisibility,
+    }),
+  };
+
   const table = useReactTable({
-    columnResizeMode: 'onChange',
+    columnResizeMode: "onChange",
     columns,
     data,
     enableColumnResizing: isColumnResizingEnabled,
@@ -550,7 +623,9 @@ export const DataTable = <TData, TValue>({
     enableSorting: isSortingEnabled,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: isPaginationEnabled ? getPaginationRowModel() : undefined,
+    getPaginationRowModel: isPaginationEnabled
+      ? getPaginationRowModel()
+      : undefined,
     getSortedRowModel: isSortingEnabled ? getSortedRowModel() : undefined,
     manualPagination: !isPaginationEnabled,
     onColumnFiltersChange,
@@ -561,29 +636,11 @@ export const DataTable = <TData, TValue>({
     onPaginationChange,
     onRowSelectionChange,
     onSortingChange,
-    state: {
-      columnFilters: controlledState?.columnFilters,
-      columnOrder:
-        isPersistenceEnabled && persistedState.columnOrder
-          ? persistedState.columnOrder
-          : controlledState?.columnOrder,
-      columnSizing:
-        isPersistenceEnabled && persistedState.columnSizing
-          ? persistedState.columnSizing
-          : controlledState?.columnSizing,
-      columnVisibility:
-        isPersistenceEnabled && persistedState.columnVisibility
-          ? persistedState.columnVisibility
-          : controlledState?.columnVisibility,
-      globalFilter: controlledState?.globalFilter,
-      pagination: controlledState?.pagination,
-      rowSelection: controlledState?.rowSelection,
-      sorting: controlledState?.sorting,
-    },
+    state: tableState,
   });
 
   // Get rows for display
-  const rows = table.getRowModel().rows;
+  const rows = table.getRowModel().rows ?? [];
   const isHasRows = rows.length > 0;
   const isHasData = data.length > 0;
   const isShowNoResults = !isLoading && isHasData && !isHasRows;
@@ -594,12 +651,14 @@ export const DataTable = <TData, TValue>({
   const columnCount = columns.length + (actions ? 1 : 0);
 
   // Show loading skeleton while persistence is loading
-  const isShowSkeleton = isLoading || (isPersistenceEnabled && !isPersistenceLoaded);
+  const isShowSkeleton =
+    isLoading || (isPersistenceEnabled && !isPersistenceLoaded);
 
   // Derived state for empty states
   const isShowNoResultsEmptyState = isShowNoResults && !!emptyState?.noResults;
   const isShowNoDataEmptyState = isShowNoData && !!emptyState?.noData;
-  const isShowDefaultEmptyState = (isShowNoResults || isShowNoData) && !emptyState;
+  const isShowDefaultEmptyState =
+    (isShowNoResults || isShowNoData) && !emptyState;
 
   // Handle row click
   const handleRowClick = useCallback(
@@ -613,7 +672,7 @@ export const DataTable = <TData, TValue>({
   const tableStyle = useMemo(() => {
     const totalSize = table.getTotalSize();
     return {
-      '--table-width': `${totalSize}px`,
+      "--table-width": `${totalSize}px`,
     } as CSSProperties;
   }, [table]);
 
@@ -628,7 +687,13 @@ export const DataTable = <TData, TValue>({
         <DataTableToolbar
           onGlobalFilterChange={onGlobalFilterChange}
           searchPlaceholder={searchPlaceholder}
-          size={density === 'compact' ? 'sm' : density === 'comfortable' ? 'lg' : 'default'}
+          size={
+            density === "compact"
+              ? "sm"
+              : density === "comfortable"
+                ? "lg"
+                : "default"
+          }
           table={table}
         >
           {toolbarContent}
@@ -648,7 +713,7 @@ export const DataTable = <TData, TValue>({
       {/* Table Container */}
       {!isShowSkeleton && (
         <div
-          className={'overflow-auto rounded-md border border-border'}
+          className={"overflow-auto rounded-md border border-border"}
           ref={tableContainerRef}
         >
           <table
@@ -660,7 +725,8 @@ export const DataTable = <TData, TValue>({
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
-                    const headerClassName = header.column.columnDef.meta?.headerClassName;
+                    const headerClassName =
+                      header.column.columnDef.meta?.headerClassName;
 
                     return (
                       <th
@@ -683,7 +749,10 @@ export const DataTable = <TData, TValue>({
 
                         {/* Resize Handle */}
                         {header.column.getCanResize() && (
-                          <DataTableResizeHandle header={header} table={table} />
+                          <DataTableResizeHandle
+                            header={header}
+                            table={table}
+                          />
                         )}
                       </th>
                     );
@@ -707,12 +776,15 @@ export const DataTable = <TData, TValue>({
                         dataTableRowVariants({ isClickable, isSelected }),
                         customRowStyle
                       )}
-                      data-state={isSelected ? 'selected' : undefined}
+                      data-state={isSelected ? "selected" : undefined}
                       key={row.id}
-                      onClick={isClickable ? () => handleRowClick(row) : undefined}
+                      onClick={
+                        isClickable ? () => handleRowClick(row) : undefined
+                      }
                     >
                       {row.getVisibleCells().map((cell) => {
-                        const cellClassName = cell.column.columnDef.meta?.cellClassName;
+                        const cellClassName =
+                          cell.column.columnDef.meta?.cellClassName;
 
                         return (
                           <td
@@ -725,7 +797,10 @@ export const DataTable = <TData, TValue>({
                               width: cell.column.getSize(),
                             }}
                           >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
                           </td>
                         );
                       })}
@@ -737,7 +812,7 @@ export const DataTable = <TData, TValue>({
 
           {/* No Results Empty State */}
           {isShowNoResultsEmptyState && (
-            <div className={'py-8'}>
+            <div className={"py-8"}>
               <EmptyState
                 action={emptyState!.noResults!.action}
                 description={emptyState!.noResults!.description}
@@ -749,7 +824,7 @@ export const DataTable = <TData, TValue>({
 
           {/* No Data Empty State */}
           {isShowNoDataEmptyState && (
-            <div className={'py-8'}>
+            <div className={"py-8"}>
               <EmptyState
                 action={emptyState!.noData.action}
                 description={emptyState!.noData.description}
@@ -761,10 +836,14 @@ export const DataTable = <TData, TValue>({
 
           {/* Default Empty State */}
           {isShowDefaultEmptyState && (
-            <div className={'py-8'}>
+            <div className={"py-8"}>
               <EmptyState
-                description={isShowNoResults ? 'Try adjusting your search or filters.' : undefined}
-                title={isShowNoResults ? 'No results found' : 'No data'}
+                description={
+                  isShowNoResults
+                    ? "Try adjusting your search or filters."
+                    : undefined
+                }
+                title={isShowNoResults ? "No results found" : "No data"}
               />
             </div>
           )}
@@ -775,7 +854,13 @@ export const DataTable = <TData, TValue>({
       {isPaginationEnabled && !isShowSkeleton && (
         <DataTablePagination
           pageSizeOptions={pageSizeOptions}
-          size={density === 'compact' ? 'sm' : density === 'comfortable' ? 'lg' : 'default'}
+          size={
+            density === "compact"
+              ? "sm"
+              : density === "comfortable"
+                ? "lg"
+                : "default"
+          }
           table={table}
         />
       )}
