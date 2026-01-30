@@ -34,8 +34,29 @@ export function useActivateAgent() {
       if (agent) {
         // Update detail cache directly
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Invalidate all agent queries to refresh lists
-        void queryClient.invalidateQueries({ queryKey: agentKeys._def });
+        // Invalidate general list queries
+        void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+        // Invalidate active queries
+        void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+
+        // Invalidate scope-specific queries based on whether agent has projectId
+        if (agent.projectId) {
+          // Invalidate project-scoped queries for this project
+          void queryClient.invalidateQueries({
+            queryKey: agentKeys.projectScoped._def,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: agentKeys.byProject(agent.projectId).queryKey,
+          });
+        } else {
+          // Invalidate global queries
+          void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+        }
+
+        // Invalidate type-specific queries
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byType(agent.type).queryKey,
+        });
       }
     },
   });
@@ -110,10 +131,6 @@ export function useAgentsByType(type: "planning" | "review" | "specialist") {
   });
 }
 
-// ============================================================================
-// Mutation Hooks
-// ============================================================================
-
 /**
  * Fetch built-in agents
  */
@@ -156,7 +173,26 @@ export function useCreateAgent() {
         });
         return;
       }
-      void queryClient.invalidateQueries({ queryKey: agentKeys._def });
+      const agent = result.agent;
+      // Invalidate general list queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      // Invalidate active queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+
+      // Invalidate scope-specific queries based on whether agent has projectId
+      if (agent?.projectId) {
+        // Invalidate project-scoped queries for this project
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.projectScoped._def,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byProject(agent.projectId).queryKey,
+        });
+      } else {
+        // Invalidate global queries
+        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      }
+
       toast.success({
         description: "Agent created successfully",
         title: "Agent Created",
@@ -164,6 +200,65 @@ export function useCreateAgent() {
     },
   });
 }
+
+/**
+ * Create a project-specific override of a global agent
+ */
+export function useCreateAgentOverride() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: ({ agentId, projectId }: { agentId: number; projectId: number }) =>
+      api!.agent.createOverride(agentId, projectId),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to create agent override",
+        title: "Override Failed",
+      });
+    },
+    onSuccess: (result, variables) => {
+      if (!result.success) {
+        toast.error({
+          description: result.error ?? "Failed to create agent override",
+          title: "Override Failed",
+        });
+        return;
+      }
+      const agent = result.agent;
+
+      // Invalidate general list queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      // Invalidate active queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+      // Invalidate global queries (source agent)
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      // Invalidate project-scoped queries for the target project
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.projectScoped._def,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.byProject(variables.projectId).queryKey,
+      });
+
+      // Update detail cache if we have the agent
+      if (agent) {
+        queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
+      }
+
+      toast.success({
+        description: "Project override created successfully. You can now customize this agent for your project.",
+        title: "Override Created",
+      });
+    },
+  });
+}
+
+// ============================================================================
+// Mutation Hooks
+// ============================================================================
 
 /**
  * Deactivate an agent
@@ -188,8 +283,29 @@ export function useDeactivateAgent() {
       if (agent) {
         // Update detail cache directly
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Invalidate all agent queries to refresh lists
-        void queryClient.invalidateQueries({ queryKey: agentKeys._def });
+        // Invalidate general list queries
+        void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+        // Invalidate active queries
+        void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+
+        // Invalidate scope-specific queries based on whether agent has projectId
+        if (agent.projectId) {
+          // Invalidate project-scoped queries for this project
+          void queryClient.invalidateQueries({
+            queryKey: agentKeys.projectScoped._def,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: agentKeys.byProject(agent.projectId).queryKey,
+          });
+        } else {
+          // Invalidate global queries
+          void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+        }
+
+        // Invalidate type-specific queries
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byType(agent.type).queryKey,
+        });
       }
     },
   });
@@ -197,6 +313,9 @@ export function useDeactivateAgent() {
 
 /**
  * Delete an agent
+ * @param projectId - Optional projectId to enable targeted cache invalidation.
+ *                    When provided, only the specific project's cache is invalidated.
+ *                    When not provided, all agent caches are invalidated.
  */
 export function useDeleteAgent() {
   const queryClient = useQueryClient();
@@ -204,7 +323,8 @@ export function useDeleteAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.agent.delete(id),
+    mutationFn: ({ id }: { id: number; projectId?: number }) =>
+      api!.agent.delete(id),
     onError: (error) => {
       toast.error({
         description:
@@ -212,7 +332,7 @@ export function useDeleteAgent() {
         title: "Delete Failed",
       });
     },
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
       if (!result.success) {
         toast.error({
           description: result.error ?? "Failed to delete agent",
@@ -220,7 +340,33 @@ export function useDeleteAgent() {
         });
         return;
       }
-      void queryClient.invalidateQueries({ queryKey: agentKeys._def });
+
+      // Invalidate general list queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      // Invalidate active queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+      // Invalidate builtIn queries (in case this was related to a built-in override)
+      void queryClient.invalidateQueries({ queryKey: agentKeys.builtIn.queryKey });
+
+      // Invalidate scope-specific queries based on whether agent had projectId
+      if (variables.projectId) {
+        // Invalidate project-scoped queries for this project
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.projectScoped._def,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byProject(variables.projectId).queryKey,
+        });
+      } else {
+        // Invalidate global queries
+        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      }
+
+      // Remove the deleted agent from detail cache
+      queryClient.removeQueries({
+        queryKey: agentKeys.detail(variables.id).queryKey,
+      });
+
       toast.success({
         description: "Agent deleted successfully",
         title: "Agent Deleted",
@@ -254,7 +400,35 @@ export function useDuplicateAgent() {
         });
         return;
       }
-      void queryClient.invalidateQueries({ queryKey: agentKeys._def });
+
+      const agent = result.agent;
+
+      // Invalidate general list queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      // Invalidate active queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+
+      // Invalidate scope-specific queries based on whether duplicated agent has projectId
+      if (agent?.projectId) {
+        // Invalidate project-scoped queries for this project
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.projectScoped._def,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byProject(agent.projectId).queryKey,
+        });
+      } else {
+        // Invalidate global queries
+        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      }
+
+      // Invalidate type-specific queries if agent exists
+      if (agent) {
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byType(agent.type).queryKey,
+        });
+      }
+
       toast.success({
         description: "Agent duplicated successfully",
         title: "Agent Duplicated",
@@ -264,7 +438,55 @@ export function useDuplicateAgent() {
 }
 
 /**
- * Reset an agent to its default configuration
+ * Fetch global agents (agents with no projectId)
+ */
+export function useGlobalAgents(filters?: {
+  includeDeactivated?: boolean;
+  type?: string;
+}) {
+  const { api, isElectron } = useElectron();
+
+  return useQuery({
+    ...agentKeys.global(filters),
+    enabled: isElectron,
+    queryFn: () =>
+      api!.agent.list({
+        includeDeactivated: filters?.includeDeactivated,
+        scope: "global",
+        type: filters?.type as AgentListFilters["type"],
+      }),
+  });
+}
+
+/**
+ * Fetch project-scoped agents for a specific project
+ */
+export function useProjectAgents(
+  projectId: number,
+  filters?: { includeDeactivated?: boolean; type?: string }
+) {
+  const { api, isElectron } = useElectron();
+
+  return useQuery({
+    ...agentKeys.projectScoped(projectId, filters),
+    enabled: isElectron && projectId > 0,
+    queryFn: () =>
+      api!.agent.list({
+        includeDeactivated: filters?.includeDeactivated,
+        projectId,
+        scope: "project",
+        type: filters?.type as AgentListFilters["type"],
+      }),
+  });
+}
+
+/**
+ * Reset an agent to its default configuration.
+ * For project overrides, this deletes the override and activates the parent.
+ * For global agents, this resets to built-in defaults.
+ *
+ * @param projectId - Optional projectId of the agent being reset.
+ *                    When provided, enables targeted cache invalidation for project-scoped agents.
  */
 export function useResetAgent() {
   const queryClient = useQueryClient();
@@ -272,7 +494,8 @@ export function useResetAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.agent.reset(id),
+    mutationFn: ({ id }: { id: number; projectId?: number }) =>
+      api!.agent.reset(id),
     onError: (error) => {
       toast.error({
         description:
@@ -280,17 +503,49 @@ export function useResetAgent() {
         title: "Reset Failed",
       });
     },
-    onSuccess: (agent) => {
+    onSuccess: (agent, variables) => {
+      // Invalidate general list queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      // Invalidate active queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+      // Invalidate builtIn queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.builtIn.queryKey });
+
+      // Handle scope-specific invalidation
+      // For project overrides being reset, we need to invalidate the project cache
+      // The returned agent is the parent (global) agent, not the deleted override
+      if (variables.projectId) {
+        // Invalidate project-scoped queries for this project
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.projectScoped._def,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byProject(variables.projectId).queryKey,
+        });
+        // Also invalidate global since the parent agent may have been reactivated
+        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+        // Remove the detail cache for the deleted override
+        queryClient.removeQueries({
+          queryKey: agentKeys.detail(variables.id).queryKey,
+        });
+      } else {
+        // Invalidate global queries
+        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      }
+
       if (agent) {
-        // Update detail cache directly
+        // Update detail cache for the returned agent (parent after reset)
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Invalidate all agent queries to refresh all views
-        void queryClient.invalidateQueries({ queryKey: agentKeys._def });
-        toast.success({
-          description: "Agent reset to default successfully",
-          title: "Agent Reset",
+        // Invalidate type-specific queries
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byType(agent.type).queryKey,
         });
       }
+
+      toast.success({
+        description: "Agent reset to default successfully",
+        title: "Agent Reset",
+      });
     },
   });
 }
@@ -329,12 +584,21 @@ export function useUpdateAgent() {
         void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
         // Invalidate active queries
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
-        // Invalidate project-specific queries if agent has projectId
+
+        // Invalidate scope-specific queries based on whether agent has projectId
         if (agent.projectId) {
+          // Invalidate project-scoped queries for this project
+          void queryClient.invalidateQueries({
+            queryKey: agentKeys.projectScoped._def,
+          });
           void queryClient.invalidateQueries({
             queryKey: agentKeys.byProject(agent.projectId).queryKey,
           });
+        } else {
+          // Invalidate global queries
+          void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
         }
+
         // Invalidate type-specific queries
         void queryClient.invalidateQueries({
           queryKey: agentKeys.byType(agent.type).queryKey,

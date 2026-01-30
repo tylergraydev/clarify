@@ -113,7 +113,10 @@ export const ProjectAgentEditorDialog = ({
 
   const handleResetToGlobalDefaults = async () => {
     try {
-      await resetAgentMutation.mutateAsync(agent.id);
+      await resetAgentMutation.mutateAsync({
+        id: agent.id,
+        projectId: agent.projectId ?? projectId,
+      });
       handleClose();
       onSuccess?.();
     } catch {

@@ -31,8 +31,19 @@ export type {
  * Filters for querying agents
  */
 export interface AgentListFilters {
+  /**
+   * When true, excludes agents that have a projectId set.
+   * Useful for showing only global agents in the global view.
+   */
+  excludeProjectAgents?: boolean;
   includeDeactivated?: boolean;
   projectId?: number;
+  /**
+   * Filter by agent scope:
+   * - "global": Only agents with projectId IS NULL (global agents)
+   * - "project": Only agents with projectId IS NOT NULL (project-specific agents)
+   */
+  scope?: "global" | "project";
   type?: "planning" | "review" | "specialist";
 }
 
@@ -49,6 +60,7 @@ export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<import("../db/schema").Agent | undefined>;
     create(data: import("../db/schema").NewAgent): Promise<AgentOperationResult>;
+    createOverride(agentId: number, projectId: number): Promise<AgentOperationResult>;
     deactivate(id: number): Promise<import("../db/schema").Agent | undefined>;
     delete(id: number): Promise<AgentOperationResult>;
     duplicate(id: number): Promise<AgentOperationResult>;

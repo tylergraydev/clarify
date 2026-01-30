@@ -51,6 +51,7 @@ export type CreateAgentInput = z.infer<typeof createAgentSchema>;
 // Create agent form schema for dialog validation
 // This is designed for form input in the create agent dialog
 // Note: color is managed via state in the dialog but validated here for form submission
+// Note: projectId is optional - when provided, creates a project-scoped agent
 export const createAgentFormSchema = z.object({
   color: z.enum(agentColors).optional(),
   description: z.string().max(1000, "Description is too long").optional(),
@@ -66,6 +67,7 @@ export const createAgentFormSchema = z.object({
       /^[a-z][a-z0-9-]*$/,
       "Agent name must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens"
     ),
+  projectId: z.number().int().positive("Invalid project ID").nullable().optional(),
   systemPrompt: z
     .string()
     .min(1, "System prompt is required")

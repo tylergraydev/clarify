@@ -18,7 +18,7 @@ interface AgentColorPickerProps extends Omit<
 > {
   disabled?: boolean;
   onChange?: (color: AgentColor) => void;
-  value?: AgentColor | "" | null;
+  value?: "" | AgentColor | null;
 }
 
 export const AgentColorPicker = ({
