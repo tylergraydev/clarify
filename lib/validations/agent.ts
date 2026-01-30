@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { agentColors, agentTypes } from "@/db/schema/agents.schema";
+import { agentColors, agentTypes } from "../../db/schema/agents.schema";
 
 // Agent tool input schema for validating tool configuration
 export const agentToolInputSchema = z.object({

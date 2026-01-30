@@ -3,10 +3,15 @@
 import type { RefObject } from "react";
 
 import { Bot, Search } from "lucide-react";
-import { parseAsBoolean, parseAsString, useQueryState } from "nuqs";
+import {
+  parseAsBoolean,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryState,
+} from "nuqs";
 import { useRef } from "react";
 
-import type { Agent, AgentListFilters } from "@/types/electron";
+import type { Agent } from "@/types/electron";
 
 import { AgentCard } from "@/components/agents/agent-card";
 import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
@@ -166,7 +171,10 @@ export default function AgentsPage() {
     "search",
     parseAsString.withDefault("")
   );
-  const [typeFilter, setTypeFilter] = useQueryState("type", parseAsString);
+  const [typeFilter, setTypeFilter] = useQueryState(
+    "type",
+    parseAsStringLiteral([...agentTypes])
+  );
   const [isShowDeactivated, setIsShowDeactivated] = useQueryState(
     "showDeactivated",
     parseAsBoolean.withDefault(false)
@@ -175,7 +183,7 @@ export default function AgentsPage() {
   // Data fetching - pass both includeDeactivated and type filters to the server
   const { data: agents, isLoading } = useAgents({
     includeDeactivated: isShowDeactivated,
-    type: typeFilter as AgentListFilters["type"],
+    type: typeFilter ?? undefined,
   });
 
   // Mutations
@@ -210,7 +218,7 @@ export default function AgentsPage() {
     if (!newType) {
       void setTypeFilter(null);
     } else {
-      void setTypeFilter(newType);
+      void setTypeFilter(newType as (typeof agentTypes)[number]);
     }
   };
 
@@ -231,13 +239,14 @@ export default function AgentsPage() {
   };
 
   // Derived state
-  const hasNoAgents = !isLoading && agents && agents.length === 0;
+  const hasActiveFilters = Boolean(typeFilter) || Boolean(search);
+  const hasNoAgents =
+    !isLoading && agents && agents.length === 0 && !hasActiveFilters;
   const hasNoFilteredAgents =
     !isLoading &&
     agents &&
-    agents.length > 0 &&
-    filteredAgents &&
-    filteredAgents.length === 0;
+    agents.length === 0 &&
+    hasActiveFilters;
   const isTogglingAgent =
     activateAgentMutation.isPending || deactivateAgentMutation.isPending;
   const isResettingAgent = resetAgentMutation.isPending;
@@ -252,8 +261,8 @@ export default function AgentsPage() {
         </p>
       </div>
 
-      {/* Filters */}
-      {!hasNoAgents && (
+      {/* Filters - show when there are agents OR when filters are active (so users can clear them) */}
+      {(!hasNoAgents || hasActiveFilters) && (
         <div className={"flex flex-wrap items-center gap-4"}>
           {/* Type filter */}
           <SelectRoot

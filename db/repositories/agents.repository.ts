@@ -1,12 +1,11 @@
 import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 
+import type { DrizzleDatabase } from "../index";
+
 import {
   createAgentSchema,
   updateAgentRepositorySchema,
-} from "@/lib/validations/agent";
-
-import type { DrizzleDatabase } from "../index";
-
+} from "../../lib/validations/agent";
 import { type Agent, agents, type NewAgent } from "../schema";
 
 export interface AgentsRepository {

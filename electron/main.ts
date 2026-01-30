@@ -16,7 +16,7 @@ let mainWindow: BrowserWindow | null = null;
 async function createWindow(): Promise<void> {
   mainWindow = new BrowserWindow({
     backgroundColor: "#000000",
-    height: 800,
+    height: 1000,
     minHeight: 600,
     minWidth: 800,
     show: false,
@@ -27,7 +27,7 @@ async function createWindow(): Promise<void> {
       preload: path.join(__dirname, "preload.js"),
       sandbox: true,
     },
-    width: 1200,
+    width: 1600,
   });
 
   mainWindow.once("ready-to-show", () => {

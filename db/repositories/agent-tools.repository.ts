@@ -1,9 +1,8 @@
 import { and, asc, eq, isNull } from "drizzle-orm";
 
-import { agentToolInputSchema } from "@/lib/validations/agent";
-
 import type { DrizzleDatabase } from "../index";
 
+import { agentToolInputSchema } from "../../lib/validations/agent";
 import { type AgentTool, agentTools, type NewAgentTool } from "../schema";
 
 export interface AgentToolsRepository {

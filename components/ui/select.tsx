@@ -205,13 +205,19 @@ type SelectItemProps = ComponentPropsWithRef<typeof BaseSelect.Item> &
 export const SelectItem = ({
   children,
   className,
+  label,
   ref,
   size,
   ...props
 }: SelectItemProps) => {
+  // Derive label from children if not explicitly provided
+  const derivedLabel =
+    label ?? (typeof children === "string" ? children : undefined);
+
   return (
     <BaseSelect.Item
       className={cn(selectItemVariants({ size }), className)}
+      label={derivedLabel}
       ref={ref}
       {...props}
     >
