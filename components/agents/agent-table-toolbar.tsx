@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
-import type { ComponentPropsWithRef } from 'react';
+import type { ComponentPropsWithRef } from "react";
 
-import { RotateCcw } from 'lucide-react';
-import { Fragment } from 'react';
+import { RotateCcw } from "lucide-react";
 
-import type { Project } from '@/db/schema';
+import type { Project } from "@/db/schema";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   SelectItem,
   SelectList,
@@ -17,16 +16,16 @@ import {
   SelectRoot,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { agentTypes } from '@/db/schema/agents.schema';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { agentTypes } from "@/db/schema/agents.schema";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface AgentTableToolbarProps extends ComponentPropsWithRef<'div'> {
+interface AgentTableToolbarProps extends ComponentPropsWithRef<"div"> {
   /** Callback when project filter changes */
   onProjectFilterChange: (value: null | string) => void;
   /** Callback when reset filters button is clicked */
@@ -58,9 +57,9 @@ interface AgentTableToolbarProps extends ComponentPropsWithRef<'div'> {
 // ============================================================================
 
 const STATUS_OPTIONS = [
-  { label: 'All statuses', value: '' },
-  { label: 'Active', value: 'active' },
-  { label: 'Inactive', value: 'inactive' },
+  { label: "All statuses", value: "" },
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
 ] as const;
 
 // ============================================================================
@@ -137,15 +136,15 @@ export const AgentTableToolbar = ({
 
   // Handlers
   const handleTypeChange = (value: null | string) => {
-    onTypeFilterChange(value === '' ? null : value);
+    onTypeFilterChange(value === "" ? null : value);
   };
 
   const handleProjectChange = (value: null | string) => {
-    onProjectFilterChange(value === '' ? null : value);
+    onProjectFilterChange(value === "" ? null : value);
   };
 
   const handleStatusChange = (value: null | string) => {
-    onStatusFilterChange(value === '' ? null : value);
+    onStatusFilterChange(value === "" ? null : value);
   };
 
   const handleShowBuiltInToggle = (isChecked: boolean) => {
@@ -158,34 +157,31 @@ export const AgentTableToolbar = ({
 
   return (
     <div
-      className={cn('flex flex-wrap items-center gap-3', className)}
+      className={cn("flex items-center gap-3", className)}
       ref={ref}
       {...props}
     >
       {/* Type Filter */}
-      <SelectRoot
-        onValueChange={handleTypeChange}
-        value={typeFilter ?? ''}
-      >
+      <SelectRoot onValueChange={handleTypeChange} value={typeFilter ?? ""}>
         <SelectTrigger
-          aria-label={'Filter by type'}
-          className={'w-32'}
-          size={'sm'}
+          aria-label={"Filter by type"}
+          className={"w-32 shrink-0"}
+          size={"sm"}
         >
-          <SelectValue placeholder={'All types'} />
+          <SelectValue placeholder={"All types"} />
         </SelectTrigger>
         <SelectPortal>
           <SelectPositioner>
-            <SelectPopup size={'sm'}>
+            <SelectPopup size={"sm"}>
               <SelectList>
-                <SelectItem label={'All types'} size={'sm'} value={''}>
-                  {'All types'}
+                <SelectItem label={"All types"} size={"sm"} value={""}>
+                  {"All types"}
                 </SelectItem>
                 {agentTypes.map((type) => (
                   <SelectItem
                     key={type}
                     label={formatTypeLabel(type)}
-                    size={'sm'}
+                    size={"sm"}
                     value={type}
                   >
                     {formatTypeLabel(type)}
@@ -200,30 +196,30 @@ export const AgentTableToolbar = ({
       {/* Project Filter */}
       <SelectRoot
         onValueChange={handleProjectChange}
-        value={projectFilter ?? ''}
+        value={projectFilter ?? ""}
       >
         <SelectTrigger
-          aria-label={'Filter by project'}
-          className={'w-40'}
-          size={'sm'}
+          aria-label={"Filter by project"}
+          className={"w-40 shrink-0"}
+          size={"sm"}
         >
-          <SelectValue placeholder={'All projects'} />
+          <SelectValue placeholder={"All projects"} />
         </SelectTrigger>
         <SelectPortal>
           <SelectPositioner>
-            <SelectPopup size={'sm'}>
+            <SelectPopup size={"sm"}>
               <SelectList>
-                <SelectItem label={'All projects'} size={'sm'} value={''}>
-                  {'All projects'}
+                <SelectItem label={"All projects"} size={"sm"} value={""}>
+                  {"All projects"}
                 </SelectItem>
-                <SelectItem label={'Global only'} size={'sm'} value={'global'}>
-                  {'Global only'}
+                <SelectItem label={"Global only"} size={"sm"} value={"global"}>
+                  {"Global only"}
                 </SelectItem>
                 {projects.map((project) => (
                   <SelectItem
                     key={project.id}
                     label={project.name}
-                    size={'sm'}
+                    size={"sm"}
                     value={String(project.id)}
                   >
                     {project.name}
@@ -236,26 +232,23 @@ export const AgentTableToolbar = ({
       </SelectRoot>
 
       {/* Status Filter */}
-      <SelectRoot
-        onValueChange={handleStatusChange}
-        value={statusFilter ?? ''}
-      >
+      <SelectRoot onValueChange={handleStatusChange} value={statusFilter ?? ""}>
         <SelectTrigger
-          aria-label={'Filter by status'}
-          className={'w-32'}
-          size={'sm'}
+          aria-label={"Filter by status"}
+          className={"w-32 shrink-0"}
+          size={"sm"}
         >
-          <SelectValue placeholder={'All statuses'} />
+          <SelectValue placeholder={"All statuses"} />
         </SelectTrigger>
         <SelectPortal>
           <SelectPositioner>
-            <SelectPopup size={'sm'}>
+            <SelectPopup size={"sm"}>
               <SelectList>
                 {STATUS_OPTIONS.map((option) => (
                   <SelectItem
                     key={option.value}
                     label={option.label}
-                    size={'sm'}
+                    size={"sm"}
                     value={option.value}
                   >
                     {option.label}
@@ -267,56 +260,51 @@ export const AgentTableToolbar = ({
         </SelectPortal>
       </SelectRoot>
 
+      {/* Reset Filters Button */}
+      {hasActiveFilters && onResetFilters && (
+        <Button
+          aria-label={"Reset all filters"}
+          className={"shrink-0"}
+          onClick={onResetFilters}
+          size={"sm"}
+          variant={"ghost"}
+        >
+          <RotateCcw aria-hidden={"true"} className={"size-4"} />
+          {"Reset Filters"}
+        </Button>
+      )}
+
       {/* Separator */}
       <div
-        aria-hidden={'true'}
-        className={'mx-1 h-5 w-px bg-border'}
+        aria-hidden={"true"}
+        className={"mx-1 h-5 w-px shrink-0 bg-border"}
       />
 
       {/* Show Built-in Toggle */}
-      <div className={'flex items-center gap-2'}>
+      <div className={"flex shrink-0 items-center gap-2"}>
         <Switch
-          aria-label={'Show built-in agents'}
+          aria-label={"Show built-in agents"}
           checked={showBuiltIn}
           onCheckedChange={handleShowBuiltInToggle}
-          size={'sm'}
+          size={"sm"}
         />
-        <span className={'text-sm text-muted-foreground'}>
-          {'Show built-in'}
+        <span className={"text-sm text-muted-foreground"}>
+          {"Show built-in"}
         </span>
       </div>
 
       {/* Show Deactivated Toggle */}
-      <div className={'flex items-center gap-2'}>
+      <div className={"flex shrink-0 items-center gap-2"}>
         <Switch
-          aria-label={'Show deactivated agents'}
+          aria-label={"Show deactivated agents"}
           checked={showDeactivated}
           onCheckedChange={handleShowDeactivatedToggle}
-          size={'sm'}
+          size={"sm"}
         />
-        <span className={'text-sm text-muted-foreground'}>
-          {'Show deactivated'}
+        <span className={"text-sm text-muted-foreground"}>
+          {"Show deactivated"}
         </span>
       </div>
-
-      {/* Reset Filters Button */}
-      {hasActiveFilters && onResetFilters && (
-        <Fragment>
-          <div
-            aria-hidden={'true'}
-            className={'mx-1 h-5 w-px bg-border'}
-          />
-          <Button
-            aria-label={'Reset all filters'}
-            onClick={onResetFilters}
-            size={'sm'}
-            variant={'ghost'}
-          >
-            <RotateCcw aria-hidden={'true'} className={'size-4'} />
-            {'Reset Filters'}
-          </Button>
-        </Fragment>
-      )}
     </div>
   );
 };

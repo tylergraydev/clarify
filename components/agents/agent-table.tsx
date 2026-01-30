@@ -236,8 +236,8 @@ export const AgentTable = ({
         });
       }
 
-      // Move to Project action (for all agents that can be moved)
-      if (onMoveToProject) {
+      // Move to Project action (only for custom agents that can be moved)
+      if (onMoveToProject && isCustomAgent) {
         actions.push({
           disabled: isActionDisabled,
           icon: <FolderOutput aria-hidden={'true'} className={'size-4'} />,
