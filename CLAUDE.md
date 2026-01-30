@@ -179,3 +179,43 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 | `pnpm db:generate`       | Generate Drizzle migrations from schema changes                     |
 | `pnpm db:migrate`        | Apply pending database migrations                                   |
 | `pnpm next-typesafe-url` | Generate type-safe route definitions                                |
+
+## 8. Project Documentation Conventions (Important)
+
+| Document Type           | Location                                                      |
+| ----------------------- | ------------------------------------------------------------- |
+| Design Documents        | `docs/clarify-design-document.md`, `docs/database-design-document.md` |
+| Orchestration Outputs   | `docs/YYYY_MM_DD/orchestration/<feature-name>/`               |
+| Implementation Plans    | `docs/YYYY_MM_DD/plans/<feature-name>-implementation-plan.md` |
+| Implementation Tracking | `docs/YYYY_MM_DD/implementation/<feature-name>/`              |
+
+> **Note**: Always verify that target directories exist before creating new files. Use existing patterns in the codebase as templates for new additions.
+
+## 9. Custom Commands
+
+Custom commands in `.claude/commands/` provide high-level workflows. Use slash commands to invoke them.
+
+| Command           | Description                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `/plan-feature`   | Generate implementation plans through 3-4 step orchestration (clarify → refine → discover → plan) |
+| `/implement-plan` | Execute implementation plans with structured tracking using subagent architecture                 |
+| `/create-schema`  | Create or modify database schemas using natural language descriptions                             |
+| `/fix-file`       | Fix a file to follow project patterns using specialist agents with automatic review               |
+| `/next-feature`   | Identify the next logical feature area based on design document and codebase analysis             |
+
+## 10. Specialist Subagents
+
+Specialist subagents in `.claude/agents/` handle domain-specific implementation tasks. Use them when working in their respective domains.
+
+| Agent                           | Domain                       | When to Use                                                |
+| ------------------------------- | ---------------------------- | ---------------------------------------------------------- |
+| `database-schema`               | Database schemas & repos     | Files in `db/schema/` or `db/repositories/`                |
+| `ipc-handler`                   | Electron IPC communication   | Files in `electron/ipc/`, `electron/preload.ts`, IPC hooks |
+| `tanstack-query`                | Data fetching & server state | Query hooks, mutations, cache management                   |
+| `tanstack-table`                | Data table components        | TanStack Table implementations with pagination, sorting    |
+| `tanstack-form`                 | Form implementations         | Forms in dialogs, pages, features + validation schemas     |
+| `tanstack-form-base-components` | Base form components         | Field components in `components/ui/form/`                  |
+| `frontend-component`            | UI & feature components      | UI primitives in `components/ui/`, feature components      |
+| `clarification-agent`           | Requirement gathering        | Gathering clarifying questions for ambiguous requests      |
+| `file-discovery-agent`          | File discovery               | Identifying all files relevant to a feature                |
+| `implementation-planner`        | Implementation planning      | Creating comprehensive implementation plans                |

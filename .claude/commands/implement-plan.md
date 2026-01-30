@@ -1,5 +1,5 @@
 ---
-allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,pnpm:*,cd:*), TodoWrite(*), AskUserQuestion(*)
+allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,pnpm:*,cd:*), TodoWrite(*), AskUserQuestion(*)
 argument-hint: "path/to/implementation-plan.md [--step-by-step|--dry-run|--resume-from=N|--worktree]"
 description: Execute implementation plan with structured tracking and validation using subagent architecture
 ---
@@ -94,6 +94,7 @@ You do NOT implement code. Subagents implement code.
 | `database-schema`               | Database schemas & repos     | Files in `db/schema/` or `db/repositories/`                |
 | `ipc-handler`                   | Electron IPC communication   | Files in `electron/ipc/`, `electron/preload.ts`, IPC hooks |
 | `tanstack-query`                | Data fetching & server state | Query hooks, mutations, cache management                   |
+| `tanstack-table`                | Data table components        | Table components with pagination, sorting, filtering       |
 | `tanstack-form`                 | Form implementations         | Forms in dialogs, pages, features + validation schemas     |
 | `tanstack-form-base-components` | Base form components         | Field components in `components/ui/form/`                  |
 | `frontend-component`            | UI & feature components      | UI primitives in `components/ui/`, feature components      |
@@ -106,10 +107,11 @@ You do NOT implement code. Subagents implement code.
 2. IF files contain "db/repositories/" → database-schema
 3. IF files contain "electron/ipc/" OR "electron/preload.ts" OR step involves IPC handlers → ipc-handler
 4. IF files involve TanStack Query hooks/mutations → tanstack-query
-5. IF files contain "components/ui/form/" (base field components) → tanstack-form-base-components
-6. IF step involves creating/modifying forms OR files contain "lib/validations/" → tanstack-form
-7. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
-8. ELSE → general-purpose
+5. IF step involves data tables with useReactTable, pagination, sorting, or filtering → tanstack-table
+6. IF files contain "components/ui/form/" (base field components) → tanstack-form-base-components
+7. IF step involves creating/modifying forms OR files contain "lib/validations/" → tanstack-form
+8. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
+9. ELSE → general-purpose
 ```
 
 ---
@@ -141,11 +143,12 @@ You do NOT implement code. Subagents implement code.
    ```
    Step 1: database-schema (db/schema/users.schema.ts)
    Step 2: tanstack-query (hooks/queries/use-users.ts)
-   Step 3: tanstack-form-base-components (components/ui/form/combobox-field.tsx)
-   Step 4: tanstack-form (components/users/create-user-form.tsx, lib/validations/user.ts)
-   Step 5: frontend-component (components/ui/avatar.tsx)
-   Step 6: frontend-component (components/features/users/user-card.tsx)
-   Step 7: general-purpose (app/(app)/users/page.tsx)
+   Step 3: tanstack-table (components/features/users/users-table.tsx)
+   Step 4: tanstack-form-base-components (components/ui/form/combobox-field.tsx)
+   Step 5: tanstack-form (components/users/create-user-form.tsx, lib/validations/user.ts)
+   Step 6: frontend-component (components/ui/avatar.tsx)
+   Step 7: frontend-component (components/features/users/user-card.tsx)
+   Step 8: general-purpose (app/(app)/users/page.tsx)
    ...
    ```
 3. Create TodoWrite with all steps labeled with their specialist:

@@ -1,5 +1,5 @@
 ---
-allowed-tools: Task(subagent_type:*), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
+allowed-tools: Task(subagent_type:database-schema), Task(subagent_type:ipc-handler), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:frontend-component), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
 argument-hint: "path/to/file.ts [--reference=path/to/reference.ts] [--dry-run]"
 description: Fix a file to follow project patterns using specialist agents with automatic review and iteration
 ---
@@ -45,6 +45,7 @@ Map the file path to the appropriate specialist agent:
 | `electron/preload.ts`                   | `ipc-handler`                   | ipc-handler-conventions                             |
 | `use-*.ts` in `hooks/queries/`          | `tanstack-query`                | tanstack-query-conventions                          |
 | `*.ts` in `lib/queries/`                | `tanstack-query`                | tanstack-query-conventions                          |
+| `*-table.tsx` or tables with useReactTable | `tanstack-table`             | tanstack-table, component-conventions               |
 | `*-form.tsx` or forms in features       | `tanstack-form`                 | tanstack-form-conventions, react-coding-conventions |
 | `*.ts` in `lib/validations/`            | `tanstack-form`                 | tanstack-form-conventions                           |
 | Components in `components/ui/form/`     | `tanstack-form-base-components` | tanstack-form-base-components                       |
@@ -187,6 +188,17 @@ Study these well-implemented files to understand the correct patterns:
 - Void prefix: `void queryClient.invalidateQueries()`
 - Naming: `use{Entity}` for detail, `use{Entities}` for list
 - Mutations use `Parameters<typeof fn>` for type inference
+
+### For TanStack Table (tanstack-table):
+- Data memoization: `data` wrapped in `useMemo` with stable deps
+- Column memoization: `columns` wrapped in `useMemo`
+- Server-side flags: `manualPagination`, `manualSorting`, `manualFiltering` for server-side
+- Query integration: All table state included in query keys
+- Pagination state: `pageCount` provided for server-side pagination
+- Virtualization guard: `enabled` option used when virtualizing in tabs/modals
+- React 19 compatibility: `"use no memo"` directive if using React Compiler
+- Column definitions: `accessorKey` for simple, `accessorFn` for computed
+- Action columns: `id` property and `enableSorting: false`
 
 ### For TanStack Form (tanstack-form):
 - Hook usage: Uses `useAppForm` from `@/lib/forms`
@@ -336,6 +348,16 @@ Study these files for proper patterns:
 - Invalidation with `_def` property
 - `void` prefix for invalidation promises
 
+### For TanStack Table:
+- Memoize `data` and `columns` with `useMemo`
+- Set `manualPagination`, `manualSorting`, `manualFiltering` for server-side
+- Include all table state in query keys
+- Provide `pageCount` for server-side pagination
+- Use `enabled` option in virtualizer when in tabs/modals
+- Add `"use no memo"` for React 19 Compiler compatibility
+- Use `accessorKey` for simple, `accessorFn` for computed columns
+- Add `id` and `enableSorting: false` for action columns
+
 ### For TanStack Form:
 - Use `useAppForm` from `@/lib/forms`
 - Define validation schemas in `lib/validations/`
@@ -484,6 +506,17 @@ Check each item and report status:
 - [ ] useElectronDb hook used
 - [ ] Invalidation uses _def
 - [ ] void prefix on invalidation
+
+### For TanStack Table:
+- [ ] Data wrapped in useMemo
+- [ ] Columns wrapped in useMemo
+- [ ] Server-side flags set correctly (manual*)
+- [ ] Table state in query keys
+- [ ] pageCount provided for server-side
+- [ ] Virtualization guard if needed
+- [ ] React 19 compatibility handled
+- [ ] Column defs use accessorKey/accessorFn correctly
+- [ ] Action columns have id and enableSorting: false
 
 ### For TanStack Form:
 - [ ] useAppForm hook used
