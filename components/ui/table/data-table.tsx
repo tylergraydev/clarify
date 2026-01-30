@@ -605,7 +605,9 @@ export const DataTable = <TData, TValue>({
     ...(controlledState?.rowSelection !== undefined && {
       rowSelection: controlledState.rowSelection,
     }),
-    ...(resolvedColumnOrder !== undefined && { columnOrder: resolvedColumnOrder }),
+    ...(resolvedColumnOrder !== undefined && {
+      columnOrder: resolvedColumnOrder,
+    }),
     ...(resolvedColumnSizing !== undefined && {
       columnSizing: resolvedColumnSizing,
     }),
@@ -614,6 +616,7 @@ export const DataTable = <TData, TValue>({
     }),
   };
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     columnResizeMode: "onChange",
     columns,
