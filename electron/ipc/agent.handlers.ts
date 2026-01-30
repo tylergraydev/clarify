@@ -21,8 +21,19 @@ import { IpcChannels } from "./channels";
  * Filter options for listing agents
  */
 interface AgentListFilters {
+  /**
+   * When true, excludes agents that have a projectId set.
+   * Useful for showing only global agents in the global view.
+   */
+  excludeProjectAgents?: boolean;
   includeDeactivated?: boolean;
   projectId?: number;
+  /**
+   * Filter by agent scope:
+   * - "global": Only agents with projectId IS NULL (global agents)
+   * - "project": Only agents with projectId IS NOT NULL (project-specific agents)
+   */
+  scope?: "global" | "project";
   type?: string;
 }
 
@@ -178,6 +189,91 @@ export function registerAgentHandlers(
         return {
           error:
             error instanceof Error ? error.message : "Failed to duplicate agent",
+          success: false,
+        };
+      }
+    }
+  );
+
+  // Create a project-specific override of a global agent
+  ipcMain.handle(
+    IpcChannels.agent.createOverride,
+    async (
+      _event: IpcMainInvokeEvent,
+      agentId: number,
+      projectId: number
+    ): Promise<AgentOperationResult> => {
+      try {
+        // Validate projectId
+        if (!projectId || projectId <= 0) {
+          return { error: "A valid project ID is required to create an override", success: false };
+        }
+
+        // Fetch the source agent by ID
+        const sourceAgent = await agentsRepository.findById(agentId);
+        if (!sourceAgent) {
+          return { error: "Agent not found", success: false };
+        }
+
+        // Ensure the source agent is a global agent (no projectId)
+        if (sourceAgent.projectId !== null) {
+          return {
+            error: "Can only create overrides of global agents",
+            success: false,
+          };
+        }
+
+        // Check if an override already exists for this agent and project
+        const existingOverrides = await agentsRepository.findAll({
+          projectId,
+          scope: "project",
+        });
+        const hasExistingOverride = existingOverrides.some(
+          (agent) => agent.parentAgentId === agentId
+        );
+        if (hasExistingOverride) {
+          return {
+            error: "An override for this agent already exists in this project",
+            success: false,
+          };
+        }
+
+        // Generate a unique name by appending project ID
+        // Name uses kebab-case to comply with the agent name regex pattern
+        let newName = `${sourceAgent.name}-project-${projectId}`;
+        let newDisplayName = `${sourceAgent.displayName} (Project Override)`;
+
+        // Check for name conflicts (unlikely but handle gracefully)
+        let copyNumber = 1;
+        let existingAgent = await agentsRepository.findByName(newName);
+        while (existingAgent) {
+          copyNumber++;
+          newName = `${sourceAgent.name}-project-${projectId}-${copyNumber}`;
+          newDisplayName = `${sourceAgent.displayName} (Project Override ${copyNumber})`;
+          existingAgent = await agentsRepository.findByName(newName);
+        }
+
+        // Create the override agent with projectId and parentAgentId set
+        const newAgentData: NewAgent = {
+          builtInAt: null, // Custom agent, not built-in
+          color: sourceAgent.color,
+          description: sourceAgent.description,
+          displayName: newDisplayName,
+          name: newName,
+          parentAgentId: agentId, // Links to the global agent
+          projectId, // Scoped to the specific project
+          systemPrompt: sourceAgent.systemPrompt,
+          type: sourceAgent.type,
+          version: 1,
+        };
+
+        const overrideAgent = await agentsRepository.create(newAgentData);
+        return { agent: overrideAgent, success: true };
+      } catch (error) {
+        console.error("[IPC Error] agent:createOverride:", error);
+        return {
+          error:
+            error instanceof Error ? error.message : "Failed to create agent override",
           success: false,
         };
       }

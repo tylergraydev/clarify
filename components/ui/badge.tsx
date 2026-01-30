@@ -118,9 +118,17 @@ export const badgeVariants = cva(
           bg-pink-500/15 text-pink-700
           dark:bg-pink-500/20 dark:text-pink-400
         `,
+        pending: `
+          bg-amber-500/15 text-amber-700
+          dark:bg-amber-500/20 dark:text-amber-400
+        `,
         planning: `
           bg-purple-500/15 text-purple-700
           dark:bg-purple-500/20 dark:text-purple-400
+        `,
+        project: `
+          bg-indigo-500/15 text-indigo-700
+          dark:bg-indigo-500/20 dark:text-indigo-400
         `,
         researching: `
           bg-blue-500/15 text-blue-700

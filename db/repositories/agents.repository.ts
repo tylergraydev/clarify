@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
 
 import type { DrizzleDatabase } from "../index";
 
@@ -8,22 +8,31 @@ import {
 } from "../../lib/validations/agent";
 import { type Agent, agents, type NewAgent } from "../schema";
 
+export interface AgentListFilters {
+  excludeProjectAgents?: boolean;
+  includeDeactivated?: boolean;
+  projectId?: number;
+  scope?: "global" | "project";
+  type?: string;
+}
+
 export interface AgentsRepository {
   activate(id: number): Promise<Agent | undefined>;
   create(data: NewAgent): Promise<Agent>;
   deactivate(id: number): Promise<Agent | undefined>;
   delete(id: number): Promise<void>;
   findActive(projectId?: number): Promise<Array<Agent>>;
-  findAll(options?: {
-    includeDeactivated?: boolean;
-    projectId?: number;
-    type?: string;
-  }): Promise<Array<Agent>>;
+  findAll(options?: AgentListFilters): Promise<Array<Agent>>;
   findBuiltIn(): Promise<Array<Agent>>;
   findById(id: number): Promise<Agent | undefined>;
   findByName(name: string): Promise<Agent | undefined>;
   findByProjectId(projectId: number): Promise<Array<Agent>>;
+  findByProjectWithParents(projectId: number): Promise<Array<Agent>>;
   findByType(type: string): Promise<Array<Agent>>;
+  findGlobal(options?: {
+    includeDeactivated?: boolean;
+    type?: string;
+  }): Promise<Array<Agent>>;
   update(
     id: number,
     data: Partial<Omit<NewAgent, "createdAt" | "id">>
@@ -78,19 +87,28 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       return db.select().from(agents).where(isNull(agents.deactivatedAt));
     },
 
-    async findAll(options?: {
-      includeDeactivated?: boolean;
-      projectId?: number;
-      type?: string;
-    }): Promise<Array<Agent>> {
+    async findAll(options?: AgentListFilters): Promise<Array<Agent>> {
       const conditions = [];
 
       if (!options?.includeDeactivated) {
         conditions.push(isNull(agents.deactivatedAt));
       }
 
-      if (options?.projectId !== undefined) {
+      // Handle scope filter
+      if (options?.scope === "global") {
+        // Global scope: only agents where projectId IS NULL
+        conditions.push(isNull(agents.projectId));
+      } else if (options?.scope === "project" && options?.projectId) {
+        // Project scope: only agents for the specific project
         conditions.push(eq(agents.projectId, options.projectId));
+      } else if (options?.projectId !== undefined) {
+        // Legacy behavior: filter by projectId if provided
+        conditions.push(eq(agents.projectId, options.projectId));
+      }
+
+      // Handle excludeProjectAgents flag (for global view that excludes project-specific agents)
+      if (options?.excludeProjectAgents) {
+        conditions.push(isNull(agents.projectId));
       }
 
       if (options?.type) {
@@ -128,8 +146,47 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       return db.select().from(agents).where(eq(agents.projectId, projectId));
     },
 
+    async findByProjectWithParents(projectId: number): Promise<Array<Agent>> {
+      // Get project-specific agents and their global parent agents
+      // This is useful for resolving agent overrides in project context
+      return db
+        .select()
+        .from(agents)
+        .where(
+          and(
+            isNull(agents.deactivatedAt),
+            or(
+              // Include project-specific agents for this project
+              eq(agents.projectId, projectId),
+              // Include global agents (potential parents)
+              isNull(agents.projectId)
+            )
+          )
+        );
+    },
+
     async findByType(type: string): Promise<Array<Agent>> {
       return db.select().from(agents).where(eq(agents.type, type));
+    },
+
+    async findGlobal(options?: {
+      includeDeactivated?: boolean;
+      type?: string;
+    }): Promise<Array<Agent>> {
+      const conditions = [isNull(agents.projectId)];
+
+      if (!options?.includeDeactivated) {
+        conditions.push(isNull(agents.deactivatedAt));
+      }
+
+      if (options?.type) {
+        conditions.push(eq(agents.type, options.type));
+      }
+
+      return db
+        .select()
+        .from(agents)
+        .where(conditions.length === 1 ? conditions[0] : and(...conditions));
     },
 
     async update(

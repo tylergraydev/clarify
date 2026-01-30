@@ -40,6 +40,7 @@ const IpcChannels = {
   agent: {
     activate: "agent:activate",
     create: "agent:create",
+    createOverride: "agent:createOverride",
     deactivate: "agent:deactivate",
     delete: "agent:delete",
     duplicate: "agent:duplicate",
@@ -177,8 +178,19 @@ const IpcChannels = {
  * Filters for querying agents
  */
 export interface AgentListFilters {
+  /**
+   * When true, excludes agents that have a projectId set.
+   * Useful for showing only global agents in the global view.
+   */
+  excludeProjectAgents?: boolean;
   includeDeactivated?: boolean;
   projectId?: number;
+  /**
+   * Filter by agent scope:
+   * - "global": Only agents with projectId IS NULL (global agents)
+   * - "project": Only agents with projectId IS NOT NULL (project-specific agents)
+   */
+  scope?: "global" | "project";
   type?: "planning" | "review" | "specialist";
 }
 
@@ -195,6 +207,7 @@ export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<Agent | undefined>;
     create(data: NewAgent): Promise<AgentOperationResult>;
+    createOverride(agentId: number, projectId: number): Promise<AgentOperationResult>;
     deactivate(id: number): Promise<Agent | undefined>;
     delete(id: number): Promise<AgentOperationResult>;
     duplicate(id: number): Promise<AgentOperationResult>;
@@ -474,6 +487,8 @@ const electronAPI: ElectronAPI = {
   agent: {
     activate: (id) => ipcRenderer.invoke(IpcChannels.agent.activate, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.agent.create, data),
+    createOverride: (agentId, projectId) =>
+      ipcRenderer.invoke(IpcChannels.agent.createOverride, agentId, projectId),
     deactivate: (id) => ipcRenderer.invoke(IpcChannels.agent.deactivate, id),
     delete: (id) => ipcRenderer.invoke(IpcChannels.agent.delete, id),
     duplicate: (id) => ipcRenderer.invoke(IpcChannels.agent.duplicate, id),

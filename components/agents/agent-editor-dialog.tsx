@@ -42,6 +42,7 @@ import {
   useResetAgent,
   useUpdateAgent,
 } from "@/hooks/queries/use-agents";
+import { useProject } from "@/hooks/queries/use-projects";
 import { getAgentColorHex } from "@/lib/colors/agent-colors";
 import { useAppForm } from "@/lib/forms/form-hook";
 import {
@@ -64,6 +65,8 @@ interface AgentEditorDialogProps {
   mode: EditorMode;
   /** Callback when agent is successfully saved */
   onSuccess?: () => void;
+  /** Optional project ID for creating project-scoped agents (create mode only) */
+  projectId?: number;
   /** The trigger element that opens the dialog */
   trigger: ReactNode;
 }
@@ -94,6 +97,7 @@ export const AgentEditorDialog = ({
   initialData,
   mode,
   onSuccess,
+  projectId,
   trigger,
 }: AgentEditorDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -104,6 +108,9 @@ export const AgentEditorDialog = ({
   const updateAgentMutation = useUpdateAgent();
   const resetAgentMutation = useResetAgent();
 
+  // Fetch project data when projectId is provided (for displaying project context)
+  const projectQuery = useProject(projectId ?? 0);
+
   const isSubmitting =
     createAgentMutation.isPending || updateAgentMutation.isPending;
   const isResetting = resetAgentMutation.isPending;
@@ -111,6 +118,7 @@ export const AgentEditorDialog = ({
   const isBuiltIn = agent?.builtInAt !== null;
   const isCustomized = agent?.parentAgentId !== null;
   const isDuplicateMode = mode === "create" && initialData !== undefined;
+  const isProjectScoped = !isEditMode && projectId !== undefined;
 
   // Determine validation schema based on mode
   const validationSchema = isEditMode
@@ -170,6 +178,7 @@ export const AgentEditorDialog = ({
           description: createValue.description,
           displayName: createValue.displayName,
           name: createValue.name,
+          projectId: projectId ?? null,
           systemPrompt: createValue.systemPrompt,
           type: createValue.type,
         });
@@ -241,7 +250,10 @@ export const AgentEditorDialog = ({
   const handleConfirmReset = async () => {
     if (!agent) return;
     try {
-      await resetAgentMutation.mutateAsync(agent.id);
+      await resetAgentMutation.mutateAsync({
+        id: agent.id,
+        projectId: agent.projectId ?? undefined,
+      });
       setIsResetDialogOpen(false);
       handleClose();
       onSuccess?.();
@@ -296,6 +308,12 @@ export const AgentEditorDialog = ({
           <DialogHeader
             badges={
               <Fragment>
+                {/* Project Scope Indicator (Create Mode Only) */}
+                {isProjectScoped && projectQuery.data && (
+                  <Badge variant={"project"}>
+                    {`Project: ${projectQuery.data.name}`}
+                  </Badge>
+                )}
                 {isEditMode && isBuiltIn && (
                   <Badge variant={"default"}>{"Built-in Agent"}</Badge>
                 )}

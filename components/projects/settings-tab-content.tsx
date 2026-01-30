@@ -64,7 +64,7 @@ export const SettingsTabContent = ({
   };
 
   const handleReset = (agentId: number) => {
-    resetAgentMutation.mutate(agentId);
+    resetAgentMutation.mutate({ id: agentId, projectId });
   };
 
   // Derived state

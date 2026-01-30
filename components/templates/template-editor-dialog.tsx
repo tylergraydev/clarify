@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 
 import type {
   TemplatePlaceholderFormValues,
@@ -324,7 +324,7 @@ export const TemplateEditorDialog = ({
           {/* Header */}
           <DialogHeader
             badges={
-              <>
+              <Fragment>
                 {isEditMode && isBuiltIn && (
                   <Badge variant={"default"}>{"Built-in Template"}</Badge>
                 )}
@@ -334,7 +334,7 @@ export const TemplateEditorDialog = ({
                       template.category.slice(1)}
                   </Badge>
                 )}
-              </>
+              </Fragment>
             }
           >
             <DialogTitle id={"template-editor-title"}>
