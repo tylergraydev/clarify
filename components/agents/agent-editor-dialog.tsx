@@ -751,7 +751,10 @@ export const AgentEditorDialog = ({
                     />
                   )}
                 </form.AppField>
+              </fieldset>
 
+              {/* Collapsible sections outside fieldset so they can be expanded in view mode */}
+              <div className={"mt-4 flex flex-col gap-4"}>
                 {/* Tools Section - Show in both create and edit modes */}
                 <Collapsible
                   className={"rounded-md border border-border"}
@@ -766,7 +769,7 @@ export const AgentEditorDialog = ({
                     <div className={"border-t border-border p-3"}>
                       <AgentToolsSection
                         customTools={customTools}
-                        disabled={isSubmitting || isResetting}
+                        disabled={isSubmitting || isResetting || isViewMode}
                         onCustomToolsChange={
                           isEditMode
                             ? handleEditModeCustomToolsChange
@@ -795,13 +798,13 @@ export const AgentEditorDialog = ({
                       <div className={"border-t border-border p-3"}>
                         <AgentSkillsManager
                           agentId={agent.id}
-                          disabled={isSubmitting || isResetting}
+                          disabled={isSubmitting || isResetting || isViewMode}
                         />
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
                 )}
-              </fieldset>
+              </div>
             </DialogBody>
 
             {/* Sticky Footer */}
