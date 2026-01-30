@@ -10,6 +10,7 @@ import {
 import { Fragment, useCallback, useRef } from "react";
 
 import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
+import { AgentLayoutToggle } from "@/components/agents/agent-layout-toggle";
 import { GlobalAgentsTabContent } from "@/components/agents/global-agents-tab-content";
 import { ProjectAgentsTabContent } from "@/components/agents/project-agents-tab-content";
 import { Badge } from "@/components/ui/badge";
@@ -344,6 +345,9 @@ export default function AgentsPage() {
             {"Show deactivated"}
           </span>
         </div>
+
+        {/* Layout toggle */}
+        <AgentLayoutToggle />
 
         {/* Clear filters button (only show when filters are active) */}
         {hasActiveFilters && (
