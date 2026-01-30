@@ -123,8 +123,8 @@ export const badgeVariants = cva(
           dark:bg-amber-500/20 dark:text-amber-400
         `,
         planning: `
-          bg-purple-500/15 text-purple-700
-          dark:bg-purple-500/20 dark:text-purple-400
+          bg-purple-100 text-purple-900
+          dark:bg-purple-900/40 dark:text-purple-200
         `,
         project: `
           bg-indigo-500/15 text-indigo-700
@@ -143,8 +143,8 @@ export const badgeVariants = cva(
           dark:bg-red-500/20 dark:text-red-400
         `,
         specialist: `
-          bg-blue-500/15 text-blue-700
-          dark:bg-blue-500/20 dark:text-blue-400
+          bg-blue-100 text-blue-900
+          dark:bg-blue-900/40 dark:text-blue-200
         `,
         stale: `
           bg-amber-500/15 text-amber-700
