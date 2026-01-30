@@ -61,14 +61,18 @@ interface AgentEditorDialogProps {
   agent?: Agent;
   /** Initial data for pre-filling the form (used in create mode for duplicating) */
   initialData?: AgentInitialData;
+  /** Controlled open state (optional - if provided, component is controlled) */
+  isOpen?: boolean;
   /** The mode of the editor */
   mode: EditorMode;
+  /** Callback when open state changes (optional - for controlled mode) */
+  onOpenChange?: (open: boolean) => void;
   /** Callback when agent is successfully saved */
   onSuccess?: () => void;
   /** Optional project ID for creating project-scoped agents (create mode only) */
   projectId?: number;
-  /** The trigger element that opens the dialog */
-  trigger: ReactNode;
+  /** The trigger element that opens the dialog (optional when using controlled mode) */
+  trigger?: ReactNode;
 }
 /**
  * Initial data for creating an agent, typically used when duplicating.
@@ -95,12 +99,21 @@ const AGENT_TYPE_OPTIONS = agentTypes.map((type) => ({
 export const AgentEditorDialog = ({
   agent,
   initialData,
+  isOpen: controlledIsOpen,
   mode,
+  onOpenChange: controlledOnOpenChange,
   onSuccess,
   projectId,
   trigger,
 }: AgentEditorDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+  // Determine if component is controlled
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+  const setIsOpen = isControlled
+    ? (open: boolean) => controlledOnOpenChange?.(open)
+    : setInternalIsOpen;
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<"" | AgentColor>("");
 
@@ -239,7 +252,7 @@ export const AgentEditorDialog = ({
         resetFormAndColor();
       }
     },
-    [resetFormAndColor, getDefaultValues, getInitialColor, form]
+    [setIsOpen, resetFormAndColor, getDefaultValues, getInitialColor, form]
   );
 
   const handleResetClick = () => {
@@ -291,8 +304,8 @@ export const AgentEditorDialog = ({
 
   return (
     <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
-      {/* Trigger */}
-      <DialogTrigger>{trigger}</DialogTrigger>
+      {/* Trigger - only render when provided (uncontrolled mode) */}
+      {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
 
       {/* Portal */}
       <DialogPortal>

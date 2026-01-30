@@ -1,9 +1,7 @@
 'use client';
 
-import type { RefObject } from 'react';
-
 import { Bot, FolderOpen, Plus, Search } from 'lucide-react';
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useState } from 'react';
 
 import type { Agent } from '@/types/electron';
 
@@ -105,7 +103,7 @@ interface AgentGridItemProps {
 
 /**
  * Renders an AgentCard with an AgentEditorDialog.
- * The Edit button in the card triggers the dialog via a hidden trigger element.
+ * Uses controlled state to open the dialog when Edit is clicked.
  */
 const AgentGridItem = ({
   agent,
@@ -118,10 +116,10 @@ const AgentGridItem = ({
   onReset,
   onToggleActive,
 }: AgentGridItemProps) => {
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleEditClick = () => {
-    triggerRef.current?.click();
+    setIsEditDialogOpen(true);
   };
 
   return (
@@ -138,21 +136,12 @@ const AgentGridItem = ({
         onReset={onReset}
         onToggleActive={onToggleActive}
       />
-      {/* Hidden dialog trigger */}
+      {/* Edit dialog with controlled state */}
       <AgentEditorDialog
         agent={agent}
+        isOpen={isEditDialogOpen}
         mode={'edit'}
-        trigger={
-          <button
-            aria-hidden={'true'}
-            className={'sr-only'}
-            ref={triggerRef as RefObject<HTMLButtonElement>}
-            tabIndex={-1}
-            type={'button'}
-          >
-            {'Edit agent'}
-          </button>
-        }
+        onOpenChange={setIsEditDialogOpen}
       />
     </div>
   );

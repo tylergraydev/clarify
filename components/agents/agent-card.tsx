@@ -123,9 +123,9 @@ export const AgentCard = ({
       {...props}
     >
       {/* Header */}
-      <CardHeader>
-        <div className={"flex items-start justify-between gap-2"}>
-          <div className={"flex items-center gap-2"}>
+      <CardHeader className={"overflow-hidden"}>
+        <div className={"flex items-start justify-between gap-2 overflow-hidden"}>
+          <div className={"flex min-w-0 flex-1 items-center gap-2"}>
             {/* Color Indicator */}
             <div
               aria-hidden={"true"}
@@ -134,11 +134,11 @@ export const AgentCard = ({
                 getAgentColorClass(agent.color)
               )}
             />
-            <CardTitle className={"line-clamp-1"}>
+            <CardTitle className={"truncate"}>
               {agent.displayName}
             </CardTitle>
           </div>
-          <Badge variant={getTypeVariant(agent.type)}>
+          <Badge className={"shrink-0"} variant={getTypeVariant(agent.type)}>
             {formatTypeLabel(agent.type)}
           </Badge>
         </div>
