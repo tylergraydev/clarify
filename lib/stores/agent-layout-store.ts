@@ -2,24 +2,30 @@ import { create } from "zustand";
 
 import {
   AGENT_LAYOUT_STORAGE_KEY,
+  AGENT_SHOW_DEACTIVATED_STORAGE_KEY,
   AgentLayout,
   DEFAULT_AGENT_LAYOUT,
+  DEFAULT_AGENT_SHOW_DEACTIVATED,
 } from "../layout/constants";
 
 /**
- * Agent layout state interface for managing layout preference.
+ * Agent layout state interface for managing layout and filter preferences.
  */
 export interface AgentLayoutState {
   /** Currently selected layout for the agents view */
   layout: AgentLayout;
+  /** Whether to show deactivated agents */
+  showDeactivated: boolean;
 }
 
 /**
- * Agent layout actions interface for modifying layout state.
+ * Agent layout actions interface for modifying state.
  */
 export interface AgentLayoutActions {
   /** Set the layout preference and persist to electron-store */
   setLayout: (layout: AgentLayout) => void;
+  /** Set the show deactivated preference and persist to electron-store */
+  setShowDeactivated: (show: boolean) => void;
 }
 
 /**
@@ -28,8 +34,8 @@ export interface AgentLayoutActions {
 export type AgentLayoutStore = AgentLayoutActions & AgentLayoutState;
 
 /**
- * Zustand store for managing agent layout preference with persistence
- * to electron-store.
+ * Zustand store for managing agent layout and filter preferences with
+ * persistence to electron-store.
  *
  * @example
  * ```tsx
@@ -44,10 +50,24 @@ export type AgentLayoutStore = AgentLayoutActions & AgentLayoutState;
  *   );
  * }
  * ```
+ *
+ * @example
+ * ```tsx
+ * function ShowDeactivatedToggle() {
+ *   const { showDeactivated, setShowDeactivated } = useAgentLayoutStore();
+ *   return (
+ *     <Switch
+ *       checked={showDeactivated}
+ *       onCheckedChange={setShowDeactivated}
+ *     />
+ *   );
+ * }
+ * ```
  */
 export const useAgentLayoutStore = create<AgentLayoutStore>()((set) => ({
   // Initial state - will be hydrated from electron-store on mount
   layout: DEFAULT_AGENT_LAYOUT,
+  showDeactivated: DEFAULT_AGENT_SHOW_DEACTIVATED,
 
   // Actions
   setLayout: (layout: AgentLayout) => {
@@ -56,6 +76,15 @@ export const useAgentLayoutStore = create<AgentLayoutStore>()((set) => ({
     // Persist to electron-store via IPC
     if (typeof window !== "undefined" && window.electronAPI?.store) {
       window.electronAPI.store.set(AGENT_LAYOUT_STORAGE_KEY, layout);
+    }
+  },
+
+  setShowDeactivated: (show: boolean) => {
+    set({ showDeactivated: show });
+
+    // Persist to electron-store via IPC
+    if (typeof window !== "undefined" && window.electronAPI?.store) {
+      window.electronAPI.store.set(AGENT_SHOW_DEACTIVATED_STORAGE_KEY, show);
     }
   },
 }));

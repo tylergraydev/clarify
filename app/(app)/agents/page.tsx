@@ -1,12 +1,7 @@
 "use client";
 
 import { FolderOpen, Globe, Plus, Search } from "lucide-react";
-import {
-  parseAsBoolean,
-  parseAsString,
-  parseAsStringLiteral,
-  useQueryState,
-} from "nuqs";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { Fragment, useCallback, useRef } from "react";
 
 import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
@@ -38,6 +33,7 @@ import { agentTypes } from "@/db/schema/agents.schema";
 import { useGlobalAgents, useProjectAgents } from "@/hooks/queries/use-agents";
 import { useProject } from "@/hooks/queries/use-projects";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcut";
+import { useAgentLayoutStore } from "@/lib/stores/agent-layout-store";
 import { useShellStore } from "@/lib/stores/shell-store";
 import { cn } from "@/lib/utils";
 
@@ -89,10 +85,9 @@ export default function AgentsPage() {
     "type",
     parseAsStringLiteral([...agentTypes])
   );
-  const [isShowDeactivated, setIsShowDeactivated] = useQueryState(
-    "showDeactivated",
-    parseAsBoolean.withDefault(false)
-  );
+
+  // Persisted state from Zustand store (electron-store backed)
+  const { showDeactivated, setShowDeactivated } = useAgentLayoutStore();
 
   // Shell store for selected project
   const selectedProjectId = useShellStore((state) => state.selectedProjectId);
@@ -107,11 +102,11 @@ export default function AgentsPage() {
 
   // Data fetching for counts (separate from tab content queries)
   const { data: globalAgents } = useGlobalAgents({
-    includeDeactivated: isShowDeactivated,
+    includeDeactivated: showDeactivated,
     type: typeFilter ?? undefined,
   });
   const { data: projectAgents } = useProjectAgents(selectedProjectId ?? 0, {
-    includeDeactivated: isShowDeactivated,
+    includeDeactivated: showDeactivated,
     type: typeFilter ?? undefined,
   });
 
@@ -145,7 +140,7 @@ export default function AgentsPage() {
   };
 
   const handleShowDeactivatedChange = (isChecked: boolean) => {
-    void setIsShowDeactivated(isChecked);
+    setShowDeactivated(isChecked);
   };
 
   const handleClearFilters = () => {
@@ -160,7 +155,7 @@ export default function AgentsPage() {
 
   // Filter props for tab content components
   const filterProps = {
-    includeDeactivated: isShowDeactivated,
+    includeDeactivated: showDeactivated,
     search: search || undefined,
     type: typeFilter ?? undefined,
   };
@@ -337,7 +332,7 @@ export default function AgentsPage() {
         <div className={"flex items-center gap-2"}>
           <Switch
             aria-label={"Show deactivated agents"}
-            checked={isShowDeactivated}
+            checked={showDeactivated}
             onCheckedChange={handleShowDeactivatedChange}
             size={"sm"}
           />

@@ -15,6 +15,7 @@ import type {
   UpdateAgentFormValues,
 } from "@/lib/validations/agent";
 import type { Agent } from "@/types/electron";
+import type { CreateToolData, ToolSelection } from "@/types/agent-tools";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,12 +39,25 @@ import {
 } from "@/components/ui/dialog";
 import { agentColors, agentTypes } from "@/db/schema/agents.schema";
 import {
+  useAgentTools,
+  useCreateAgentTool,
+  useDeleteAgentTool,
+  useAllowAgentTool,
+  useDisallowAgentTool,
+} from "@/hooks/queries/use-agent-tools";
+import {
   useCreateAgent,
   useResetAgent,
   useUpdateAgent,
 } from "@/hooks/queries/use-agents";
 import { useProject } from "@/hooks/queries/use-projects";
 import { getAgentColorHex } from "@/lib/colors/agent-colors";
+import {
+  CLAUDE_BUILTIN_TOOLS,
+  getDefaultToolsForAgentType,
+  isBuiltinTool,
+} from "@/lib/constants/claude-tools";
+import type { AgentToolType } from "@/lib/constants/claude-tools";
 import { useAppForm } from "@/lib/forms/form-hook";
 import {
   createAgentFormSchema,
@@ -52,7 +66,7 @@ import {
 
 import { AgentColorPicker } from "./agent-color-picker";
 import { AgentSkillsManager } from "./agent-skills-manager";
-import { AgentToolsManager } from "./agent-tools-manager";
+import { AgentToolsSection } from "./agent-tools-section";
 import { ConfirmResetAgentDialog } from "./confirm-reset-agent-dialog";
 
 type AgentColor = (typeof agentColors)[number];
@@ -117,9 +131,30 @@ export const AgentEditorDialog = ({
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<"" | AgentColor>("");
 
+  // Tool state for both create and edit modes
+  const [toolSelections, setToolSelections] = useState<Array<ToolSelection>>(
+    []
+  );
+  const [customTools, setCustomTools] = useState<Array<CreateToolData>>([]);
+
+  // Track the selected agent type for resetting tool defaults
+  const [selectedAgentType, setSelectedAgentType] = useState<AgentToolType>(
+    initialData?.type ?? "specialist"
+  );
+
   const createAgentMutation = useCreateAgent();
   const updateAgentMutation = useUpdateAgent();
   const resetAgentMutation = useResetAgent();
+
+  // Tool mutations for edit mode
+  const createToolMutation = useCreateAgentTool();
+  const deleteToolMutation = useDeleteAgentTool();
+  const allowToolMutation = useAllowAgentTool();
+  const disallowToolMutation = useDisallowAgentTool();
+
+  // Fetch existing tools for edit mode
+  const existingToolsQuery = useAgentTools(agent?.id ?? 0);
+  const existingTools = existingToolsQuery.data;
 
   // Fetch project data when projectId is provided (for displaying project context)
   const projectQuery = useProject(projectId ?? 0);
@@ -170,6 +205,42 @@ export const AgentEditorDialog = ({
     };
   }, [isEditMode, agent, initialData]);
 
+  // Initialize tool defaults for create mode
+  const initializeToolDefaults = useCallback((type: AgentToolType) => {
+    const defaultTools = getDefaultToolsForAgentType(type);
+
+    const selections: Array<ToolSelection> = CLAUDE_BUILTIN_TOOLS.map(
+      (tool) => ({
+        enabled: defaultTools.includes(tool.name),
+        pattern: "*",
+        toolName: tool.name,
+      })
+    );
+
+    setToolSelections(selections);
+    setCustomTools([]);
+  }, []);
+
+  // Get tools to save (for create mode submission)
+  const getToolsToSave = useCallback((): Array<CreateToolData> => {
+    const result: Array<CreateToolData> = [];
+
+    // Add enabled built-in tools
+    for (const selection of toolSelections) {
+      if (selection.enabled) {
+        result.push({
+          pattern: selection.pattern,
+          toolName: selection.toolName,
+        });
+      }
+    }
+
+    // Add custom tools
+    result.push(...customTools);
+
+    return result;
+  }, [toolSelections, customTools]);
+
   const form = useAppForm({
     defaultValues: getDefaultValues(),
     onSubmit: async ({ value }) => {
@@ -185,9 +256,9 @@ export const AgentEditorDialog = ({
           id: agent.id,
         });
       } else {
-        // Create new agent
+        // Create new agent with tools
         const createValue = value as CreateAgentFormData;
-        await createAgentMutation.mutateAsync({
+        const result = await createAgentMutation.mutateAsync({
           color: createValue.color,
           description: createValue.description,
           displayName: createValue.displayName,
@@ -196,6 +267,18 @@ export const AgentEditorDialog = ({
           systemPrompt: createValue.systemPrompt,
           type: createValue.type,
         });
+
+        // If agent was created successfully, create tools
+        if (result.success && result.agent) {
+          const toolsToSave = getToolsToSave();
+          for (const tool of toolsToSave) {
+            await createToolMutation.mutateAsync({
+              agentId: result.agent.id,
+              toolName: tool.toolName,
+              toolPattern: tool.pattern,
+            });
+          }
+        }
       }
       handleClose();
       onSuccess?.();
@@ -216,10 +299,64 @@ export const AgentEditorDialog = ({
       updateSelectedColor((agent.color as AgentColor) ?? "");
     } else if (initialData) {
       updateSelectedColor(initialData.color ?? "");
+      setSelectedAgentType(initialData.type);
     } else {
       updateSelectedColor("");
+      setSelectedAgentType("specialist");
     }
   }, [agent, initialData, form, getDefaultValues, isEditMode]);
+
+  // Initialize tools when dialog opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (!isEditMode) {
+      // Create mode: initialize from defaults based on agent type
+      const type = initialData?.type ?? "specialist";
+      initializeToolDefaults(type);
+      setSelectedAgentType(type);
+    }
+  }, [isEditMode, isOpen, initialData, initializeToolDefaults]);
+
+  // Initialize tools from existing database records (edit mode)
+  useEffect(() => {
+    if (!isOpen || !isEditMode || !existingTools) return;
+
+    const builtinSelections: Array<ToolSelection> = [];
+    const customToolsList: Array<CreateToolData> = [];
+
+    for (const tool of existingTools) {
+      if (isBuiltinTool(tool.toolName)) {
+        builtinSelections.push({
+          enabled: tool.disallowedAt === null,
+          pattern: tool.toolPattern,
+          toolName: tool.toolName,
+        });
+      } else {
+        // Only add custom tools that are allowed
+        if (tool.disallowedAt === null) {
+          customToolsList.push({
+            pattern: tool.toolPattern,
+            toolName: tool.toolName,
+          });
+        }
+      }
+    }
+
+    // Ensure all built-in tools have an entry (disabled if not in existingTools)
+    for (const tool of CLAUDE_BUILTIN_TOOLS) {
+      if (!builtinSelections.some((s) => s.toolName === tool.name)) {
+        builtinSelections.push({
+          enabled: false,
+          pattern: "*",
+          toolName: tool.name,
+        });
+      }
+    }
+
+    setToolSelections(builtinSelections);
+    setCustomTools(customToolsList);
+  }, [isOpen, isEditMode, existingTools]);
 
   const getInitialColor = useCallback((): "" | AgentColor => {
     if (isEditMode && agent) {
@@ -234,12 +371,25 @@ export const AgentEditorDialog = ({
   const resetFormAndColor = useCallback(() => {
     form.reset(getDefaultValues());
     setSelectedColor(getInitialColor());
-  }, [form, getDefaultValues, getInitialColor]);
+    // Reset tools state
+    if (!isEditMode) {
+      const type = initialData?.type ?? "specialist";
+      initializeToolDefaults(type);
+      setSelectedAgentType(type);
+    }
+  }, [
+    form,
+    getDefaultValues,
+    getInitialColor,
+    isEditMode,
+    initialData,
+    initializeToolDefaults,
+  ]);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
     resetFormAndColor();
-  }, [resetFormAndColor]);
+  }, [resetFormAndColor, setIsOpen]);
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -248,11 +398,26 @@ export const AgentEditorDialog = ({
         // Reset form to ensure it has latest values
         form.reset(getDefaultValues());
         setSelectedColor(getInitialColor());
+        // Reset tools for create mode
+        if (!isEditMode) {
+          const type = initialData?.type ?? "specialist";
+          initializeToolDefaults(type);
+          setSelectedAgentType(type);
+        }
       } else {
         resetFormAndColor();
       }
     },
-    [setIsOpen, resetFormAndColor, getDefaultValues, getInitialColor, form]
+    [
+      setIsOpen,
+      resetFormAndColor,
+      getDefaultValues,
+      getInitialColor,
+      form,
+      isEditMode,
+      initialData,
+      initializeToolDefaults,
+    ]
   );
 
   const handleResetClick = () => {
@@ -273,6 +438,93 @@ export const AgentEditorDialog = ({
       // Error handled by mutation
     }
   };
+
+  // Handle agent type change in create mode - reset tool defaults
+  const handleAgentTypeChange = useCallback(
+    (newType: string) => {
+      const type = newType as AgentToolType;
+      setSelectedAgentType(type);
+      initializeToolDefaults(type);
+    },
+    [initializeToolDefaults]
+  );
+
+  // Handle tool changes in edit mode - sync to database
+  const handleEditModeToolSelectionsChange = useCallback(
+    async (newSelections: Array<ToolSelection>) => {
+      if (!agent || !existingTools) return;
+
+      // For each selection change, update the database
+      for (const selection of newSelections) {
+        const existingTool = existingTools.find(
+          (t) => t.toolName === selection.toolName
+        );
+
+        if (existingTool) {
+          // Tool exists - toggle allow/disallow based on enabled state
+          const isCurrentlyAllowed = existingTool.disallowedAt === null;
+          if (selection.enabled && !isCurrentlyAllowed) {
+            await allowToolMutation.mutateAsync(existingTool.id);
+          } else if (!selection.enabled && isCurrentlyAllowed) {
+            await disallowToolMutation.mutateAsync(existingTool.id);
+          }
+        } else if (selection.enabled) {
+          // Tool doesn't exist and is enabled - create it
+          await createToolMutation.mutateAsync({
+            agentId: agent.id,
+            toolName: selection.toolName,
+            toolPattern: selection.pattern,
+          });
+        }
+      }
+
+      setToolSelections(newSelections);
+    },
+    [
+      agent,
+      existingTools,
+      allowToolMutation,
+      disallowToolMutation,
+      createToolMutation,
+    ]
+  );
+
+  // Handle custom tool changes in edit mode
+  const handleEditModeCustomToolsChange = useCallback(
+    async (newCustomTools: Array<CreateToolData>) => {
+      if (!agent || !existingTools) return;
+
+      // Find tools to add (in newCustomTools but not in existingTools)
+      for (const tool of newCustomTools) {
+        const exists = existingTools.some((t) => t.toolName === tool.toolName);
+        if (!exists) {
+          await createToolMutation.mutateAsync({
+            agentId: agent.id,
+            toolName: tool.toolName,
+            toolPattern: tool.pattern,
+          });
+        }
+      }
+
+      // Find tools to remove (in existingTools but not in newCustomTools, and not built-in)
+      for (const existingTool of existingTools) {
+        if (isBuiltinTool(existingTool.toolName)) continue;
+
+        const stillExists = newCustomTools.some(
+          (t) => t.toolName === existingTool.toolName
+        );
+        if (!stillExists) {
+          await deleteToolMutation.mutateAsync({
+            agentId: agent.id,
+            id: existingTool.id,
+          });
+        }
+      }
+
+      setCustomTools(newCustomTools);
+    },
+    [agent, existingTools, createToolMutation, deleteToolMutation]
+  );
 
   const agentTypeLabel = agent
     ? agent.type === "planning"
@@ -415,6 +667,7 @@ export const AgentEditorDialog = ({
                           "Planning agents handle workflow planning, specialist agents perform specific tasks, review agents validate outputs"
                         }
                         label={"Agent Type"}
+                        onChange={handleAgentTypeChange}
                         options={AGENT_TYPE_OPTIONS}
                         placeholder={"Select agent type"}
                       />
@@ -483,24 +736,39 @@ export const AgentEditorDialog = ({
                   )}
                 </form.AppField>
 
-                {/* Tools Section (Edit Mode Only) */}
-                {isEditMode && agent && (
-                  <Collapsible className={"rounded-md border border-border"}>
-                    <CollapsibleTrigger
-                      className={"w-full justify-start px-3 py-2"}
-                    >
-                      {"Allowed Tools"}
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className={"border-t border-border p-3"}>
-                        <AgentToolsManager
-                          agentId={agent.id}
-                          disabled={isSubmitting || isResetting}
-                        />
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                )}
+                {/* Tools Section - Show in both create and edit modes */}
+                <Collapsible
+                  className={"rounded-md border border-border"}
+                  defaultOpen={!isEditMode}
+                >
+                  <CollapsibleTrigger
+                    className={"w-full justify-start px-3 py-2"}
+                  >
+                    {"Allowed Tools"}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className={"border-t border-border p-3"}>
+                      <AgentToolsSection
+                        agentType={isEditMode ? (agent?.type as AgentToolType) : selectedAgentType}
+                        customTools={customTools}
+                        disabled={isSubmitting || isResetting}
+                        existingTools={isEditMode ? existingTools : undefined}
+                        isCreateMode={!isEditMode}
+                        onCustomToolsChange={
+                          isEditMode
+                            ? handleEditModeCustomToolsChange
+                            : setCustomTools
+                        }
+                        onToolSelectionsChange={
+                          isEditMode
+                            ? handleEditModeToolSelectionsChange
+                            : setToolSelections
+                        }
+                        toolSelections={toolSelections}
+                      />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
 
                 {/* Skills Section (Edit Mode Only) */}
                 {isEditMode && agent && (

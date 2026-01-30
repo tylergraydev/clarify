@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
 
 import {
   AGENT_LAYOUT_STORAGE_KEY,
+  AGENT_SHOW_DEACTIVATED_STORAGE_KEY,
   type AgentLayout,
-  DEFAULT_AGENT_LAYOUT,
 } from '@/lib/layout/constants';
 import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
 
@@ -17,8 +17,8 @@ interface AgentLayoutProviderProps {
 
 /**
  * Provider component that hydrates the agent layout store from electron-store
- * on mount. This ensures layout preference is loaded from persistent storage
- * before rendering, preventing flash of default layout.
+ * on mount. This ensures layout and filter preferences are loaded from
+ * persistent storage before rendering, preventing flash of default values.
  *
  * @example
  * ```tsx
@@ -31,29 +31,52 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    const hydrateLayout = async () => {
+    const hydrateStore = async () => {
       // Check if running in Electron environment
       if (typeof window !== 'undefined' && window.electronAPI?.store) {
+        // Hydrate layout preference
         const persistedLayout = await window.electronAPI.store.get<AgentLayout>(
           AGENT_LAYOUT_STORAGE_KEY
         );
 
-        // Validate and hydrate the store with persisted value
+        // Hydrate show deactivated preference
+        const persistedShowDeactivated =
+          await window.electronAPI.store.get<boolean>(
+            AGENT_SHOW_DEACTIVATED_STORAGE_KEY
+          );
+
+        // Build state update object
+        const stateUpdate: Partial<{
+          layout: AgentLayout;
+          showDeactivated: boolean;
+        }> = {};
+
+        // Validate and add layout to update
         if (
           persistedLayout &&
           ['card', 'list', 'table'].includes(persistedLayout)
         ) {
-          useAgentLayoutStore.setState({ layout: persistedLayout });
+          stateUpdate.layout = persistedLayout;
+        }
+
+        // Validate and add showDeactivated to update
+        if (typeof persistedShowDeactivated === 'boolean') {
+          stateUpdate.showDeactivated = persistedShowDeactivated;
+        }
+
+        // Apply state update if any values were persisted
+        if (Object.keys(stateUpdate).length > 0) {
+          useAgentLayoutStore.setState(stateUpdate);
         }
       }
 
       setIsHydrated(true);
     };
 
-    hydrateLayout();
+    hydrateStore();
   }, []);
 
-  // Prevent flash of default layout by not rendering until hydrated
+  // Prevent flash of default values by not rendering until hydrated
   if (!isHydrated) {
     return null;
   }

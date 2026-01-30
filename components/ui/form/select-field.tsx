@@ -29,6 +29,8 @@ type SelectFieldProps = ClassName &
     description?: string;
     isDisabled?: boolean;
     label: string;
+    /** Optional callback when value changes (in addition to form state update) */
+    onChange?: (value: string) => void;
     options: Array<SelectOption>;
     placeholder?: string;
   };
@@ -44,6 +46,7 @@ export const SelectField = ({
   description,
   isDisabled,
   label,
+  onChange,
   options,
   placeholder = "Select an option",
   size,
@@ -81,7 +84,11 @@ export const SelectField = ({
             field.handleBlur();
           }
         }}
-        onValueChange={(value) => field.handleChange(value ?? "")}
+        onValueChange={(value) => {
+          const newValue = value ?? "";
+          field.handleChange(newValue);
+          onChange?.(newValue);
+        }}
         value={field.state.value}
       >
         <SelectTrigger isInvalid={hasError} size={size}>

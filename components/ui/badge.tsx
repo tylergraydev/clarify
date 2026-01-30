@@ -26,145 +26,145 @@ export const badgeVariants = cva(
       },
       variant: {
         anthropic: `
-          bg-orange-500/15 text-orange-700
-          dark:bg-orange-500/20 dark:text-orange-400
+          bg-orange-200 text-orange-900
+          dark:bg-orange-900/60 dark:text-orange-100
         `,
         azure: `
-          bg-sky-500/15 text-sky-700
-          dark:bg-sky-500/20 dark:text-sky-400
+          bg-sky-200 text-sky-900
+          dark:bg-sky-900/60 dark:text-sky-100
         `,
         backend: `
-          bg-violet-500/15 text-violet-700
-          dark:bg-violet-500/20 dark:text-violet-400
+          bg-violet-200 text-violet-900
+          dark:bg-violet-900/60 dark:text-violet-100
         `,
         bedrock: `
-          bg-amber-500/15 text-amber-700
-          dark:bg-amber-500/20 dark:text-amber-400
+          bg-amber-200 text-amber-900
+          dark:bg-amber-900/60 dark:text-amber-100
         `,
         "category-builtin": `
-          bg-amber-500/15 text-amber-700
-          dark:bg-amber-500/20 dark:text-amber-400
+          bg-amber-200 text-amber-900
+          dark:bg-amber-900/60 dark:text-amber-100
         `,
         clarifying: `
-          bg-yellow-500/15 text-yellow-700
-          dark:bg-yellow-500/20 dark:text-yellow-400
+          bg-yellow-200 text-yellow-900
+          dark:bg-yellow-900/60 dark:text-yellow-100
         `,
         "claude-cli": `
-          bg-orange-500/15 text-orange-700
-          dark:bg-orange-500/20 dark:text-orange-400
+          bg-orange-200 text-orange-900
+          dark:bg-orange-900/60 dark:text-orange-100
         `,
         cohere: `
-          bg-rose-500/15 text-rose-700
-          dark:bg-rose-500/20 dark:text-rose-400
+          bg-rose-200 text-rose-900
+          dark:bg-rose-900/60 dark:text-rose-100
         `,
         completed: `
-          bg-green-500/15 text-green-700
-          dark:bg-green-500/20 dark:text-green-400
+          bg-green-200 text-green-900
+          dark:bg-green-900/60 dark:text-green-100
         `,
         custom: `
-          bg-teal-500/15 text-teal-700
-          dark:bg-teal-500/20 dark:text-teal-400
+          bg-teal-200 text-teal-900
+          dark:bg-teal-900/60 dark:text-teal-100
         `,
         data: `
-          bg-emerald-500/15 text-emerald-700
-          dark:bg-emerald-500/20 dark:text-emerald-400
+          bg-emerald-200 text-emerald-900
+          dark:bg-emerald-900/60 dark:text-emerald-100
         `,
         deepseek: `
-          bg-indigo-500/15 text-indigo-700
-          dark:bg-indigo-500/20 dark:text-indigo-400
+          bg-indigo-200 text-indigo-900
+          dark:bg-indigo-900/60 dark:text-indigo-100
         `,
         default: `bg-muted text-muted-foreground`,
         describing: `
-          bg-neutral-500/15 text-neutral-700
-          dark:bg-neutral-500/20 dark:text-neutral-400
+          bg-neutral-200 text-neutral-900
+          dark:bg-neutral-900/60 dark:text-neutral-100
         `,
         draft: `
-          bg-neutral-500/15 text-neutral-700
-          dark:bg-neutral-500/20 dark:text-neutral-400
+          bg-neutral-200 text-neutral-900
+          dark:bg-neutral-900/60 dark:text-neutral-100
         `,
         electron: `
-          bg-sky-500/15 text-sky-700
-          dark:bg-sky-500/20 dark:text-sky-400
+          bg-sky-200 text-sky-900
+          dark:bg-sky-900/60 dark:text-sky-100
         `,
         environment: `
-          bg-cyan-500/15 text-cyan-700
-          dark:bg-cyan-500/20 dark:text-cyan-400
+          bg-cyan-200 text-cyan-900
+          dark:bg-cyan-900/60 dark:text-cyan-100
         `,
         failed: `
-          bg-red-500/15 text-red-700
-          dark:bg-red-500/20 dark:text-red-400
+          bg-red-200 text-red-900
+          dark:bg-red-900/60 dark:text-red-100
         `,
         google: `
-          bg-blue-500/15 text-blue-700
-          dark:bg-blue-500/20 dark:text-blue-400
+          bg-blue-200 text-blue-900
+          dark:bg-blue-900/60 dark:text-blue-100
         `,
         groq: `
-          bg-lime-500/15 text-lime-700
-          dark:bg-lime-500/20 dark:text-lime-400
+          bg-lime-200 text-lime-900
+          dark:bg-lime-900/60 dark:text-lime-100
         `,
         mistral: `
-          bg-red-500/15 text-red-700
-          dark:bg-red-500/20 dark:text-red-400
+          bg-red-200 text-red-900
+          dark:bg-red-900/60 dark:text-red-100
         `,
         ollama: `
-          bg-fuchsia-500/15 text-fuchsia-700
-          dark:bg-fuchsia-500/20 dark:text-fuchsia-400
+          bg-fuchsia-200 text-fuchsia-900
+          dark:bg-fuchsia-900/60 dark:text-fuchsia-100
         `,
         openai: `
-          bg-emerald-500/15 text-emerald-700
-          dark:bg-emerald-500/20 dark:text-emerald-400
+          bg-emerald-200 text-emerald-900
+          dark:bg-emerald-900/60 dark:text-emerald-100
         `,
         openrouter: `
-          bg-pink-500/15 text-pink-700
-          dark:bg-pink-500/20 dark:text-pink-400
+          bg-pink-200 text-pink-900
+          dark:bg-pink-900/60 dark:text-pink-100
         `,
         pending: `
-          bg-amber-500/15 text-amber-700
-          dark:bg-amber-500/20 dark:text-amber-400
+          bg-amber-200 text-amber-900
+          dark:bg-amber-900/60 dark:text-amber-100
         `,
         planning: `
-          bg-purple-100 text-purple-900
-          dark:bg-purple-900/40 dark:text-purple-200
+          bg-purple-200 text-purple-900
+          dark:bg-purple-900/60 dark:text-purple-100
         `,
         project: `
-          bg-indigo-500/15 text-indigo-700
-          dark:bg-indigo-500/20 dark:text-indigo-400
+          bg-indigo-200 text-indigo-900
+          dark:bg-indigo-900/60 dark:text-indigo-100
         `,
         researching: `
-          bg-blue-500/15 text-blue-700
-          dark:bg-blue-500/20 dark:text-blue-400
+          bg-blue-200 text-blue-900
+          dark:bg-blue-900/60 dark:text-blue-100
         `,
         review: `
-          bg-yellow-500/15 text-yellow-700
-          dark:bg-yellow-500/20 dark:text-yellow-400
+          bg-yellow-200 text-yellow-900
+          dark:bg-yellow-900/60 dark:text-yellow-100
         `,
         security: `
-          bg-red-500/15 text-red-700
-          dark:bg-red-500/20 dark:text-red-400
+          bg-red-200 text-red-900
+          dark:bg-red-900/60 dark:text-red-100
         `,
         specialist: `
-          bg-blue-100 text-blue-900
-          dark:bg-blue-900/40 dark:text-blue-200
+          bg-blue-200 text-blue-900
+          dark:bg-blue-900/60 dark:text-blue-100
         `,
         stale: `
-          bg-amber-500/15 text-amber-700
-          dark:bg-amber-500/20 dark:text-amber-400
+          bg-amber-200 text-amber-900
+          dark:bg-amber-900/60 dark:text-amber-100
         `,
         togetherai: `
-          bg-teal-500/15 text-teal-700
-          dark:bg-teal-500/20 dark:text-teal-400
+          bg-teal-200 text-teal-900
+          dark:bg-teal-900/60 dark:text-teal-100
         `,
         ui: `
-          bg-blue-500/15 text-blue-700
-          dark:bg-blue-500/20 dark:text-blue-400
+          bg-blue-200 text-blue-900
+          dark:bg-blue-900/60 dark:text-blue-100
         `,
         user: `
-          bg-violet-500/15 text-violet-700
-          dark:bg-violet-500/20 dark:text-violet-400
+          bg-violet-200 text-violet-900
+          dark:bg-violet-900/60 dark:text-violet-100
         `,
         xai: `
-          bg-slate-500/15 text-slate-700
-          dark:bg-slate-500/20 dark:text-slate-400
+          bg-slate-200 text-slate-900
+          dark:bg-slate-900/60 dark:text-slate-100
         `,
       },
     },
