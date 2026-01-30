@@ -342,11 +342,13 @@ interface DataTableProps<TData, TValue>
 function createSelectionColumn<TData>(): DataTableColumnDef<TData, unknown> {
   return {
     cell: ({ row }) => (
-      <Checkbox
-        aria-label={"Select row"}
-        checked={row.getIsSelected()}
-        onCheckedChange={(checked) => row.toggleSelected(!!checked)}
-      />
+      <div onClick={(e) => e.stopPropagation()}>
+        <Checkbox
+          aria-label={"Select row"}
+          checked={row.getIsSelected()}
+          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
+        />
+      </div>
     ),
     enableColumnFilter: false,
     enableHiding: false,

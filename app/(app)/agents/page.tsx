@@ -3,7 +3,7 @@
 import type { RowSelectionState } from '@tanstack/react-table';
 
 import { Plus } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { AgentWithRelations } from '@/components/agents/agent-table';
 import type { ParsedAgentMarkdown } from '@/lib/utils/agent-markdown';
@@ -32,7 +32,6 @@ import {
 } from '@/hooks/queries/use-agents';
 import { useProjects } from '@/hooks/queries/use-projects';
 import { useElectron } from '@/hooks/use-electron';
-import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
 import { useToast } from '@/hooks/use-toast';
 import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
 import { cn } from '@/lib/utils';
@@ -63,10 +62,10 @@ type TypeFilterValue = null | string;
  * - Toggle switches for showing built-in and deactivated agents
  * - Full CRUD operations: create, edit, duplicate, delete
  * - Move and copy agents between projects
- * - Keyboard shortcuts (Ctrl+N for create)
  */
 export default function AgentsPage() {
   // Filter state
+  const [searchFilter, setSearchFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<TypeFilterValue>(null);
   const [projectFilter, setProjectFilter] = useState<ProjectFilterValue>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>(null);
@@ -97,9 +96,6 @@ export default function AgentsPage() {
   const [importValidationResult, setImportValidationResult] =
     useState<AgentImportValidationResult | null>(null);
 
-  // Create dialog ref
-  const createDialogTriggerRef = useRef<HTMLButtonElement>(null);
-
   // Hooks for API access
   const { api } = useElectron();
   const toast = useToast();
@@ -124,16 +120,11 @@ export default function AgentsPage() {
   const moveAgentMutation = useMoveAgent();
   const resetMutation = useResetAgent();
 
-  // Keyboard shortcuts
-  const openCreateDialog = useCallback(() => {
-    createDialogTriggerRef.current?.click();
+  // Filter handlers
+  const handleSearchFilterChange = useCallback((value: string) => {
+    setSearchFilter(value);
   }, []);
 
-  useKeyboardShortcuts([
-    { callback: openCreateDialog, options: { key: 'n', modifiers: ['ctrl'] } },
-  ]);
-
-  // Filter handlers
   const handleTypeFilterChange = (value: null | string) => {
     setTypeFilter(value);
   };
@@ -507,6 +498,20 @@ export default function AgentsPage() {
         return false;
       }
 
+      // Filter by search term (matches name, displayName, or description)
+      if (searchFilter) {
+        const searchLower = searchFilter.toLowerCase();
+        const matchesName = agent.name.toLowerCase().includes(searchLower);
+        const matchesDisplayName = agent.displayName
+          .toLowerCase()
+          .includes(searchLower);
+        const matchesDescription =
+          agent.description?.toLowerCase().includes(searchLower) ?? false;
+        if (!matchesName && !matchesDisplayName && !matchesDescription) {
+          return false;
+        }
+      }
+
       // Filter by type
       if (typeFilter && agent.type !== typeFilter) {
         return false;
@@ -532,7 +537,7 @@ export default function AgentsPage() {
 
       return true;
     });
-  }, [allAgents, projectFilter, showBuiltIn, statusFilter, typeFilter]);
+  }, [allAgents, projectFilter, searchFilter, showBuiltIn, statusFilter, typeFilter]);
 
   // Derived state
   const totalCount = allAgents?.length ?? 0;
@@ -589,16 +594,9 @@ export default function AgentsPage() {
         <AgentEditorDialog
           mode={'create'}
           trigger={
-            <Button ref={createDialogTriggerRef}>
+            <Button>
               <Plus aria-hidden={'true'} className={'size-4'} />
               {'Create Agent'}
-              <kbd
-                className={
-                  'ml-2 hidden rounded-sm bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground md:inline-block'
-                }
-              >
-                {'Ctrl+N'}
-              </kbd>
             </Button>
           }
         />
@@ -624,6 +622,7 @@ export default function AgentsPage() {
           onDelete={handleDeleteClick}
           onDuplicate={handleDuplicate}
           onExport={handleExportSingle}
+          onGlobalFilterChange={handleSearchFilterChange}
           onMoveToProject={handleMoveToProject}
           onReset={handleReset}
           onRowSelectionChange={handleRowSelectionChange}

@@ -2,11 +2,22 @@
 
 import type { ComponentPropsWithRef } from "react";
 
-import { Download, RotateCcw, Upload } from "lucide-react";
+import { Download, Filter, RotateCcw, Upload } from "lucide-react";
 
 import type { Project } from "@/db/schema";
 
 import { Button } from "@/components/ui/button";
+import {
+  PopoverContent,
+  PopoverFooter,
+  PopoverHeader,
+  PopoverPopup,
+  PopoverPortal,
+  PopoverPositioner,
+  PopoverRoot,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   SelectItem,
   SelectList,
@@ -19,6 +30,10 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { agentTypes } from "@/db/schema/agents.schema";
+import {
+  DEFAULT_AGENT_SHOW_BUILTIN,
+  DEFAULT_AGENT_SHOW_DEACTIVATED,
+} from "@/lib/layout/constants";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -79,19 +94,64 @@ const formatTypeLabel = (type: string): string => {
   return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
+/**
+ * Calculate the number of active filters
+ */
+const getActiveFilterCount = (
+  typeFilter: null | string,
+  projectFilter: null | string,
+  statusFilter: null | string,
+  showBuiltIn: boolean,
+  showDeactivated: boolean
+): number => {
+  let count = 0;
+  if (typeFilter !== null) count++;
+  if (projectFilter !== null) count++;
+  if (statusFilter !== null) count++;
+  // Count toggles if they differ from defaults
+  if (showBuiltIn !== DEFAULT_AGENT_SHOW_BUILTIN) count++;
+  if (showDeactivated !== DEFAULT_AGENT_SHOW_DEACTIVATED) count++;
+  return count;
+};
+
+// ============================================================================
+// Sub-components
+// ============================================================================
+
+interface FilterCountBadgeProps {
+  /** Number of active filters */
+  count: number;
+}
+
+/**
+ * Badge showing the count of active filters
+ */
+const FilterCountBadge = ({ count }: FilterCountBadgeProps) => {
+  if (count === 0) return null;
+  return (
+    <span
+      aria-label={`${count} filter${count !== 1 ? "s" : ""} active`}
+      className={
+        "ml-1 inline-flex size-5 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground"
+      }
+    >
+      {count}
+    </span>
+  );
+};
+
 // ============================================================================
 // Main Component
 // ============================================================================
 
 /**
- * Toolbar content component for the agents table with faceted filters.
+ * Toolbar content component for the agents table with collapsible filters panel.
  *
  * Provides:
- * - Type filter dropdown (All types / Planning / Specialist / Review)
- * - Project filter dropdown (All projects / Global only / [Project names...])
- * - Status filter dropdown (All statuses / Active / Inactive)
- * - Show built-in toggle switch
- * - Show deactivated toggle switch
+ * - Collapsible filters panel with type, project, and status filters
+ * - Show built-in and show deactivated toggles inside the filter panel
+ * - Active filter count badge on the Filters button
+ * - Import and Export Selected actions
  *
  * Designed to integrate with DataTable's toolbarContent slot for
  * consistent toolbar styling and layout.
@@ -139,9 +199,14 @@ export const AgentTableToolbar = ({
   ...props
 }: AgentTableToolbarProps) => {
   // Computed state
-  const hasActiveFilters = Boolean(
-    typeFilter !== null || projectFilter !== null || statusFilter !== null
+  const activeFilterCount = getActiveFilterCount(
+    typeFilter,
+    projectFilter,
+    statusFilter,
+    showBuiltIn,
+    showDeactivated
   );
+  const hasActiveFilters = activeFilterCount > 0;
   const isExportDisabled = selectedCount === 0;
 
   // Handlers
@@ -173,156 +238,245 @@ export const AgentTableToolbar = ({
     onExportSelected?.();
   };
 
+  const handleResetFilters = () => {
+    // Reset all filters to defaults
+    onTypeFilterChange(null);
+    onProjectFilterChange(null);
+    onStatusFilterChange(null);
+    onShowBuiltInChange(DEFAULT_AGENT_SHOW_BUILTIN);
+    onShowDeactivatedChange(DEFAULT_AGENT_SHOW_DEACTIVATED);
+    onResetFilters?.();
+  };
+
   return (
     <div
       className={cn("flex items-center gap-3", className)}
       ref={ref}
       {...props}
     >
-      {/* Type Filter */}
-      <SelectRoot onValueChange={handleTypeChange} value={typeFilter ?? ""}>
-        <SelectTrigger
-          aria-label={"Filter by type"}
-          className={"w-32 shrink-0"}
-          size={"sm"}
-        >
-          <SelectValue placeholder={"All types"} />
-        </SelectTrigger>
-        <SelectPortal>
-          <SelectPositioner>
-            <SelectPopup size={"sm"}>
-              <SelectList>
-                <SelectItem label={"All types"} size={"sm"} value={""}>
-                  {"All types"}
-                </SelectItem>
-                {agentTypes.map((type) => (
-                  <SelectItem
-                    key={type}
-                    label={formatTypeLabel(type)}
-                    size={"sm"}
-                    value={type}
+      {/* Filters Popover */}
+      <PopoverRoot>
+        <PopoverTrigger>
+          <Button
+            aria-label={`Filters${hasActiveFilters ? `, ${activeFilterCount} active` : ""}`}
+            size={"sm"}
+            variant={"outline"}
+          >
+            <Filter aria-hidden={"true"} className={"size-4"} />
+            {"Filters"}
+            <FilterCountBadge count={activeFilterCount} />
+          </Button>
+        </PopoverTrigger>
+        <PopoverPortal>
+          <PopoverPositioner align={"start"}>
+            <PopoverPopup className={"w-72"}>
+              <PopoverHeader>
+                <PopoverTitle>{"Filters"}</PopoverTitle>
+              </PopoverHeader>
+
+              <PopoverContent className={"space-y-4"}>
+                {/* Type Filter */}
+                <div className={"space-y-1.5"}>
+                  <label
+                    className={"text-xs font-medium text-muted-foreground"}
+                    id={"filter-type-label"}
                   >
-                    {formatTypeLabel(type)}
-                  </SelectItem>
-                ))}
-              </SelectList>
-            </SelectPopup>
-          </SelectPositioner>
-        </SelectPortal>
-      </SelectRoot>
-
-      {/* Project Filter */}
-      <SelectRoot
-        onValueChange={handleProjectChange}
-        value={projectFilter ?? ""}
-      >
-        <SelectTrigger
-          aria-label={"Filter by project"}
-          className={"w-40 shrink-0"}
-          size={"sm"}
-        >
-          <SelectValue placeholder={"All projects"} />
-        </SelectTrigger>
-        <SelectPortal>
-          <SelectPositioner>
-            <SelectPopup size={"sm"}>
-              <SelectList>
-                <SelectItem label={"All projects"} size={"sm"} value={""}>
-                  {"All projects"}
-                </SelectItem>
-                <SelectItem label={"Global only"} size={"sm"} value={"global"}>
-                  {"Global only"}
-                </SelectItem>
-                {projects.map((project) => (
-                  <SelectItem
-                    key={project.id}
-                    label={project.name}
-                    size={"sm"}
-                    value={String(project.id)}
+                    {"Type"}
+                  </label>
+                  <SelectRoot
+                    onValueChange={handleTypeChange}
+                    value={typeFilter ?? ""}
                   >
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectList>
-            </SelectPopup>
-          </SelectPositioner>
-        </SelectPortal>
-      </SelectRoot>
+                    <SelectTrigger
+                      aria-labelledby={"filter-type-label"}
+                      className={"w-full"}
+                      size={"sm"}
+                    >
+                      <SelectValue placeholder={"All types"} />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectPositioner>
+                        <SelectPopup size={"sm"}>
+                          <SelectList>
+                            <SelectItem
+                              label={"All types"}
+                              size={"sm"}
+                              value={""}
+                            >
+                              {"All types"}
+                            </SelectItem>
+                            {agentTypes.map((type) => (
+                              <SelectItem
+                                key={type}
+                                label={formatTypeLabel(type)}
+                                size={"sm"}
+                                value={type}
+                              >
+                                {formatTypeLabel(type)}
+                              </SelectItem>
+                            ))}
+                          </SelectList>
+                        </SelectPopup>
+                      </SelectPositioner>
+                    </SelectPortal>
+                  </SelectRoot>
+                </div>
 
-      {/* Status Filter */}
-      <SelectRoot onValueChange={handleStatusChange} value={statusFilter ?? ""}>
-        <SelectTrigger
-          aria-label={"Filter by status"}
-          className={"w-32 shrink-0"}
-          size={"sm"}
-        >
-          <SelectValue placeholder={"All statuses"} />
-        </SelectTrigger>
-        <SelectPortal>
-          <SelectPositioner>
-            <SelectPopup size={"sm"}>
-              <SelectList>
-                {STATUS_OPTIONS.map((option) => (
-                  <SelectItem
-                    key={option.value}
-                    label={option.label}
-                    size={"sm"}
-                    value={option.value}
+                {/* Project Filter */}
+                <div className={"space-y-1.5"}>
+                  <label
+                    className={"text-xs font-medium text-muted-foreground"}
+                    id={"filter-project-label"}
                   >
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectList>
-            </SelectPopup>
-          </SelectPositioner>
-        </SelectPortal>
-      </SelectRoot>
+                    {"Project"}
+                  </label>
+                  <SelectRoot
+                    onValueChange={handleProjectChange}
+                    value={projectFilter ?? ""}
+                  >
+                    <SelectTrigger
+                      aria-labelledby={"filter-project-label"}
+                      className={"w-full"}
+                      size={"sm"}
+                    >
+                      <SelectValue placeholder={"All projects"} />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectPositioner>
+                        <SelectPopup size={"sm"}>
+                          <SelectList>
+                            <SelectItem
+                              label={"All projects"}
+                              size={"sm"}
+                              value={""}
+                            >
+                              {"All projects"}
+                            </SelectItem>
+                            <SelectItem
+                              label={"Global only"}
+                              size={"sm"}
+                              value={"global"}
+                            >
+                              {"Global only"}
+                            </SelectItem>
+                            {projects.map((project) => (
+                              <SelectItem
+                                key={project.id}
+                                label={project.name}
+                                size={"sm"}
+                                value={String(project.id)}
+                              >
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          </SelectList>
+                        </SelectPopup>
+                      </SelectPositioner>
+                    </SelectPortal>
+                  </SelectRoot>
+                </div>
 
-      {/* Reset Filters Button */}
-      {hasActiveFilters && onResetFilters && (
-        <Button
-          aria-label={"Reset all filters"}
-          className={"shrink-0"}
-          onClick={onResetFilters}
-          size={"sm"}
-          variant={"ghost"}
-        >
-          <RotateCcw aria-hidden={"true"} className={"size-4"} />
-          {"Reset Filters"}
-        </Button>
-      )}
+                {/* Status Filter */}
+                <div className={"space-y-1.5"}>
+                  <label
+                    className={"text-xs font-medium text-muted-foreground"}
+                    id={"filter-status-label"}
+                  >
+                    {"Status"}
+                  </label>
+                  <SelectRoot
+                    onValueChange={handleStatusChange}
+                    value={statusFilter ?? ""}
+                  >
+                    <SelectTrigger
+                      aria-labelledby={"filter-status-label"}
+                      className={"w-full"}
+                      size={"sm"}
+                    >
+                      <SelectValue placeholder={"All statuses"} />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectPositioner>
+                        <SelectPopup size={"sm"}>
+                          <SelectList>
+                            {STATUS_OPTIONS.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                label={option.label}
+                                size={"sm"}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectList>
+                        </SelectPopup>
+                      </SelectPositioner>
+                    </SelectPortal>
+                  </SelectRoot>
+                </div>
 
-      {/* Separator */}
-      <div
-        aria-hidden={"true"}
-        className={"mx-1 h-5 w-px shrink-0 bg-border"}
-      />
+                {/* Separator */}
+                <div
+                  aria-hidden={"true"}
+                  className={"h-px bg-border"}
+                  role={"separator"}
+                />
 
-      {/* Show Built-in Toggle */}
-      <div className={"flex shrink-0 items-center gap-2"}>
-        <Switch
-          aria-label={"Show built-in agents"}
-          checked={showBuiltIn}
-          onCheckedChange={handleShowBuiltInToggle}
-          size={"sm"}
-        />
-        <span className={"text-sm text-muted-foreground"}>
-          {"Show built-in"}
-        </span>
-      </div>
+                {/* Toggle Switches */}
+                <div className={"space-y-3"}>
+                  {/* Show Built-in Toggle */}
+                  <div className={"flex items-center justify-between"}>
+                    <label
+                      className={"text-sm"}
+                      htmlFor={"filter-show-builtin"}
+                    >
+                      {"Show built-in agents"}
+                    </label>
+                    <Switch
+                      checked={showBuiltIn}
+                      id={"filter-show-builtin"}
+                      onCheckedChange={handleShowBuiltInToggle}
+                      size={"sm"}
+                    />
+                  </div>
 
-      {/* Show Deactivated Toggle */}
-      <div className={"flex shrink-0 items-center gap-2"}>
-        <Switch
-          aria-label={"Show deactivated agents"}
-          checked={showDeactivated}
-          onCheckedChange={handleShowDeactivatedToggle}
-          size={"sm"}
-        />
-        <span className={"text-sm text-muted-foreground"}>
-          {"Show deactivated"}
-        </span>
-      </div>
+                  {/* Show Deactivated Toggle */}
+                  <div className={"flex items-center justify-between"}>
+                    <label
+                      className={"text-sm"}
+                      htmlFor={"filter-show-deactivated"}
+                    >
+                      {"Show deactivated agents"}
+                    </label>
+                    <Switch
+                      checked={showDeactivated}
+                      id={"filter-show-deactivated"}
+                      onCheckedChange={handleShowDeactivatedToggle}
+                      size={"sm"}
+                    />
+                  </div>
+                </div>
+              </PopoverContent>
+
+              {/* Reset Filters Button */}
+              {hasActiveFilters && (
+                <PopoverFooter>
+                  <Button
+                    className={"w-full"}
+                    onClick={handleResetFilters}
+                    size={"sm"}
+                    variant={"ghost"}
+                  >
+                    <RotateCcw aria-hidden={"true"} className={"size-4"} />
+                    {"Reset Filters"}
+                  </Button>
+                </PopoverFooter>
+              )}
+            </PopoverPopup>
+          </PopoverPositioner>
+        </PopoverPortal>
+      </PopoverRoot>
 
       {/* Actions Separator */}
       {(onImport || onExportSelected) && (

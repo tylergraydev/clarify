@@ -24,7 +24,7 @@ export const TooltipPopup = ({
     <BaseTooltip.Popup
       className={cn(
         `
-          z-50 animate-in rounded-md bg-foreground px-2.5 py-1.5 text-xs
+          z-50 max-w-xs animate-in rounded-md bg-foreground px-2.5 py-1.5 text-sm
           text-background shadow-md fade-in-0 zoom-in-95
           data-[side=bottom]:slide-in-from-top-2
           data-[side=left]:slide-in-from-right-2
