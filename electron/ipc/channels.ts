@@ -21,6 +21,7 @@ export const IpcChannels = {
     create: "agent:create",
     deactivate: "agent:deactivate",
     delete: "agent:delete",
+    duplicate: "agent:duplicate",
     get: "agent:get",
     list: "agent:list",
     reset: "agent:reset",

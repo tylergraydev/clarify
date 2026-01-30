@@ -42,6 +42,7 @@ const IpcChannels = {
     create: "agent:create",
     deactivate: "agent:deactivate",
     delete: "agent:delete",
+    duplicate: "agent:duplicate",
     get: "agent:get",
     list: "agent:list",
     reset: "agent:reset",
@@ -196,6 +197,7 @@ export interface ElectronAPI {
     create(data: NewAgent): Promise<AgentOperationResult>;
     deactivate(id: number): Promise<Agent | undefined>;
     delete(id: number): Promise<AgentOperationResult>;
+    duplicate(id: number): Promise<AgentOperationResult>;
     get(id: number): Promise<Agent | undefined>;
     list(filters?: AgentListFilters): Promise<Array<Agent>>;
     reset(id: number): Promise<Agent | undefined>;
@@ -474,6 +476,7 @@ const electronAPI: ElectronAPI = {
     create: (data) => ipcRenderer.invoke(IpcChannels.agent.create, data),
     deactivate: (id) => ipcRenderer.invoke(IpcChannels.agent.deactivate, id),
     delete: (id) => ipcRenderer.invoke(IpcChannels.agent.delete, id),
+    duplicate: (id) => ipcRenderer.invoke(IpcChannels.agent.duplicate, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.agent.get, id),
     list: (filters) => ipcRenderer.invoke(IpcChannels.agent.list, filters),
     reset: (id) => ipcRenderer.invoke(IpcChannels.agent.reset, id),

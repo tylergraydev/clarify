@@ -230,6 +230,40 @@ export function useDeleteAgent() {
 }
 
 /**
+ * Duplicate an agent
+ */
+export function useDuplicateAgent() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: (id: number) => api!.agent.duplicate(id),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to duplicate agent",
+        title: "Duplicate Failed",
+      });
+    },
+    onSuccess: (result) => {
+      if (!result.success) {
+        toast.error({
+          description: result.error ?? "Failed to duplicate agent",
+          title: "Duplicate Failed",
+        });
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: agentKeys._def });
+      toast.success({
+        description: "Agent duplicated successfully",
+        title: "Agent Duplicated",
+      });
+    },
+  });
+}
+
+/**
  * Reset an agent to its default configuration
  */
 export function useResetAgent() {

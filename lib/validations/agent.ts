@@ -48,6 +48,35 @@ export const createAgentSchema = z.object({
 
 export type CreateAgentInput = z.infer<typeof createAgentSchema>;
 
+// Create agent form schema for dialog validation
+// This is designed for form input in the create agent dialog
+// Note: color is managed via state in the dialog but validated here for form submission
+export const createAgentFormSchema = z.object({
+  color: z.enum(agentColors).optional(),
+  description: z.string().max(1000, "Description is too long").optional(),
+  displayName: z
+    .string()
+    .min(1, "Display name is required")
+    .max(255, "Display name is too long"),
+  name: z
+    .string()
+    .min(1, "Agent name is required")
+    .max(100, "Agent name is too long")
+    .regex(
+      /^[a-z][a-z0-9-]*$/,
+      "Agent name must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens"
+    ),
+  systemPrompt: z
+    .string()
+    .min(1, "System prompt is required")
+    .max(50000, "System prompt is too long"),
+  type: z.enum(agentTypes, {
+    error: "Please select an agent type",
+  }),
+});
+
+export type CreateAgentFormData = z.infer<typeof createAgentFormSchema>;
+
 // Note: color is managed separately via state in AgentEditorDialog
 // since it requires special handling with the color picker component
 export const updateAgentSchema = z.object({
