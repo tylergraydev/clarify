@@ -2,7 +2,7 @@
 
 import type { ComponentPropsWithRef } from "react";
 
-import { Copy, FolderPlus, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import type { Agent } from "@/db/schema";
@@ -188,6 +188,11 @@ const AgentListItem = ({
             {"Project"}
           </Badge>
         )}
+        {!isCustomAgent && (
+          <Badge size={"sm"} variant={"category-builtin"}>
+            {"Built-in"}
+          </Badge>
+        )}
         {isCustomAgent && (
           <Badge size={"sm"} variant={"custom"}>
             {"Custom"}
@@ -217,12 +222,16 @@ const AgentListItem = ({
       {/* Action Buttons */}
       <div className={"flex shrink-0 items-center gap-1"}>
         <IconButton
-          aria-label={"Edit agent"}
+          aria-label={isCustomAgent ? "Edit agent" : "View agent"}
           disabled={isActionDisabled}
           onClick={handleEditClick}
           type={"button"}
         >
-          <Pencil aria-hidden={"true"} className={"size-4"} />
+          {isCustomAgent ? (
+            <Pencil aria-hidden={"true"} className={"size-4"} />
+          ) : (
+            <Eye aria-hidden={"true"} className={"size-4"} />
+          )}
         </IconButton>
         <IconButton
           aria-label={"Duplicate agent"}

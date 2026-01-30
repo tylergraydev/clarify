@@ -39,6 +39,7 @@ interface GlobalAgentsTabContentProps {
   filters?: {
     includeDeactivated?: boolean;
     search?: string;
+    showBuiltIn?: boolean;
     type?: string;
   };
 }
@@ -114,11 +115,13 @@ export const GlobalAgentsTabContent = ({
   filters,
 }: GlobalAgentsTabContentProps) => {
   const [agentToDelete, setAgentToDelete] = useState<Agent | null>(null);
+  const [duplicatedAgent, setDuplicatedAgent] = useState<Agent | null>(null);
 
   const { layout } = useAgentLayoutStore();
   const selectedProjectId = useShellStore((state) => state.selectedProjectId);
 
   const isDeleteDialogOpen = agentToDelete !== null;
+  const isDuplicatedDialogOpen = duplicatedAgent !== null;
 
   // Data fetching
   const { data: agents, isLoading } = useGlobalAgents({
@@ -134,8 +137,14 @@ export const GlobalAgentsTabContent = ({
   const duplicateAgentMutation = useDuplicateAgent();
   const resetAgentMutation = useResetAgent();
 
-  // Client-side search filtering
+  // Client-side filtering (search and showBuiltIn)
   const filteredAgents = agents?.filter((agent) => {
+    // Filter by showBuiltIn preference
+    if (filters?.showBuiltIn === false && agent.builtInAt !== null) {
+      return false;
+    }
+
+    // Filter by search term
     if (filters?.search) {
       const searchLower = filters.search.toLowerCase();
       const isMatchesName = agent.displayName
@@ -192,7 +201,20 @@ export const GlobalAgentsTabContent = ({
   };
 
   const handleDuplicateClick = (agent: Agent) => {
-    duplicateAgentMutation.mutate(agent.id);
+    duplicateAgentMutation.mutate(agent.id, {
+      onSuccess: (result) => {
+        // Auto-open edit dialog for the newly duplicated agent
+        if (result.success && result.agent) {
+          setDuplicatedAgent(result.agent);
+        }
+      },
+    });
+  };
+
+  const handleDuplicatedDialogOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setDuplicatedAgent(null);
+    }
   };
 
   const handleCreateOverrideClick = (agent: Agent) => {
@@ -302,6 +324,16 @@ export const GlobalAgentsTabContent = ({
         onConfirm={handleConfirmDelete}
         onOpenChange={handleDeleteDialogOpenChange}
       />
+
+      {/* Edit Dialog for Duplicated Agent */}
+      {duplicatedAgent && (
+        <AgentEditorDialog
+          agent={duplicatedAgent}
+          isOpen={isDuplicatedDialogOpen}
+          mode={"edit"}
+          onOpenChange={handleDuplicatedDialogOpenChange}
+        />
+      )}
     </Fragment>
   );
 };

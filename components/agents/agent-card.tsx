@@ -2,7 +2,8 @@
 
 import type { ComponentPropsWithRef } from "react";
 
-import { Copy, FolderPlus, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { Fragment } from "react";
 
 import type { Agent } from "@/db/schema";
 
@@ -180,6 +181,11 @@ export const AgentCard = ({
               {"Project"}
             </Badge>
           )}
+          {!isCustomAgent && (
+            <Badge size={"sm"} variant={"category-builtin"}>
+              {"Built-in"}
+            </Badge>
+          )}
           {isCustomAgent && (
             <Badge size={"sm"} variant={"custom"}>
               {"Custom"}
@@ -196,14 +202,23 @@ export const AgentCard = ({
       {/* Actions */}
       <CardFooter className={"gap-2"}>
         <Button
-          aria-label={"Edit agent"}
+          aria-label={isCustomAgent ? "Edit agent" : "View agent"}
           disabled={isActionDisabled}
           onClick={handleEditClick}
           size={"sm"}
           variant={"outline"}
         >
-          <Pencil aria-hidden={"true"} className={"size-4"} />
-          {"Edit"}
+          {isCustomAgent ? (
+            <Fragment>
+              <Pencil aria-hidden={"true"} className={"size-4"} />
+              {"Edit"}
+            </Fragment>
+          ) : (
+            <Fragment>
+              <Eye aria-hidden={"true"} className={"size-4"} />
+              {"View"}
+            </Fragment>
+          )}
         </Button>
         <Button
           aria-label={"Duplicate agent"}

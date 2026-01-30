@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import {
   AGENT_LAYOUT_STORAGE_KEY,
+  AGENT_SHOW_BUILTIN_STORAGE_KEY,
   AGENT_SHOW_DEACTIVATED_STORAGE_KEY,
   type AgentLayout,
 } from "@/lib/layout/constants";
@@ -39,6 +40,12 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
           AGENT_LAYOUT_STORAGE_KEY
         );
 
+        // Hydrate show built-in preference
+        const persistedShowBuiltIn =
+          await window.electronAPI.store.get<boolean>(
+            AGENT_SHOW_BUILTIN_STORAGE_KEY
+          );
+
         // Hydrate show deactivated preference
         const persistedShowDeactivated =
           await window.electronAPI.store.get<boolean>(
@@ -48,6 +55,7 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
         // Build state update object
         const stateUpdate: Partial<{
           layout: AgentLayout;
+          showBuiltIn: boolean;
           showDeactivated: boolean;
         }> = {};
 
@@ -57,6 +65,11 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
           ["card", "list", "table"].includes(persistedLayout)
         ) {
           stateUpdate.layout = persistedLayout;
+        }
+
+        // Validate and add showBuiltIn to update
+        if (typeof persistedShowBuiltIn === "boolean") {
+          stateUpdate.showBuiltIn = persistedShowBuiltIn;
         }
 
         // Validate and add showDeactivated to update

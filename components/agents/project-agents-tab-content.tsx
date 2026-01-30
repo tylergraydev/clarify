@@ -37,6 +37,7 @@ interface ProjectAgentsTabContentProps {
   filters?: {
     includeDeactivated?: boolean;
     search?: string;
+    showBuiltIn?: boolean;
     type?: string;
   };
   projectId: number;
@@ -114,10 +115,12 @@ export const ProjectAgentsTabContent = ({
   projectId,
 }: ProjectAgentsTabContentProps) => {
   const [agentToDelete, setAgentToDelete] = useState<Agent | null>(null);
+  const [duplicatedAgent, setDuplicatedAgent] = useState<Agent | null>(null);
 
   const { layout } = useAgentLayoutStore();
 
   const isDeleteDialogOpen = agentToDelete !== null;
+  const isDuplicatedDialogOpen = duplicatedAgent !== null;
   const isProjectSelected = projectId > 0;
 
   // Data fetching - only enabled when a project is selected
@@ -133,8 +136,14 @@ export const ProjectAgentsTabContent = ({
   const duplicateAgentMutation = useDuplicateAgent();
   const resetAgentMutation = useResetAgent();
 
-  // Client-side search filtering
+  // Client-side filtering (search and showBuiltIn)
   const filteredAgents = agents?.filter((agent) => {
+    // Filter by showBuiltIn preference
+    if (filters?.showBuiltIn === false && agent.builtInAt !== null) {
+      return false;
+    }
+
+    // Filter by search term
     if (filters?.search) {
       const searchLower = filters.search.toLowerCase();
       const isMatchesName = agent.displayName
@@ -192,7 +201,20 @@ export const ProjectAgentsTabContent = ({
   };
 
   const handleDuplicateClick = (agent: Agent) => {
-    duplicateAgentMutation.mutate(agent.id);
+    duplicateAgentMutation.mutate(agent.id, {
+      onSuccess: (result) => {
+        // Auto-open edit dialog for the newly duplicated agent
+        if (result.success && result.agent) {
+          setDuplicatedAgent(result.agent);
+        }
+      },
+    });
+  };
+
+  const handleDuplicatedDialogOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setDuplicatedAgent(null);
+    }
   };
 
   // Derived state
@@ -303,6 +325,16 @@ export const ProjectAgentsTabContent = ({
         onConfirm={handleConfirmDelete}
         onOpenChange={handleDeleteDialogOpenChange}
       />
+
+      {/* Edit Dialog for Duplicated Agent */}
+      {duplicatedAgent && (
+        <AgentEditorDialog
+          agent={duplicatedAgent}
+          isOpen={isDuplicatedDialogOpen}
+          mode={"edit"}
+          onOpenChange={handleDuplicatedDialogOpenChange}
+        />
+      )}
     </Fragment>
   );
 };

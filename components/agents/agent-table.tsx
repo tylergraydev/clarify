@@ -3,7 +3,7 @@
 import type { ComponentPropsWithRef } from "react";
 
 import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import type { Agent } from "@/db/schema";
 
@@ -254,6 +254,11 @@ export const AgentTable = ({
                     </button>
                     {/* Origin Badges */}
                     <div className={"flex items-center gap-1"}>
+                      {!isCustomAgent && (
+                        <Badge size={"sm"} variant={"category-builtin"}>
+                          {"Built-in"}
+                        </Badge>
+                      )}
                       {isCustomAgent && (
                         <Badge size={"sm"} variant={"custom"}>
                           {"Custom"}
@@ -312,27 +317,29 @@ export const AgentTable = ({
                     className={"flex items-center justify-end gap-1"}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {/* View/Edit */}
+                    {/* View (for built-in agents) or Edit (for custom agents) */}
                     <Button
-                      aria-label={`Edit ${agent.displayName}`}
+                      aria-label={
+                        isCustomAgent
+                          ? `Edit ${agent.displayName}`
+                          : `View ${agent.displayName}`
+                      }
                       disabled={isActionDisabled}
                       onClick={() => handleEditClick(agent)}
                       size={"sm"}
                       variant={"ghost"}
                     >
-                      <Eye aria-hidden={"true"} className={"size-4"} />
-                      {"View"}
-                    </Button>
-
-                    {/* Edit */}
-                    <Button
-                      aria-label={`Edit ${agent.displayName}`}
-                      disabled={isActionDisabled}
-                      onClick={() => handleEditClick(agent)}
-                      size={"sm"}
-                      variant={"ghost"}
-                    >
-                      <Pencil aria-hidden={"true"} className={"size-4"} />
+                      {isCustomAgent ? (
+                        <Fragment>
+                          <Pencil aria-hidden={"true"} className={"size-4"} />
+                          {"Edit"}
+                        </Fragment>
+                      ) : (
+                        <Fragment>
+                          <Eye aria-hidden={"true"} className={"size-4"} />
+                          {"View"}
+                        </Fragment>
+                      )}
                     </Button>
 
                     {/* Duplicate */}

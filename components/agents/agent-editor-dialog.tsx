@@ -167,6 +167,10 @@ export const AgentEditorDialog = ({
   const isCustomized = agent?.parentAgentId !== null;
   const isDuplicateMode = mode === "create" && initialData !== undefined;
   const isProjectScoped = !isEditMode && projectId !== undefined;
+  // View-only mode for built-in agents in edit mode
+  const isViewMode = isEditMode && isBuiltIn && !isCustomized;
+  // Show reset button only for customized agents in edit mode, but not in view mode
+  const isResetButtonVisible = isEditMode && isCustomized && !isViewMode;
 
   // Determine validation schema based on mode
   const validationSchema = isEditMode
@@ -542,17 +546,21 @@ export const AgentEditorDialog = ({
         : "Review"
     : null;
 
-  const dialogTitle = isEditMode
-    ? "Edit Agent"
-    : isDuplicateMode
-      ? "Duplicate Agent"
-      : "Create Agent";
+  const dialogTitle = isViewMode
+    ? "View Agent"
+    : isEditMode
+      ? "Edit Agent"
+      : isDuplicateMode
+        ? "Duplicate Agent"
+        : "Create Agent";
 
-  const dialogDescription = isEditMode
-    ? "Customize the agent's display name, description, and system prompt."
-    : isDuplicateMode
-      ? "Create a copy of the agent with your modifications."
-      : "Create a new custom agent with a unique name, type, and system prompt.";
+  const dialogDescription = isViewMode
+    ? "View the built-in agent configuration. Duplicate to create an editable copy."
+    : isEditMode
+      ? "Customize the agent's display name, description, and system prompt."
+      : isDuplicateMode
+        ? "Create a copy of the agent with your modifications."
+        : "Create a new custom agent with a unique name, type, and system prompt.";
 
   const submitLabel = isEditMode
     ? isSubmitting
@@ -645,7 +653,7 @@ export const AgentEditorDialog = ({
 
               <fieldset
                 className={"mt-4 flex flex-col gap-4"}
-                disabled={isSubmitting || isResetting}
+                disabled={isSubmitting || isResetting || isViewMode}
               >
                 <legend className={"sr-only"}>{"Agent details"}</legend>
 
@@ -798,9 +806,9 @@ export const AgentEditorDialog = ({
 
             {/* Sticky Footer */}
             <DialogFooter alignment={"between"}>
-              {/* Reset Button - only for customized agents in edit mode */}
+              {/* Reset Button - only for customized agents in edit mode, hidden in view mode */}
               <div>
-                {isEditMode && isCustomized && (
+                {isResetButtonVisible && (
                   <Button
                     disabled={isSubmitting || isResetting}
                     onClick={handleResetClick}
@@ -820,12 +828,14 @@ export const AgentEditorDialog = ({
                     type={"button"}
                     variant={"outline"}
                   >
-                    {"Cancel"}
+                    {isViewMode ? "Close" : "Cancel"}
                   </Button>
                 </DialogClose>
-                <form.AppForm>
-                  <form.SubmitButton>{submitLabel}</form.SubmitButton>
-                </form.AppForm>
+                {!isViewMode && (
+                  <form.AppForm>
+                    <form.SubmitButton>{submitLabel}</form.SubmitButton>
+                  </form.AppForm>
+                )}
               </div>
             </DialogFooter>
           </form>

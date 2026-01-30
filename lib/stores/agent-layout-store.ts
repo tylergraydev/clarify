@@ -2,9 +2,11 @@ import { create } from "zustand";
 
 import {
   AGENT_LAYOUT_STORAGE_KEY,
+  AGENT_SHOW_BUILTIN_STORAGE_KEY,
   AGENT_SHOW_DEACTIVATED_STORAGE_KEY,
   AgentLayout,
   DEFAULT_AGENT_LAYOUT,
+  DEFAULT_AGENT_SHOW_BUILTIN,
   DEFAULT_AGENT_SHOW_DEACTIVATED,
 } from "../layout/constants";
 
@@ -14,6 +16,8 @@ import {
 export interface AgentLayoutActions {
   /** Set the layout preference and persist to electron-store */
   setLayout: (layout: AgentLayout) => void;
+  /** Set the show built-in preference and persist to electron-store */
+  setShowBuiltIn: (show: boolean) => void;
   /** Set the show deactivated preference and persist to electron-store */
   setShowDeactivated: (show: boolean) => void;
 }
@@ -24,6 +28,8 @@ export interface AgentLayoutActions {
 export interface AgentLayoutState {
   /** Currently selected layout for the agents view */
   layout: AgentLayout;
+  /** Whether to show built-in agents */
+  showBuiltIn: boolean;
   /** Whether to show deactivated agents */
   showDeactivated: boolean;
 }
@@ -77,6 +83,15 @@ export const useAgentLayoutStore = create<AgentLayoutStore>()((set) => ({
     }
   },
 
+  setShowBuiltIn: (show: boolean) => {
+    set({ showBuiltIn: show });
+
+    // Persist to electron-store via IPC
+    if (typeof window !== "undefined" && window.electronAPI?.store) {
+      window.electronAPI.store.set(AGENT_SHOW_BUILTIN_STORAGE_KEY, show);
+    }
+  },
+
   setShowDeactivated: (show: boolean) => {
     set({ showDeactivated: show });
 
@@ -85,6 +100,8 @@ export const useAgentLayoutStore = create<AgentLayoutStore>()((set) => ({
       window.electronAPI.store.set(AGENT_SHOW_DEACTIVATED_STORAGE_KEY, show);
     }
   },
+
+  showBuiltIn: DEFAULT_AGENT_SHOW_BUILTIN,
 
   showDeactivated: DEFAULT_AGENT_SHOW_DEACTIVATED,
 }));

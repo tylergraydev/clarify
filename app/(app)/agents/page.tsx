@@ -87,7 +87,8 @@ export default function AgentsPage() {
   );
 
   // Persisted state from Zustand store (electron-store backed)
-  const { setShowDeactivated, showDeactivated } = useAgentLayoutStore();
+  const { setShowBuiltIn, setShowDeactivated, showBuiltIn, showDeactivated } =
+    useAgentLayoutStore();
 
   // Shell store for selected project
   const selectedProjectId = useShellStore((state) => state.selectedProjectId);
@@ -139,6 +140,10 @@ export default function AgentsPage() {
     }
   };
 
+  const handleShowBuiltInChange = (isChecked: boolean) => {
+    setShowBuiltIn(isChecked);
+  };
+
   const handleShowDeactivatedChange = (isChecked: boolean) => {
     setShowDeactivated(isChecked);
   };
@@ -157,12 +162,18 @@ export default function AgentsPage() {
   const filterProps = {
     includeDeactivated: showDeactivated,
     search: search || undefined,
+    showBuiltIn,
     type: typeFilter ?? undefined,
   };
 
   // Count display - use client-side filtered results
   const globalCount =
     globalAgents?.filter((agent) => {
+      // Filter by showBuiltIn preference
+      if (!showBuiltIn && agent.builtInAt !== null) {
+        return false;
+      }
+      // Filter by search term
       if (!search) return true;
       const searchLower = search.toLowerCase();
       const isMatchesName = agent.displayName
@@ -175,6 +186,11 @@ export default function AgentsPage() {
 
   const projectCount =
     projectAgents?.filter((agent) => {
+      // Filter by showBuiltIn preference
+      if (!showBuiltIn && agent.builtInAt !== null) {
+        return false;
+      }
+      // Filter by search term
       if (!search) return true;
       const searchLower = search.toLowerCase();
       const isMatchesName = agent.displayName
@@ -326,6 +342,19 @@ export default function AgentsPage() {
             type={"search"}
             value={search}
           />
+        </div>
+
+        {/* Show built-in toggle */}
+        <div className={"flex items-center gap-2"}>
+          <Switch
+            aria-label={"Show built-in agents"}
+            checked={showBuiltIn}
+            onCheckedChange={handleShowBuiltInChange}
+            size={"sm"}
+          />
+          <span className={"text-sm text-muted-foreground"}>
+            {"Show built-in"}
+          </span>
         </div>
 
         {/* Show deactivated toggle */}
