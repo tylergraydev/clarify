@@ -1,5 +1,5 @@
 ---
-allowed-tools: Task(subagent_type:database-schema), Task(subagent_type:ipc-handler), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:frontend-component), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
+allowed-tools: Task(subagent_type:database-schema), Task(subagent_type:ipc-handler), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:frontend-component), Task(subagent_type:vercel-react-best-practices), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
 argument-hint: "path/to/file.ts [--reference=path/to/reference.ts] [--dry-run]"
 description: Fix a file to follow project patterns using specialist agents with automatic review and iteration
 ---
@@ -37,21 +37,22 @@ follow project patterns, then review the changes and iterate if issues are found
 
 Map the file path to the appropriate specialist agent:
 
-| File Pattern                            | Specialist Agent                | Skills Loaded                                       |
-| --------------------------------------- | ------------------------------- | --------------------------------------------------- |
-| `*.schema.ts` in `db/schema/`           | `database-schema`               | database-schema-conventions                         |
-| `*.repository.ts` in `db/repositories/` | `database-schema`               | database-schema-conventions                         |
-| `*.handlers.ts` in `electron/ipc/`      | `ipc-handler`                   | ipc-handler-conventions                             |
-| `electron/preload.ts`                   | `ipc-handler`                   | ipc-handler-conventions                             |
-| `use-*.ts` in `hooks/queries/`          | `tanstack-query`                | tanstack-query-conventions                          |
-| `*.ts` in `lib/queries/`                | `tanstack-query`                | tanstack-query-conventions                          |
-| `*-table.tsx` or tables with useReactTable | `tanstack-table`             | tanstack-table, component-conventions               |
-| `*-form.tsx` or forms in features       | `tanstack-form`                 | tanstack-form-conventions, react-coding-conventions |
-| `*.ts` in `lib/validations/`            | `tanstack-form`                 | tanstack-form-conventions                           |
-| Components in `components/ui/form/`     | `tanstack-form-base-components` | tanstack-form-base-components                       |
-| Components in `components/ui/`          | `frontend-component`            | component-conventions, react-coding-conventions     |
-| Components in `components/features/`    | `frontend-component`            | component-conventions, react-coding-conventions     |
-| Components in `components/layout/`      | `frontend-component`            | component-conventions, react-coding-conventions     |
+| File Pattern                            | Specialist Agent                | Skills Loaded                                              |
+| --------------------------------------- | ------------------------------- | ---------------------------------------------------------- |
+| `*.schema.ts` in `db/schema/`           | `database-schema`               | database-schema-conventions                                |
+| `*.repository.ts` in `db/repositories/` | `database-schema`               | database-schema-conventions                                |
+| `*.handlers.ts` in `electron/ipc/`      | `ipc-handler`                   | ipc-handler-conventions                                    |
+| `electron/preload.ts`                   | `ipc-handler`                   | ipc-handler-conventions                                    |
+| `use-*.ts` in `hooks/queries/`          | `tanstack-query`                | tanstack-query-conventions                                 |
+| `*.ts` in `lib/queries/`                | `tanstack-query`                | tanstack-query-conventions                                 |
+| `*-table.tsx` or tables with useReactTable | `tanstack-table`             | tanstack-table, component-conventions                      |
+| `*-form.tsx` or forms in features       | `tanstack-form`                 | tanstack-form-conventions, react-coding-conventions        |
+| `*.ts` in `lib/validations/`            | `tanstack-form`                 | tanstack-form-conventions                                  |
+| Components in `components/ui/form/`     | `tanstack-form-base-components` | tanstack-form-base-components                              |
+| Components in `components/ui/`          | `frontend-component`            | component-conventions, react-coding-conventions            |
+| Components in `components/features/`    | `frontend-component`            | component-conventions, react-coding-conventions            |
+| Components in `components/layout/`      | `frontend-component`            | component-conventions, react-coding-conventions            |
+| Performance optimization requests       | `vercel-react-best-practices`   | vercel-react-best-practices, react-coding-conventions      |
 
 ## Orchestration Workflow
 
@@ -222,6 +223,18 @@ Study these well-implemented files to understand the correct patterns:
 - Import order: Type imports first, then external, then internal
 - `'use client'` directive at top for client components
 
+### For Performance Optimization (vercel-react-best-practices):
+- Async waterfalls: Sequential awaits converted to Promise.all()
+- Barrel imports: Direct imports instead of barrel file imports
+- Dynamic imports: Heavy/conditional components use next/dynamic
+- Server caching: React.cache() for per-request deduplication
+- Data memoization: useMemo for expensive values with stable deps
+- Component memoization: memo() for expensive pure components
+- State subscriptions: Derived values instead of raw state
+- Refs for callbacks: useRef for values only accessed in callbacks
+- Passive listeners: passive: true for scroll event listeners
+- Conditional rendering: Ternary instead of && for conditionals
+
 ## Report Format
 
 Provide your analysis in this exact format:
@@ -373,6 +386,18 @@ Study these files for proper patterns:
 - Always accept and merge className with cn()
 - Include focus-visible and data-disabled styles
 - Named exports only
+
+### For Performance Optimization:
+- Convert sequential awaits to Promise.all() for parallel operations
+- Replace barrel imports with direct imports from source files
+- Use next/dynamic for heavy or conditionally-loaded components
+- Add React.cache() for server-side deduplication
+- Wrap expensive values in useMemo with stable dependencies
+- Use memo() for pure components with expensive renders
+- Subscribe to derived values instead of raw state
+- Use useRef for values only accessed in callbacks
+- Add passive: true to scroll event listeners
+- Use ternary instead of && for conditional rendering
 
 ## Report Format
 
@@ -534,6 +559,18 @@ Check each item and report status:
 - [ ] Focus states included
 - [ ] Disabled states included
 - [ ] Named exports only
+
+### For Performance Optimization:
+- [ ] No sequential awaits for independent operations
+- [ ] No barrel file imports
+- [ ] Heavy components use dynamic imports
+- [ ] Server-side fetches use React.cache()
+- [ ] Expensive values wrapped in useMemo
+- [ ] Expensive components wrapped in memo()
+- [ ] Derived values instead of raw state subscriptions
+- [ ] Callback-only values use useRef
+- [ ] Scroll listeners are passive
+- [ ] Conditional rendering uses ternary
 
 ## Report Format
 

@@ -2,7 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { AgentListFilters, NewAgent } from "@/types/electron";
+import type {
+  AgentExportBatchItem,
+  AgentImportInput,
+  AgentListFilters,
+  NewAgent,
+} from "@/types/electron";
 
 import { agentKeys } from "@/lib/queries/agents";
 
@@ -548,6 +553,45 @@ export function useDuplicateAgent() {
 }
 
 /**
+ * Export a single agent to markdown format
+ */
+export function useExportAgent() {
+  const { api } = useElectron();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: (id: number) => api!.agent.export(id),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to export agent",
+        title: "Export Failed",
+      });
+    },
+  });
+}
+
+/**
+ * Export multiple agents to markdown format in batch
+ */
+export function useExportAgentsBatch() {
+  const { api } = useElectron();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: (ids: Array<number>): Promise<Array<AgentExportBatchItem>> =>
+      api!.agent.exportBatch(ids),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to export agents",
+        title: "Export Failed",
+      });
+    },
+  });
+}
+
+/**
  * Fetch global agents (agents with no projectId)
  */
 export function useGlobalAgents(filters?: {
@@ -565,6 +609,72 @@ export function useGlobalAgents(filters?: {
         scope: "global",
         type: filters?.type as AgentListFilters["type"],
       }),
+  });
+}
+
+/**
+ * Import an agent from parsed markdown data
+ */
+export function useImportAgent() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: (data: AgentImportInput) => api!.agent.import(data),
+    onError: (error) => {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : "Failed to import agent",
+        title: "Import Failed",
+      });
+    },
+    onSuccess: (result) => {
+      if (!result.success) {
+        // Show validation errors
+        const errorMessage = result.errors
+          ?.map((e) => `${e.field}: ${e.message}`)
+          .join("; ");
+        toast.error({
+          description: errorMessage ?? "Failed to import agent",
+          title: "Import Failed",
+        });
+        return;
+      }
+
+      const agent = result.agent;
+
+      // Invalidate all agent-related queries
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+
+      // Update detail cache if we have the agent
+      if (agent) {
+        queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
+        // Invalidate type-specific queries
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.byType(agent.type).queryKey,
+        });
+      }
+
+      // Show warnings if any
+      if (result.warnings && result.warnings.length > 0) {
+        const warningMessage = result.warnings
+          .map((w) => `${w.field}: ${w.message}`)
+          .join("; ");
+        toast.warning({
+          description: warningMessage,
+          title: "Agent Imported with Warnings",
+        });
+      } else {
+        toast.success({
+          description: "Agent imported successfully",
+          title: "Agent Imported",
+        });
+      }
+    },
   });
 }
 

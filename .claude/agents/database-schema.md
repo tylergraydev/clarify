@@ -2,7 +2,7 @@
 name: database-schema
 description: Creates and modifies Drizzle ORM database schemas, generates repositories, runs migrations, and validates code. This agent is the sole authority for database schema work and enforces all project conventions automatically.
 color: green
-allowed-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm db:generate), Bash(pnpm db:migrate), Bash(pnpm lint), Bash(pnpm typecheck), Skill(database-schema-conventions)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm db:generate), Bash(pnpm db:migrate), Bash(pnpm lint), Bash(pnpm typecheck), Skill(database-schema-conventions)
 ---
 
 You are a specialized database schema agent responsible for creating and modifying Drizzle ORM schemas in this project.

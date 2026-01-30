@@ -9,6 +9,8 @@
  * - Deleting agents (with built-in protection)
  * - Activating and deactivating agents
  * - Resetting agents to built-in defaults
+ * - Importing agents from markdown files
+ * - Exporting agents to markdown format
  */
 import { ipcMain, type IpcMainInvokeEvent } from "electron";
 
@@ -20,7 +22,60 @@ import type {
 } from "../../db/repositories";
 import type { Agent, AgentSkill, AgentTool, NewAgent } from "../../db/schema";
 
+import { serializeAgentToMarkdown } from "../../lib/utils/agent-markdown";
+import {
+  type AgentImportData,
+  prepareAgentImportData,
+  validateAgentImport,
+} from "../../lib/validations/agent-import";
 import { IpcChannels } from "./channels";
+
+/**
+ * Item in batch export result
+ */
+interface AgentExportBatchItem {
+  agentName: string;
+  error?: string;
+  markdown?: string;
+  success: boolean;
+}
+
+/**
+ * Result type for agent export operations
+ */
+interface AgentExportResult {
+  error?: string;
+  markdown?: string;
+  success: boolean;
+}
+
+/**
+ * Input data for agent import - parsed markdown data from the renderer.
+ * The renderer is responsible for parsing the markdown file before sending.
+ */
+interface AgentImportInput {
+  frontmatter: {
+    color?: string;
+    description?: string;
+    displayName: string;
+    name: string;
+    skills?: Array<{ isRequired: boolean; skillName: string }>;
+    tools?: Array<{ pattern?: string; toolName: string }>;
+    type: string;
+    version: number;
+  };
+  systemPrompt: string;
+}
+
+/**
+ * Result type for agent import operations
+ */
+interface AgentImportResult {
+  agent?: Agent;
+  errors?: Array<{ field: string; message: string }>;
+  success: boolean;
+  warnings?: Array<{ field: string; message: string }>;
+}
 
 /**
  * Filter options for listing agents
@@ -672,6 +727,230 @@ export function registerAgentHandlers(
           success: false,
         };
       }
+    }
+  );
+
+  // Import an agent from parsed markdown data
+  ipcMain.handle(
+    IpcChannels.agent.import,
+    async (
+      _event: IpcMainInvokeEvent,
+      parsedMarkdown: AgentImportInput
+    ): Promise<AgentImportResult> => {
+      try {
+        // Prepare the data for validation
+        const importData = prepareAgentImportData(parsedMarkdown);
+
+        // Validate the import data
+        const validationResult = validateAgentImport(importData);
+        if (!validationResult.success || !validationResult.data) {
+          return {
+            errors: validationResult.errors,
+            success: false,
+            warnings: validationResult.warnings,
+          };
+        }
+
+        const validatedData: AgentImportData = validationResult.data;
+
+        // Check for duplicate agent names in database
+        const existingAgent = await agentsRepository.findByName(
+          validatedData.name
+        );
+        if (existingAgent) {
+          return {
+            errors: [
+              {
+                field: "name",
+                message: `An agent with the name "${validatedData.name}" already exists`,
+              },
+            ],
+            success: false,
+            warnings: validationResult.warnings,
+          };
+        }
+
+        // Create the agent record
+        const newAgentData: NewAgent = {
+          builtInAt: null, // Imported agents are not built-in
+          color: validatedData.color ?? null,
+          description: validatedData.description ?? null,
+          displayName: validatedData.displayName,
+          name: validatedData.name,
+          parentAgentId: null,
+          projectId: null, // Imported agents are global by default
+          systemPrompt: validatedData.systemPrompt,
+          type: validatedData.type,
+          version: validatedData.version ?? 1,
+        };
+
+        const createdAgent = await agentsRepository.create(newAgentData);
+
+        // Create associated tools
+        if (validatedData.tools && validatedData.tools.length > 0) {
+          for (let i = 0; i < validatedData.tools.length; i++) {
+            const tool = validatedData.tools[i];
+            if (tool) {
+              await agentToolsRepository.create({
+                agentId: createdAgent.id,
+                disallowedAt: null,
+                orderIndex: i,
+                toolName: tool.toolName,
+                toolPattern: tool.pattern ?? "*",
+              });
+            }
+          }
+        }
+
+        // Create associated skills
+        if (validatedData.skills && validatedData.skills.length > 0) {
+          for (let i = 0; i < validatedData.skills.length; i++) {
+            const skill = validatedData.skills[i];
+            if (skill) {
+              await agentSkillsRepository.create({
+                agentId: createdAgent.id,
+                orderIndex: i,
+                requiredAt: skill.isRequired ? new Date().toISOString() : null,
+                skillName: skill.skillName,
+              });
+            }
+          }
+        }
+
+        return {
+          agent: createdAgent,
+          success: true,
+          warnings: validationResult.warnings,
+        };
+      } catch (error) {
+        console.error("[IPC Error] agent:import:", error);
+        return {
+          errors: [
+            {
+              field: "_root",
+              message:
+                error instanceof Error ? error.message : "Failed to import agent",
+            },
+          ],
+          success: false,
+        };
+      }
+    }
+  );
+
+  // Export an agent to markdown format
+  ipcMain.handle(
+    IpcChannels.agent.export,
+    async (
+      _event: IpcMainInvokeEvent,
+      id: number
+    ): Promise<AgentExportResult> => {
+      try {
+        // Fetch the agent
+        const agent = await agentsRepository.findById(id);
+        if (!agent) {
+          return { error: "Agent not found", success: false };
+        }
+
+        // Fetch associated tools and skills
+        const tools = await agentToolsRepository.findByAgentId(id);
+        const skills = await agentSkillsRepository.findByAgentId(id);
+
+        // Serialize to markdown format
+        const markdown = serializeAgentToMarkdown({
+          agent: {
+            color: agent.color,
+            description: agent.description,
+            displayName: agent.displayName,
+            name: agent.name,
+            systemPrompt: agent.systemPrompt,
+            type: agent.type,
+          },
+          skills: skills.map((skill) => ({
+            requiredAt: skill.requiredAt,
+            skillName: skill.skillName,
+          })),
+          tools: tools.map((tool) => ({
+            toolName: tool.toolName,
+            toolPattern: tool.toolPattern,
+          })),
+        });
+
+        return { markdown, success: true };
+      } catch (error) {
+        console.error("[IPC Error] agent:export:", error);
+        return {
+          error:
+            error instanceof Error ? error.message : "Failed to export agent",
+          success: false,
+        };
+      }
+    }
+  );
+
+  // Export multiple agents to markdown format (batch export)
+  ipcMain.handle(
+    IpcChannels.agent.exportBatch,
+    async (
+      _event: IpcMainInvokeEvent,
+      ids: Array<number>
+    ): Promise<Array<AgentExportBatchItem>> => {
+      const results: Array<AgentExportBatchItem> = [];
+
+      for (const id of ids) {
+        try {
+          // Fetch the agent
+          const agent = await agentsRepository.findById(id);
+          if (!agent) {
+            results.push({
+              agentName: `Unknown (ID: ${id})`,
+              error: "Agent not found",
+              success: false,
+            });
+            continue;
+          }
+
+          // Fetch associated tools and skills
+          const tools = await agentToolsRepository.findByAgentId(id);
+          const skills = await agentSkillsRepository.findByAgentId(id);
+
+          // Serialize to markdown format
+          const markdown = serializeAgentToMarkdown({
+            agent: {
+              color: agent.color,
+              description: agent.description,
+              displayName: agent.displayName,
+              name: agent.name,
+              systemPrompt: agent.systemPrompt,
+              type: agent.type,
+            },
+            skills: skills.map((skill) => ({
+              requiredAt: skill.requiredAt,
+              skillName: skill.skillName,
+            })),
+            tools: tools.map((tool) => ({
+              toolName: tool.toolName,
+              toolPattern: tool.toolPattern,
+            })),
+          });
+
+          results.push({
+            agentName: agent.name,
+            markdown,
+            success: true,
+          });
+        } catch (error) {
+          console.error(`[IPC Error] agent:exportBatch (ID: ${id}):`, error);
+          results.push({
+            agentName: `Unknown (ID: ${id})`,
+            error:
+              error instanceof Error ? error.message : "Failed to export agent",
+            success: false,
+          });
+        }
+      }
+
+      return results;
     }
   );
 }

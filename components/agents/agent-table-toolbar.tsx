@@ -2,7 +2,7 @@
 
 import type { ComponentPropsWithRef } from "react";
 
-import { RotateCcw } from "lucide-react";
+import { Download, RotateCcw, Upload } from "lucide-react";
 
 import type { Project } from "@/db/schema";
 
@@ -26,6 +26,10 @@ import { cn } from "@/lib/utils";
 // ============================================================================
 
 interface AgentTableToolbarProps extends ComponentPropsWithRef<"div"> {
+  /** Callback when export selected button is clicked */
+  onExportSelected?: () => void;
+  /** Callback when import button is clicked */
+  onImport?: () => void;
   /** Callback when project filter changes */
   onProjectFilterChange: (value: null | string) => void;
   /** Callback when reset filters button is clicked */
@@ -42,6 +46,8 @@ interface AgentTableToolbarProps extends ComponentPropsWithRef<"div"> {
   projectFilter: null | string;
   /** List of projects for dropdown options */
   projects: Array<Project>;
+  /** Number of selected rows for export button state */
+  selectedCount?: number;
   /** Whether to show built-in agents */
   showBuiltIn: boolean;
   /** Whether to show deactivated agents */
@@ -114,6 +120,8 @@ const formatTypeLabel = (type: string): string => {
  */
 export const AgentTableToolbar = ({
   className,
+  onExportSelected,
+  onImport,
   onProjectFilterChange,
   onResetFilters,
   onShowBuiltInChange,
@@ -123,6 +131,7 @@ export const AgentTableToolbar = ({
   projectFilter,
   projects,
   ref,
+  selectedCount = 0,
   showBuiltIn,
   showDeactivated,
   statusFilter,
@@ -133,6 +142,7 @@ export const AgentTableToolbar = ({
   const hasActiveFilters = Boolean(
     typeFilter !== null || projectFilter !== null || statusFilter !== null
   );
+  const isExportDisabled = selectedCount === 0;
 
   // Handlers
   const handleTypeChange = (value: null | string) => {
@@ -153,6 +163,14 @@ export const AgentTableToolbar = ({
 
   const handleShowDeactivatedToggle = (isChecked: boolean) => {
     onShowDeactivatedChange(isChecked);
+  };
+
+  const handleImportClick = () => {
+    onImport?.();
+  };
+
+  const handleExportSelectedClick = () => {
+    onExportSelected?.();
   };
 
   return (
@@ -305,6 +323,51 @@ export const AgentTableToolbar = ({
           {"Show deactivated"}
         </span>
       </div>
+
+      {/* Actions Separator */}
+      {(onImport || onExportSelected) && (
+        <div
+          aria-hidden={"true"}
+          className={"mx-1 h-5 w-px shrink-0 bg-border"}
+        />
+      )}
+
+      {/* Import/Export Actions */}
+      {onImport && (
+        <Button
+          aria-label={"Import agents"}
+          className={"shrink-0"}
+          onClick={handleImportClick}
+          size={"sm"}
+          variant={"outline"}
+        >
+          <Upload aria-hidden={"true"} className={"size-4"} />
+          {"Import"}
+        </Button>
+      )}
+
+      {onExportSelected && (
+        <Button
+          aria-label={`Export ${selectedCount} selected agent${selectedCount !== 1 ? "s" : ""}`}
+          className={"shrink-0"}
+          disabled={isExportDisabled}
+          onClick={handleExportSelectedClick}
+          size={"sm"}
+          variant={"outline"}
+        >
+          <Download aria-hidden={"true"} className={"size-4"} />
+          {"Export Selected"}
+          {selectedCount > 0 && (
+            <span
+              className={
+                "ml-1 inline-flex size-5 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground"
+              }
+            >
+              {selectedCount}
+            </span>
+          )}
+        </Button>
+      )}
     </div>
   );
 };

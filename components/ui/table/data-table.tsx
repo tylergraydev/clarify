@@ -185,6 +185,13 @@ interface DataTableProps<TData, TValue>
   emptyState?: DataTableEmptyStateConfig;
 
   /**
+   * Function to derive a unique row ID from row data.
+   * Used for stable row selection state management.
+   * If not provided, row index is used as the ID.
+   */
+  getRowId?: (originalRow: TData, index: number, parent?: Row<TData>) => string;
+
+  /**
    * Whether column reordering via drag-and-drop is enabled.
    * When true, users can drag column headers to reorder columns.
    * Column order persists via useTablePersistence when persistence is configured.
@@ -438,6 +445,7 @@ export const DataTable = <TData, TValue>({
   data,
   density = "default",
   emptyState,
+  getRowId,
   isColumnReorderEnabled = false,
   isColumnResizingEnabled = true,
   isLoading = false,
@@ -629,6 +637,7 @@ export const DataTable = <TData, TValue>({
     getPaginationRowModel: isPaginationEnabled
       ? getPaginationRowModel()
       : undefined,
+    getRowId,
     getSortedRowModel: isSortingEnabled ? getSortedRowModel() : undefined,
     manualPagination: !isPaginationEnabled,
     onColumnFiltersChange,

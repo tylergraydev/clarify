@@ -1,5 +1,5 @@
 ---
-allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,pnpm:*,cd:*), TodoWrite(*), AskUserQuestion(*)
+allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Task(subagent_type:vercel-react-best-practices), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,pnpm:*,cd:*), TodoWrite(*), AskUserQuestion(*)
 argument-hint: "path/to/implementation-plan.md [--step-by-step|--dry-run|--resume-from=N|--worktree]"
 description: Execute implementation plan with structured tracking and validation using subagent architecture
 ---
@@ -98,6 +98,7 @@ You do NOT implement code. Subagents implement code.
 | `tanstack-form`                 | Form implementations         | Forms in dialogs, pages, features + validation schemas     |
 | `tanstack-form-base-components` | Base form components         | Field components in `components/ui/form/`                  |
 | `frontend-component`            | UI & feature components      | UI primitives in `components/ui/`, feature components      |
+| `vercel-react-best-practices`   | Performance optimization     | Performance audits, bundle optimization, waterfall fixes   |
 | `general-purpose`               | Everything else              | Pages, utilities, non-component code                       |
 
 ## Step-Type Detection Rules
@@ -110,8 +111,9 @@ You do NOT implement code. Subagents implement code.
 5. IF step involves data tables with useReactTable, pagination, sorting, or filtering → tanstack-table
 6. IF files contain "components/ui/form/" (base field components) → tanstack-form-base-components
 7. IF step involves creating/modifying forms OR files contain "lib/validations/" → tanstack-form
-8. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
-9. ELSE → general-purpose
+8. IF step involves performance optimization, bundle size, waterfall fixes, or re-render optimization → vercel-react-best-practices
+9. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
+10. ELSE → general-purpose
 ```
 
 ---

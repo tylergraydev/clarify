@@ -1,11 +1,12 @@
 'use client';
 
-import type { Row } from '@tanstack/react-table';
+import type { OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 import { format } from 'date-fns';
 import {
   Copy,
+  Download,
   Eye,
   FolderInput,
   FolderOutput,
@@ -51,18 +52,26 @@ interface AgentTableProps
   isCreatingOverride?: boolean;
   isDeleting?: boolean;
   isDuplicating?: boolean;
+  isExporting?: boolean;
   isMovingToProject?: boolean;
   isResetting?: boolean;
+  /** Whether row selection is enabled for batch operations */
+  isRowSelectionEnabled?: boolean;
   isToggling?: boolean;
   onCopyToProject?: (agent: AgentWithRelations, projectId: number) => void;
   onCreateOverride?: (agent: AgentWithRelations) => void;
   onDelete?: (agentId: number) => void;
   onDuplicate?: (agent: AgentWithRelations) => void;
+  onExport?: (agent: AgentWithRelations) => void;
   onMoveToProject?: (agent: AgentWithRelations, projectId: null | number) => void;
   onReset?: (agentId: number) => void;
+  /** Callback fired when row selection changes */
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
   onToggleActive?: (agentId: number, isActive: boolean) => void;
   /** List of projects for resolving project names in the table */
   projects?: Array<Project>;
+  /** Controlled row selection state */
+  rowSelection?: RowSelectionState;
   /** Additional toolbar content to render in the DataTable toolbar */
   toolbarContent?: ReactNode;
 }
@@ -146,18 +155,23 @@ export const AgentTable = ({
   isCreatingOverride = false,
   isDeleting = false,
   isDuplicating = false,
+  isExporting = false,
   isMovingToProject = false,
   isResetting = false,
+  isRowSelectionEnabled = false,
   isToggling = false,
   onCopyToProject,
   onCreateOverride,
   onDelete,
   onDuplicate,
+  onExport,
   onMoveToProject,
   onReset,
+  onRowSelectionChange,
   onToggleActive,
   projects,
   ref,
+  rowSelection,
   toolbarContent,
   ...props
 }: AgentTableProps) => {
@@ -188,6 +202,7 @@ export const AgentTable = ({
     isCopyingToProject ||
     isDeleting ||
     isDuplicating ||
+    isExporting ||
     isMovingToProject ||
     isResetting ||
     isToggling;
@@ -224,6 +239,17 @@ export const AgentTable = ({
         onAction: (r) => onDuplicate?.(r.original),
         type: 'button',
       });
+
+      // Export action
+      if (onExport) {
+        actions.push({
+          disabled: isActionDisabled,
+          icon: <Download aria-hidden={'true'} className={'size-4'} />,
+          label: 'Export',
+          onAction: (r) => onExport(r.original),
+          type: 'button',
+        });
+      }
 
       // Create Project Copy action (only for global agents)
       if (isGlobalAgent && onCreateOverride) {
@@ -304,6 +330,7 @@ export const AgentTable = ({
       onCreateOverride,
       onDelete,
       onDuplicate,
+      onExport,
       onMoveToProject,
       onReset,
     ]
@@ -553,9 +580,12 @@ export const AgentTable = ({
             title: 'No matching agents',
           },
         }}
+        getRowId={(agent) => String(agent.id)}
         isPaginationEnabled={false}
+        isRowSelectionEnabled={isRowSelectionEnabled}
         isToolbarVisible={true}
         onRowClick={handleRowClick}
+        onRowSelectionChange={onRowSelectionChange}
         persistence={{
           persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing'],
           tableId: 'agents-table',
@@ -563,6 +593,7 @@ export const AgentTable = ({
         ref={ref}
         rowStyleCallback={rowStyleCallback}
         searchPlaceholder={'Search agents...'}
+        state={{ rowSelection }}
         toolbarContent={toolbarContent}
         {...props}
       />

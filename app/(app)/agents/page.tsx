@@ -1,14 +1,19 @@
 'use client';
 
+import type { RowSelectionState } from '@tanstack/react-table';
+
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { AgentWithRelations } from '@/components/agents/agent-table';
+import type { ParsedAgentMarkdown } from '@/lib/utils/agent-markdown';
+import type { AgentImportValidationResult } from '@/lib/validations/agent-import';
 
 import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
 import { AgentTable } from '@/components/agents/agent-table';
 import { AgentTableToolbar } from '@/components/agents/agent-table-toolbar';
 import { ConfirmDeleteAgentDialog } from '@/components/agents/confirm-delete-agent-dialog';
+import { ImportAgentDialog } from '@/components/agents/import-agent-dialog';
 import { SelectProjectDialog } from '@/components/agents/select-project-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,13 +24,23 @@ import {
   useDeactivateAgent,
   useDeleteAgent,
   useDuplicateAgent,
+  useExportAgent,
+  useExportAgentsBatch,
+  useImportAgent,
   useMoveAgent,
   useResetAgent,
 } from '@/hooks/queries/use-agents';
 import { useProjects } from '@/hooks/queries/use-projects';
+import { useElectron } from '@/hooks/use-electron';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
+import { useToast } from '@/hooks/use-toast';
 import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
 import { cn } from '@/lib/utils';
+import { parseAgentMarkdown } from '@/lib/utils/agent-markdown';
+import {
+  prepareAgentImportData,
+  validateAgentImport,
+} from '@/lib/validations/agent-import';
 
 // ============================================================================
 // Types
@@ -72,8 +87,22 @@ export default function AgentsPage() {
   const [agentForProjectDialog, setAgentForProjectDialog] =
     useState<AgentWithRelations | null>(null);
 
+  // Row selection state for batch operations
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  // Import dialog state
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [parsedImportData, setParsedImportData] =
+    useState<null | ParsedAgentMarkdown>(null);
+  const [importValidationResult, setImportValidationResult] =
+    useState<AgentImportValidationResult | null>(null);
+
   // Create dialog ref
   const createDialogTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // Hooks for API access
+  const { api } = useElectron();
+  const toast = useToast();
 
   // Data fetching
   const { data: allAgents } = useAllAgents({
@@ -89,6 +118,9 @@ export default function AgentsPage() {
   const deactivateMutation = useDeactivateAgent();
   const deleteMutation = useDeleteAgent();
   const duplicateMutation = useDuplicateAgent();
+  const exportAgentMutation = useExportAgent();
+  const exportAgentsBatchMutation = useExportAgentsBatch();
+  const importAgentMutation = useImportAgent();
   const moveAgentMutation = useMoveAgent();
   const resetMutation = useResetAgent();
 
@@ -249,6 +281,222 @@ export default function AgentsPage() {
     []
   );
 
+  // Import/Export handlers
+  const handleImportClick = useCallback(async () => {
+    if (!api) {
+      toast.error({
+        description: 'Electron API not available',
+        title: 'Import Failed',
+      });
+      return;
+    }
+
+    // Open file dialog with markdown filter
+    const filePath = await api.dialog.openFile([
+      { extensions: ['md'], name: 'Markdown Files' },
+    ]);
+
+    if (!filePath) {
+      return; // User cancelled
+    }
+
+    // Read file content
+    const result = await api.fs.readFile(filePath);
+
+    if (!result.success || !result.content) {
+      toast.error({
+        description: result.error ?? 'Failed to read file',
+        title: 'Import Failed',
+      });
+      return;
+    }
+
+    // Parse markdown
+    try {
+      const parsed = parseAgentMarkdown(result.content);
+      setParsedImportData(parsed);
+
+      // Validate using prepareAgentImportData and validateAgentImport
+      const preparedData = prepareAgentImportData(parsed);
+      const validationResult = validateAgentImport(preparedData);
+      setImportValidationResult(validationResult);
+
+      // Open import dialog
+      setIsImportDialogOpen(true);
+    } catch (error) {
+      toast.error({
+        description:
+          error instanceof Error ? error.message : 'Failed to parse markdown',
+        title: 'Parse Failed',
+      });
+    }
+  }, [api, toast]);
+
+  const handleImportConfirm = useCallback(
+    (data: ParsedAgentMarkdown) => {
+      importAgentMutation.mutate(data, {
+        onSettled: () => {
+          // Close dialog and clear import states
+          setIsImportDialogOpen(false);
+          setParsedImportData(null);
+          setImportValidationResult(null);
+          // Clear row selection
+          setRowSelection({});
+        },
+      });
+    },
+    [importAgentMutation]
+  );
+
+  const handleImportDialogOpenChange = useCallback((isOpen: boolean) => {
+    setIsImportDialogOpen(isOpen);
+    if (!isOpen) {
+      setParsedImportData(null);
+      setImportValidationResult(null);
+    }
+  }, []);
+
+  const handleExportSingle = useCallback(
+    async (agent: AgentWithRelations) => {
+      if (!api) {
+        toast.error({
+          description: 'Electron API not available',
+          title: 'Export Failed',
+        });
+        return;
+      }
+
+      // Get markdown content from mutation
+      exportAgentMutation.mutate(agent.id, {
+        onSuccess: async (result) => {
+          if (!result.success || !result.markdown) {
+            toast.error({
+              description: result.error ?? 'Failed to export agent',
+              title: 'Export Failed',
+            });
+            return;
+          }
+
+          // Open save dialog with default filename
+          const defaultFilename = `${agent.name}.md`;
+          const savePath = await api.dialog.saveFile(defaultFilename, [
+            { extensions: ['md'], name: 'Markdown Files' },
+          ]);
+
+          if (!savePath) {
+            return; // User cancelled
+          }
+
+          // Write content to file
+          const writeResult = await api.fs.writeFile(savePath, result.markdown);
+
+          if (!writeResult.success) {
+            toast.error({
+              description: writeResult.error ?? 'Failed to write file',
+              title: 'Export Failed',
+            });
+            return;
+          }
+
+          toast.success({
+            description: `Exported "${agent.displayName}" successfully`,
+            title: 'Export Complete',
+          });
+        },
+      });
+    },
+    [api, exportAgentMutation, toast]
+  );
+
+  const handleExportSelected = useCallback(async () => {
+    if (!api) {
+      toast.error({
+        description: 'Electron API not available',
+        title: 'Export Failed',
+      });
+      return;
+    }
+
+    // Get selected agent IDs from rowSelection state (keys where value is true)
+    const selectedIds = Object.keys(rowSelection)
+      .filter((key) => rowSelection[key])
+      .map((key) => Number(key));
+
+    if (selectedIds.length === 0) {
+      toast.error({
+        description: 'No agents selected for export',
+        title: 'Export Failed',
+      });
+      return;
+    }
+
+    // Open directory dialog
+    const directoryPath = await api.dialog.openDirectory();
+
+    if (!directoryPath) {
+      return; // User cancelled
+    }
+
+    // Get markdown content for all selected agents
+    exportAgentsBatchMutation.mutate(selectedIds, {
+      onSuccess: async (results) => {
+        let successCount = 0;
+        let failCount = 0;
+
+        // Write each agent to separate file
+        for (const item of results) {
+          if (!item.success || !item.markdown) {
+            failCount++;
+            continue;
+          }
+
+          const filename = `${item.agentName}.md`;
+          const filePath = `${directoryPath}/${filename}`;
+
+          const writeResult = await api.fs.writeFile(filePath, item.markdown);
+
+          if (writeResult.success) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        }
+
+        // Clear row selection on success
+        if (successCount > 0) {
+          setRowSelection({});
+        }
+
+        // Show toast notification with count
+        if (failCount === 0) {
+          toast.success({
+            description: `Exported ${successCount} agent${successCount !== 1 ? 's' : ''} successfully`,
+            title: 'Export Complete',
+          });
+        } else {
+          toast.warning({
+            description: `Exported ${successCount} agent${successCount !== 1 ? 's' : ''}, ${failCount} failed`,
+            title: 'Export Partial',
+          });
+        }
+      },
+    });
+  }, [api, exportAgentsBatchMutation, rowSelection, toast]);
+
+  const handleRowSelectionChange = useCallback(
+    (updater: ((prev: RowSelectionState) => RowSelectionState) | RowSelectionState) => {
+      setRowSelection((prev) =>
+        typeof updater === 'function' ? updater(prev) : updater
+      );
+    },
+    []
+  );
+
+  // Computed selected count
+  const selectedCount = useMemo(() => {
+    return Object.keys(rowSelection).filter((key) => rowSelection[key]).length;
+  }, [rowSelection]);
+
   // Client-side filtering
   const filteredAgents = useMemo(() => {
     if (!allAgents) return [];
@@ -297,6 +545,9 @@ export default function AgentsPage() {
     activateMutation.isPending || deactivateMutation.isPending;
   const isDeleting = deleteMutation.isPending;
   const isDuplicating = duplicateMutation.isPending;
+  const isExporting =
+    exportAgentMutation.isPending || exportAgentsBatchMutation.isPending;
+  const isImporting = importAgentMutation.isPending;
   const isResetting = resetMutation.isPending;
   const isMovingToProject = moveAgentMutation.isPending;
   const isCopyingToProject = copyToProjectMutation.isPending;
@@ -364,18 +615,25 @@ export default function AgentsPage() {
           isCopyingToProject={isCopyingToProject}
           isDeleting={isDeleting}
           isDuplicating={isDuplicating}
+          isExporting={isExporting}
           isMovingToProject={isMovingToProject}
           isResetting={isResetting}
+          isRowSelectionEnabled={true}
           isToggling={isToggling}
           onCopyToProject={handleCopyToProject}
           onDelete={handleDeleteClick}
           onDuplicate={handleDuplicate}
+          onExport={handleExportSingle}
           onMoveToProject={handleMoveToProject}
           onReset={handleReset}
+          onRowSelectionChange={handleRowSelectionChange}
           onToggleActive={handleToggleActive}
           projects={projects ?? []}
+          rowSelection={rowSelection}
           toolbarContent={
             <AgentTableToolbar
+              onExportSelected={handleExportSelected}
+              onImport={handleImportClick}
               onProjectFilterChange={handleProjectFilterChange}
               onResetFilters={handleResetFilters}
               onShowBuiltInChange={handleShowBuiltInChange}
@@ -384,6 +642,7 @@ export default function AgentsPage() {
               onTypeFilterChange={handleTypeFilterChange}
               projectFilter={projectFilter}
               projects={projects ?? []}
+              selectedCount={selectedCount}
               showBuiltIn={showBuiltIn}
               showDeactivated={showDeactivated}
               statusFilter={statusFilter}
@@ -415,6 +674,16 @@ export default function AgentsPage() {
         onSelect={handleProjectDialogSelect}
         projects={projects ?? []}
         sourceAgent={agentForProjectDialog}
+      />
+
+      {/* Import Agent Dialog */}
+      <ImportAgentDialog
+        isLoading={isImporting}
+        isOpen={isImportDialogOpen}
+        onImport={handleImportConfirm}
+        onOpenChange={handleImportDialogOpenChange}
+        parsedData={parsedImportData}
+        validationResult={importValidationResult}
       />
     </main>
   );

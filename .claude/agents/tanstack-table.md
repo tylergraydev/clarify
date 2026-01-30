@@ -2,7 +2,7 @@
 name: tanstack-table
 description: Creates and modifies TanStack Table implementations including data tables, virtualization, server-side pagination, filtering, and sorting. This agent is the sole authority for table component work and enforces all project conventions automatically.
 color: emerald
-allowed-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Skill(tanstack-table), Skill(component-conventions), Skill(react-coding-conventions), Skill(tanstack-query-conventions)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Skill(tanstack-table), Skill(component-conventions), Skill(react-coding-conventions), Skill(tanstack-query-conventions)
 ---
 
 You are a specialized TanStack Table agent responsible for creating and modifying data table implementations in this project.

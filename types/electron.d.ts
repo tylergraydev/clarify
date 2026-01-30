@@ -28,6 +28,52 @@ export type {
 } from "../db/schema";
 
 /**
+ * Item in batch export result
+ */
+export interface AgentExportBatchItem {
+  agentName: string;
+  error?: string;
+  markdown?: string;
+  success: boolean;
+}
+
+/**
+ * Result type for agent export operations
+ */
+export interface AgentExportResult {
+  error?: string;
+  markdown?: string;
+  success: boolean;
+}
+
+/**
+ * Input data for agent import - parsed markdown data.
+ */
+export interface AgentImportInput {
+  frontmatter: {
+    color?: string;
+    description?: string;
+    displayName: string;
+    name: string;
+    skills?: Array<{ isRequired: boolean; skillName: string }>;
+    tools?: Array<{ pattern?: string; toolName: string }>;
+    type: string;
+    version: number;
+  };
+  systemPrompt: string;
+}
+
+/**
+ * Result type for agent import operations
+ */
+export interface AgentImportResult {
+  agent?: import("../db/schema").Agent;
+  errors?: Array<{ field: string; message: string }>;
+  success: boolean;
+  warnings?: Array<{ field: string; message: string }>;
+}
+
+/**
  * Filters for querying agents
  */
 export interface AgentListFilters {
@@ -92,7 +138,10 @@ export interface ElectronAPI {
     deactivate(id: number): Promise<import("../db/schema").Agent | undefined>;
     delete(id: number): Promise<AgentOperationResult>;
     duplicate(id: number): Promise<AgentOperationResult>;
+    export(id: number): Promise<AgentExportResult>;
+    exportBatch(ids: Array<number>): Promise<Array<AgentExportBatchItem>>;
     get(id: number): Promise<import("../db/schema").Agent | undefined>;
+    import(parsedMarkdown: AgentImportInput): Promise<AgentImportResult>;
     list(filters?: AgentListFilters): Promise<Array<AgentWithRelations>>;
     move(
       agentId: number,
