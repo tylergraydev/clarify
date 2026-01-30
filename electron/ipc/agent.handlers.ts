@@ -141,16 +141,18 @@ export function registerAgentHandlers(
           return { error: "Agent not found", success: false };
         }
 
-        // Generate a unique name by appending " (Copy)" and checking for conflicts
+        // Generate a unique name by appending "-copy" and checking for conflicts
+        // Name uses kebab-case to comply with the agent name regex pattern
+        // Display name uses human-readable format with spaces
         let copyNumber = 1;
-        let newName = `${sourceAgent.name} (Copy)`;
+        let newName = `${sourceAgent.name}-copy`;
         let newDisplayName = `${sourceAgent.displayName} (Copy)`;
 
         // Check if a copy already exists and increment the number if needed
         let existingAgent = await agentsRepository.findByName(newName);
         while (existingAgent) {
           copyNumber++;
-          newName = `${sourceAgent.name} (Copy ${copyNumber})`;
+          newName = `${sourceAgent.name}-copy-${copyNumber}`;
           newDisplayName = `${sourceAgent.displayName} (Copy ${copyNumber})`;
           existingAgent = await agentsRepository.findByName(newName);
         }

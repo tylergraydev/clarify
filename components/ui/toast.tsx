@@ -33,11 +33,11 @@ export const toastRootVariants = cva(
     variants: {
       variant: {
         default: "border-border",
-        error: "border-destructive/50 bg-destructive/10",
-        info: "border-accent/50 bg-accent/10",
+        error: "border-destructive/50",
+        info: "border-accent/50",
         loading: "border-border",
-        success: "border-green-500/50 bg-green-500/10",
-        warning: "border-amber-500/50 bg-amber-500/10",
+        success: "border-green-500/50",
+        warning: "border-amber-500/50",
       },
     },
   }

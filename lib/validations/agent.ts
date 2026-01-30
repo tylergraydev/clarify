@@ -19,7 +19,7 @@ export type AgentSkillInput = z.infer<typeof agentSkillInputSchema>;
 
 // Create agent schema for repository validation
 export const createAgentSchema = z.object({
-  builtInAt: z.string().optional(),
+  builtInAt: z.string().nullable().optional(),
   color: z.enum(agentColors).optional(),
   deactivatedAt: z.string().optional(),
   description: z.string().max(1000, "Description is too long").optional(),
@@ -35,8 +35,8 @@ export const createAgentSchema = z.object({
       /^[a-z][a-z0-9-]*$/,
       "Agent name must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens"
     ),
-  parentAgentId: z.number().int().positive("Invalid parent agent ID").optional(),
-  projectId: z.number().int().positive("Invalid project ID").optional(),
+  parentAgentId: z.number().int().positive("Invalid parent agent ID").nullable().optional(),
+  projectId: z.number().int().positive("Invalid project ID").nullable().optional(),
   systemPrompt: z
     .string()
     .min(1, "System prompt is required")
