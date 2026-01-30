@@ -95,6 +95,7 @@ export const SelectField = ({
                   <SelectItem
                     disabled={option.isDisabled}
                     key={option.value}
+                    label={option.label}
                     size={size}
                     value={option.value}
                   >

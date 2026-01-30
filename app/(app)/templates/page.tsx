@@ -1308,7 +1308,12 @@ export default function TemplatesPage() {
                       {"All categories"}
                     </SelectItem>
                     {templateCategories.map((category) => (
-                      <SelectItem key={category} size={"sm"} value={category}>
+                      <SelectItem
+                        key={category}
+                        label={formatCategoryLabel(category)}
+                        size={"sm"}
+                        value={category}
+                      >
                         {formatCategoryLabel(category)}
                       </SelectItem>
                     ))}

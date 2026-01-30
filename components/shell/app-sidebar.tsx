@@ -202,20 +202,15 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             isCollapsed={isSidebarCollapsed}
             label={"Agents"}
           />
+          {/* Settings */}
+          <NavItem
+            href={$path({ route: "/settings" })}
+            icon={Settings}
+            isActive={isPathActive($path({ route: "/settings" }))}
+            isCollapsed={isSidebarCollapsed}
+            label={"Settings"}
+          />
         </div>
-
-        {/* Spacer to push content up */}
-        <div className={"flex-1"} />
-
-        {/* Footer Navigation */}
-        <Separator className={"my-2"} />
-        <NavItem
-          href={$path({ route: "/settings" })}
-          icon={Settings}
-          isActive={isPathActive($path({ route: "/settings" }))}
-          isCollapsed={isSidebarCollapsed}
-          label={"Settings"}
-        />
       </nav>
     </aside>
   );

@@ -338,16 +338,21 @@ function WorkflowsPageContent() {
                     <SelectItem size={"sm"} value={""}>
                       {"All statuses"}
                     </SelectItem>
-                    {workflowStatuses.map((workflowStatus) => (
-                      <SelectItem
-                        key={workflowStatus}
-                        size={"sm"}
-                        value={workflowStatus}
-                      >
-                        {workflowStatus.charAt(0).toUpperCase() +
-                          workflowStatus.slice(1)}
-                      </SelectItem>
-                    ))}
+                    {workflowStatuses.map((workflowStatus) => {
+                      const formattedStatus =
+                        workflowStatus.charAt(0).toUpperCase() +
+                        workflowStatus.slice(1);
+                      return (
+                        <SelectItem
+                          key={workflowStatus}
+                          label={formattedStatus}
+                          size={"sm"}
+                          value={workflowStatus}
+                        >
+                          {formattedStatus}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectList>
                 </SelectPopup>
               </SelectPositioner>
@@ -378,6 +383,7 @@ function WorkflowsPageContent() {
                     {projectOptions.map((option) => (
                       <SelectItem
                         key={option.value}
+                        label={option.label}
                         size={"sm"}
                         value={String(option.value)}
                       >

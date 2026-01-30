@@ -398,7 +398,12 @@ export default function AgentsPage() {
                       {"All types"}
                     </SelectItem>
                     {agentTypes.map((type) => (
-                      <SelectItem key={type} size={"sm"} value={type}>
+                      <SelectItem
+                        key={type}
+                        label={formatTypeLabel(type)}
+                        size={"sm"}
+                        value={type}
+                      >
                         {formatTypeLabel(type)}
                       </SelectItem>
                     ))}

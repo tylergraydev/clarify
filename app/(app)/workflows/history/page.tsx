@@ -387,6 +387,7 @@ function WorkflowHistoryPageContent() {
                     {TERMINAL_STATUSES.map((terminalStatus) => (
                       <SelectItem
                         key={terminalStatus}
+                        label={formatStatusLabel(terminalStatus)}
                         size={"sm"}
                         value={terminalStatus}
                       >
@@ -423,6 +424,7 @@ function WorkflowHistoryPageContent() {
                     {projectOptions.map((option) => (
                       <SelectItem
                         key={option.value}
+                        label={option.label}
                         size={"sm"}
                         value={String(option.value)}
                       >

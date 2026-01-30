@@ -178,7 +178,11 @@ export const ProjectSelector = ({
                 <SelectPopup>
                   <SelectList>
                     {projects.map((project) => (
-                      <SelectItem key={project.id} value={String(project.id)}>
+                      <SelectItem
+                        key={project.id}
+                        label={project.name}
+                        value={String(project.id)}
+                      >
                         {project.name}
                       </SelectItem>
                     ))}
@@ -219,7 +223,11 @@ export const ProjectSelector = ({
             <SelectPopup>
               <SelectList>
                 {projects.map((project) => (
-                  <SelectItem key={project.id} value={String(project.id)}>
+                  <SelectItem
+                    key={project.id}
+                    label={project.name}
+                    value={String(project.id)}
+                  >
                     {project.name}
                   </SelectItem>
                 ))}
