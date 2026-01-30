@@ -19,8 +19,15 @@ export function useCompleteStep() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: ({ id, output }: { id: number; output?: string }) =>
-      api!.step.complete(id, output),
+    mutationFn: ({
+      durationMs,
+      id,
+      output,
+    }: {
+      durationMs?: number;
+      id: number;
+      output?: string;
+    }) => api!.step.complete(id, output, durationMs),
     onSuccess: (step) => {
       if (step) {
         // Update detail cache directly

@@ -48,7 +48,12 @@ export function registerTemplateHandlers(
       _event: IpcMainInvokeEvent,
       filters?: TemplateListFilters
     ): Array<Template> => {
-      return templatesRepository.findAll(filters);
+      try {
+        return templatesRepository.findAll(filters);
+      } catch (error) {
+        console.error("[IPC Error] template:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -56,7 +61,12 @@ export function registerTemplateHandlers(
   ipcMain.handle(
     IpcChannels.template.get,
     (_event: IpcMainInvokeEvent, id: number): Template | undefined => {
-      return templatesRepository.findById(id);
+      try {
+        return templatesRepository.findById(id);
+      } catch (error) {
+        console.error("[IPC Error] template:get:", error);
+        throw error;
+      }
     }
   );
 
@@ -64,7 +74,12 @@ export function registerTemplateHandlers(
   ipcMain.handle(
     IpcChannels.template.create,
     (_event: IpcMainInvokeEvent, data: NewTemplate): Template => {
-      return templatesRepository.create(data);
+      try {
+        return templatesRepository.create(data);
+      } catch (error) {
+        console.error("[IPC Error] template:create:", error);
+        throw error;
+      }
     }
   );
 
@@ -76,7 +91,12 @@ export function registerTemplateHandlers(
       id: number,
       data: Partial<NewTemplate>
     ): Template | undefined => {
-      return templatesRepository.update(id, data);
+      try {
+        return templatesRepository.update(id, data);
+      } catch (error) {
+        console.error("[IPC Error] template:update:", error);
+        throw error;
+      }
     }
   );
 
@@ -84,7 +104,12 @@ export function registerTemplateHandlers(
   ipcMain.handle(
     IpcChannels.template.delete,
     (_event: IpcMainInvokeEvent, id: number): Template | undefined => {
-      return templatesRepository.deactivate(id);
+      try {
+        return templatesRepository.deactivate(id);
+      } catch (error) {
+        console.error("[IPC Error] template:delete:", error);
+        throw error;
+      }
     }
   );
 
@@ -92,7 +117,12 @@ export function registerTemplateHandlers(
   ipcMain.handle(
     IpcChannels.template.incrementUsage,
     (_event: IpcMainInvokeEvent, id: number): Template | undefined => {
-      return templatesRepository.incrementUsageCount(id);
+      try {
+        return templatesRepository.incrementUsageCount(id);
+      } catch (error) {
+        console.error("[IPC Error] template:incrementUsage:", error);
+        throw error;
+      }
     }
   );
 
@@ -103,7 +133,12 @@ export function registerTemplateHandlers(
       _event: IpcMainInvokeEvent,
       templateId: number
     ): Array<TemplatePlaceholder> => {
-      return placeholdersRepository.findByTemplateId(templateId);
+      try {
+        return placeholdersRepository.findByTemplateId(templateId);
+      } catch (error) {
+        console.error("[IPC Error] template:getPlaceholders:", error);
+        throw error;
+      }
     }
   );
 
@@ -115,10 +150,15 @@ export function registerTemplateHandlers(
       templateId: number,
       placeholders: Array<Omit<NewTemplatePlaceholder, "templateId">>
     ): Array<TemplatePlaceholder> => {
-      return placeholdersRepository.replaceForTemplate(
-        templateId,
-        placeholders
-      );
+      try {
+        return placeholdersRepository.replaceForTemplate(
+          templateId,
+          placeholders
+        );
+      } catch (error) {
+        console.error("[IPC Error] template:updatePlaceholders:", error);
+        throw error;
+      }
     }
   );
 }

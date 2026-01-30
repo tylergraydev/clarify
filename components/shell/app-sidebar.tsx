@@ -79,6 +79,8 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
           border-r border-sidebar-border bg-sidebar-bg
           transition-[width] duration-200 ease-out
         `,
+        // Hide on mobile, show on tablet and up
+        "hidden md:block",
         isSidebarCollapsed
           ? "w-(--sidebar-width-collapsed)"
           : "w-(--sidebar-width-expanded)",

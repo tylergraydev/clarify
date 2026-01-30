@@ -24,7 +24,12 @@ export function registerStoreHandlers(): void {
   ipcMain.handle(
     IpcChannels.store.get,
     (_event: IpcMainInvokeEvent, key: string): unknown => {
-      return store.get(key);
+      try {
+        return store.get(key);
+      } catch (error) {
+        console.error("[IPC Error] store:get:", error);
+        return undefined;
+      }
     }
   );
 

@@ -39,7 +39,12 @@ export function registerWorkflowHandlers(
   ipcMain.handle(
     IpcChannels.workflow.create,
     (_event: IpcMainInvokeEvent, data: NewWorkflow): Workflow => {
-      return workflowsRepository.create(data);
+      try {
+        return workflowsRepository.create(data);
+      } catch (error) {
+        console.error("[IPC Error] workflow:create:", error);
+        throw error;
+      }
     }
   );
 
@@ -47,7 +52,12 @@ export function registerWorkflowHandlers(
   ipcMain.handle(
     IpcChannels.workflow.start,
     (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
-      return workflowsRepository.start(id);
+      try {
+        return workflowsRepository.start(id);
+      } catch (error) {
+        console.error("[IPC Error] workflow:start:", error);
+        throw error;
+      }
     }
   );
 
@@ -55,7 +65,12 @@ export function registerWorkflowHandlers(
   ipcMain.handle(
     IpcChannels.workflow.pause,
     (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
-      return workflowsRepository.updateStatus(id, "paused");
+      try {
+        return workflowsRepository.updateStatus(id, "paused");
+      } catch (error) {
+        console.error("[IPC Error] workflow:pause:", error);
+        throw error;
+      }
     }
   );
 
@@ -63,7 +78,12 @@ export function registerWorkflowHandlers(
   ipcMain.handle(
     IpcChannels.workflow.resume,
     (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
-      return workflowsRepository.updateStatus(id, "running");
+      try {
+        return workflowsRepository.updateStatus(id, "running");
+      } catch (error) {
+        console.error("[IPC Error] workflow:resume:", error);
+        throw error;
+      }
     }
   );
 
@@ -71,7 +91,12 @@ export function registerWorkflowHandlers(
   ipcMain.handle(
     IpcChannels.workflow.cancel,
     (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
-      return workflowsRepository.updateStatus(id, "cancelled");
+      try {
+        return workflowsRepository.updateStatus(id, "cancelled");
+      } catch (error) {
+        console.error("[IPC Error] workflow:cancel:", error);
+        throw error;
+      }
     }
   );
 
@@ -79,7 +104,12 @@ export function registerWorkflowHandlers(
   ipcMain.handle(
     IpcChannels.workflow.delete,
     (_event: IpcMainInvokeEvent, id: number): boolean => {
-      return workflowsRepository.delete(id);
+      try {
+        return workflowsRepository.delete(id);
+      } catch (error) {
+        console.error("[IPC Error] workflow:delete:", error);
+        throw error;
+      }
     }
   );
 
@@ -87,7 +117,12 @@ export function registerWorkflowHandlers(
   ipcMain.handle(
     IpcChannels.workflow.get,
     (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
-      return workflowsRepository.findById(id);
+      try {
+        return workflowsRepository.findById(id);
+      } catch (error) {
+        console.error("[IPC Error] workflow:get:", error);
+        throw error;
+      }
     }
   );
 
@@ -98,7 +133,12 @@ export function registerWorkflowHandlers(
       _event: IpcMainInvokeEvent,
       filters?: WorkflowListFilters
     ): Array<Workflow> => {
-      return workflowsRepository.findAll(filters);
+      try {
+        return workflowsRepository.findAll(filters);
+      } catch (error) {
+        console.error("[IPC Error] workflow:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -109,7 +149,12 @@ export function registerWorkflowHandlers(
       _event: IpcMainInvokeEvent,
       filters?: WorkflowHistoryFilters
     ): WorkflowHistoryResult => {
-      return workflowsRepository.findHistory(filters);
+      try {
+        return workflowsRepository.findHistory(filters);
+      } catch (error) {
+        console.error("[IPC Error] workflow:listHistory:", error);
+        throw error;
+      }
     }
   );
 
@@ -120,7 +165,12 @@ export function registerWorkflowHandlers(
       _event: IpcMainInvokeEvent,
       filters?: { dateFrom?: string; dateTo?: string; projectId?: number }
     ): WorkflowStatistics => {
-      return workflowsRepository.getHistoryStatistics(filters);
+      try {
+        return workflowsRepository.getHistoryStatistics(filters);
+      } catch (error) {
+        console.error("[IPC Error] workflow:getStatistics:", error);
+        throw error;
+      }
     }
   );
 }

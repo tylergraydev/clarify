@@ -56,7 +56,12 @@ export function registerAuditHandlers(
   ipcMain.handle(
     IpcChannels.audit.create,
     (_event: IpcMainInvokeEvent, data: NewAuditLog): AuditLog => {
-      return auditLogsRepository.create(data);
+      try {
+        return auditLogsRepository.create(data);
+      } catch (error) {
+        console.error("[IPC Error] audit:create:", error);
+        throw error;
+      }
     }
   );
 
@@ -64,19 +69,24 @@ export function registerAuditHandlers(
   ipcMain.handle(
     IpcChannels.audit.export,
     (_event: IpcMainInvokeEvent, options: ExportOptions): ExportResult => {
-      const logs = auditLogsRepository.findByWorkflowId(options.workflowId);
+      try {
+        const logs = auditLogsRepository.findByWorkflowId(options.workflowId);
 
-      let content: string;
-      if (options.format === "markdown") {
-        content = exportAsMarkdown(logs, options.workflowId);
-      } else {
-        content = exportAsJson(logs, options.workflowId);
+        let content: string;
+        if (options.format === "markdown") {
+          content = exportAsMarkdown(logs, options.workflowId);
+        } else {
+          content = exportAsJson(logs, options.workflowId);
+        }
+
+        return {
+          content,
+          format: options.format,
+        };
+      } catch (error) {
+        console.error("[IPC Error] audit:export:", error);
+        throw error;
       }
-
-      return {
-        content,
-        format: options.format,
-      };
     }
   );
 
@@ -87,7 +97,12 @@ export function registerAuditHandlers(
       _event: IpcMainInvokeEvent,
       filters?: AuditListFilters
     ): Array<AuditLog> => {
-      return auditLogsRepository.findAll(filters);
+      try {
+        return auditLogsRepository.findAll(filters);
+      } catch (error) {
+        console.error("[IPC Error] audit:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -95,7 +110,12 @@ export function registerAuditHandlers(
   ipcMain.handle(
     IpcChannels.audit.findByWorkflow,
     (_event: IpcMainInvokeEvent, workflowId: number): Array<AuditLog> => {
-      return auditLogsRepository.findByWorkflowId(workflowId);
+      try {
+        return auditLogsRepository.findByWorkflowId(workflowId);
+      } catch (error) {
+        console.error("[IPC Error] audit:findByWorkflow:", error);
+        throw error;
+      }
     }
   );
 
@@ -103,7 +123,12 @@ export function registerAuditHandlers(
   ipcMain.handle(
     IpcChannels.audit.findByStep,
     (_event: IpcMainInvokeEvent, stepId: number): Array<AuditLog> => {
-      return auditLogsRepository.findByWorkflowStepId(stepId);
+      try {
+        return auditLogsRepository.findByWorkflowStepId(stepId);
+      } catch (error) {
+        console.error("[IPC Error] audit:findByStep:", error);
+        throw error;
+      }
     }
   );
 }

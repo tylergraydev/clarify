@@ -39,7 +39,12 @@ export function registerAgentHandlers(
       _event: IpcMainInvokeEvent,
       filters?: AgentListFilters
     ): Promise<Array<Agent>> => {
-      return agentsRepository.findAll(filters);
+      try {
+        return agentsRepository.findAll(filters);
+      } catch (error) {
+        console.error("[IPC Error] agent:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -50,7 +55,12 @@ export function registerAgentHandlers(
       _event: IpcMainInvokeEvent,
       id: number
     ): Promise<Agent | undefined> => {
-      return agentsRepository.findById(id);
+      try {
+        return agentsRepository.findById(id);
+      } catch (error) {
+        console.error("[IPC Error] agent:get:", error);
+        throw error;
+      }
     }
   );
 
@@ -62,7 +72,12 @@ export function registerAgentHandlers(
       id: number,
       data: Partial<Omit<NewAgent, "createdAt" | "id">>
     ): Promise<Agent | undefined> => {
-      return agentsRepository.update(id, data);
+      try {
+        return agentsRepository.update(id, data);
+      } catch (error) {
+        console.error("[IPC Error] agent:update:", error);
+        throw error;
+      }
     }
   );
 
@@ -74,22 +89,27 @@ export function registerAgentHandlers(
       _event: IpcMainInvokeEvent,
       id: number
     ): Promise<Agent | undefined> => {
-      // Get the current agent to find its parent (built-in version)
-      const agent = await agentsRepository.findById(id);
-      if (!agent) {
-        return undefined;
-      }
+      try {
+        // Get the current agent to find its parent (built-in version)
+        const agent = await agentsRepository.findById(id);
+        if (!agent) {
+          return undefined;
+        }
 
-      // If this is a custom agent with a parent, deactivate it and activate the parent
-      if (agent.parentAgentId !== null) {
-        // Deactivate the custom agent
-        await agentsRepository.deactivate(id);
-        // Activate the parent (built-in) agent
-        return agentsRepository.activate(agent.parentAgentId);
-      }
+        // If this is a custom agent with a parent, deactivate it and activate the parent
+        if (agent.parentAgentId !== null) {
+          // Deactivate the custom agent
+          await agentsRepository.deactivate(id);
+          // Activate the parent (built-in) agent
+          return agentsRepository.activate(agent.parentAgentId);
+        }
 
-      // If this is a built-in agent, just ensure it's active
-      return agentsRepository.activate(id);
+        // If this is a built-in agent, just ensure it's active
+        return agentsRepository.activate(id);
+      } catch (error) {
+        console.error("[IPC Error] agent:reset:", error);
+        throw error;
+      }
     }
   );
 
@@ -100,7 +120,12 @@ export function registerAgentHandlers(
       _event: IpcMainInvokeEvent,
       id: number
     ): Promise<Agent | undefined> => {
-      return agentsRepository.activate(id);
+      try {
+        return agentsRepository.activate(id);
+      } catch (error) {
+        console.error("[IPC Error] agent:activate:", error);
+        throw error;
+      }
     }
   );
 
@@ -111,7 +136,12 @@ export function registerAgentHandlers(
       _event: IpcMainInvokeEvent,
       id: number
     ): Promise<Agent | undefined> => {
-      return agentsRepository.deactivate(id);
+      try {
+        return agentsRepository.deactivate(id);
+      } catch (error) {
+        console.error("[IPC Error] agent:deactivate:", error);
+        throw error;
+      }
     }
   );
 }

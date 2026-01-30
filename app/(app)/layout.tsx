@@ -1,6 +1,11 @@
 "use client";
 
-import { AppHeader, AppSidebar, StatusBar } from "@/components/shell";
+import {
+  AppHeader,
+  AppSidebar,
+  MobileDrawer,
+  StatusBar,
+} from "@/components/shell";
 import { useActiveWorkflows } from "@/hooks/queries/use-workflows";
 import { useShellStore } from "@/lib/stores/shell-store";
 import { cn } from "@/lib/utils";
@@ -26,7 +31,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Header - fixed at top */}
       <AppHeader />
 
-      {/* Sidebar - fixed on left */}
+      {/* Mobile drawer - only visible on mobile when open */}
+      <MobileDrawer />
+
+      {/* Sidebar - fixed on left, hidden on mobile */}
       <AppSidebar />
 
       {/* Main content area */}
@@ -43,10 +51,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
           "mb-8",
           // Padding uses CSS variables for responsive values
           "px-(--padding-content-x) py-(--padding-content-y)",
-          // Margin left accounts for sidebar width based on collapsed state
+          // No left margin on mobile (sidebar hidden), responsive margin on tablet+
+          "ml-0",
           isSidebarCollapsed
-            ? "ml-(--sidebar-width-collapsed)"
-            : "ml-(--sidebar-width-expanded)"
+            ? "md:ml-(--sidebar-width-collapsed)"
+            : "md:ml-(--sidebar-width-expanded)"
         )}
       >
         {children}

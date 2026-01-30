@@ -27,8 +27,15 @@ import type {
   Worktree,
 } from "../db/schema";
 
-// IPC Channel constants inlined here because sandboxed preload scripts
-// cannot use require() for local modules - only for 'electron' and built-in Node.js modules
+/**
+ * IPC Channel Constants (Duplicate - Required for Preload)
+ *
+ * This is a duplicate of electron/ipc/channels.ts. Due to Electron's
+ * sandboxed preload restrictions, we cannot import local modules.
+ *
+ * IMPORTANT: Keep this synchronized with the source in electron/ipc/channels.ts.
+ * When adding or modifying channels, update BOTH files.
+ */
 const IpcChannels = {
   agent: {
     activate: "agent:activate",
@@ -298,7 +305,7 @@ export interface ElectronAPI {
     setValue(key: string, value: string): Promise<Setting | undefined>;
   };
   step: {
-    complete(id: number, output?: string): Promise<undefined | WorkflowStep>;
+    complete(id: number, output?: string, durationMs?: number): Promise<undefined | WorkflowStep>;
     edit(id: number, editedOutput: string): Promise<undefined | WorkflowStep>;
     fail(id: number, errorMessage: string): Promise<undefined | WorkflowStep>;
     get(id: number): Promise<undefined | WorkflowStep>;
@@ -538,8 +545,8 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke(IpcChannels.settings.setValue, key, value),
   },
   step: {
-    complete: (id, output) =>
-      ipcRenderer.invoke(IpcChannels.step.complete, id, output),
+    complete: (id, output, durationMs) =>
+      ipcRenderer.invoke(IpcChannels.step.complete, id, output, durationMs),
     edit: (id, editedOutput) =>
       ipcRenderer.invoke(IpcChannels.step.edit, id, editedOutput),
     fail: (id, errorMessage) =>

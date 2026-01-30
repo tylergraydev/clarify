@@ -30,7 +30,12 @@ export function registerAgentSkillHandlers(
       _event: IpcMainInvokeEvent,
       agentId: number
     ): Promise<Array<AgentSkill>> => {
-      return agentSkillsRepository.findByAgentId(agentId);
+      try {
+        return agentSkillsRepository.findByAgentId(agentId);
+      } catch (error) {
+        console.error("[IPC Error] agentSkill:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -41,7 +46,12 @@ export function registerAgentSkillHandlers(
       _event: IpcMainInvokeEvent,
       data: NewAgentSkill
     ): Promise<AgentSkill> => {
-      return agentSkillsRepository.create(data);
+      try {
+        return agentSkillsRepository.create(data);
+      } catch (error) {
+        console.error("[IPC Error] agentSkill:create:", error);
+        throw error;
+      }
     }
   );
 
@@ -53,7 +63,12 @@ export function registerAgentSkillHandlers(
       id: number,
       data: Partial<Omit<NewAgentSkill, "createdAt" | "id">>
     ): Promise<AgentSkill | undefined> => {
-      return agentSkillsRepository.update(id, data);
+      try {
+        return agentSkillsRepository.update(id, data);
+      } catch (error) {
+        console.error("[IPC Error] agentSkill:update:", error);
+        throw error;
+      }
     }
   );
 
@@ -65,7 +80,12 @@ export function registerAgentSkillHandlers(
       id: number,
       required: boolean
     ): Promise<AgentSkill | undefined> => {
-      return agentSkillsRepository.setRequired(id, required);
+      try {
+        return agentSkillsRepository.setRequired(id, required);
+      } catch (error) {
+        console.error("[IPC Error] agentSkill:setRequired:", error);
+        throw error;
+      }
     }
   );
 
@@ -73,7 +93,12 @@ export function registerAgentSkillHandlers(
   ipcMain.handle(
     IpcChannels.agentSkill.delete,
     async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
-      return agentSkillsRepository.delete(id);
+      try {
+        return agentSkillsRepository.delete(id);
+      } catch (error) {
+        console.error("[IPC Error] agentSkill:delete:", error);
+        throw error;
+      }
     }
   );
 }

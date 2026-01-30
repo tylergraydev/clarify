@@ -1,8 +1,12 @@
 /**
- * IPC Channel Constants
+ * IPC Channel Constants (Source of Truth)
  *
  * Centralized channel definitions for all Electron IPC communication.
  * Follow the naming pattern: `{domain}:{action}` or `{domain}:{subdomain}:{action}`
+ *
+ * IMPORTANT: This constant is duplicated in electron/preload.ts because
+ * sandboxed preload scripts cannot import local modules. When adding
+ * or modifying channels, update BOTH files to keep them synchronized.
  *
  * Rules:
  * - Use lowercase with colons as separators

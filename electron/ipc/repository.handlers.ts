@@ -33,7 +33,12 @@ export function registerRepositoryHandlers(
   ipcMain.handle(
     IpcChannels.repository.create,
     (_event: IpcMainInvokeEvent, data: NewRepository): Repository => {
-      return repositoriesRepository.create(data);
+      try {
+        return repositoriesRepository.create(data);
+      } catch (error) {
+        console.error("[IPC Error] repository:create:", error);
+        throw error;
+      }
     }
   );
 
@@ -41,7 +46,12 @@ export function registerRepositoryHandlers(
   ipcMain.handle(
     IpcChannels.repository.get,
     (_event: IpcMainInvokeEvent, id: number): Repository | undefined => {
-      return repositoriesRepository.findById(id);
+      try {
+        return repositoriesRepository.findById(id);
+      } catch (error) {
+        console.error("[IPC Error] repository:get:", error);
+        throw error;
+      }
     }
   );
 
@@ -52,7 +62,12 @@ export function registerRepositoryHandlers(
       _event: IpcMainInvokeEvent,
       filters?: RepositoryListFilters
     ): Array<Repository> => {
-      return repositoriesRepository.findAll(filters);
+      try {
+        return repositoriesRepository.findAll(filters);
+      } catch (error) {
+        console.error("[IPC Error] repository:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -64,7 +79,12 @@ export function registerRepositoryHandlers(
       id: number,
       data: Partial<NewRepository>
     ): Repository | undefined => {
-      return repositoriesRepository.update(id, data);
+      try {
+        return repositoriesRepository.update(id, data);
+      } catch (error) {
+        console.error("[IPC Error] repository:update:", error);
+        throw error;
+      }
     }
   );
 
@@ -72,7 +92,12 @@ export function registerRepositoryHandlers(
   ipcMain.handle(
     IpcChannels.repository.delete,
     (_event: IpcMainInvokeEvent, id: number): boolean => {
-      return repositoriesRepository.delete(id);
+      try {
+        return repositoriesRepository.delete(id);
+      } catch (error) {
+        console.error("[IPC Error] repository:delete:", error);
+        throw error;
+      }
     }
   );
 
@@ -80,7 +105,12 @@ export function registerRepositoryHandlers(
   ipcMain.handle(
     IpcChannels.repository.findByPath,
     (_event: IpcMainInvokeEvent, path: string): Repository | undefined => {
-      return repositoriesRepository.findByPath(path);
+      try {
+        return repositoriesRepository.findByPath(path);
+      } catch (error) {
+        console.error("[IPC Error] repository:findByPath:", error);
+        throw error;
+      }
     }
   );
 
@@ -88,7 +118,12 @@ export function registerRepositoryHandlers(
   ipcMain.handle(
     IpcChannels.repository.setDefault,
     (_event: IpcMainInvokeEvent, id: number): Repository | undefined => {
-      return repositoriesRepository.setAsDefault(id);
+      try {
+        return repositoriesRepository.setAsDefault(id);
+      } catch (error) {
+        console.error("[IPC Error] repository:setDefault:", error);
+        throw error;
+      }
     }
   );
 
@@ -96,7 +131,12 @@ export function registerRepositoryHandlers(
   ipcMain.handle(
     IpcChannels.repository.clearDefault,
     (_event: IpcMainInvokeEvent, id: number): Repository | undefined => {
-      return repositoriesRepository.clearDefault(id);
+      try {
+        return repositoriesRepository.clearDefault(id);
+      } catch (error) {
+        console.error("[IPC Error] repository:clearDefault:", error);
+        throw error;
+      }
     }
   );
 
@@ -104,7 +144,12 @@ export function registerRepositoryHandlers(
   ipcMain.handle(
     IpcChannels.repository.findByProject,
     (_event: IpcMainInvokeEvent, projectId: number): Array<Repository> => {
-      return repositoriesRepository.findByProjectId(projectId);
+      try {
+        return repositoriesRepository.findByProjectId(projectId);
+      } catch (error) {
+        console.error("[IPC Error] repository:findByProject:", error);
+        throw error;
+      }
     }
   );
 }

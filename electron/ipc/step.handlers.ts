@@ -36,7 +36,12 @@ export function registerStepHandlers(
   ipcMain.handle(
     IpcChannels.step.get,
     (_event: IpcMainInvokeEvent, id: number): undefined | WorkflowStep => {
-      return workflowStepsRepository.findById(id);
+      try {
+        return workflowStepsRepository.findById(id);
+      } catch (error) {
+        console.error("[IPC Error] step:get:", error);
+        throw error;
+      }
     }
   );
 
@@ -47,7 +52,12 @@ export function registerStepHandlers(
       _event: IpcMainInvokeEvent,
       filters?: StepListFilters
     ): Array<WorkflowStep> => {
-      return workflowStepsRepository.findAll(filters);
+      try {
+        return workflowStepsRepository.findAll(filters);
+      } catch (error) {
+        console.error("[IPC Error] step:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -59,7 +69,12 @@ export function registerStepHandlers(
       id: number,
       outputText: string
     ): undefined | WorkflowStep => {
-      return workflowStepsRepository.markEdited(id, outputText);
+      try {
+        return workflowStepsRepository.markEdited(id, outputText);
+      } catch (error) {
+        console.error("[IPC Error] step:edit:", error);
+        throw error;
+      }
     }
   );
 
@@ -69,10 +84,19 @@ export function registerStepHandlers(
     (
       _event: IpcMainInvokeEvent,
       id: number,
-      outputText: string,
-      durationMs: number
+      outputText?: string,
+      durationMs?: number
     ): undefined | WorkflowStep => {
-      return workflowStepsRepository.complete(id, outputText, durationMs);
+      try {
+        return workflowStepsRepository.complete(
+          id,
+          outputText ?? "",
+          durationMs ?? 0
+        );
+      } catch (error) {
+        console.error("[IPC Error] step:complete:", error);
+        throw error;
+      }
     }
   );
 
@@ -84,7 +108,12 @@ export function registerStepHandlers(
       id: number,
       errorMessage: string
     ): undefined | WorkflowStep => {
-      return workflowStepsRepository.fail(id, errorMessage);
+      try {
+        return workflowStepsRepository.fail(id, errorMessage);
+      } catch (error) {
+        console.error("[IPC Error] step:fail:", error);
+        throw error;
+      }
     }
   );
 
@@ -92,7 +121,12 @@ export function registerStepHandlers(
   ipcMain.handle(
     IpcChannels.step.regenerate,
     (_event: IpcMainInvokeEvent, id: number): undefined | WorkflowStep => {
-      return workflowStepsRepository.updateStatus(id, "pending");
+      try {
+        return workflowStepsRepository.updateStatus(id, "pending");
+      } catch (error) {
+        console.error("[IPC Error] step:regenerate:", error);
+        throw error;
+      }
     }
   );
 
@@ -100,7 +134,12 @@ export function registerStepHandlers(
   ipcMain.handle(
     IpcChannels.step.skip,
     (_event: IpcMainInvokeEvent, id: number): undefined | WorkflowStep => {
-      return workflowStepsRepository.skip(id);
+      try {
+        return workflowStepsRepository.skip(id);
+      } catch (error) {
+        console.error("[IPC Error] step:skip:", error);
+        throw error;
+      }
     }
   );
 }

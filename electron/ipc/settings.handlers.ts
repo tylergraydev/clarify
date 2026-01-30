@@ -38,7 +38,12 @@ export function registerSettingsHandlers(
       _event: IpcMainInvokeEvent,
       options?: { category?: string }
     ): Promise<Array<Setting>> => {
-      return settingsRepository.findAll(options);
+      try {
+        return settingsRepository.findAll(options);
+      } catch (error) {
+        console.error("[IPC Error] settings:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -49,7 +54,12 @@ export function registerSettingsHandlers(
       _event: IpcMainInvokeEvent,
       id: number
     ): Promise<Setting | undefined> => {
-      return settingsRepository.findById(id);
+      try {
+        return settingsRepository.findById(id);
+      } catch (error) {
+        console.error("[IPC Error] settings:get:", error);
+        throw error;
+      }
     }
   );
 
@@ -60,7 +70,12 @@ export function registerSettingsHandlers(
       _event: IpcMainInvokeEvent,
       key: string
     ): Promise<Setting | undefined> => {
-      return settingsRepository.findByKey(key);
+      try {
+        return settingsRepository.findByKey(key);
+      } catch (error) {
+        console.error("[IPC Error] settings:getByKey:", error);
+        throw error;
+      }
     }
   );
 
@@ -71,7 +86,12 @@ export function registerSettingsHandlers(
       _event: IpcMainInvokeEvent,
       category: string
     ): Promise<Array<Setting>> => {
-      return settingsRepository.findByCategory(category);
+      try {
+        return settingsRepository.findByCategory(category);
+      } catch (error) {
+        console.error("[IPC Error] settings:getByCategory:", error);
+        throw error;
+      }
     }
   );
 
@@ -83,7 +103,12 @@ export function registerSettingsHandlers(
       key: string,
       value: string
     ): Promise<Setting | undefined> => {
-      return settingsRepository.setValue(key, value);
+      try {
+        return settingsRepository.setValue(key, value);
+      } catch (error) {
+        console.error("[IPC Error] settings:setValue:", error);
+        throw error;
+      }
     }
   );
 
@@ -94,7 +119,12 @@ export function registerSettingsHandlers(
       _event: IpcMainInvokeEvent,
       key: string
     ): Promise<Setting | undefined> => {
-      return settingsRepository.resetToDefault(key);
+      try {
+        return settingsRepository.resetToDefault(key);
+      } catch (error) {
+        console.error("[IPC Error] settings:resetToDefault:", error);
+        throw error;
+      }
     }
   );
 
@@ -105,16 +135,21 @@ export function registerSettingsHandlers(
       _event: IpcMainInvokeEvent,
       updates: Array<BulkUpdateItem>
     ): Promise<Array<Setting>> => {
-      const results: Array<Setting> = [];
+      try {
+        const results: Array<Setting> = [];
 
-      for (const { key, value } of updates) {
-        const result = await settingsRepository.setValue(key, value);
-        if (result) {
-          results.push(result);
+        for (const { key, value } of updates) {
+          const result = await settingsRepository.setValue(key, value);
+          if (result) {
+            results.push(result);
+          }
         }
-      }
 
-      return results;
+        return results;
+      } catch (error) {
+        console.error("[IPC Error] settings:bulkUpdate:", error);
+        throw error;
+      }
     }
   );
 }

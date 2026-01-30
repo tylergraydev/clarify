@@ -53,7 +53,12 @@ export function registerProjectHandlers(
   ipcMain.handle(
     IpcChannels.project.create,
     async (_event: IpcMainInvokeEvent, data: NewProject): Promise<Project> => {
-      return projectsRepository.create(data);
+      try {
+        return projectsRepository.create(data);
+      } catch (error) {
+        console.error("[IPC Error] project:create:", error);
+        throw error;
+      }
     }
   );
 
@@ -64,7 +69,12 @@ export function registerProjectHandlers(
       _event: IpcMainInvokeEvent,
       id: number
     ): Promise<Project | undefined> => {
-      return projectsRepository.findById(id);
+      try {
+        return projectsRepository.findById(id);
+      } catch (error) {
+        console.error("[IPC Error] project:get:", error);
+        throw error;
+      }
     }
   );
 
@@ -75,7 +85,12 @@ export function registerProjectHandlers(
       _event: IpcMainInvokeEvent,
       options?: ProjectListOptions
     ): Promise<Array<Project>> => {
-      return projectsRepository.findAll(options);
+      try {
+        return projectsRepository.findAll(options);
+      } catch (error) {
+        console.error("[IPC Error] project:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -87,7 +102,12 @@ export function registerProjectHandlers(
       id: number,
       data: Partial<Omit<NewProject, "createdAt" | "id">>
     ): Promise<Project | undefined> => {
-      return projectsRepository.update(id, data);
+      try {
+        return projectsRepository.update(id, data);
+      } catch (error) {
+        console.error("[IPC Error] project:update:", error);
+        throw error;
+      }
     }
   );
 
@@ -98,7 +118,12 @@ export function registerProjectHandlers(
       _event: IpcMainInvokeEvent,
       id: number
     ): Promise<Project | undefined> => {
-      return projectsRepository.archive(id);
+      try {
+        return projectsRepository.archive(id);
+      } catch (error) {
+        console.error("[IPC Error] project:delete:", error);
+        throw error;
+      }
     }
   );
 
@@ -110,16 +135,21 @@ export function registerProjectHandlers(
       projectId: number,
       repoData: AddRepoData
     ): Promise<Repository> => {
-      // Build the new repository data with project association
-      const newRepo: NewRepository = {
-        defaultBranch: repoData.defaultBranch ?? "main",
-        name: repoData.name,
-        path: repoData.path,
-        projectId,
-        remoteUrl: repoData.remoteUrl ?? null,
-      };
+      try {
+        // Build the new repository data with project association
+        const newRepo: NewRepository = {
+          defaultBranch: repoData.defaultBranch ?? "main",
+          name: repoData.name,
+          path: repoData.path,
+          projectId,
+          remoteUrl: repoData.remoteUrl ?? null,
+        };
 
-      return repositoriesRepository.create(newRepo);
+        return repositoriesRepository.create(newRepo);
+      } catch (error) {
+        console.error("[IPC Error] project:addRepo:", error);
+        throw error;
+      }
     }
   );
 }

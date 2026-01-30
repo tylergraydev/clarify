@@ -5,6 +5,7 @@ import type { ComponentPropsWithRef, CSSProperties } from "react";
 import { Menu } from "lucide-react";
 
 import { IconButton } from "@/components/ui/icon-button";
+import { useIsMobile } from "@/hooks/use-media-query";
 import { useShellStore } from "@/lib/stores/shell-store";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +37,16 @@ export const AppHeader = ({
   selectedProjectId,
   ...props
 }: AppHeaderProps) => {
-  const { isSidebarCollapsed, toggleSidebar } = useShellStore();
+  const isMobile = useIsMobile();
+  const { isSidebarCollapsed, setMobileDrawerOpen, toggleSidebar } =
+    useShellStore();
 
   const handleToggleSidebar = () => {
-    toggleSidebar();
+    if (isMobile) {
+      setMobileDrawerOpen(true);
+    } else {
+      toggleSidebar();
+    }
   };
 
   return (

@@ -19,10 +19,10 @@ A comprehensive review of the Clarify application against the design document re
 | Workflows        | 85%        | Auto-start not implemented               |
 | Templates        | 95%        | Missing built-in template seeding        |
 | Agents           | 75%        | Missing tool/skill UI, no seeding        |
-| Settings         | 85%        | Missing per-step-type timeouts           |
+| Settings         | 100%       | All issues resolved                      |
 | Dashboard        | 85%        | Status bar not wired, missing fields     |
 | Navigation/Shell | 95%        | Status bar activeWorkflowCount not wired |
-| IPC Handlers     | 98%        | Critical type mismatch in step:complete  |
+| IPC Handlers     | 100%       | All issues resolved                      |
 
 ---
 
@@ -274,22 +274,22 @@ Allowed Tools
 
 ## 6. Settings Issues
 
-### 6.1 Missing Per-Step-Type Timeouts
+### 6.1 Missing Per-Step-Type Timeouts - RESOLVED
 
-**Design specifies 5 separate timeout fields:**
-| Step Type | Default |
-|-----------|---------|
-| Clarification | 60s |
-| Refinement | 30s |
-| File Discovery | 120s |
-| Planning | 180s |
-| Implementation | 300s |
+**Status:** ✅ Already implemented
 
-**Current:** Single `workflow.stepTimeoutSeconds` field (300s default).
+All 5 step-type-specific timeout fields exist in both the validation schema (`lib/validations/settings.ts`) and the UI (`components/settings/workflow-settings-section.tsx`):
+- `workflow.clarificationTimeoutSeconds`
+- `workflow.refinementTimeoutSeconds`
+- `workflow.discoveryTimeoutSeconds`
+- `workflow.planningTimeoutSeconds`
+- `workflow.implementationTimeoutSeconds`
 
-### 6.2 Advanced Settings Category Unused
+### 6.2 Advanced Settings Category Unused - RESOLVED
 
-Schema defines `"advanced"` category but no settings use it and no UI section exists.
+**Status:** ✅ Removed unused category
+
+The unused `"advanced"` category has been removed from `db/schema/settings.schema.ts` since no settings used it and the design document didn't specify what should go there.
 
 ---
 
@@ -365,42 +365,38 @@ Comprehensive indexing on all foreign keys, filter columns, and composite querie
 
 ## 9. IPC Handler Issues
 
-### 9.1 Critical Type Mismatch: step:complete
+### 9.1 Critical Type Mismatch: step:complete - RESOLVED
 
-**Preload API:**
+**Status:** ✅ Fixed
 
-```typescript
-complete(id: number, output?: string): Promise<undefined | WorkflowStep>;
-```
+The `step:complete` signature has been updated across all layers to include the optional `durationMs` parameter:
+- `electron/preload.ts` - Interface and implementation updated
+- `types/electron.d.ts` - Type declaration updated
+- `electron/ipc/step.handlers.ts` - Handler accepts optional params with defaults
+- `hooks/queries/use-steps.ts` - Mutation hook updated
+- `hooks/use-electron.ts` - Wrapper function updated
 
-**Handler:**
+### 9.2 Inconsistent Error Handling - RESOLVED
 
-```typescript
-complete(id: number, outputText: string, durationMs: number): ...
-```
+**Status:** ✅ Fixed
 
-**Problem:** Handler expects `durationMs` parameter that preload doesn't expose.
-
-**Impact:** Runtime errors or silent failures when completing steps.
-
-### 9.2 Inconsistent Error Handling
+All IPC handlers now have consistent error handling:
 
 | Handler Module        | Error Handling            |
 | --------------------- | ------------------------- |
 | fs.handlers           | ✓ Comprehensive try-catch |
-| store.handlers        | ⚠️ Silent failures        |
-| All database handlers | ❌ No error handling      |
+| store.handlers        | ✓ All methods have try-catch |
+| All database handlers | ✓ Try-catch with logging and re-throw |
 
-**Impact:** Repository errors propagate to renderer unhandled.
+Error handling pattern applied: `console.error("[IPC Error] channel:method:", error)` followed by re-throw.
 
-### 9.3 Duplicate Channel Definitions
+### 9.3 Duplicate Channel Definitions - DOCUMENTED
 
-`IpcChannels` constant defined in both:
+**Status:** ✅ Documented
 
-- `electron/preload.ts` (inline)
-- `electron/ipc/channels.ts` (exported)
-
-While identical, this creates maintenance burden.
+Cannot consolidate due to Electron preload sandbox limitations. Added clear documentation in both files:
+- `electron/ipc/channels.ts` - Marked as "Source of Truth" with sync instructions
+- `electron/preload.ts` - Marked as "Duplicate - Required for Preload" with sync instructions
 
 ---
 
@@ -408,7 +404,7 @@ While identical, this creates maintenance burden.
 
 ### Critical (Must Fix)
 
-1. **Fix step:complete type mismatch** - Runtime errors
+1. ~~**Fix step:complete type mismatch** - Runtime errors~~ ✅ RESOLVED
 2. **Wire Status Bar activeWorkflowCount** - Core feature broken
 3. **Implement built-in agent seeding** - Empty agents list on first run
 4. **Implement built-in template seeding** - Empty templates list on first run
@@ -417,27 +413,25 @@ While identical, this creates maintenance burden.
 
 5. **Add Edit Repository Dialog** - Can't fix repository mistakes
 6. **Add delete confirmation dialogs** - Data loss risk
-7. **Add per-step-type timeout settings** - Design requirement
-8. **Auto-start workflow after creation** - UX issue
-9. **Add repository selection to workflow creation** - Design requirement
+7. **Auto-start workflow after creation** - UX issue
+8. **Add repository selection to workflow creation** - Design requirement
 
 ### Medium Priority
 
-10. **Add tool permissions UI to agent editor** - Schema exists, UI missing
-11. **Add skills management UI to agent editor** - Schema exists, UI missing
-12. **Add color tag editor to agent editor** - Schema exists, UI missing
-13. **Add branch name to dashboard workflow cards** - Missing information
-14. **Add action buttons to dashboard workflow cards** - Missing interactivity
-15. **Add duration column to recent workflows** - Missing information
-16. **Add skip clarification toggle** - Design requirement
-17. **Add workflow delete/archive functionality** - Missing CRUD operation
+9. **Add tool permissions UI to agent editor** - Schema exists, UI missing
+10. **Add skills management UI to agent editor** - Schema exists, UI missing
+11. **Add color tag editor to agent editor** - Schema exists, UI missing
+12. **Add branch name to dashboard workflow cards** - Missing information
+13. **Add action buttons to dashboard workflow cards** - Missing interactivity
+14. **Add duration column to recent workflows** - Missing information
+15. **Add skip clarification toggle** - Design requirement
+16. **Add workflow delete/archive functionality** - Missing CRUD operation
 
 ### Low Priority
 
-18. **Add mobile drawer for sidebar** - Responsive enhancement
-19. **Add error handling to database IPC handlers** - Robustness
-20. **Consolidate IpcChannels definitions** - Code maintenance
-21. **Add "advanced" settings section** - Schema defined but unused
+17. **Add mobile drawer for sidebar** - Responsive enhancement
+18. ~~**Add error handling to database IPC handlers** - Robustness~~ ✅ RESOLVED
+19. ~~**Consolidate IpcChannels definitions** - Code maintenance~~ ✅ DOCUMENTED (cannot consolidate due to preload sandbox)
 
 ---
 
@@ -461,8 +455,6 @@ While identical, this creates maintenance burden.
 | `electron/ipc/step.handlers.ts`                               | Fix complete handler signature                      |
 | `electron/preload.ts`                                         | Update step.complete signature                      |
 | `components/agents/agent-editor-dialog.tsx`                   | Add tool/skill/color editors                        |
-| `app/(app)/settings/page.tsx`                                 | Add per-step-type timeout fields                    |
-| `components/settings/workflow-settings-section.tsx`           | Add individual timeout fields                       |
 | `components/projects/repository-card.tsx`                     | Add edit button                                     |
 | `app/(app)/dashboard/_components/active-workflows-widget.tsx` | Add branch name and action buttons                  |
 | `app/(app)/dashboard/_components/recent-workflows-widget.tsx` | Add duration column                                 |
@@ -503,7 +495,7 @@ While identical, this creates maintenance burden.
 ### Section 4.7 Settings Panel
 
 - [x] Default pause behavior
-- [ ] Individual step timeouts (5 types)
+- [x] Individual step timeouts (5 types)
 - [x] Worktree location
 - [x] Auto-cleanup toggle
 - [x] Create feature branch toggle

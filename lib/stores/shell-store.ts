@@ -6,6 +6,8 @@ import { create } from "zustand";
 export interface ShellActions {
   /** Set the currently active navigation item */
   setActiveNavItem: (item: null | string) => void;
+  /** Set the mobile drawer open state */
+  setMobileDrawerOpen: (open: boolean) => void;
   /** Set the currently selected project */
   setSelectedProject: (id: null | number) => void;
   /** Explicitly set sidebar collapsed state */
@@ -22,6 +24,8 @@ export interface ShellActions {
 export interface ShellState {
   /** Currently active navigation item identifier */
   activeNavItem: null | string;
+  /** Whether the mobile navigation drawer is open */
+  isMobileDrawerOpen: boolean;
   /** Whether the sidebar is currently collapsed */
   isSidebarCollapsed: boolean;
   /** Timestamp of the last data sync operation */
@@ -54,12 +58,17 @@ export type ShellStore = ShellActions & ShellState;
 export const useShellStore = create<ShellStore>()((set) => ({
   activeNavItem: null,
   // Initial state
+  isMobileDrawerOpen: false,
   isSidebarCollapsed: false,
   lastSyncTimestamp: null,
   selectedProjectId: null,
 
   setActiveNavItem: (item: null | string) => {
     set({ activeNavItem: item });
+  },
+
+  setMobileDrawerOpen: (open: boolean) => {
+    set({ isMobileDrawerOpen: open });
   },
 
   setSelectedProject: (id: null | number) => {

@@ -31,11 +31,16 @@ export function registerWorkflowRepositoriesHandlers(
       repositoryId: number,
       isPrimary?: boolean
     ): WorkflowRepository => {
-      return workflowRepositoriesRepository.addToWorkflow(
-        workflowId,
-        repositoryId,
-        isPrimary
-      );
+      try {
+        return workflowRepositoriesRepository.addToWorkflow(
+          workflowId,
+          repositoryId,
+          isPrimary
+        );
+      } catch (error) {
+        console.error("[IPC Error] workflowRepository:add:", error);
+        throw error;
+      }
     }
   );
 
@@ -48,11 +53,16 @@ export function registerWorkflowRepositoriesHandlers(
       repositoryIds: Array<number>,
       primaryRepositoryId?: number
     ): Array<WorkflowRepository> => {
-      return workflowRepositoriesRepository.addMultipleToWorkflow(
-        workflowId,
-        repositoryIds,
-        primaryRepositoryId
-      );
+      try {
+        return workflowRepositoriesRepository.addMultipleToWorkflow(
+          workflowId,
+          repositoryIds,
+          primaryRepositoryId
+        );
+      } catch (error) {
+        console.error("[IPC Error] workflowRepository:addMultiple:", error);
+        throw error;
+      }
     }
   );
 
@@ -63,7 +73,12 @@ export function registerWorkflowRepositoriesHandlers(
       _event: IpcMainInvokeEvent,
       workflowId: number
     ): Array<WorkflowRepository> => {
-      return workflowRepositoriesRepository.findByWorkflowId(workflowId);
+      try {
+        return workflowRepositoriesRepository.findByWorkflowId(workflowId);
+      } catch (error) {
+        console.error("[IPC Error] workflowRepository:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -75,10 +90,15 @@ export function registerWorkflowRepositoriesHandlers(
       workflowId: number,
       repositoryId: number
     ): boolean => {
-      return workflowRepositoriesRepository.removeFromWorkflow(
-        workflowId,
-        repositoryId
-      );
+      try {
+        return workflowRepositoriesRepository.removeFromWorkflow(
+          workflowId,
+          repositoryId
+        );
+      } catch (error) {
+        console.error("[IPC Error] workflowRepository:remove:", error);
+        throw error;
+      }
     }
   );
 
@@ -90,10 +110,15 @@ export function registerWorkflowRepositoriesHandlers(
       workflowId: number,
       repositoryId: number
     ): undefined | WorkflowRepository => {
-      return workflowRepositoriesRepository.setPrimary(
-        workflowId,
-        repositoryId
-      );
+      try {
+        return workflowRepositoriesRepository.setPrimary(
+          workflowId,
+          repositoryId
+        );
+      } catch (error) {
+        console.error("[IPC Error] workflowRepository:setPrimary:", error);
+        throw error;
+      }
     }
   );
 }

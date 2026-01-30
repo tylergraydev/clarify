@@ -39,10 +39,15 @@ export function registerDiscoveryHandlers(
       workflowStepId: number,
       options?: { priority?: string }
     ): Array<DiscoveredFile> => {
-      return discoveredFilesRepository.findAll({
-        priority: options?.priority,
-        workflowStepId,
-      });
+      try {
+        return discoveredFilesRepository.findAll({
+          priority: options?.priority,
+          workflowStepId,
+        });
+      } catch (error) {
+        console.error("[IPC Error] discovery:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -53,9 +58,14 @@ export function registerDiscoveryHandlers(
       _event: IpcMainInvokeEvent,
       updates: Array<BatchUpdateInput>
     ): Array<DiscoveredFile | undefined> => {
-      return updates.map((update) =>
-        discoveredFilesRepository.update(update.id, update.data)
-      );
+      try {
+        return updates.map((update) =>
+          discoveredFilesRepository.update(update.id, update.data)
+        );
+      } catch (error) {
+        console.error("[IPC Error] discovery:update:", error);
+        throw error;
+      }
     }
   );
 
@@ -63,7 +73,12 @@ export function registerDiscoveryHandlers(
   ipcMain.handle(
     IpcChannels.discovery.include,
     (_event: IpcMainInvokeEvent, id: number): DiscoveredFile | undefined => {
-      return discoveredFilesRepository.include(id);
+      try {
+        return discoveredFilesRepository.include(id);
+      } catch (error) {
+        console.error("[IPC Error] discovery:include:", error);
+        throw error;
+      }
     }
   );
 
@@ -71,7 +86,12 @@ export function registerDiscoveryHandlers(
   ipcMain.handle(
     IpcChannels.discovery.exclude,
     (_event: IpcMainInvokeEvent, id: number): DiscoveredFile | undefined => {
-      return discoveredFilesRepository.exclude(id);
+      try {
+        return discoveredFilesRepository.exclude(id);
+      } catch (error) {
+        console.error("[IPC Error] discovery:exclude:", error);
+        throw error;
+      }
     }
   );
 
@@ -79,9 +99,14 @@ export function registerDiscoveryHandlers(
   ipcMain.handle(
     IpcChannels.discovery.add,
     (_event: IpcMainInvokeEvent, data: NewDiscoveredFile): DiscoveredFile => {
-      const file = discoveredFilesRepository.create(data);
-      // Mark as user-added
-      return discoveredFilesRepository.markUserAdded(file.id) ?? file;
+      try {
+        const file = discoveredFilesRepository.create(data);
+        // Mark as user-added
+        return discoveredFilesRepository.markUserAdded(file.id) ?? file;
+      } catch (error) {
+        console.error("[IPC Error] discovery:add:", error);
+        throw error;
+      }
     }
   );
 
@@ -93,7 +118,12 @@ export function registerDiscoveryHandlers(
       id: number,
       priority: string
     ): DiscoveredFile | undefined => {
-      return discoveredFilesRepository.updatePriority(id, priority);
+      try {
+        return discoveredFilesRepository.updatePriority(id, priority);
+      } catch (error) {
+        console.error("[IPC Error] discovery:updatePriority:", error);
+        throw error;
+      }
     }
   );
 }

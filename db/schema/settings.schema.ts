@@ -6,7 +6,6 @@ export const settingCategories = [
   "worktree",
   "logging",
   "ui",
-  "advanced",
 ] as const;
 export const settingValueTypes = [
   "string",

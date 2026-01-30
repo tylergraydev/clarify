@@ -30,7 +30,12 @@ export function registerAgentToolHandlers(
       _event: IpcMainInvokeEvent,
       agentId: number
     ): Promise<Array<AgentTool>> => {
-      return agentToolsRepository.findByAgentId(agentId);
+      try {
+        return agentToolsRepository.findByAgentId(agentId);
+      } catch (error) {
+        console.error("[IPC Error] agentTool:list:", error);
+        throw error;
+      }
     }
   );
 
@@ -41,7 +46,12 @@ export function registerAgentToolHandlers(
       _event: IpcMainInvokeEvent,
       data: NewAgentTool
     ): Promise<AgentTool> => {
-      return agentToolsRepository.create(data);
+      try {
+        return agentToolsRepository.create(data);
+      } catch (error) {
+        console.error("[IPC Error] agentTool:create:", error);
+        throw error;
+      }
     }
   );
 
@@ -53,7 +63,12 @@ export function registerAgentToolHandlers(
       id: number,
       data: Partial<Omit<NewAgentTool, "createdAt" | "id">>
     ): Promise<AgentTool | undefined> => {
-      return agentToolsRepository.update(id, data);
+      try {
+        return agentToolsRepository.update(id, data);
+      } catch (error) {
+        console.error("[IPC Error] agentTool:update:", error);
+        throw error;
+      }
     }
   );
 
@@ -64,7 +79,12 @@ export function registerAgentToolHandlers(
       _event: IpcMainInvokeEvent,
       id: number
     ): Promise<AgentTool | undefined> => {
-      return agentToolsRepository.allow(id);
+      try {
+        return agentToolsRepository.allow(id);
+      } catch (error) {
+        console.error("[IPC Error] agentTool:allow:", error);
+        throw error;
+      }
     }
   );
 
@@ -75,7 +95,12 @@ export function registerAgentToolHandlers(
       _event: IpcMainInvokeEvent,
       id: number
     ): Promise<AgentTool | undefined> => {
-      return agentToolsRepository.disallow(id);
+      try {
+        return agentToolsRepository.disallow(id);
+      } catch (error) {
+        console.error("[IPC Error] agentTool:disallow:", error);
+        throw error;
+      }
     }
   );
 
@@ -83,7 +108,12 @@ export function registerAgentToolHandlers(
   ipcMain.handle(
     IpcChannels.agentTool.delete,
     async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
-      return agentToolsRepository.delete(id);
+      try {
+        return agentToolsRepository.delete(id);
+      } catch (error) {
+        console.error("[IPC Error] agentTool:delete:", error);
+        throw error;
+      }
     }
   );
 }

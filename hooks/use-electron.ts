@@ -117,9 +117,9 @@ export function useElectronDb() {
 
   const steps = useMemo(
     () => ({
-      complete: async (id: number, output?: string) => {
+      complete: async (id: number, output?: string, durationMs?: number) => {
         const electronApi = throwIfNoApi("step.complete");
-        return electronApi.step.complete(id, output);
+        return electronApi.step.complete(id, output, durationMs);
       },
       edit: async (id: number, editedOutput: string) => {
         const electronApi = throwIfNoApi("step.edit");

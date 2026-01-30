@@ -211,7 +211,8 @@ export interface ElectronAPI {
   step: {
     complete(
       id: number,
-      output?: string
+      output?: string,
+      durationMs?: number
     ): Promise<import("../db/schema").WorkflowStep | undefined>;
     edit(
       id: number,

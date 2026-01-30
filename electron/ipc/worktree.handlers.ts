@@ -25,7 +25,12 @@ export function registerWorktreeHandlers(
       _event: IpcMainInvokeEvent,
       id: number
     ): Promise<undefined | Worktree> => {
-      return worktreesRepository.findById(id);
+      try {
+        return worktreesRepository.findById(id);
+      } catch (error) {
+        console.error("[IPC Error] worktree:get:", error);
+        throw error;
+      }
     }
   );
 
@@ -36,7 +41,12 @@ export function registerWorktreeHandlers(
       _event: IpcMainInvokeEvent,
       workflowId: number
     ): Promise<undefined | Worktree> => {
-      return worktreesRepository.findByWorkflowId(workflowId);
+      try {
+        return worktreesRepository.findByWorkflowId(workflowId);
+      } catch (error) {
+        console.error("[IPC Error] worktree:getByWorkflowId:", error);
+        throw error;
+      }
     }
   );
 
@@ -47,7 +57,12 @@ export function registerWorktreeHandlers(
       _event: IpcMainInvokeEvent,
       options?: { repositoryId?: number; status?: string }
     ): Promise<Array<Worktree>> => {
-      return worktreesRepository.findAll(options);
+      try {
+        return worktreesRepository.findAll(options);
+      } catch (error) {
+        console.error("[IPC Error] worktree:list:", error);
+        throw error;
+      }
     }
   );
 }
