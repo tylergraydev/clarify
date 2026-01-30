@@ -16,6 +16,7 @@ import type {
   CreateAgentFormData,
   UpdateAgentFormValues,
 } from "@/lib/validations/agent";
+import type { PendingSkillData } from "@/types/agent-skills";
 import type { CreateToolData, ToolSelection } from "@/types/agent-tools";
 import type { Agent } from "@/types/electron";
 
@@ -65,8 +66,14 @@ import {
   updateAgentSchema,
 } from "@/lib/validations/agent";
 
+import {
+  useCreateAgentSkill,
+  useSetAgentSkillRequired,
+} from "@/hooks/queries/use-agent-skills";
+
 import { AgentColorPicker } from "./agent-color-picker";
 import { AgentSkillsManager } from "./agent-skills-manager";
+import { AgentSkillsSection } from "./agent-skills-section";
 import { AgentToolsSection } from "./agent-tools-section";
 import { ConfirmResetAgentDialog } from "./confirm-reset-agent-dialog";
 
@@ -142,6 +149,11 @@ export const AgentEditorDialog = ({
   );
   const [customTools, setCustomTools] = useState<Array<CreateToolData>>([]);
 
+  // Skill state for create mode
+  const [pendingSkills, setPendingSkills] = useState<Array<PendingSkillData>>(
+    []
+  );
+
   const createAgentMutation = useCreateAgent();
   const updateAgentMutation = useUpdateAgent();
   const resetAgentMutation = useResetAgent();
@@ -151,6 +163,10 @@ export const AgentEditorDialog = ({
   const deleteToolMutation = useDeleteAgentTool();
   const allowToolMutation = useAllowAgentTool();
   const disallowToolMutation = useDisallowAgentTool();
+
+  // Skill mutations for create mode
+  const createSkillMutation = useCreateAgentSkill();
+  const setSkillRequiredMutation = useSetAgentSkillRequired();
 
   // Fetch existing tools for edit mode
   const existingToolsQuery = useAgentTools(agent?.id ?? 0);
@@ -272,7 +288,7 @@ export const AgentEditorDialog = ({
           type: createValue.type,
         });
 
-        // If agent was created successfully, create tools
+        // If agent was created successfully, create tools and skills
         if (result.success && result.agent) {
           const toolsToSave = getToolsToSave();
           for (const tool of toolsToSave) {
@@ -281,6 +297,21 @@ export const AgentEditorDialog = ({
               toolName: tool.toolName,
               toolPattern: tool.pattern,
             });
+          }
+
+          // Create skills for the new agent
+          for (const skill of pendingSkills) {
+            const createdSkill = await createSkillMutation.mutateAsync({
+              agentId: result.agent.id,
+              skillName: skill.skillName,
+            });
+            // Set required status if needed
+            if (skill.isRequired && createdSkill) {
+              await setSkillRequiredMutation.mutateAsync({
+                id: createdSkill.id,
+                required: true,
+              });
+            }
           }
         }
       }
@@ -386,10 +417,11 @@ export const AgentEditorDialog = ({
   const resetFormAndColor = useCallback(() => {
     form.reset(getDefaultValues());
     setSelectedColor(getInitialColor());
-    // Reset tools state
+    // Reset tools and skills state
     if (!isEditMode) {
       const type = initialData?.type ?? "specialist";
       initializeToolDefaults(type);
+      setPendingSkills([]);
     }
   }, [
     form,
@@ -412,10 +444,11 @@ export const AgentEditorDialog = ({
         // Reset form to ensure it has latest values
         form.reset(getDefaultValues());
         setSelectedColor(getInitialColor());
-        // Reset tools for create mode
+        // Reset tools and skills for create mode
         if (!isEditMode) {
           const type = initialData?.type ?? "specialist";
           initializeToolDefaults(type);
+          setPendingSkills([]);
         }
       } else {
         resetFormAndColor();
@@ -786,24 +819,30 @@ export const AgentEditorDialog = ({
                   </CollapsibleContent>
                 </Collapsible>
 
-                {/* Skills Section (Edit Mode Only) */}
-                {isEditMode && agent && (
-                  <Collapsible className={"rounded-md border border-border"}>
-                    <CollapsibleTrigger
-                      className={"w-full justify-start px-3 py-2"}
-                    >
-                      {"Referenced Skills"}
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className={"border-t border-border p-3"}>
+                {/* Skills Section - Show in both create and edit modes */}
+                <Collapsible className={"rounded-md border border-border"}>
+                  <CollapsibleTrigger
+                    className={"w-full justify-start px-3 py-2"}
+                  >
+                    {"Referenced Skills"}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className={"border-t border-border p-3"}>
+                      {isEditMode && agent ? (
                         <AgentSkillsManager
                           agentId={agent.id}
                           disabled={isSubmitting || isResetting || isViewMode}
                         />
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                )}
+                      ) : (
+                        <AgentSkillsSection
+                          disabled={isSubmitting || isResetting}
+                          onSkillsChange={setPendingSkills}
+                          skills={pendingSkills}
+                        />
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             </DialogBody>
 
