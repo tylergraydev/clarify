@@ -15,7 +15,7 @@ export const switchVariants = cva(
     focus-visible:outline-none
     data-checked:bg-accent
     data-disabled:cursor-not-allowed data-disabled:opacity-50
-    data-unchecked:bg-muted
+    data-unchecked:border-border data-unchecked:bg-muted
   `,
   {
     defaultVariants: {
