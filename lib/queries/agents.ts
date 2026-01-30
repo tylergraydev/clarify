@@ -18,9 +18,12 @@ export const agentKeys = createQueryKeys("agents", {
   /** Active agents, optionally filtered by project */
   active: (projectId?: number) => [{ projectId }],
   /** All agents regardless of scope (for unified table view) */
-  all: (filters?: { includeBuiltIn?: boolean; includeDeactivated?: boolean }) => [
-    { filters },
-  ],
+  all: (filters?: {
+    includeBuiltIn?: boolean;
+    includeDeactivated?: boolean;
+    includeSkills?: boolean;
+    includeTools?: boolean;
+  }) => [{ filters }],
   /** Built-in system agents */
   builtIn: null,
   /** Agents scoped to a specific project */

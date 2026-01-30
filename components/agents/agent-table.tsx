@@ -328,6 +328,24 @@ export const AgentTable = ({
   // Define columns using the column helper
   const columns = useMemo(
     () => [
+      // Actions column (first for easy access)
+      columnHelper.display({
+        cell: ({ row }) => {
+          const actions = getRowActions(row);
+          return <DataTableRowActions actions={actions} row={row} size={'sm'} />;
+        },
+        enableHiding: false,
+        enableResizing: false,
+        enableSorting: false,
+        header: '',
+        id: 'actions',
+        meta: {
+          cellClassName: 'text-left',
+          headerClassName: 'text-left',
+        },
+        size: 60,
+      }),
+
       // Name column with color indicator
       columnHelper.accessor('displayName', {
         cell: ({ row }) => {
@@ -349,7 +367,7 @@ export const AgentTable = ({
               {/* Agent Name */}
               <button
                 className={cn(
-                  'text-left font-medium text-foreground hover:text-accent',
+                  'cursor-pointer text-left font-medium text-foreground hover:text-accent',
                   'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
                   'focus-visible:outline-none'
                 )}
@@ -512,24 +530,6 @@ export const AgentTable = ({
         },
         header: 'Updated',
         size: 110,
-      }),
-
-      // Actions column
-      columnHelper.display({
-        cell: ({ row }) => {
-          const actions = getRowActions(row);
-          return <DataTableRowActions actions={actions} row={row} size={'sm'} />;
-        },
-        enableHiding: false,
-        enableResizing: false,
-        enableSorting: false,
-        header: '',
-        id: 'actions',
-        meta: {
-          cellClassName: 'text-right',
-          headerClassName: 'text-right',
-        },
-        size: 60,
       }),
     ],
     [getRowActions, handleEditClick, isToggling, onToggleActive, projects]

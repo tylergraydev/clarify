@@ -78,6 +78,8 @@ export default function AgentsPage() {
   // Data fetching
   const { data: allAgents } = useAllAgents({
     includeDeactivated: showDeactivated,
+    includeSkills: true,
+    includeTools: true,
   });
   const { data: projects } = useProjects();
 
@@ -119,6 +121,12 @@ export default function AgentsPage() {
   const handleShowDeactivatedChange = (value: boolean) => {
     setShowDeactivated(value);
   };
+
+  const handleResetFilters = useCallback(() => {
+    setTypeFilter(null);
+    setProjectFilter(null);
+    setStatusFilter(null);
+  }, []);
 
   // Agent action handlers
   const handleToggleActive = useCallback(
@@ -369,6 +377,7 @@ export default function AgentsPage() {
           toolbarContent={
             <AgentTableToolbar
               onProjectFilterChange={handleProjectFilterChange}
+              onResetFilters={handleResetFilters}
               onShowBuiltInChange={handleShowBuiltInChange}
               onShowDeactivatedChange={handleShowDeactivatedChange}
               onStatusFilterChange={handleStatusFilterChange}

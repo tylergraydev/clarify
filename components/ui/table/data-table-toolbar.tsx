@@ -5,7 +5,7 @@ import type { ChangeEvent, ComponentPropsWithRef, ReactNode } from 'react';
 
 import { Button as BaseButton } from '@base-ui/react/button';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { RotateCcw, Search, Settings2 } from 'lucide-react';
+import { RotateCcw, Search, Settings2, X } from 'lucide-react';
 import { Fragment, useCallback, useMemo, useState } from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,6 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { useDebouncedCallback } from '@/hooks/use-debounced-callback';
 import { cn } from '@/lib/utils';
@@ -170,6 +171,11 @@ const GlobalFilterInput = ({
     [debouncedSetFilter]
   );
 
+  const handleClear = useCallback(() => {
+    setInputValue('');
+    debouncedSetFilter('');
+  }, [debouncedSetFilter]);
+
   return (
     <div className={'relative'}>
       <Search
@@ -181,13 +187,32 @@ const GlobalFilterInput = ({
       />
       <Input
         aria-label={'Search table'}
-        className={cn('pl-9', size === 'sm' ? 'w-[180px]' : 'w-[240px]')}
+        className={cn(
+          'pl-9',
+          inputValue ? 'pr-8' : '',
+          size === 'sm' ? 'w-[180px]' : 'w-[240px]'
+        )}
         onChange={handleInputChange}
         placeholder={searchPlaceholder}
         size={size}
-        type={'search'}
+        type={'text'}
         value={inputValue}
       />
+      {inputValue && (
+        <IconButton
+          aria-label={'Clear search'}
+          className={cn(
+            'absolute top-1/2 right-1 -translate-y-1/2',
+            size === 'sm' ? 'size-6' : 'size-7'
+          )}
+          onClick={handleClear}
+        >
+          <X
+            aria-hidden={'true'}
+            className={size === 'sm' ? 'size-3' : 'size-3.5'}
+          />
+        </IconButton>
+      )}
     </div>
   );
 };
@@ -256,6 +281,7 @@ const ColumnVisibilityDropdown = <TData,>({
 
                 return (
                   <DropdownMenuItem
+                    closeOnClick={false}
                     key={columnId}
                     onClick={() => column.toggleVisibility(!isColumnVisible)}
                     size={size === 'lg' ? 'default' : 'sm'}

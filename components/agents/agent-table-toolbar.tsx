@@ -2,8 +2,12 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
+import { RotateCcw } from 'lucide-react';
+import { Fragment } from 'react';
+
 import type { Project } from '@/db/schema';
 
+import { Button } from '@/components/ui/button';
 import {
   SelectItem,
   SelectList,
@@ -25,6 +29,8 @@ import { cn } from '@/lib/utils';
 interface AgentTableToolbarProps extends ComponentPropsWithRef<'div'> {
   /** Callback when project filter changes */
   onProjectFilterChange: (value: null | string) => void;
+  /** Callback when reset filters button is clicked */
+  onResetFilters?: () => void;
   /** Callback when show built-in toggle changes */
   onShowBuiltInChange: (value: boolean) => void;
   /** Callback when show deactivated toggle changes */
@@ -110,6 +116,7 @@ const formatTypeLabel = (type: string): string => {
 export const AgentTableToolbar = ({
   className,
   onProjectFilterChange,
+  onResetFilters,
   onShowBuiltInChange,
   onShowDeactivatedChange,
   onStatusFilterChange,
@@ -123,6 +130,11 @@ export const AgentTableToolbar = ({
   typeFilter,
   ...props
 }: AgentTableToolbarProps) => {
+  // Computed state
+  const hasActiveFilters = Boolean(
+    typeFilter !== null || projectFilter !== null || statusFilter !== null
+  );
+
   // Handlers
   const handleTypeChange = (value: null | string) => {
     onTypeFilterChange(value === '' ? null : value);
@@ -286,6 +298,25 @@ export const AgentTableToolbar = ({
           {'Show deactivated'}
         </span>
       </div>
+
+      {/* Reset Filters Button */}
+      {hasActiveFilters && onResetFilters && (
+        <Fragment>
+          <div
+            aria-hidden={'true'}
+            className={'mx-1 h-5 w-px bg-border'}
+          />
+          <Button
+            aria-label={'Reset all filters'}
+            onClick={onResetFilters}
+            size={'sm'}
+            variant={'ghost'}
+          >
+            <RotateCcw aria-hidden={'true'} className={'size-4'} />
+            {'Reset Filters'}
+          </Button>
+        </Fragment>
+      )}
     </div>
   );
 };

@@ -141,6 +141,8 @@ export function useAgentsByType(type: "planning" | "review" | "specialist") {
 export function useAllAgents(filters?: {
   includeBuiltIn?: boolean;
   includeDeactivated?: boolean;
+  includeSkills?: boolean;
+  includeTools?: boolean;
 }) {
   const { api, isElectron } = useElectron();
 
@@ -150,6 +152,8 @@ export function useAllAgents(filters?: {
     queryFn: () =>
       api!.agent.list({
         includeDeactivated: filters?.includeDeactivated,
+        includeSkills: filters?.includeSkills,
+        includeTools: filters?.includeTools,
       }),
   });
 }

@@ -18,7 +18,7 @@ import type {
   AgentToolsRepository,
   ProjectsRepository,
 } from "../../db/repositories";
-import type { Agent, NewAgent } from "../../db/schema";
+import type { Agent, AgentSkill, AgentTool, NewAgent } from "../../db/schema";
 
 import { IpcChannels } from "./channels";
 
@@ -32,6 +32,16 @@ interface AgentListFilters {
    */
   excludeProjectAgents?: boolean;
   includeDeactivated?: boolean;
+  /**
+   * When true, includes the skills array for each agent.
+   * Useful for displaying skill counts in table views.
+   */
+  includeSkills?: boolean;
+  /**
+   * When true, includes the tools array for each agent.
+   * Useful for displaying tool counts in table views.
+   */
+  includeTools?: boolean;
   projectId?: number;
   /**
    * Filter by agent scope:
@@ -49,6 +59,15 @@ interface AgentOperationResult {
   agent?: Agent;
   error?: string;
   success: boolean;
+}
+
+/**
+ * Extended Agent type that includes optional tools and skills arrays
+ * for list responses when includeTools/includeSkills filters are used.
+ */
+interface AgentWithRelations extends Agent {
+  skills?: Array<AgentSkill>;
+  tools?: Array<AgentTool>;
 }
 
 /**
@@ -331,9 +350,33 @@ export function registerAgentHandlers(
     async (
       _event: IpcMainInvokeEvent,
       filters?: AgentListFilters
-    ): Promise<Array<Agent>> => {
+    ): Promise<Array<AgentWithRelations>> => {
       try {
-        return agentsRepository.findAll(filters);
+        const agents = await agentsRepository.findAll(filters);
+
+        // If neither includeTools nor includeSkills is requested, return plain agents
+        if (!filters?.includeTools && !filters?.includeSkills) {
+          return agents;
+        }
+
+        // Fetch tools and/or skills for each agent
+        const agentsWithRelations: Array<AgentWithRelations> = await Promise.all(
+          agents.map(async (agent) => {
+            const result: AgentWithRelations = { ...agent };
+
+            if (filters?.includeTools) {
+              result.tools = await agentToolsRepository.findByAgentId(agent.id);
+            }
+
+            if (filters?.includeSkills) {
+              result.skills = await agentSkillsRepository.findByAgentId(agent.id);
+            }
+
+            return result;
+          })
+        );
+
+        return agentsWithRelations;
       } catch (error) {
         console.error("[IPC Error] agent:list:", error);
         throw error;

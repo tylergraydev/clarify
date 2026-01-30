@@ -327,6 +327,15 @@ export const AgentEditorDialog = ({
           },
           id: agent.id,
         });
+
+        // If project changed, move the agent
+        const originalProjectId = agent.projectId ?? null;
+        if (selectedProjectId !== originalProjectId) {
+          await moveAgentMutation.mutateAsync({
+            agentId: agent.id,
+            targetProjectId: selectedProjectId,
+          });
+        }
       } else {
         // Create new agent with tools
         const createValue = value as CreateAgentFormData;
@@ -572,26 +581,12 @@ export const AgentEditorDialog = ({
     [initializeToolDefaults]
   );
 
-  // Handle project change in edit mode - call move mutation
-  const handleProjectChange = useCallback(
-    async (newValue: string) => {
-      if (!agent) return;
-
-      // Convert the string value to the appropriate type
-      const newProjectId =
-        newValue === GLOBAL_PROJECT_VALUE ? null : Number(newValue);
-
-      // Update local state immediately for UI responsiveness
-      setSelectedProjectId(newProjectId);
-
-      // Call the move mutation
-      await moveAgentMutation.mutateAsync({
-        agentId: agent.id,
-        targetProjectId: newProjectId,
-      });
-    },
-    [agent, moveAgentMutation]
-  );
+  // Handle project change - only update local state, save on form submit
+  const handleProjectChange = useCallback((newValue: string) => {
+    const newProjectId =
+      newValue === GLOBAL_PROJECT_VALUE ? null : Number(newValue);
+    setSelectedProjectId(newProjectId);
+  }, []);
 
   // Handle tool changes in edit mode - sync to database
   const handleEditModeToolSelectionsChange = useCallback(

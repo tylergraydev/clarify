@@ -37,6 +37,16 @@ export interface AgentListFilters {
    */
   excludeProjectAgents?: boolean;
   includeDeactivated?: boolean;
+  /**
+   * When true, includes the skills array for each agent.
+   * Useful for displaying skill counts in table views.
+   */
+  includeSkills?: boolean;
+  /**
+   * When true, includes the tools array for each agent.
+   * Useful for displaying tool counts in table views.
+   */
+  includeTools?: boolean;
   projectId?: number;
   /**
    * Filter by agent scope:
@@ -56,6 +66,15 @@ export interface AgentOperationResult {
   success: boolean;
 }
 
+/**
+ * Extended Agent type that includes optional tools and skills arrays
+ * for list responses when includeTools/includeSkills filters are used.
+ */
+export type AgentWithRelations = import("../db/schema").Agent & {
+  skills?: Array<import("../db/schema").AgentSkill>;
+  tools?: Array<import("../db/schema").AgentTool>;
+};
+
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<import("../db/schema").Agent | undefined>;
@@ -74,9 +93,7 @@ export interface ElectronAPI {
     delete(id: number): Promise<AgentOperationResult>;
     duplicate(id: number): Promise<AgentOperationResult>;
     get(id: number): Promise<import("../db/schema").Agent | undefined>;
-    list(
-      filters?: AgentListFilters
-    ): Promise<Array<import("../db/schema").Agent>>;
+    list(filters?: AgentListFilters): Promise<Array<AgentWithRelations>>;
     move(
       agentId: number,
       targetProjectId: null | number
