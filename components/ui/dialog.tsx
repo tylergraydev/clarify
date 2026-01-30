@@ -4,8 +4,10 @@ import type { ComponentPropsWithRef, ReactElement, ReactNode } from "react";
 
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { cva, type VariantProps } from "class-variance-authority";
+import { X } from "lucide-react";
 import { cloneElement } from "react";
 
+import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils";
 
 export const DialogRoot = BaseDialog.Root;
@@ -92,13 +94,20 @@ export const dialogPopupVariants = cva(
   `,
   {
     defaultVariants: {
+      scrollable: false,
       size: "default",
     },
     variants: {
+      scrollable: {
+        false: "",
+        true: "flex max-h-[90vh] flex-col",
+      },
       size: {
+        "2xl": "w-full max-w-3xl p-6",
         default: "w-full max-w-md p-6",
         lg: "w-full max-w-lg p-8",
         sm: "w-full max-w-sm p-4",
+        xl: "w-full max-w-2xl p-6",
       },
     },
   }
@@ -110,12 +119,13 @@ type DialogPopupProps = ComponentPropsWithRef<typeof BaseDialog.Popup> &
 export const DialogPopup = ({
   className,
   ref,
+  scrollable,
   size,
   ...props
 }: DialogPopupProps) => {
   return (
     <BaseDialog.Popup
-      className={cn(dialogPopupVariants({ size }), className)}
+      className={cn(dialogPopupVariants({ scrollable, size }), className)}
       ref={ref}
       {...props}
     />
@@ -147,6 +157,146 @@ export const DialogDescription = ({
     <BaseDialog.Description
       className={cn("mt-2 text-sm text-muted-foreground", className)}
       ref={ref}
+      {...props}
+    />
+  );
+};
+
+// --- New Dialog Components ---
+
+interface DialogCloseButtonProps {
+  /** Optional custom aria-label */
+  "aria-label"?: string;
+  /** Optional className for styling */
+  className?: string;
+}
+
+/**
+ * An X close button for dialogs.
+ * Uses BaseDialog.Close to automatically handle dialog closing.
+ */
+export const DialogCloseButton = ({
+  "aria-label": ariaLabel = "Close dialog",
+  className,
+}: DialogCloseButtonProps) => {
+  return (
+    <BaseDialog.Close
+      render={(props) => (
+        <IconButton
+          {...props}
+          aria-label={ariaLabel}
+          className={cn("shrink-0", className)}
+        >
+          <X aria-hidden={"true"} className={"size-4"} />
+        </IconButton>
+      )}
+    />
+  );
+};
+
+interface DialogHeaderProps {
+  /** Optional badges to display alongside the close button */
+  badges?: ReactNode;
+  /** Content (typically DialogTitle and DialogDescription) */
+  children: ReactNode;
+  /** Additional className */
+  className?: string;
+  /** Custom aria-label for close button */
+  closeButtonAriaLabel?: string;
+  /** Whether to show the close button (default: true) */
+  showCloseButton?: boolean;
+}
+
+/**
+ * Dialog header with title area, optional badges, and close button.
+ * Use DialogTitle and DialogDescription as children.
+ */
+export const DialogHeader = ({
+  badges,
+  children,
+  className,
+  closeButtonAriaLabel,
+  showCloseButton = true,
+}: DialogHeaderProps) => {
+  return (
+    <div
+      className={cn("flex items-start justify-between gap-4", className)}
+    >
+      <div className={"min-w-0 flex-1"}>{children}</div>
+      {(badges || showCloseButton) && (
+        <div className={"flex shrink-0 items-center gap-2"}>
+          {badges}
+          {showCloseButton && (
+            <DialogCloseButton aria-label={closeButtonAriaLabel} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface DialogBodyProps {
+  /** Content */
+  children: ReactNode;
+  /** Additional className */
+  className?: string;
+}
+
+/**
+ * Scrollable content area for dialogs.
+ * Use with DialogPopup scrollable={true} for sticky footer behavior.
+ */
+export const DialogBody = ({ children, className }: DialogBodyProps) => {
+  return (
+    <div className={cn("flex-1 overflow-y-auto py-4", className)}>
+      {children}
+    </div>
+  );
+};
+
+export const dialogFooterVariants = cva(
+  "flex gap-3 bg-background pt-4",
+  {
+    defaultVariants: {
+      alignment: "end",
+      sticky: true,
+    },
+    variants: {
+      alignment: {
+        between: "justify-between",
+        center: "justify-center",
+        end: "justify-end",
+        start: "justify-start",
+      },
+      sticky: {
+        false: "mt-6",
+        true: "-mx-6 -mb-6 border-t border-border px-6 pb-6",
+      },
+    },
+  }
+);
+
+type DialogFooterProps = ComponentPropsWithRef<"div"> &
+  VariantProps<typeof dialogFooterVariants>;
+
+/**
+ * Dialog footer for action buttons.
+ * Use sticky={true} (default) with DialogPopup scrollable={true} for sticky footer.
+ * Use sticky={false} for non-scrollable dialogs (confirmation dialogs).
+ */
+export const DialogFooter = ({
+  alignment,
+  className,
+  ref,
+  sticky,
+  ...props
+}: DialogFooterProps) => {
+  return (
+    <div
+      aria-label={"Dialog actions"}
+      className={cn(dialogFooterVariants({ alignment, sticky }), className)}
+      ref={ref}
+      role={"group"}
       {...props}
     />
   );

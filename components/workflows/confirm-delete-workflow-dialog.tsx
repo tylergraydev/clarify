@@ -5,6 +5,8 @@ import {
   DialogBackdrop,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -47,12 +49,14 @@ export const ConfirmDeleteWorkflowDialog = ({
         <DialogBackdrop />
         <DialogPopup aria-modal={"true"} role={"alertdialog"}>
           {/* Header */}
-          <DialogTitle id={"confirm-delete-workflow-title"}>
-            {"Delete Workflow"}
-          </DialogTitle>
-          <DialogDescription id={"confirm-delete-workflow-description"}>
-            {`Are you sure you want to delete "${workflowName}"? This action cannot be undone.`}
-          </DialogDescription>
+          <DialogHeader>
+            <DialogTitle id={"confirm-delete-workflow-title"}>
+              {"Delete Workflow"}
+            </DialogTitle>
+            <DialogDescription id={"confirm-delete-workflow-description"}>
+              {`Are you sure you want to delete "${workflowName}"? This action cannot be undone.`}
+            </DialogDescription>
+          </DialogHeader>
 
           {/* Running Warning */}
           {isRunning && (
@@ -72,11 +76,7 @@ export const ConfirmDeleteWorkflowDialog = ({
           )}
 
           {/* Actions */}
-          <div
-            aria-label={"Confirm deletion actions"}
-            className={"mt-6 flex justify-end gap-3"}
-            role={"group"}
-          >
+          <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={"outline"}>
                 {"Cancel"}
@@ -91,7 +91,7 @@ export const ConfirmDeleteWorkflowDialog = ({
             >
               {isLoading ? "Deleting..." : "Delete"}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogPopup>
       </DialogPortal>
     </DialogRoot>

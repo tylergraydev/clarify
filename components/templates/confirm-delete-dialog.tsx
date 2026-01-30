@@ -5,6 +5,8 @@ import {
   DialogBackdrop,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -47,12 +49,14 @@ export const ConfirmDeleteDialog = ({
         <DialogBackdrop />
         <DialogPopup aria-modal={"true"} role={"alertdialog"}>
           {/* Header */}
-          <DialogTitle id={"confirm-delete-title"}>
-            {"Delete Template"}
-          </DialogTitle>
-          <DialogDescription id={"confirm-delete-description"}>
-            {`Are you sure you want to delete "${templateName}"? This action cannot be undone.`}
-          </DialogDescription>
+          <DialogHeader>
+            <DialogTitle id={"confirm-delete-title"}>
+              {"Delete Template"}
+            </DialogTitle>
+            <DialogDescription id={"confirm-delete-description"}>
+              {`Are you sure you want to delete "${templateName}"? This action cannot be undone.`}
+            </DialogDescription>
+          </DialogHeader>
 
           {/* Usage Warning */}
           {hasUsage && (
@@ -70,11 +74,7 @@ export const ConfirmDeleteDialog = ({
           )}
 
           {/* Actions */}
-          <div
-            aria-label={"Confirm deletion actions"}
-            className={"mt-6 flex justify-end gap-3"}
-            role={"group"}
-          >
+          <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={"outline"}>
                 {"Cancel"}
@@ -89,7 +89,7 @@ export const ConfirmDeleteDialog = ({
             >
               {isLoading ? "Deleting..." : "Delete"}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogPopup>
       </DialogPortal>
     </DialogRoot>

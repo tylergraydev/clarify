@@ -7,6 +7,8 @@ import {
   DialogBackdrop,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -83,12 +85,14 @@ export const CreateProjectDialog = ({
         <DialogBackdrop />
         <DialogPopup>
           {/* Header */}
-          <DialogTitle>{"Create Project"}</DialogTitle>
-          <DialogDescription>
-            {
-              "Create a new project to organize your workflows and repositories."
-            }
-          </DialogDescription>
+          <DialogHeader>
+            <DialogTitle>{"Create Project"}</DialogTitle>
+            <DialogDescription>
+              {
+                "Create a new project to organize your workflows and repositories."
+              }
+            </DialogDescription>
+          </DialogHeader>
 
           {/* Form */}
           <form
@@ -123,25 +127,25 @@ export const CreateProjectDialog = ({
                   />
                 )}
               </form.AppField>
-
-              {/* Action Buttons */}
-              <div className={"mt-2 flex justify-end gap-3"}>
-                <DialogClose>
-                  <Button
-                    disabled={isSubmitting}
-                    type={"button"}
-                    variant={"outline"}
-                  >
-                    {"Cancel"}
-                  </Button>
-                </DialogClose>
-                <form.AppForm>
-                  <form.SubmitButton>
-                    {isSubmitting ? "Creating..." : "Create Project"}
-                  </form.SubmitButton>
-                </form.AppForm>
-              </div>
             </div>
+
+            {/* Action Buttons */}
+            <DialogFooter sticky={false}>
+              <DialogClose>
+                <Button
+                  disabled={isSubmitting}
+                  type={"button"}
+                  variant={"outline"}
+                >
+                  {"Cancel"}
+                </Button>
+              </DialogClose>
+              <form.AppForm>
+                <form.SubmitButton>
+                  {isSubmitting ? "Creating..." : "Create Project"}
+                </form.SubmitButton>
+              </form.AppForm>
+            </DialogFooter>
           </form>
         </DialogPopup>
       </DialogPortal>

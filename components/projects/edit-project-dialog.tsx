@@ -11,6 +11,8 @@ import {
   DialogBackdrop,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -100,10 +102,12 @@ export const EditProjectDialog = ({
         <DialogBackdrop />
         <DialogPopup>
           {/* Header */}
-          <DialogTitle>{"Edit Project"}</DialogTitle>
-          <DialogDescription>
-            {"Update your project's name and description."}
-          </DialogDescription>
+          <DialogHeader>
+            <DialogTitle>{"Edit Project"}</DialogTitle>
+            <DialogDescription>
+              {"Update your project's name and description."}
+            </DialogDescription>
+          </DialogHeader>
 
           {/* Form */}
           <form
@@ -138,25 +142,25 @@ export const EditProjectDialog = ({
                   />
                 )}
               </form.AppField>
-
-              {/* Action Buttons */}
-              <div className={"mt-2 flex justify-end gap-3"}>
-                <DialogClose>
-                  <Button
-                    disabled={isSubmitting}
-                    type={"button"}
-                    variant={"outline"}
-                  >
-                    {"Cancel"}
-                  </Button>
-                </DialogClose>
-                <form.AppForm>
-                  <form.SubmitButton>
-                    {isSubmitting ? "Saving..." : "Save Changes"}
-                  </form.SubmitButton>
-                </form.AppForm>
-              </div>
             </div>
+
+            {/* Action Buttons */}
+            <DialogFooter sticky={false}>
+              <DialogClose>
+                <Button
+                  disabled={isSubmitting}
+                  type={"button"}
+                  variant={"outline"}
+                >
+                  {"Cancel"}
+                </Button>
+              </DialogClose>
+              <form.AppForm>
+                <form.SubmitButton>
+                  {isSubmitting ? "Saving..." : "Save Changes"}
+                </form.SubmitButton>
+              </form.AppForm>
+            </DialogFooter>
           </form>
         </DialogPopup>
       </DialogPortal>

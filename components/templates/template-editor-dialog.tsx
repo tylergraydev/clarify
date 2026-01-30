@@ -15,8 +15,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DialogBackdrop,
+  DialogBody,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -314,171 +317,177 @@ export const TemplateEditorDialog = ({
         <DialogBackdrop />
         <DialogPopup
           aria-modal={"true"}
-          className={"max-w-3xl"}
           role={"dialog"}
+          scrollable={true}
+          size={"2xl"}
         >
           {/* Header */}
-          <div className={"flex items-start justify-between gap-4"}>
-            <div>
-              <DialogTitle id={"template-editor-title"}>
-                {dialogTitle}
-              </DialogTitle>
-              <DialogDescription id={"template-editor-description"}>
-                {dialogDescription}
-              </DialogDescription>
-            </div>
-            <div className={"flex shrink-0 items-center gap-2"}>
-              {isEditMode && isBuiltIn && (
-                <Badge variant={"default"}>{"Built-in Template"}</Badge>
-              )}
-              {isEditMode && template?.category && (
-                <Badge variant={template.category}>
-                  {template.category.charAt(0).toUpperCase() +
-                    template.category.slice(1)}
-                </Badge>
-              )}
-            </div>
-          </div>
+          <DialogHeader
+            badges={
+              <>
+                {isEditMode && isBuiltIn && (
+                  <Badge variant={"default"}>{"Built-in Template"}</Badge>
+                )}
+                {isEditMode && template?.category && (
+                  <Badge variant={template.category}>
+                    {template.category.charAt(0).toUpperCase() +
+                      template.category.slice(1)}
+                  </Badge>
+                )}
+              </>
+            }
+          >
+            <DialogTitle id={"template-editor-title"}>
+              {dialogTitle}
+            </DialogTitle>
+            <DialogDescription id={"template-editor-description"}>
+              {dialogDescription}
+            </DialogDescription>
+          </DialogHeader>
 
-          {/* Usage Count Display (Edit Mode Only) */}
-          {isEditMode && template && (
-            <div
-              className={"mt-4 rounded-md border border-border bg-muted/50 p-3"}
-            >
-              <div className={"flex items-center justify-between text-sm"}>
-                <span className={"text-muted-foreground"}>
-                  {"Usage Count:"}
-                </span>
-                <span className={"font-medium text-foreground"}>
-                  {template.usageCount}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Built-in Template Warning */}
-          {isEditMode && isBuiltIn && (
-            <div
-              className={
-                "mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30"
-              }
-            >
-              <p className={"text-sm text-amber-800 dark:text-amber-200"}>
-                {
-                  "This is a built-in template. Only the active state can be modified."
-                }
-              </p>
-            </div>
-          )}
-
-          {/* Form */}
+          {/* Form wraps DialogBody + DialogFooter for submit to work */}
           <form
             aria-describedby={"template-editor-description"}
             aria-labelledby={"template-editor-title"}
-            className={"mt-6"}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
               void form.handleSubmit();
             }}
           >
-            <fieldset className={"flex flex-col gap-4"} disabled={isSubmitting}>
-              <legend className={"sr-only"}>{"Template details"}</legend>
-
-              {/* Name Field */}
-              <form.AppField name={"name"}>
-                {(field) => (
-                  <field.TextField
-                    autoFocus={isDuplicateMode}
-                    isDisabled={isFieldsDisabled}
-                    label={"Template Name"}
-                    placeholder={"Enter template name"}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Category Field */}
-              <form.AppField name={"category"}>
-                {(field) => (
-                  <field.SelectField
-                    isDisabled={isFieldsDisabled}
-                    label={"Category"}
-                    options={CATEGORY_OPTIONS}
-                    placeholder={"Select a category"}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Description Field */}
-              <form.AppField name={"description"}>
-                {(field) => (
-                  <field.TextareaField
-                    description={
-                      "A brief description of what this template is for"
-                    }
-                    isDisabled={isFieldsDisabled}
-                    label={"Description"}
-                    placeholder={"Describe the template purpose..."}
-                    rows={3}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Template Text Field */}
-              <form.AppField name={"templateText"}>
-                {(field) => (
-                  <field.TextareaField
-                    description={
-                      "Use {{placeholderName}} syntax for dynamic content"
-                    }
-                    isDisabled={isFieldsDisabled}
-                    label={"Template Text"}
-                    placeholder={"Enter template text with {{placeholders}}..."}
-                    rows={8}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Placeholder Editor (Hidden for Built-in Templates) */}
-              {!isFieldsDisabled && (
-                <div className={"flex flex-col gap-2"}>
-                  <label className={"text-sm font-medium text-foreground"}>
-                    {"Placeholders"}
-                  </label>
-                  <p className={"text-sm text-muted-foreground"}>
-                    {
-                      "Define placeholders that users can fill in when using this template."
-                    }
-                  </p>
-                  <PlaceholderEditor
-                    className={"mt-2"}
-                    onChange={handlePlaceholdersChange}
-                    placeholders={placeholders}
-                  />
+            <DialogBody>
+              {/* Usage Count Display (Edit Mode Only) */}
+              {isEditMode && template && (
+                <div
+                  className={
+                    "rounded-md border border-border bg-muted/50 p-3"
+                  }
+                >
+                  <div className={"flex items-center justify-between text-sm"}>
+                    <span className={"text-muted-foreground"}>
+                      {"Usage Count:"}
+                    </span>
+                    <span className={"font-medium text-foreground"}>
+                      {template.usageCount}
+                    </span>
+                  </div>
                 </div>
               )}
 
-              {/* Active State Toggle (Edit Mode Only) */}
-              {isEditMode && (
-                <form.AppField name={"isActive"}>
+              {/* Built-in Template Warning */}
+              {isEditMode && isBuiltIn && (
+                <div
+                  className={
+                    "mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30"
+                  }
+                >
+                  <p className={"text-sm text-amber-800 dark:text-amber-200"}>
+                    {
+                      "This is a built-in template. Only the active state can be modified."
+                    }
+                  </p>
+                </div>
+              )}
+
+              <fieldset
+                className={"mt-4 flex flex-col gap-4"}
+                disabled={isSubmitting}
+              >
+                <legend className={"sr-only"}>{"Template details"}</legend>
+
+                {/* Name Field */}
+                <form.AppField name={"name"}>
                   {(field) => (
-                    <field.SwitchField
-                      description={
-                        "Deactivated templates will not appear in the template selection list"
-                      }
-                      label={"Active"}
+                    <field.TextField
+                      autoFocus={isDuplicateMode}
+                      isDisabled={isFieldsDisabled}
+                      label={"Template Name"}
+                      placeholder={"Enter template name"}
                     />
                   )}
                 </form.AppField>
-              )}
-            </fieldset>
 
-            {/* Action Buttons */}
-            <div
-              aria-label={"Dialog actions"}
-              className={"mt-6 flex justify-end gap-3"}
-              role={"group"}
-            >
+                {/* Category Field */}
+                <form.AppField name={"category"}>
+                  {(field) => (
+                    <field.SelectField
+                      isDisabled={isFieldsDisabled}
+                      label={"Category"}
+                      options={CATEGORY_OPTIONS}
+                      placeholder={"Select a category"}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Description Field */}
+                <form.AppField name={"description"}>
+                  {(field) => (
+                    <field.TextareaField
+                      description={
+                        "A brief description of what this template is for"
+                      }
+                      isDisabled={isFieldsDisabled}
+                      label={"Description"}
+                      placeholder={"Describe the template purpose..."}
+                      rows={3}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Template Text Field */}
+                <form.AppField name={"templateText"}>
+                  {(field) => (
+                    <field.TextareaField
+                      description={
+                        "Use {{placeholderName}} syntax for dynamic content"
+                      }
+                      isDisabled={isFieldsDisabled}
+                      label={"Template Text"}
+                      placeholder={
+                        "Enter template text with {{placeholders}}..."
+                      }
+                      rows={8}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Placeholder Editor (Hidden for Built-in Templates) */}
+                {!isFieldsDisabled && (
+                  <div className={"flex flex-col gap-2"}>
+                    <label className={"text-sm font-medium text-foreground"}>
+                      {"Placeholders"}
+                    </label>
+                    <p className={"text-sm text-muted-foreground"}>
+                      {
+                        "Define placeholders that users can fill in when using this template."
+                      }
+                    </p>
+                    <PlaceholderEditor
+                      className={"mt-2"}
+                      onChange={handlePlaceholdersChange}
+                      placeholders={placeholders}
+                    />
+                  </div>
+                )}
+
+                {/* Active State Toggle (Edit Mode Only) */}
+                {isEditMode && (
+                  <form.AppField name={"isActive"}>
+                    {(field) => (
+                      <field.SwitchField
+                        description={
+                          "Deactivated templates will not appear in the template selection list"
+                        }
+                        label={"Active"}
+                      />
+                    )}
+                  </form.AppField>
+                )}
+              </fieldset>
+            </DialogBody>
+
+            {/* Sticky Footer */}
+            <DialogFooter>
               <DialogClose>
                 <Button
                   disabled={isSubmitting}
@@ -491,7 +500,7 @@ export const TemplateEditorDialog = ({
               <form.AppForm>
                 <form.SubmitButton>{submitLabel}</form.SubmitButton>
               </form.AppForm>
-            </div>
+            </DialogFooter>
           </form>
         </DialogPopup>
       </DialogPortal>

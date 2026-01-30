@@ -8,8 +8,11 @@ import type { CreateWorkflowFormValues } from "@/lib/validations/workflow";
 import { Button } from "@/components/ui/button";
 import {
   DialogBackdrop,
+  DialogBody,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -214,149 +217,152 @@ export const CreateWorkflowDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup className={"max-w-lg"}>
+        <DialogPopup scrollable={true} size={"lg"}>
           {/* Header */}
-          <DialogTitle>{"Create Workflow"}</DialogTitle>
-          <DialogDescription>
-            {
-              "Create a new workflow to plan or implement a feature. Select a project and describe what you want to build."
-            }
-          </DialogDescription>
+          <DialogHeader>
+            <DialogTitle>{"Create Workflow"}</DialogTitle>
+            <DialogDescription>
+              {
+                "Create a new workflow to plan or implement a feature. Select a project and describe what you want to build."
+              }
+            </DialogDescription>
+          </DialogHeader>
 
-          {/* Form */}
+          {/* Form wraps DialogBody + DialogFooter for submit to work */}
           <form
-            className={"mt-6"}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
               void form.handleSubmit();
             }}
           >
-            <div className={"flex flex-col gap-4"}>
-              {/* Project Selection */}
-              <form.AppField name={"projectId"}>
-                {(field) => (
-                  <field.SelectField
-                    label={"Project"}
-                    options={projectOptions}
-                    placeholder={"Select a project"}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Repository Selection */}
-              {repositoryOptions.length > 0 && (
-                <form.AppField name={"repositoryIds"}>
+            <DialogBody>
+              <div className={"flex flex-col gap-4"}>
+                {/* Project Selection */}
+                <form.AppField name={"projectId"}>
                   {(field) => (
-                    <field.MultiSelectField
-                      description={
-                        "Select the repositories this workflow will work with"
-                      }
-                      isRequired
-                      label={"Repositories"}
-                      options={repositoryOptions}
+                    <field.SelectField
+                      label={"Project"}
+                      options={projectOptions}
+                      placeholder={"Select a project"}
                     />
                   )}
                 </form.AppField>
-              )}
 
-              {/* Feature Name */}
-              <form.AppField name={"featureName"}>
-                {(field) => (
-                  <field.TextField
-                    isRequired
-                    label={"Feature Name"}
-                    placeholder={"Enter a short feature title"}
-                  />
+                {/* Repository Selection */}
+                {repositoryOptions.length > 0 && (
+                  <form.AppField name={"repositoryIds"}>
+                    {(field) => (
+                      <field.MultiSelectField
+                        description={
+                          "Select the repositories this workflow will work with"
+                        }
+                        isRequired
+                        label={"Repositories"}
+                        options={repositoryOptions}
+                      />
+                    )}
+                  </form.AppField>
                 )}
-              </form.AppField>
 
-              {/* Template Selection */}
-              <form.AppField name={"templateId"}>
-                {(field) => (
-                  <field.SelectField
-                    description={
-                      "Select a template to pre-fill the feature request"
-                    }
-                    label={"Template"}
-                    options={templateOptions}
-                    placeholder={"Select a template (optional)"}
-                  />
-                )}
-              </form.AppField>
+                {/* Feature Name */}
+                <form.AppField name={"featureName"}>
+                  {(field) => (
+                    <field.TextField
+                      isRequired
+                      label={"Feature Name"}
+                      placeholder={"Enter a short feature title"}
+                    />
+                  )}
+                </form.AppField>
 
-              {/* Feature Request */}
-              <form.AppField name={"featureRequest"}>
-                {(field) => (
-                  <field.TextareaField
-                    description={
-                      "Describe the feature you want to build in detail"
-                    }
-                    label={"Feature Request"}
-                    placeholder={"Describe the feature you want to build..."}
-                    rows={6}
-                  />
-                )}
-              </form.AppField>
+                {/* Template Selection */}
+                <form.AppField name={"templateId"}>
+                  {(field) => (
+                    <field.SelectField
+                      description={
+                        "Select a template to pre-fill the feature request"
+                      }
+                      label={"Template"}
+                      options={templateOptions}
+                      placeholder={"Select a template (optional)"}
+                    />
+                  )}
+                </form.AppField>
 
-              {/* Workflow Type */}
-              <form.AppField name={"type"}>
-                {(field) => (
-                  <field.SelectField
-                    description={
-                      "Planning workflows refine requirements, Implementation workflows build features"
-                    }
-                    label={"Workflow Type"}
-                    options={workflowTypeOptions}
-                    placeholder={"Select workflow type"}
-                  />
-                )}
-              </form.AppField>
+                {/* Feature Request */}
+                <form.AppField name={"featureRequest"}>
+                  {(field) => (
+                    <field.TextareaField
+                      description={
+                        "Describe the feature you want to build in detail"
+                      }
+                      label={"Feature Request"}
+                      placeholder={"Describe the feature you want to build..."}
+                      rows={6}
+                    />
+                  )}
+                </form.AppField>
 
-              {/* Pause Behavior */}
-              <form.AppField name={"pauseBehavior"}>
-                {(field) => (
-                  <field.SelectField
-                    description={
-                      "Control how the workflow pauses between steps"
-                    }
-                    label={"Pause Behavior"}
-                    options={pauseBehaviorOptions}
-                    placeholder={"Select pause behavior"}
-                  />
-                )}
-              </form.AppField>
+                {/* Workflow Type */}
+                <form.AppField name={"type"}>
+                  {(field) => (
+                    <field.SelectField
+                      description={
+                        "Planning workflows refine requirements, Implementation workflows build features"
+                      }
+                      label={"Workflow Type"}
+                      options={workflowTypeOptions}
+                      placeholder={"Select workflow type"}
+                    />
+                  )}
+                </form.AppField>
 
-              {/* Skip Clarification */}
-              <form.AppField name={"skipClarification"}>
-                {(field) => (
-                  <field.SwitchField
-                    description={
-                      "Skip the clarification step and proceed directly to refinement"
-                    }
-                    label={"Skip Clarification"}
-                  />
-                )}
-              </form.AppField>
+                {/* Pause Behavior */}
+                <form.AppField name={"pauseBehavior"}>
+                  {(field) => (
+                    <field.SelectField
+                      description={
+                        "Control how the workflow pauses between steps"
+                      }
+                      label={"Pause Behavior"}
+                      options={pauseBehaviorOptions}
+                      placeholder={"Select pause behavior"}
+                    />
+                  )}
+                </form.AppField>
 
-              {/* Action Buttons */}
-              <div className={"mt-2 flex justify-end gap-3"}>
-                <DialogClose>
-                  <Button
-                    disabled={isSubmitting}
-                    type={"button"}
-                    variant={"outline"}
-                  >
-                    {"Cancel"}
-                  </Button>
-                </DialogClose>
-                <form.AppForm>
-                  <form.SubmitButton>
-                    {isSubmitting ? "Creating..." : "Create Workflow"}
-                  </form.SubmitButton>
-                </form.AppForm>
+                {/* Skip Clarification */}
+                <form.AppField name={"skipClarification"}>
+                  {(field) => (
+                    <field.SwitchField
+                      description={
+                        "Skip the clarification step and proceed directly to refinement"
+                      }
+                      label={"Skip Clarification"}
+                    />
+                  )}
+                </form.AppField>
               </div>
-            </div>
+            </DialogBody>
+
+            {/* Sticky Footer */}
+            <DialogFooter>
+              <DialogClose>
+                <Button
+                  disabled={isSubmitting}
+                  type={"button"}
+                  variant={"outline"}
+                >
+                  {"Cancel"}
+                </Button>
+              </DialogClose>
+              <form.AppForm>
+                <form.SubmitButton>
+                  {isSubmitting ? "Creating..." : "Create Workflow"}
+                </form.SubmitButton>
+              </form.AppForm>
+            </DialogFooter>
           </form>
         </DialogPopup>
       </DialogPortal>

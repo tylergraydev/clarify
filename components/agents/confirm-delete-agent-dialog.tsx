@@ -5,6 +5,8 @@ import {
   DialogBackdrop,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -42,12 +44,14 @@ export const ConfirmDeleteAgentDialog = ({
         <DialogBackdrop />
         <DialogPopup aria-modal={"true"} role={"alertdialog"}>
           {/* Header */}
-          <DialogTitle id={"confirm-delete-agent-title"}>
-            {"Delete Agent"}
-          </DialogTitle>
-          <DialogDescription id={"confirm-delete-agent-description"}>
-            {`Are you sure you want to delete "${agentName}"?`}
-          </DialogDescription>
+          <DialogHeader>
+            <DialogTitle id={"confirm-delete-agent-title"}>
+              {"Delete Agent"}
+            </DialogTitle>
+            <DialogDescription id={"confirm-delete-agent-description"}>
+              {`Are you sure you want to delete "${agentName}"?`}
+            </DialogDescription>
+          </DialogHeader>
 
           {/* Warning */}
           <div
@@ -65,11 +69,7 @@ export const ConfirmDeleteAgentDialog = ({
           </div>
 
           {/* Actions */}
-          <div
-            aria-label={"Confirm deletion actions"}
-            className={"mt-6 flex justify-end gap-3"}
-            role={"group"}
-          >
+          <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={"outline"}>
                 {"Cancel"}
@@ -84,7 +84,7 @@ export const ConfirmDeleteAgentDialog = ({
             >
               {isLoading ? "Deleting..." : "Delete"}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogPopup>
       </DialogPortal>
     </DialogRoot>

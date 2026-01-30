@@ -5,6 +5,8 @@ import {
   DialogBackdrop,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -42,10 +44,14 @@ export const ConfirmResetAgentDialog = ({
         <DialogBackdrop />
         <DialogPopup aria-modal={"true"} role={"alertdialog"}>
           {/* Header */}
-          <DialogTitle id={"confirm-reset-title"}>{"Reset Agent"}</DialogTitle>
-          <DialogDescription id={"confirm-reset-description"}>
-            {`Are you sure you want to reset "${agentName}" to its default configuration?`}
-          </DialogDescription>
+          <DialogHeader>
+            <DialogTitle id={"confirm-reset-title"}>
+              {"Reset Agent"}
+            </DialogTitle>
+            <DialogDescription id={"confirm-reset-description"}>
+              {`Are you sure you want to reset "${agentName}" to its default configuration?`}
+            </DialogDescription>
+          </DialogHeader>
 
           {/* Warning */}
           <div
@@ -63,11 +69,7 @@ export const ConfirmResetAgentDialog = ({
           </div>
 
           {/* Actions */}
-          <div
-            aria-label={"Confirm reset actions"}
-            className={"mt-6 flex justify-end gap-3"}
-            role={"group"}
-          >
+          <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={"outline"}>
                 {"Cancel"}
@@ -82,7 +84,7 @@ export const ConfirmResetAgentDialog = ({
             >
               {isLoading ? "Resetting..." : "Reset to Default"}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogPopup>
       </DialogPortal>
     </DialogRoot>

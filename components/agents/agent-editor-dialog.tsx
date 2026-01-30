@@ -2,7 +2,13 @@
 
 import type { ReactNode } from "react";
 
-import { useCallback, useEffect, useEffectEvent, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useState,
+} from "react";
 
 import type {
   CreateAgentFormData,
@@ -19,8 +25,11 @@ import {
 } from "@/components/ui/collapsible";
 import {
   DialogBackdrop,
+  DialogBody,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -89,7 +98,7 @@ export const AgentEditorDialog = ({
 }: AgentEditorDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState<AgentColor | "">("");
+  const [selectedColor, setSelectedColor] = useState<"" | AgentColor>("");
 
   const createAgentMutation = useCreateAgent();
   const updateAgentMutation = useUpdateAgent();
@@ -121,6 +130,7 @@ export const AgentEditorDialog = ({
     }
     if (initialData) {
       return {
+        color: (initialData.color as AgentColor) ?? ("" as unknown as AgentColor),
         description: initialData.description ?? "",
         displayName: initialData.displayName,
         name: initialData.name,
@@ -129,6 +139,7 @@ export const AgentEditorDialog = ({
       };
     }
     return {
+      color: "" as unknown as AgentColor,
       description: "",
       displayName: "",
       name: "",
@@ -155,7 +166,7 @@ export const AgentEditorDialog = ({
         // Create new agent
         const createValue = value as CreateAgentFormData;
         await createAgentMutation.mutateAsync({
-          color: selectedColor === "" ? null : selectedColor,
+          color: createValue.color,
           description: createValue.description,
           displayName: createValue.displayName,
           name: createValue.name,
@@ -172,7 +183,7 @@ export const AgentEditorDialog = ({
   });
 
   const updateSelectedColor = useEffectEvent(
-    (agentColor: AgentColor | "") => {
+    (agentColor: "" | AgentColor) => {
       setSelectedColor(agentColor);
     }
   );
@@ -189,7 +200,7 @@ export const AgentEditorDialog = ({
     }
   }, [agent, initialData, form, getDefaultValues, isEditMode]);
 
-  const getInitialColor = useCallback((): AgentColor | "" => {
+  const getInitialColor = useCallback((): "" | AgentColor => {
     if (isEditMode && agent) {
       return (agent.color as AgentColor) ?? "";
     }
@@ -277,222 +288,240 @@ export const AgentEditorDialog = ({
         <DialogBackdrop />
         <DialogPopup
           aria-modal={"true"}
-          className={"max-h-[90vh] max-w-2xl overflow-y-auto"}
           role={"dialog"}
+          scrollable={true}
+          size={"xl"}
         >
           {/* Header */}
-          <div className={"flex items-start justify-between gap-4"}>
-            <div>
-              <DialogTitle id={"agent-editor-title"}>{dialogTitle}</DialogTitle>
-              <DialogDescription id={"agent-editor-description"}>
-                {dialogDescription}
-              </DialogDescription>
-            </div>
-            <div className={"flex shrink-0 items-center gap-2"}>
-              {isEditMode && isBuiltIn && (
-                <Badge variant={"default"}>{"Built-in Agent"}</Badge>
-              )}
-              {isEditMode && !isBuiltIn && (
-                <Badge variant={"custom"}>{"Custom Agent"}</Badge>
-              )}
-              {isEditMode && agentTypeLabel && (
-                <Badge variant={"default"}>{agentTypeLabel}</Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Agent Info Display (Edit Mode Only) */}
-          {isEditMode && agent && (
-            <div
-              className={"mt-4 rounded-md border border-border bg-muted/50 p-3"}
-            >
-              <div className={"flex items-center gap-3"}>
-                {selectedColor && (
-                  <div
-                    className={"size-4 rounded-full"}
-                    style={{ backgroundColor: getAgentColorHex(selectedColor) }}
-                  />
+          <DialogHeader
+            badges={
+              <Fragment>
+                {isEditMode && isBuiltIn && (
+                  <Badge variant={"default"}>{"Built-in Agent"}</Badge>
                 )}
-                <div className={"text-sm"}>
-                  <span className={"text-muted-foreground"}>
-                    {"Internal name: "}
-                  </span>
-                  <span className={"font-mono text-foreground"}>
-                    {agent.name}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+                {isEditMode && !isBuiltIn && (
+                  <Badge variant={"custom"}>{"Custom Agent"}</Badge>
+                )}
+                {isEditMode && agentTypeLabel && (
+                  <Badge variant={"default"}>{agentTypeLabel}</Badge>
+                )}
+              </Fragment>
+            }
+          >
+            <DialogTitle id={"agent-editor-title"}>{dialogTitle}</DialogTitle>
+            <DialogDescription id={"agent-editor-description"}>
+              {dialogDescription}
+            </DialogDescription>
+          </DialogHeader>
 
-          {/* Form */}
+          {/* Form wraps DialogBody + DialogFooter for submit to work */}
           <form
             aria-describedby={"agent-editor-description"}
             aria-labelledby={"agent-editor-title"}
-            className={"mt-6"}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
               void form.handleSubmit();
             }}
           >
-            <fieldset
-              className={"flex flex-col gap-4"}
-              disabled={isSubmitting || isResetting}
-            >
-              <legend className={"sr-only"}>{"Agent details"}</legend>
+            {/* Scrollable Content */}
+            <DialogBody>
+              {/* Agent Info Display (Edit Mode Only) */}
+              {isEditMode && agent && (
+                <div
+                  className={
+                    "rounded-md border border-border bg-muted/50 p-3"
+                  }
+                >
+                  <div className={"flex items-center gap-3"}>
+                    {selectedColor && (
+                      <div
+                        className={"size-4 rounded-full"}
+                        style={{
+                          backgroundColor: getAgentColorHex(selectedColor),
+                        }}
+                      />
+                    )}
+                    <div className={"text-sm"}>
+                      <span className={"text-muted-foreground"}>
+                        {"Internal name: "}
+                      </span>
+                      <span className={"font-mono text-foreground"}>
+                        {agent.name}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              {/* Name Field (Create Mode Only) */}
-              {!isEditMode && (
-                <form.AppField name={"name"}>
+              <fieldset
+                className={"mt-4 flex flex-col gap-4"}
+                disabled={isSubmitting || isResetting}
+              >
+                <legend className={"sr-only"}>{"Agent details"}</legend>
+
+                {/* Name Field (Create Mode Only) */}
+                {!isEditMode && (
+                  <form.AppField name={"name"}>
+                    {(field) => (
+                      <field.TextField
+                        autoFocus={!isDuplicateMode}
+                        description={
+                          "A unique identifier using lowercase letters, numbers, and hyphens (e.g., my-custom-agent)"
+                        }
+                        label={"Agent Name"}
+                        placeholder={"my-custom-agent"}
+                      />
+                    )}
+                  </form.AppField>
+                )}
+
+                {/* Type Field (Create Mode Only) */}
+                {!isEditMode && (
+                  <form.AppField name={"type"}>
+                    {(field) => (
+                      <field.SelectField
+                        description={
+                          "Planning agents handle workflow planning, specialist agents perform specific tasks, review agents validate outputs"
+                        }
+                        label={"Agent Type"}
+                        options={AGENT_TYPE_OPTIONS}
+                        placeholder={"Select agent type"}
+                      />
+                    )}
+                  </form.AppField>
+                )}
+
+                {/* Display Name */}
+                <form.AppField name={"displayName"}>
                   {(field) => (
                     <field.TextField
-                      autoFocus={!isDuplicateMode}
-                      description={
-                        "A unique identifier using lowercase letters, numbers, and hyphens (e.g., my-custom-agent)"
-                      }
-                      label={"Agent Name"}
-                      placeholder={"my-custom-agent"}
+                      autoFocus={isEditMode || isDuplicateMode}
+                      label={"Display Name"}
+                      placeholder={"Enter display name"}
                     />
                   )}
                 </form.AppField>
-              )}
 
-              {/* Type Field (Create Mode Only) */}
-              {!isEditMode && (
-                <form.AppField name={"type"}>
+                {/* Description */}
+                <form.AppField name={"description"}>
                   {(field) => (
-                    <field.SelectField
+                    <field.TextareaField
                       description={
-                        "Planning agents handle workflow planning, specialist agents perform specific tasks, review agents validate outputs"
+                        "A brief description of what this agent does"
                       }
-                      label={"Agent Type"}
-                      options={AGENT_TYPE_OPTIONS}
-                      placeholder={"Select agent type"}
+                      label={"Description"}
+                      placeholder={"Describe the agent's purpose..."}
+                      rows={3}
                     />
                   )}
                 </form.AppField>
-              )}
 
-              {/* Display Name */}
-              <form.AppField name={"displayName"}>
-                {(field) => (
-                  <field.TextField
-                    autoFocus={isEditMode || isDuplicateMode}
-                    label={"Display Name"}
-                    placeholder={"Enter display name"}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Description */}
-              <form.AppField name={"description"}>
-                {(field) => (
-                  <field.TextareaField
-                    description={"A brief description of what this agent does"}
-                    label={"Description"}
-                    placeholder={"Describe the agent's purpose..."}
-                    rows={3}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Color Picker */}
-              <AgentColorPicker
-                disabled={isSubmitting || isResetting}
-                onChange={setSelectedColor}
-                value={selectedColor}
-              />
-
-              {/* System Prompt */}
-              <form.AppField name={"systemPrompt"}>
-                {(field) => (
-                  <field.TextareaField
-                    description={
-                      "The system prompt that defines how this agent behaves"
-                    }
-                    label={"System Prompt"}
-                    placeholder={"Enter the system prompt..."}
-                    rows={12}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Tools Section (Edit Mode Only) */}
-              {isEditMode && agent && (
-                <Collapsible className={"rounded-md border border-border"}>
-                  <CollapsibleTrigger
-                    className={"w-full justify-start px-3 py-2"}
-                  >
-                    {"Allowed Tools"}
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className={"border-t border-border p-3"}>
-                      <AgentToolsManager
-                        agentId={agent.id}
-                        disabled={isSubmitting || isResetting}
+                {/* Color Picker - Form field for create mode, standalone for edit mode */}
+                {!isEditMode ? (
+                  <form.AppField name={"color"}>
+                    {(field) => (
+                      <field.ColorPickerField
+                        isDisabled={isSubmitting || isResetting}
+                        label={"Color Tag"}
                       />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+                    )}
+                  </form.AppField>
+                ) : (
+                  <AgentColorPicker
+                    disabled={isSubmitting || isResetting}
+                    label={"Color Tag"}
+                    onChange={setSelectedColor}
+                    value={selectedColor}
+                  />
+                )}
 
-              {/* Skills Section (Edit Mode Only) */}
-              {isEditMode && agent && (
-                <Collapsible className={"rounded-md border border-border"}>
-                  <CollapsibleTrigger
-                    className={"w-full justify-start px-3 py-2"}
-                  >
-                    {"Referenced Skills"}
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className={"border-t border-border p-3"}>
-                      <AgentSkillsManager
-                        agentId={agent.id}
-                        disabled={isSubmitting || isResetting}
-                      />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
-
-              {/* Action Buttons */}
-              <div className={"mt-2 flex justify-between"}>
-                {/* Reset Button - only for customized agents in edit mode */}
-                <div>
-                  {isEditMode && isCustomized && (
-                    <Button
-                      disabled={isSubmitting || isResetting}
-                      onClick={handleResetClick}
-                      type={"button"}
-                      variant={"outline"}
-                    >
-                      {"Reset to Default"}
-                    </Button>
+                {/* System Prompt */}
+                <form.AppField name={"systemPrompt"}>
+                  {(field) => (
+                    <field.TextareaField
+                      description={
+                        "The system prompt that defines how this agent behaves"
+                      }
+                      label={"System Prompt"}
+                      placeholder={"Enter the system prompt..."}
+                      rows={12}
+                    />
                   )}
-                </div>
+                </form.AppField>
 
-                {/* Cancel and Save Buttons */}
-                <div
-                  aria-label={"Dialog actions"}
-                  className={"flex gap-3"}
-                  role={"group"}
-                >
-                  <DialogClose>
-                    <Button
-                      disabled={isSubmitting || isResetting}
-                      type={"button"}
-                      variant={"outline"}
+                {/* Tools Section (Edit Mode Only) */}
+                {isEditMode && agent && (
+                  <Collapsible className={"rounded-md border border-border"}>
+                    <CollapsibleTrigger
+                      className={"w-full justify-start px-3 py-2"}
                     >
-                      {"Cancel"}
-                    </Button>
-                  </DialogClose>
-                  <form.AppForm>
-                    <form.SubmitButton>{submitLabel}</form.SubmitButton>
-                  </form.AppForm>
-                </div>
+                      {"Allowed Tools"}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className={"border-t border-border p-3"}>
+                        <AgentToolsManager
+                          agentId={agent.id}
+                          disabled={isSubmitting || isResetting}
+                        />
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
+                {/* Skills Section (Edit Mode Only) */}
+                {isEditMode && agent && (
+                  <Collapsible className={"rounded-md border border-border"}>
+                    <CollapsibleTrigger
+                      className={"w-full justify-start px-3 py-2"}
+                    >
+                      {"Referenced Skills"}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className={"border-t border-border p-3"}>
+                        <AgentSkillsManager
+                          agentId={agent.id}
+                          disabled={isSubmitting || isResetting}
+                        />
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+              </fieldset>
+            </DialogBody>
+
+            {/* Sticky Footer */}
+            <DialogFooter alignment={"between"}>
+              {/* Reset Button - only for customized agents in edit mode */}
+              <div>
+                {isEditMode && isCustomized && (
+                  <Button
+                    disabled={isSubmitting || isResetting}
+                    onClick={handleResetClick}
+                    type={"button"}
+                    variant={"outline"}
+                  >
+                    {"Reset to Default"}
+                  </Button>
+                )}
               </div>
-            </fieldset>
+
+              {/* Cancel and Save Buttons */}
+              <div className={"flex gap-3"}>
+                <DialogClose>
+                  <Button
+                    disabled={isSubmitting || isResetting}
+                    type={"button"}
+                    variant={"outline"}
+                  >
+                    {"Cancel"}
+                  </Button>
+                </DialogClose>
+                <form.AppForm>
+                  <form.SubmitButton>{submitLabel}</form.SubmitButton>
+                </form.AppForm>
+              </div>
+            </DialogFooter>
           </form>
         </DialogPopup>
       </DialogPortal>

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import type { UpdateAgentFormValues } from "@/lib/validations/agent";
 import type { Agent } from "@/types/electron";
@@ -18,8 +18,11 @@ import {
 } from "@/components/ui/collapsible";
 import {
   DialogBackdrop,
+  DialogBody,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -136,189 +139,195 @@ export const ProjectAgentEditorDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup className={"max-h-[90vh] max-w-2xl overflow-y-auto"}>
+        <DialogPopup scrollable={true} size={"xl"}>
           {/* Header */}
-          <div className={"flex items-start justify-between gap-4"}>
-            <div>
-              <DialogTitle>{"Edit Project Agent"}</DialogTitle>
-              <DialogDescription>
-                {
-                  "Customize the agent's configuration for this project. Changes only affect this project."
-                }
-              </DialogDescription>
-            </div>
-            <div className={"flex shrink-0 flex-wrap items-center gap-2"}>
-              {isBuiltIn && <Badge variant={"default"}>{"Built-in"}</Badge>}
-              <Badge variant={"default"}>{agentTypeLabel}</Badge>
-            </div>
-          </div>
-
-          {/* Project Override Indicator */}
-          <div
-            className={
-              "mt-4 flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-600 dark:text-blue-400"
+          <DialogHeader
+            badges={
+              <Fragment>
+                {isBuiltIn && <Badge variant={"default"}>{"Built-in"}</Badge>}
+                <Badge variant={"default"}>{agentTypeLabel}</Badge>
+              </Fragment>
             }
           >
-            <svg
-              className={"size-4 shrink-0"}
-              fill={"none"}
-              stroke={"currentColor"}
-              strokeWidth={2}
-              viewBox={"0 0 24 24"}
-              xmlns={"http://www.w3.org/2000/svg"}
-            >
-              <path
-                d={"M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"}
-                strokeLinecap={"round"}
-                strokeLinejoin={"round"}
-              />
-            </svg>
-            <span>
-              {isProjectOverride
-                ? "This is a project-level configuration override."
-                : "Editing will create a project-level override of this agent."}
-            </span>
-          </div>
+            <DialogTitle>{"Edit Project Agent"}</DialogTitle>
+            <DialogDescription>
+              {
+                "Customize the agent's configuration for this project. Changes only affect this project."
+              }
+            </DialogDescription>
+          </DialogHeader>
 
-          {/* Base Agent Info Display */}
-          <div
-            className={"mt-4 rounded-md border border-border bg-muted/50 p-3"}
-          >
-            <div className={"flex items-center gap-3"}>
-              {agent.color && (
-                <div
-                  className={"size-4 rounded-full"}
-                  style={{ backgroundColor: getAgentColorHex(agent.color) }}
-                />
-              )}
-              <div className={"text-sm"}>
-                <span className={"text-muted-foreground"}>
-                  {"Internal name: "}
-                </span>
-                <span className={"font-mono text-foreground"}>
-                  {agent.name}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Form */}
+          {/* Form wraps DialogBody + DialogFooter for submit to work */}
           <form
-            className={"mt-6"}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
               void form.handleSubmit();
             }}
           >
-            <div className={"flex flex-col gap-4"}>
-              {/* Display Name */}
-              <form.AppField name={"displayName"}>
-                {(field) => (
-                  <field.TextField
-                    label={"Display Name"}
-                    placeholder={"Enter display name"}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Description */}
-              <form.AppField name={"description"}>
-                {(field) => (
-                  <field.TextareaField
-                    description={"A brief description of what this agent does"}
-                    label={"Description"}
-                    placeholder={"Describe the agent's purpose..."}
-                    rows={3}
-                  />
-                )}
-              </form.AppField>
-
-              {/* System Prompt */}
-              <form.AppField name={"systemPrompt"}>
-                {(field) => (
-                  <field.TextareaField
-                    description={
-                      "The system prompt that defines how this agent behaves for this project"
+            <DialogBody>
+              {/* Project Override Indicator */}
+              <div
+                className={
+                  "flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-600 dark:text-blue-400"
+                }
+              >
+                <svg
+                  className={"size-4 shrink-0"}
+                  fill={"none"}
+                  stroke={"currentColor"}
+                  strokeWidth={2}
+                  viewBox={"0 0 24 24"}
+                  xmlns={"http://www.w3.org/2000/svg"}
+                >
+                  <path
+                    d={
+                      "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     }
-                    label={"System Prompt"}
-                    placeholder={"Enter the system prompt..."}
-                    rows={12}
+                    strokeLinecap={"round"}
+                    strokeLinejoin={"round"}
                   />
-                )}
-              </form.AppField>
+                </svg>
+                <span>
+                  {isProjectOverride
+                    ? "This is a project-level configuration override."
+                    : "Editing will create a project-level override of this agent."}
+                </span>
+              </div>
 
-              {/* Tools Section */}
-              <Collapsible className={"rounded-md border border-border"}>
-                <CollapsibleTrigger
-                  className={"w-full justify-start px-3 py-2"}
-                >
-                  {"Allowed Tools"}
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className={"border-t border-border p-3"}>
-                    <AgentToolsManager
-                      agentId={agent.id}
-                      disabled={isSubmitting || isResetting}
+              {/* Base Agent Info Display */}
+              <div
+                className={
+                  "mt-4 rounded-md border border-border bg-muted/50 p-3"
+                }
+              >
+                <div className={"flex items-center gap-3"}>
+                  {agent.color && (
+                    <div
+                      className={"size-4 rounded-full"}
+                      style={{ backgroundColor: getAgentColorHex(agent.color) }}
                     />
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-
-              {/* Skills Section */}
-              <Collapsible className={"rounded-md border border-border"}>
-                <CollapsibleTrigger
-                  className={"w-full justify-start px-3 py-2"}
-                >
-                  {"Referenced Skills"}
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className={"border-t border-border p-3"}>
-                    <AgentSkillsManager
-                      agentId={agent.id}
-                      disabled={isSubmitting || isResetting}
-                    />
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-
-              {/* Action Buttons */}
-              <div className={"mt-2 flex justify-between"}>
-                {/* Reset Button - only for project overrides or customized agents */}
-                <div>
-                  {(isProjectOverride || isCustomized) && (
-                    <Button
-                      disabled={isSubmitting || isResetting}
-                      onClick={handleResetToGlobalDefaults}
-                      type={"button"}
-                      variant={"outline"}
-                    >
-                      {isResetting
-                        ? "Resetting..."
-                        : "Reset to Global Defaults"}
-                    </Button>
                   )}
-                </div>
-
-                {/* Cancel and Save Buttons */}
-                <div className={"flex gap-3"}>
-                  <DialogClose>
-                    <Button
-                      disabled={isSubmitting || isResetting}
-                      type={"button"}
-                      variant={"outline"}
-                    >
-                      {"Cancel"}
-                    </Button>
-                  </DialogClose>
-                  <form.AppForm>
-                    <form.SubmitButton>
-                      {isSubmitting ? "Saving..." : "Save Changes"}
-                    </form.SubmitButton>
-                  </form.AppForm>
+                  <div className={"text-sm"}>
+                    <span className={"text-muted-foreground"}>
+                      {"Internal name: "}
+                    </span>
+                    <span className={"font-mono text-foreground"}>
+                      {agent.name}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+
+              <div className={"mt-4 flex flex-col gap-4"}>
+                {/* Display Name */}
+                <form.AppField name={"displayName"}>
+                  {(field) => (
+                    <field.TextField
+                      label={"Display Name"}
+                      placeholder={"Enter display name"}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Description */}
+                <form.AppField name={"description"}>
+                  {(field) => (
+                    <field.TextareaField
+                      description={
+                        "A brief description of what this agent does"
+                      }
+                      label={"Description"}
+                      placeholder={"Describe the agent's purpose..."}
+                      rows={3}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* System Prompt */}
+                <form.AppField name={"systemPrompt"}>
+                  {(field) => (
+                    <field.TextareaField
+                      description={
+                        "The system prompt that defines how this agent behaves for this project"
+                      }
+                      label={"System Prompt"}
+                      placeholder={"Enter the system prompt..."}
+                      rows={12}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Tools Section */}
+                <Collapsible className={"rounded-md border border-border"}>
+                  <CollapsibleTrigger
+                    className={"w-full justify-start px-3 py-2"}
+                  >
+                    {"Allowed Tools"}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className={"border-t border-border p-3"}>
+                      <AgentToolsManager
+                        agentId={agent.id}
+                        disabled={isSubmitting || isResetting}
+                      />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Skills Section */}
+                <Collapsible className={"rounded-md border border-border"}>
+                  <CollapsibleTrigger
+                    className={"w-full justify-start px-3 py-2"}
+                  >
+                    {"Referenced Skills"}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className={"border-t border-border p-3"}>
+                      <AgentSkillsManager
+                        agentId={agent.id}
+                        disabled={isSubmitting || isResetting}
+                      />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            </DialogBody>
+
+            {/* Sticky Footer */}
+            <DialogFooter alignment={"between"}>
+              {/* Reset Button - only for project overrides or customized agents */}
+              <div>
+                {(isProjectOverride || isCustomized) && (
+                  <Button
+                    disabled={isSubmitting || isResetting}
+                    onClick={handleResetToGlobalDefaults}
+                    type={"button"}
+                    variant={"outline"}
+                  >
+                    {isResetting ? "Resetting..." : "Reset to Global Defaults"}
+                  </Button>
+                )}
+              </div>
+
+              {/* Cancel and Save Buttons */}
+              <div className={"flex gap-3"}>
+                <DialogClose>
+                  <Button
+                    disabled={isSubmitting || isResetting}
+                    type={"button"}
+                    variant={"outline"}
+                  >
+                    {"Cancel"}
+                  </Button>
+                </DialogClose>
+                <form.AppForm>
+                  <form.SubmitButton>
+                    {isSubmitting ? "Saving..." : "Save Changes"}
+                  </form.SubmitButton>
+                </form.AppForm>
+              </div>
+            </DialogFooter>
           </form>
         </DialogPopup>
       </DialogPortal>

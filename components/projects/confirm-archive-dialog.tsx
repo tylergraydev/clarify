@@ -7,6 +7,8 @@ import {
   DialogBackdrop,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -54,11 +56,13 @@ export const ConfirmArchiveDialog = ({
         <DialogBackdrop />
         <DialogPopup>
           {/* Header */}
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
 
           {/* Actions */}
-          <div className={"mt-6 flex justify-end gap-3"}>
+          <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={"outline"}>
                 {"Cancel"}
@@ -71,7 +75,7 @@ export const ConfirmArchiveDialog = ({
             >
               {isLoading ? "Processing..." : confirmButtonText}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogPopup>
       </DialogPortal>
     </DialogRoot>

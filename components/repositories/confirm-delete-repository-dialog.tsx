@@ -5,6 +5,8 @@ import {
   DialogBackdrop,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -47,12 +49,14 @@ export const ConfirmDeleteRepositoryDialog = ({
         <DialogBackdrop />
         <DialogPopup aria-modal={"true"} role={"alertdialog"}>
           {/* Header */}
-          <DialogTitle id={"confirm-delete-repository-title"}>
-            {"Remove Repository"}
-          </DialogTitle>
-          <DialogDescription id={"confirm-delete-repository-description"}>
-            {`Are you sure you want to remove "${repositoryName}" from this project? This action cannot be undone.`}
-          </DialogDescription>
+          <DialogHeader>
+            <DialogTitle id={"confirm-delete-repository-title"}>
+              {"Remove Repository"}
+            </DialogTitle>
+            <DialogDescription id={"confirm-delete-repository-description"}>
+              {`Are you sure you want to remove "${repositoryName}" from this project? This action cannot be undone.`}
+            </DialogDescription>
+          </DialogHeader>
 
           {/* Workflow Warning */}
           {hasWorkflows && (
@@ -70,11 +74,7 @@ export const ConfirmDeleteRepositoryDialog = ({
           )}
 
           {/* Actions */}
-          <div
-            aria-label={"Confirm deletion actions"}
-            className={"mt-6 flex justify-end gap-3"}
-            role={"group"}
-          >
+          <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={"outline"}>
                 {"Cancel"}
@@ -89,7 +89,7 @@ export const ConfirmDeleteRepositoryDialog = ({
             >
               {isLoading ? "Removing..." : "Remove"}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogPopup>
       </DialogPortal>
     </DialogRoot>
