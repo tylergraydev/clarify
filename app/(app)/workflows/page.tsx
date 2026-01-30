@@ -1,23 +1,18 @@
-"use client";
+'use client';
 
-import { GitBranch, Grid3X3, List, Plus, Search } from "lucide-react";
-import { $path } from "next-typesafe-url";
-import { withParamValidation } from "next-typesafe-url/app/hoc";
-import { useRouter } from "next/navigation";
-import {
-  parseAsInteger,
-  parseAsString,
-  parseAsStringLiteral,
-  useQueryState,
-} from "nuqs";
-import { useMemo } from "react";
+import { GitBranch, Grid3X3, List, Plus, Search } from 'lucide-react';
+import { $path } from 'next-typesafe-url';
+import { withParamValidation } from 'next-typesafe-url/app/hoc';
+import { useRouter } from 'next/navigation';
+import { parseAsInteger, parseAsString, parseAsStringLiteral, useQueryState } from 'nuqs';
+import { useMemo } from 'react';
 
-import { QueryErrorBoundary } from "@/components/data/query-error-boundary";
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { Card, CardContent } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
+import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
+import { Button } from '@/components/ui/button';
+import { ButtonGroup } from '@/components/ui/button-group';
+import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Input } from '@/components/ui/input';
 import {
   SelectItem,
   SelectList,
@@ -27,18 +22,18 @@ import {
   SelectRoot,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { CreateWorkflowDialog } from "@/components/workflows/create-workflow-dialog";
-import { WorkflowCard } from "@/components/workflows/workflow-card";
-import { WorkflowTable } from "@/components/workflows/workflow-table";
-import { workflowStatuses } from "@/db/schema/workflows.schema";
-import { useProjects } from "@/hooks/queries/use-projects";
-import { useCancelWorkflow, useWorkflows } from "@/hooks/queries/use-workflows";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/select';
+import { CreateWorkflowDialog } from '@/components/workflows/create-workflow-dialog';
+import { WorkflowCard } from '@/components/workflows/workflow-card';
+import { WorkflowTable } from '@/components/workflows/workflow-table';
+import { workflowStatuses } from '@/db/schema/workflows.schema';
+import { useProjects } from '@/hooks/queries/use-projects';
+import { useCancelWorkflow, useWorkflows } from '@/hooks/queries/use-workflows';
+import { cn } from '@/lib/utils';
 
-import { Route } from "./route-type";
+import { Route } from './route-type';
 
-const VIEW_OPTIONS = ["card", "table"] as const;
+const VIEW_OPTIONS = ['card', 'table'] as const;
 type ViewOption = (typeof VIEW_OPTIONS)[number];
 
 /**
@@ -46,26 +41,26 @@ type ViewOption = (typeof VIEW_OPTIONS)[number];
  */
 const WorkflowCardSkeleton = () => {
   return (
-    <Card className={"animate-pulse"}>
-      <CardContent className={"p-6"}>
-        <div className={"space-y-3"}>
-          <div className={"flex items-start justify-between gap-2"}>
-            <div className={"h-5 w-3/4 rounded-sm bg-muted"} />
-            <div className={"h-5 w-16 rounded-full bg-muted"} />
+    <Card className={'animate-pulse'}>
+      <CardContent className={'p-6'}>
+        <div className={'space-y-3'}>
+          <div className={'flex items-start justify-between gap-2'}>
+            <div className={'h-5 w-3/4 rounded-sm bg-muted'} />
+            <div className={'h-5 w-16 rounded-full bg-muted'} />
           </div>
-          <div className={"h-4 w-1/2 rounded-sm bg-muted"} />
+          <div className={'h-4 w-1/2 rounded-sm bg-muted'} />
         </div>
-        <div className={"mt-4 space-y-2"}>
-          <div className={"flex items-center gap-2"}>
-            <div className={"h-4 w-12 rounded-sm bg-muted"} />
-            <div className={"h-5 w-20 rounded-full bg-muted"} />
+        <div className={'mt-4 space-y-2'}>
+          <div className={'flex items-center gap-2'}>
+            <div className={'h-4 w-12 rounded-sm bg-muted'} />
+            <div className={'h-5 w-20 rounded-full bg-muted'} />
           </div>
-          <div className={"h-2 w-full rounded-full bg-muted"} />
-          <div className={"h-4 w-32 rounded-sm bg-muted"} />
+          <div className={'h-2 w-full rounded-full bg-muted'} />
+          <div className={'h-4 w-32 rounded-sm bg-muted'} />
         </div>
-        <div className={"mt-4 flex gap-2"}>
-          <div className={"h-8 w-16 rounded-sm bg-muted"} />
-          <div className={"h-8 w-20 rounded-sm bg-muted"} />
+        <div className={'mt-4 flex gap-2'}>
+          <div className={'h-8 w-16 rounded-sm bg-muted'} />
+          <div className={'h-8 w-20 rounded-sm bg-muted'} />
         </div>
       </CardContent>
     </Card>
@@ -77,59 +72,42 @@ const WorkflowCardSkeleton = () => {
  */
 const WorkflowTableSkeleton = () => {
   return (
-    <div
-      className={
-        "animate-pulse overflow-x-auto rounded-lg border border-border"
-      }
-    >
-      <table className={"w-full border-collapse text-sm"}>
-        <thead className={"border-b border-border bg-muted/50"}>
+    <div className={'animate-pulse overflow-x-auto rounded-lg border border-border'}>
+      <table className={'w-full border-collapse text-sm'}>
+        <thead className={'border-b border-border bg-muted/50'}>
           <tr>
-            {[
-              "Feature Name",
-              "Project",
-              "Type",
-              "Status",
-              "Progress",
-              "Created",
-              "Actions",
-            ].map((header) => (
-              <th
-                className={
-                  "px-4 py-3 text-left font-medium text-muted-foreground"
-                }
-                key={header}
-              >
+            {['Feature Name', 'Project', 'Type', 'Status', 'Progress', 'Created', 'Actions'].map((header) => (
+              <th className={'px-4 py-3 text-left font-medium text-muted-foreground'} key={header}>
                 {header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className={"divide-y divide-border"}>
+        <tbody className={'divide-y divide-border'}>
           {Array.from({ length: 3 }).map((_, index) => (
             <tr key={index}>
-              <td className={"px-4 py-3"}>
-                <div className={"h-4 w-32 rounded-sm bg-muted"} />
+              <td className={'px-4 py-3'}>
+                <div className={'h-4 w-32 rounded-sm bg-muted'} />
               </td>
-              <td className={"px-4 py-3"}>
-                <div className={"h-4 w-24 rounded-sm bg-muted"} />
+              <td className={'px-4 py-3'}>
+                <div className={'h-4 w-24 rounded-sm bg-muted'} />
               </td>
-              <td className={"px-4 py-3"}>
-                <div className={"h-5 w-20 rounded-full bg-muted"} />
+              <td className={'px-4 py-3'}>
+                <div className={'h-5 w-20 rounded-full bg-muted'} />
               </td>
-              <td className={"px-4 py-3"}>
-                <div className={"h-5 w-16 rounded-full bg-muted"} />
+              <td className={'px-4 py-3'}>
+                <div className={'h-5 w-16 rounded-full bg-muted'} />
               </td>
-              <td className={"px-4 py-3"}>
-                <div className={"h-4 w-12 rounded-sm bg-muted"} />
+              <td className={'px-4 py-3'}>
+                <div className={'h-4 w-12 rounded-sm bg-muted'} />
               </td>
-              <td className={"px-4 py-3"}>
-                <div className={"h-4 w-24 rounded-sm bg-muted"} />
+              <td className={'px-4 py-3'}>
+                <div className={'h-4 w-24 rounded-sm bg-muted'} />
               </td>
-              <td className={"px-4 py-3"}>
-                <div className={"flex justify-end gap-2"}>
-                  <div className={"h-8 w-16 rounded-sm bg-muted"} />
-                  <div className={"h-8 w-20 rounded-sm bg-muted"} />
+              <td className={'px-4 py-3'}>
+                <div className={'flex justify-end gap-2'}>
+                  <div className={'h-8 w-16 rounded-sm bg-muted'} />
+                  <div className={'h-8 w-20 rounded-sm bg-muted'} />
                 </div>
               </td>
             </tr>
@@ -156,19 +134,10 @@ function WorkflowsPageContent() {
   const router = useRouter();
 
   // URL state management with nuqs
-  const [view, setView] = useQueryState(
-    "view",
-    parseAsStringLiteral(VIEW_OPTIONS).withDefault("card")
-  );
-  const [status, setStatus] = useQueryState(
-    "status",
-    parseAsStringLiteral([...workflowStatuses])
-  );
-  const [search, setSearch] = useQueryState(
-    "search",
-    parseAsString.withDefault("")
-  );
-  const [projectId, setProjectId] = useQueryState("projectId", parseAsInteger);
+  const [view, setView] = useQueryState('view', parseAsStringLiteral(VIEW_OPTIONS).withDefault('card'));
+  const [status, setStatus] = useQueryState('status', parseAsStringLiteral([...workflowStatuses]));
+  const [search, setSearch] = useQueryState('search', parseAsString.withDefault(''));
+  const [projectId, setProjectId] = useQueryState('projectId', parseAsInteger);
 
   // Data fetching
   const { data: workflows, isLoading: isLoadingWorkflows } = useWorkflows();
@@ -210,10 +179,7 @@ function WorkflowsPageContent() {
       }
 
       // Filter by search term (case-insensitive feature name match)
-      if (
-        search &&
-        !workflow.featureName.toLowerCase().includes(search.toLowerCase())
-      ) {
+      if (search && !workflow.featureName.toLowerCase().includes(search.toLowerCase())) {
         return false;
       }
 
@@ -254,7 +220,7 @@ function WorkflowsPageContent() {
   const handleViewDetails = (workflowId: number) => {
     router.push(
       $path({
-        route: "/workflows/[id]",
+        route: '/workflows/[id]',
         routeParams: { id: String(workflowId) },
       })
     );
@@ -262,29 +228,21 @@ function WorkflowsPageContent() {
 
   // Derived state
   const hasNoWorkflows = !isLoading && workflows && workflows.length === 0;
-  const hasNoFilteredWorkflows =
-    !isLoading &&
-    workflows &&
-    workflows.length > 0 &&
-    filteredWorkflows.length === 0;
+  const hasNoFilteredWorkflows = !isLoading && workflows && workflows.length > 0 && filteredWorkflows.length === 0;
 
   return (
-    <div className={"space-y-6"}>
+    <div className={'space-y-6'}>
       {/* Page heading */}
-      <div className={"flex items-start justify-between gap-4"}>
-        <div className={"space-y-1"}>
-          <h1 className={"text-2xl font-semibold tracking-tight"}>
-            {"Workflows"}
-          </h1>
-          <p className={"text-muted-foreground"}>
-            {"Manage and monitor your automated workflows."}
-          </p>
+      <div className={'flex items-start justify-between gap-4'}>
+        <div className={'space-y-1'}>
+          <h1 className={'text-2xl font-semibold tracking-tight'}>{'Workflows'}</h1>
+          <p className={'text-muted-foreground'}>{'Manage and monitor your automated workflows.'}</p>
         </div>
         <CreateWorkflowDialog
           trigger={
             <Button>
-              <Plus aria-hidden={"true"} className={"size-4"} />
-              {"Create Workflow"}
+              <Plus aria-hidden={'true'} className={'size-4'} />
+              {'Create Workflow'}
             </Button>
           }
         />
@@ -292,63 +250,49 @@ function WorkflowsPageContent() {
 
       {/* Filters and view controls */}
       {!hasNoWorkflows && (
-        <div className={"flex flex-wrap items-center gap-4"}>
+        <div className={'flex flex-wrap items-center gap-4'}>
           {/* View toggle */}
           <ButtonGroup>
             <Button
-              aria-label={"Card view"}
-              aria-pressed={view === "card"}
-              className={cn(view === "card" && "bg-muted")}
-              onClick={() => handleViewChange("card")}
-              size={"sm"}
-              variant={"outline"}
+              aria-label={'Card view'}
+              aria-pressed={view === 'card'}
+              className={cn(view === 'card' && 'bg-muted')}
+              onClick={() => handleViewChange('card')}
+              size={'sm'}
+              variant={'outline'}
             >
-              <Grid3X3 aria-hidden={"true"} className={"size-4"} />
-              {"Cards"}
+              <Grid3X3 aria-hidden={'true'} className={'size-4'} />
+              {'Cards'}
             </Button>
             <Button
-              aria-label={"Table view"}
-              aria-pressed={view === "table"}
-              className={cn(view === "table" && "bg-muted")}
-              onClick={() => handleViewChange("table")}
-              size={"sm"}
-              variant={"outline"}
+              aria-label={'Table view'}
+              aria-pressed={view === 'table'}
+              className={cn(view === 'table' && 'bg-muted')}
+              onClick={() => handleViewChange('table')}
+              size={'sm'}
+              variant={'outline'}
             >
-              <List aria-hidden={"true"} className={"size-4"} />
-              {"Table"}
+              <List aria-hidden={'true'} className={'size-4'} />
+              {'Table'}
             </Button>
           </ButtonGroup>
 
           {/* Status filter */}
-          <SelectRoot
-            onValueChange={(newValue) => handleStatusChange(newValue)}
-            value={status ?? ""}
-          >
-            <SelectTrigger
-              aria-label={"Filter by status"}
-              className={"w-40"}
-              size={"sm"}
-            >
-              <SelectValue placeholder={"All statuses"} />
+          <SelectRoot onValueChange={(newValue) => handleStatusChange(newValue)} value={status ?? ''}>
+            <SelectTrigger aria-label={'Filter by status'} className={'w-40'} size={'sm'}>
+              <SelectValue placeholder={'All statuses'} />
             </SelectTrigger>
             <SelectPortal>
               <SelectPositioner>
-                <SelectPopup size={"sm"}>
+                <SelectPopup size={'sm'}>
                   <SelectList>
-                    <SelectItem size={"sm"} value={""}>
-                      {"All statuses"}
+                    <SelectItem size={'sm'} value={''}>
+                      {'All statuses'}
                     </SelectItem>
                     {workflowStatuses.map((workflowStatus) => {
-                      const formattedStatus =
-                        workflowStatus.charAt(0).toUpperCase() +
-                        workflowStatus.slice(1);
+                      const formattedStatus = workflowStatus.charAt(0).toUpperCase() + workflowStatus.slice(1);
                       return (
-                        <SelectItem
-                          key={workflowStatus}
-                          label={formattedStatus}
-                          size={"sm"}
-                          value={workflowStatus}
-                        >
+                        <SelectItem key={workflowStatus} label={formattedStatus} size={'sm'} value={workflowStatus}>
                           {formattedStatus}
                         </SelectItem>
                       );
@@ -361,32 +305,21 @@ function WorkflowsPageContent() {
 
           {/* Project filter */}
           <SelectRoot
-            onValueChange={(newValue) =>
-              handleProjectChange(newValue ? Number(newValue) : null)
-            }
-            value={projectId ? String(projectId) : ""}
+            onValueChange={(newValue) => handleProjectChange(newValue ? Number(newValue) : null)}
+            value={projectId ? String(projectId) : ''}
           >
-            <SelectTrigger
-              aria-label={"Filter by project"}
-              className={"w-48"}
-              size={"sm"}
-            >
-              <SelectValue placeholder={"All projects"} />
+            <SelectTrigger aria-label={'Filter by project'} className={'w-48'} size={'sm'}>
+              <SelectValue placeholder={'All projects'} />
             </SelectTrigger>
             <SelectPortal>
               <SelectPositioner>
-                <SelectPopup size={"sm"}>
+                <SelectPopup size={'sm'}>
                   <SelectList>
-                    <SelectItem size={"sm"} value={""}>
-                      {"All projects"}
+                    <SelectItem size={'sm'} value={''}>
+                      {'All projects'}
                     </SelectItem>
                     {projectOptions.map((option) => (
-                      <SelectItem
-                        key={option.value}
-                        label={option.label}
-                        size={"sm"}
-                        value={String(option.value)}
-                      >
+                      <SelectItem key={option.value} label={option.label} size={'sm'} value={String(option.value)}>
                         {option.label}
                       </SelectItem>
                     ))}
@@ -397,20 +330,18 @@ function WorkflowsPageContent() {
           </SelectRoot>
 
           {/* Search input */}
-          <div className={"relative flex-1 md:max-w-xs"}>
+          <div className={'relative flex-1 md:max-w-xs'}>
             <Search
-              aria-hidden={"true"}
-              className={
-                "absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
-              }
+              aria-hidden={'true'}
+              className={'absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground'}
             />
             <Input
-              aria-label={"Search workflows"}
-              className={"pl-8"}
+              aria-label={'Search workflows'}
+              className={'pl-8'}
               onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder={"Search by feature name..."}
-              size={"sm"}
-              type={"search"}
+              placeholder={'Search by feature name...'}
+              size={'sm'}
+              type={'search'}
               value={search}
             />
           </div>
@@ -421,8 +352,8 @@ function WorkflowsPageContent() {
       <QueryErrorBoundary>
         {isLoading ? (
           // Loading skeletons
-          view === "card" ? (
-            <div className={"grid gap-4 md:grid-cols-2 lg:grid-cols-3"}>
+          view === 'card' ? (
+            <div className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}>
               {Array.from({ length: 6 }).map((_, index) => (
                 <WorkflowCardSkeleton key={index} />
               ))}
@@ -437,17 +368,15 @@ function WorkflowsPageContent() {
               <CreateWorkflowDialog
                 trigger={
                   <Button>
-                    <Plus aria-hidden={"true"} className={"size-4"} />
-                    {"Create your first workflow"}
+                    <Plus aria-hidden={'true'} className={'size-4'} />
+                    {'Create your first workflow'}
                   </Button>
                 }
               />
             }
-            description={
-              "Get started by creating your first workflow to plan or implement a feature."
-            }
-            icon={<GitBranch aria-hidden={"true"} className={"size-6"} />}
-            title={"No workflows yet"}
+            description={'Get started by creating your first workflow to plan or implement a feature.'}
+            icon={<GitBranch aria-hidden={'true'} className={'size-6'} />}
+            title={'No workflows yet'}
           />
         ) : hasNoFilteredWorkflows ? (
           // Empty state when filters hide all workflows
@@ -459,20 +388,18 @@ function WorkflowsPageContent() {
                   void setSearch(null);
                   void setProjectId(null);
                 }}
-                variant={"outline"}
+                variant={'outline'}
               >
-                {"Clear filters"}
+                {'Clear filters'}
               </Button>
             }
-            description={
-              "No workflows match your current filters. Try adjusting your search criteria."
-            }
-            icon={<Search aria-hidden={"true"} className={"size-6"} />}
-            title={"No matching workflows"}
+            description={'No workflows match your current filters. Try adjusting your search criteria.'}
+            icon={<Search aria-hidden={'true'} className={'size-6'} />}
+            title={'No matching workflows'}
           />
-        ) : view === "card" ? (
+        ) : view === 'card' ? (
           // Card view
-          <div className={"grid gap-4 md:grid-cols-2 lg:grid-cols-3"}>
+          <div className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}>
             {filteredWorkflows.map((workflow) => (
               <WorkflowCard
                 key={workflow.id}

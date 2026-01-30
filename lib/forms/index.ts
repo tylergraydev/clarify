@@ -1,8 +1,1 @@
-export {
-  fieldContext,
-  formContext,
-  useAppForm,
-  useFieldContext,
-  useFormContext,
-  withForm,
-} from "./form-hook";
+export { fieldContext, formContext, useAppForm, useFieldContext, useFormContext, withForm } from './form-hook';

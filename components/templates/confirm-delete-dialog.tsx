@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
   DialogClose,
@@ -11,7 +11,7 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 interface ConfirmDeleteDialogProps {
   /** Whether the mutation is in progress */
@@ -47,13 +47,11 @@ export const ConfirmDeleteDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup aria-modal={"true"} role={"alertdialog"}>
+        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle id={"confirm-delete-title"}>
-              {"Delete Template"}
-            </DialogTitle>
-            <DialogDescription id={"confirm-delete-description"}>
+            <DialogTitle id={'confirm-delete-title'}>{'Delete Template'}</DialogTitle>
+            <DialogDescription id={'confirm-delete-description'}>
               {`Are you sure you want to delete "${templateName}"? This action cannot be undone.`}
             </DialogDescription>
           </DialogHeader>
@@ -61,14 +59,14 @@ export const ConfirmDeleteDialog = ({
           {/* Usage Warning */}
           {hasUsage && (
             <div
-              aria-live={"polite"}
+              aria-live={'polite'}
               className={
-                "mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30"
+                'mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30'
               }
-              role={"alert"}
+              role={'alert'}
             >
-              <p className={"text-sm text-amber-800 dark:text-amber-200"}>
-                {`This template has been used ${usageCount} ${usageCount === 1 ? "time" : "times"}. Deleting it will not affect existing workflows that used this template.`}
+              <p className={'text-sm text-amber-800 dark:text-amber-200'}>
+                {`This template has been used ${usageCount} ${usageCount === 1 ? 'time' : 'times'}. Deleting it will not affect existing workflows that used this template.`}
               </p>
             </div>
           )}
@@ -76,18 +74,18 @@ export const ConfirmDeleteDialog = ({
           {/* Actions */}
           <DialogFooter sticky={false}>
             <DialogClose>
-              <Button disabled={isLoading} variant={"outline"}>
-                {"Cancel"}
+              <Button disabled={isLoading} variant={'outline'}>
+                {'Cancel'}
               </Button>
             </DialogClose>
             <Button
-              aria-describedby={"confirm-delete-description"}
+              aria-describedby={'confirm-delete-description'}
               aria-label={`Delete ${templateName} template permanently`}
               disabled={isLoading}
               onClick={handleConfirmClick}
-              variant={"destructive"}
+              variant={'destructive'}
             >
-              {isLoading ? "Deleting..." : "Delete"}
+              {isLoading ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogPopup>

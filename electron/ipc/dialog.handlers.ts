@@ -11,34 +11,29 @@ import {
   type IpcMainInvokeEvent,
   type OpenDialogOptions,
   type SaveDialogOptions,
-} from "electron";
+} from 'electron';
 
-import { IpcChannels } from "./channels";
+import { IpcChannels } from './channels';
 
 /**
  * Register all dialog IPC handlers.
  *
  * @param getMainWindow - Function to get the main BrowserWindow (may be null during startup)
  */
-export function registerDialogHandlers(
-  getMainWindow: () => BrowserWindow | null
-): void {
-  ipcMain.handle(
-    IpcChannels.dialog.openDirectory,
-    async (): Promise<null | string> => {
-      const mainWindow = getMainWindow();
-      if (!mainWindow) return null;
+export function registerDialogHandlers(getMainWindow: () => BrowserWindow | null): void {
+  ipcMain.handle(IpcChannels.dialog.openDirectory, async (): Promise<null | string> => {
+    const mainWindow = getMainWindow();
+    if (!mainWindow) return null;
 
-      const options: OpenDialogOptions = {
-        properties: ["openDirectory"],
-      };
-      const result = await dialog.showOpenDialog(mainWindow, options);
-      if (result.canceled || result.filePaths.length === 0) {
-        return null;
-      }
-      return result.filePaths[0] ?? null;
+    const options: OpenDialogOptions = {
+      properties: ['openDirectory'],
+    };
+    const result = await dialog.showOpenDialog(mainWindow, options);
+    if (result.canceled || result.filePaths.length === 0) {
+      return null;
     }
-  );
+    return result.filePaths[0] ?? null;
+  });
 
   ipcMain.handle(
     IpcChannels.dialog.openFile,
@@ -50,8 +45,8 @@ export function registerDialogHandlers(
       if (!mainWindow) return null;
 
       const options: OpenDialogOptions = {
-        filters: filters ?? [{ extensions: ["*"], name: "All Files" }],
-        properties: ["openFile"],
+        filters: filters ?? [{ extensions: ['*'], name: 'All Files' }],
+        properties: ['openFile'],
       };
       const result = await dialog.showOpenDialog(mainWindow, options);
       if (result.canceled || result.filePaths.length === 0) {
@@ -73,7 +68,7 @@ export function registerDialogHandlers(
 
       const options: SaveDialogOptions = {
         defaultPath,
-        filters: filters ?? [{ extensions: ["*"], name: "All Files" }],
+        filters: filters ?? [{ extensions: ['*'], name: 'All Files' }],
       };
       const result = await dialog.showSaveDialog(mainWindow, options);
       if (result.canceled || !result.filePath) {

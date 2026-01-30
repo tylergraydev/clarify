@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type {
   NewTemplate,
@@ -8,11 +8,11 @@ import type {
   Template,
   TemplateListFilters,
   TemplatePlaceholder,
-} from "@/types/electron";
+} from '@/types/electron';
 
-import { templateKeys } from "@/lib/queries/templates";
+import { templateKeys } from '@/lib/queries/templates';
 
-import { useElectron } from "../use-electron";
+import { useElectron } from '../use-electron';
 
 // ============================================================================
 // Types for Optimistic Update Contexts
@@ -23,17 +23,13 @@ interface CreateTemplateMutationContext {
 }
 
 interface DeleteTemplateMutationContext {
-  previousQueries: Array<
-    [QueryKeyType, Array<Template> | Template | undefined]
-  >;
+  previousQueries: Array<[QueryKeyType, Array<Template> | Template | undefined]>;
 }
 
 type QueryKeyType = ReadonlyArray<unknown>;
 
 interface UpdateTemplateMutationContext {
-  previousQueries: Array<
-    [QueryKeyType, Array<Template> | Template | undefined]
-  >;
+  previousQueries: Array<[QueryKeyType, Array<Template> | Template | undefined]>;
 }
 
 // ============================================================================
@@ -79,12 +75,7 @@ export function useCreateTemplate() {
   const queryClient = useQueryClient();
   const { api } = useElectron();
 
-  return useMutation<
-    Template,
-    Error,
-    NewTemplate,
-    CreateTemplateMutationContext
-  >({
+  return useMutation<Template, Error, NewTemplate, CreateTemplateMutationContext>({
     mutationFn: (data: NewTemplate) => api!.template.create(data),
     onError: (_error, _variables, context) => {
       // Rollback optimistic updates on error
@@ -102,9 +93,7 @@ export function useCreateTemplate() {
       });
 
       // Snapshot previous values for rollback
-      const previousListQueries: Array<
-        [QueryKeyType, Array<Template> | undefined]
-      > = [];
+      const previousListQueries: Array<[QueryKeyType, Array<Template> | undefined]> = [];
 
       // Create an optimistic template with placeholder ID
       const optimisticTemplate: Template = {
@@ -125,26 +114,19 @@ export function useCreateTemplate() {
       const activeQueryKey = templateKeys.active.queryKey;
 
       // Update all matching list queries
-      queryClient.setQueriesData<Array<Template>>(
-        { queryKey: listQueryKey },
-        (old) => {
-          if (old) {
-            previousListQueries.push([listQueryKey, old]);
-            return [optimisticTemplate, ...old];
-          }
-          return [optimisticTemplate];
+      queryClient.setQueriesData<Array<Template>>({ queryKey: listQueryKey }, (old) => {
+        if (old) {
+          previousListQueries.push([listQueryKey, old]);
+          return [optimisticTemplate, ...old];
         }
-      );
+        return [optimisticTemplate];
+      });
 
       // Update active templates query
-      const previousActive =
-        queryClient.getQueryData<Array<Template>>(activeQueryKey);
+      const previousActive = queryClient.getQueryData<Array<Template>>(activeQueryKey);
       if (previousActive !== undefined) {
         previousListQueries.push([activeQueryKey, previousActive]);
-        queryClient.setQueryData<Array<Template>>(activeQueryKey, [
-          optimisticTemplate,
-          ...previousActive,
-        ]);
+        queryClient.setQueryData<Array<Template>>(activeQueryKey, [optimisticTemplate, ...previousActive]);
       }
 
       return { previousListQueries };
@@ -190,26 +172,20 @@ export function useDeleteTemplate() {
       await queryClient.cancelQueries({ queryKey: templateKeys._def });
 
       // Snapshot previous values for rollback
-      const previousQueries: Array<
-        [QueryKeyType, Array<Template> | Template | undefined]
-      > = [];
+      const previousQueries: Array<[QueryKeyType, Array<Template> | Template | undefined]> = [];
 
       // Remove from all list queries optimistically
-      queryClient.setQueriesData<Array<Template>>(
-        { queryKey: templateKeys.list._def },
-        (old) => {
-          if (old) {
-            previousQueries.push([templateKeys.list._def, old]);
-            return old.filter((t) => t.id !== templateId);
-          }
-          return old;
+      queryClient.setQueriesData<Array<Template>>({ queryKey: templateKeys.list._def }, (old) => {
+        if (old) {
+          previousQueries.push([templateKeys.list._def, old]);
+          return old.filter((t) => t.id !== templateId);
         }
-      );
+        return old;
+      });
 
       // Remove from active templates query
       const activeQueryKey = templateKeys.active.queryKey;
-      const previousActive =
-        queryClient.getQueryData<Array<Template>>(activeQueryKey);
+      const previousActive = queryClient.getQueryData<Array<Template>>(activeQueryKey);
       if (previousActive) {
         previousQueries.push([activeQueryKey, previousActive]);
         queryClient.setQueryData<Array<Template>>(
@@ -220,8 +196,7 @@ export function useDeleteTemplate() {
 
       // Remove from built-in templates query
       const builtInQueryKey = templateKeys.builtIn.queryKey;
-      const previousBuiltIn =
-        queryClient.getQueryData<Array<Template>>(builtInQueryKey);
+      const previousBuiltIn = queryClient.getQueryData<Array<Template>>(builtInQueryKey);
       if (previousBuiltIn) {
         previousQueries.push([builtInQueryKey, previousBuiltIn]);
         queryClient.setQueryData<Array<Template>>(
@@ -259,10 +234,7 @@ export function useIncrementTemplateUsage() {
     onSuccess: (template) => {
       if (template) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          templateKeys.detail(template.id).queryKey,
-          template
-        );
+        queryClient.setQueryData(templateKeys.detail(template.id).queryKey, template);
         // Invalidate list queries to update usage counts in lists
         void queryClient.invalidateQueries({
           queryKey: templateKeys.list._def,
@@ -318,9 +290,7 @@ export function useTemplates(filters?: TemplateListFilters) {
 /**
  * Fetch templates filtered by category using server-side filtering
  */
-export function useTemplatesByCategory(
-  category: TemplateListFilters["category"]
-) {
+export function useTemplatesByCategory(category: TemplateListFilters['category']) {
   const { api, isElectron } = useElectron();
 
   return useQuery({
@@ -347,14 +317,8 @@ export function useUpdateTemplate() {
     id: number;
   }
 
-  return useMutation<
-    Template | undefined,
-    Error,
-    UpdateVariables,
-    UpdateTemplateMutationContext
-  >({
-    mutationFn: ({ data, id }: UpdateVariables) =>
-      api!.template.update(id, data),
+  return useMutation<Template | undefined, Error, UpdateVariables, UpdateTemplateMutationContext>({
+    mutationFn: ({ data, id }: UpdateVariables) => api!.template.update(id, data),
     onError: (_error, _variables, context) => {
       // Rollback optimistic updates on error
       if (context?.previousQueries) {
@@ -368,9 +332,7 @@ export function useUpdateTemplate() {
       await queryClient.cancelQueries({ queryKey: templateKeys._def });
 
       // Snapshot previous values for rollback
-      const previousQueries: Array<
-        [QueryKeyType, Array<Template> | Template | undefined]
-      > = [];
+      const previousQueries: Array<[QueryKeyType, Array<Template> | Template | undefined]> = [];
 
       // Get existing template from detail cache or find in lists
       const detailQueryKey = templateKeys.detail(templateId).queryKey;
@@ -412,23 +374,17 @@ export function useUpdateTemplate() {
       queryClient.setQueryData<Template>(detailQueryKey, optimisticTemplate);
 
       // Update all list queries optimistically
-      queryClient.setQueriesData<Array<Template>>(
-        { queryKey: templateKeys.list._def },
-        (old) => {
-          if (old) {
-            previousQueries.push([templateKeys.list._def, old]);
-            return old.map((t) =>
-              t.id === templateId ? optimisticTemplate : t
-            );
-          }
-          return old;
+      queryClient.setQueriesData<Array<Template>>({ queryKey: templateKeys.list._def }, (old) => {
+        if (old) {
+          previousQueries.push([templateKeys.list._def, old]);
+          return old.map((t) => (t.id === templateId ? optimisticTemplate : t));
         }
-      );
+        return old;
+      });
 
       // Update active templates query
       const activeQueryKey = templateKeys.active.queryKey;
-      const previousActive =
-        queryClient.getQueryData<Array<Template>>(activeQueryKey);
+      const previousActive = queryClient.getQueryData<Array<Template>>(activeQueryKey);
       if (previousActive) {
         previousQueries.push([activeQueryKey, previousActive]);
         // Handle deactivation - remove from active list if deactivatedAt is set
@@ -437,16 +393,11 @@ export function useUpdateTemplate() {
             // Re-activating - add to list if not present
             const isInList = previousActive.some((t) => t.id === templateId);
             if (!isInList) {
-              queryClient.setQueryData<Array<Template>>(activeQueryKey, [
-                optimisticTemplate,
-                ...previousActive,
-              ]);
+              queryClient.setQueryData<Array<Template>>(activeQueryKey, [optimisticTemplate, ...previousActive]);
             } else {
               queryClient.setQueryData<Array<Template>>(
                 activeQueryKey,
-                previousActive.map((t) =>
-                  t.id === templateId ? optimisticTemplate : t
-                )
+                previousActive.map((t) => (t.id === templateId ? optimisticTemplate : t))
               );
             }
           } else {
@@ -459,9 +410,7 @@ export function useUpdateTemplate() {
         } else {
           queryClient.setQueryData<Array<Template>>(
             activeQueryKey,
-            previousActive.map((t) =>
-              t.id === templateId ? optimisticTemplate : t
-            )
+            previousActive.map((t) => (t.id === templateId ? optimisticTemplate : t))
           );
         }
       }
@@ -475,10 +424,7 @@ export function useUpdateTemplate() {
     onSuccess: (template) => {
       if (template) {
         // Update detail cache with actual server response
-        queryClient.setQueryData(
-          templateKeys.detail(template.id).queryKey,
-          template
-        );
+        queryClient.setQueryData(templateKeys.detail(template.id).queryKey, template);
         // Invalidate category-specific queries
         if (template.category) {
           void queryClient.invalidateQueries({
@@ -498,15 +444,11 @@ export function useUpdateTemplatePlaceholders() {
   const { api } = useElectron();
 
   interface UpdatePlaceholdersVariables {
-    placeholders: Array<Omit<NewTemplatePlaceholder, "templateId">>;
+    placeholders: Array<Omit<NewTemplatePlaceholder, 'templateId'>>;
     templateId: number;
   }
 
-  return useMutation<
-    Array<TemplatePlaceholder>,
-    Error,
-    UpdatePlaceholdersVariables
-  >({
+  return useMutation<Array<TemplatePlaceholder>, Error, UpdatePlaceholdersVariables>({
     mutationFn: ({ placeholders, templateId }: UpdatePlaceholdersVariables) =>
       api!.template.updatePlaceholders(templateId, placeholders),
     onSuccess: (_placeholders, { templateId }) => {

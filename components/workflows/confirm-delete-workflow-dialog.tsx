@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
   DialogClose,
@@ -11,7 +11,7 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 interface ConfirmDeleteWorkflowDialogProps {
   /** Whether the mutation is in progress */
@@ -36,7 +36,7 @@ export const ConfirmDeleteWorkflowDialog = ({
   status,
   workflowName,
 }: ConfirmDeleteWorkflowDialogProps) => {
-  const isRunning = status === "running" || status === "paused";
+  const isRunning = status === 'running' || status === 'paused';
 
   const handleConfirmClick = () => {
     onConfirm();
@@ -47,13 +47,11 @@ export const ConfirmDeleteWorkflowDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup aria-modal={"true"} role={"alertdialog"}>
+        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle id={"confirm-delete-workflow-title"}>
-              {"Delete Workflow"}
-            </DialogTitle>
-            <DialogDescription id={"confirm-delete-workflow-description"}>
+            <DialogTitle id={'confirm-delete-workflow-title'}>{'Delete Workflow'}</DialogTitle>
+            <DialogDescription id={'confirm-delete-workflow-description'}>
               {`Are you sure you want to delete "${workflowName}"? This action cannot be undone.`}
             </DialogDescription>
           </DialogHeader>
@@ -61,15 +59,15 @@ export const ConfirmDeleteWorkflowDialog = ({
           {/* Running Warning */}
           {isRunning && (
             <div
-              aria-live={"polite"}
+              aria-live={'polite'}
               className={
-                "mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30"
+                'mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30'
               }
-              role={"alert"}
+              role={'alert'}
             >
-              <p className={"text-sm text-amber-800 dark:text-amber-200"}>
+              <p className={'text-sm text-amber-800 dark:text-amber-200'}>
                 {
-                  "This workflow is currently running or paused. Deleting it will stop all execution and remove all associated data."
+                  'This workflow is currently running or paused. Deleting it will stop all execution and remove all associated data.'
                 }
               </p>
             </div>
@@ -78,18 +76,18 @@ export const ConfirmDeleteWorkflowDialog = ({
           {/* Actions */}
           <DialogFooter sticky={false}>
             <DialogClose>
-              <Button disabled={isLoading} variant={"outline"}>
-                {"Cancel"}
+              <Button disabled={isLoading} variant={'outline'}>
+                {'Cancel'}
               </Button>
             </DialogClose>
             <Button
-              aria-describedby={"confirm-delete-workflow-description"}
+              aria-describedby={'confirm-delete-workflow-description'}
               aria-label={`Delete ${workflowName} workflow permanently`}
               disabled={isLoading}
               onClick={handleConfirmClick}
-              variant={"destructive"}
+              variant={'destructive'}
             >
-              {isLoading ? "Deleting..." : "Delete"}
+              {isLoading ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogPopup>

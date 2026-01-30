@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import type { Project } from "@/types/electron";
+import type { Project } from '@/types/electron';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
   DialogClose,
@@ -18,10 +18,10 @@ import {
   DialogRoot,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { useUpdateProject } from "@/hooks/queries/use-projects";
-import { useAppForm } from "@/lib/forms/form-hook";
-import { createProjectSchema } from "@/lib/validations/project";
+} from '@/components/ui/dialog';
+import { useUpdateProject } from '@/hooks/queries/use-projects';
+import { useAppForm } from '@/lib/forms/form-hook';
+import { createProjectSchema } from '@/lib/validations/project';
 
 interface EditProjectDialogProps {
   /** Callback when project is successfully updated */
@@ -32,11 +32,7 @@ interface EditProjectDialogProps {
   trigger: ReactNode;
 }
 
-export const EditProjectDialog = ({
-  onSuccess,
-  project,
-  trigger,
-}: EditProjectDialogProps) => {
+export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const updateProjectMutation = useUpdateProject();
@@ -45,7 +41,7 @@ export const EditProjectDialog = ({
 
   const form = useAppForm({
     defaultValues: {
-      description: project.description ?? "",
+      description: project.description ?? '',
       name: project.name,
     },
     onSubmit: async ({ value }) => {
@@ -60,10 +56,7 @@ export const EditProjectDialog = ({
         handleClose();
         onSuccess?.();
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to update project. Please try again.";
+        const message = error instanceof Error ? error.message : 'Failed to update project. Please try again.';
         throw new Error(message);
       }
     },
@@ -75,7 +68,7 @@ export const EditProjectDialog = ({
   // Reset form when project changes
   useEffect(() => {
     form.reset({
-      description: project.description ?? "",
+      description: project.description ?? '',
       name: project.name,
     });
   }, [project, form]);
@@ -103,41 +96,34 @@ export const EditProjectDialog = ({
         <DialogPopup>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle>{"Edit Project"}</DialogTitle>
-            <DialogDescription>
-              {"Update your project's name and description."}
-            </DialogDescription>
+            <DialogTitle>{'Edit Project'}</DialogTitle>
+            <DialogDescription>{"Update your project's name and description."}</DialogDescription>
           </DialogHeader>
 
           {/* Form */}
           <form
-            className={"mt-6"}
+            className={'mt-6'}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
               void form.handleSubmit();
             }}
           >
-            <div className={"flex flex-col gap-4"}>
+            <div className={'flex flex-col gap-4'}>
               {/* Name Field */}
-              <form.AppField name={"name"}>
+              <form.AppField name={'name'}>
                 {(field) => (
-                  <field.TextField
-                    autoFocus
-                    isRequired
-                    label={"Project Name"}
-                    placeholder={"Enter project name"}
-                  />
+                  <field.TextField autoFocus isRequired label={'Project Name'} placeholder={'Enter project name'} />
                 )}
               </form.AppField>
 
               {/* Description Field */}
-              <form.AppField name={"description"}>
+              <form.AppField name={'description'}>
                 {(field) => (
                   <field.TextareaField
-                    description={"Optional description for your project"}
-                    label={"Description"}
-                    placeholder={"Describe your project..."}
+                    description={'Optional description for your project'}
+                    label={'Description'}
+                    placeholder={'Describe your project...'}
                     rows={3}
                   />
                 )}
@@ -147,18 +133,12 @@ export const EditProjectDialog = ({
             {/* Action Buttons */}
             <DialogFooter sticky={false}>
               <DialogClose>
-                <Button
-                  disabled={isSubmitting}
-                  type={"button"}
-                  variant={"outline"}
-                >
-                  {"Cancel"}
+                <Button disabled={isSubmitting} type={'button'} variant={'outline'}>
+                  {'Cancel'}
                 </Button>
               </DialogClose>
               <form.AppForm>
-                <form.SubmitButton>
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </form.SubmitButton>
+                <form.SubmitButton>{isSubmitting ? 'Saving...' : 'Save Changes'}</form.SubmitButton>
               </form.AppForm>
             </DialogFooter>
           </form>

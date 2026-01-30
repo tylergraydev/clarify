@@ -1,15 +1,10 @@
-import type { DynamicRoute } from "next-typesafe-url";
+import type { DynamicRoute } from 'next-typesafe-url';
 
-import { z } from "zod";
+import { z } from 'zod';
 
-const TERMINAL_STATUSES = ["completed", "failed", "cancelled"] as const;
-const SORT_ORDERS = ["asc", "desc"] as const;
-const SORT_FIELDS = [
-  "featureName",
-  "status",
-  "durationMs",
-  "completedAt",
-] as const;
+const TERMINAL_STATUSES = ['completed', 'failed', 'cancelled'] as const;
+const SORT_ORDERS = ['asc', 'desc'] as const;
+const SORT_FIELDS = ['featureName', 'status', 'durationMs', 'completedAt'] as const;
 
 export const Route = {
   searchParams: z.object({

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo } from 'react';
 
-import type { ElectronAPI } from "@/types/electron";
+import type { ElectronAPI } from '@/types/electron';
 
 interface UseElectronResult {
   api: ElectronAPI | null;
@@ -11,14 +11,14 @@ interface UseElectronResult {
 
 export function useElectron(): UseElectronResult {
   const isElectron = useMemo(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       return false;
     }
     return window.electronAPI !== undefined;
   }, []);
 
   const api = useMemo(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       return null;
     }
     return window.electronAPI ?? null;
@@ -37,14 +37,7 @@ export function useElectronApp() {
 
   const getPath = useCallback(
     async (
-      name:
-        | "appData"
-        | "desktop"
-        | "documents"
-        | "downloads"
-        | "home"
-        | "temp"
-        | "userData"
+      name: 'appData' | 'desktop' | 'documents' | 'downloads' | 'home' | 'temp' | 'userData'
     ): Promise<null | string> => {
       if (!api) return null;
       return api.app.getPath(name);
@@ -70,9 +63,7 @@ export function useElectronDb() {
   const throwIfNoApi = useCallback(
     (operation: string) => {
       if (!api) {
-        throw new Error(
-          `Cannot perform ${operation}: Electron API not available`
-        );
+        throw new Error(`Cannot perform ${operation}: Electron API not available`);
       }
       return api;
     },
@@ -82,13 +73,11 @@ export function useElectronDb() {
   const workflows = useMemo(
     () => ({
       cancel: async (id: number) => {
-        const electronApi = throwIfNoApi("workflow.cancel");
+        const electronApi = throwIfNoApi('workflow.cancel');
         return electronApi.workflow.cancel(id);
       },
-      create: async (
-        data: Parameters<NonNullable<ElectronAPI>["workflow"]["create"]>[0]
-      ) => {
-        const electronApi = throwIfNoApi("workflow.create");
+      create: async (data: Parameters<NonNullable<ElectronAPI>['workflow']['create']>[0]) => {
+        const electronApi = throwIfNoApi('workflow.create');
         return electronApi.workflow.create(data);
       },
       get: async (id: number) => {
@@ -100,15 +89,15 @@ export function useElectronDb() {
         return api.workflow.list();
       },
       pause: async (id: number) => {
-        const electronApi = throwIfNoApi("workflow.pause");
+        const electronApi = throwIfNoApi('workflow.pause');
         return electronApi.workflow.pause(id);
       },
       resume: async (id: number) => {
-        const electronApi = throwIfNoApi("workflow.resume");
+        const electronApi = throwIfNoApi('workflow.resume');
         return electronApi.workflow.resume(id);
       },
       start: async (id: number) => {
-        const electronApi = throwIfNoApi("workflow.start");
+        const electronApi = throwIfNoApi('workflow.start');
         return electronApi.workflow.start(id);
       },
     }),
@@ -118,15 +107,15 @@ export function useElectronDb() {
   const steps = useMemo(
     () => ({
       complete: async (id: number, output?: string, durationMs?: number) => {
-        const electronApi = throwIfNoApi("step.complete");
+        const electronApi = throwIfNoApi('step.complete');
         return electronApi.step.complete(id, output, durationMs);
       },
       edit: async (id: number, editedOutput: string) => {
-        const electronApi = throwIfNoApi("step.edit");
+        const electronApi = throwIfNoApi('step.edit');
         return electronApi.step.edit(id, editedOutput);
       },
       fail: async (id: number, errorMessage: string) => {
-        const electronApi = throwIfNoApi("step.fail");
+        const electronApi = throwIfNoApi('step.fail');
         return electronApi.step.fail(id, errorMessage);
       },
       get: async (id: number) => {
@@ -138,7 +127,7 @@ export function useElectronDb() {
         return api.step.list(workflowId);
       },
       regenerate: async (id: number) => {
-        const electronApi = throwIfNoApi("step.regenerate");
+        const electronApi = throwIfNoApi('step.regenerate');
         return electronApi.step.regenerate(id);
       },
     }),
@@ -147,34 +136,28 @@ export function useElectronDb() {
 
   const discovery = useMemo(
     () => ({
-      add: async (
-        stepId: number,
-        data: Parameters<NonNullable<ElectronAPI>["discovery"]["add"]>[1]
-      ) => {
-        const electronApi = throwIfNoApi("discovery.add");
+      add: async (stepId: number, data: Parameters<NonNullable<ElectronAPI>['discovery']['add']>[1]) => {
+        const electronApi = throwIfNoApi('discovery.add');
         return electronApi.discovery.add(stepId, data);
       },
       exclude: async (id: number) => {
-        const electronApi = throwIfNoApi("discovery.exclude");
+        const electronApi = throwIfNoApi('discovery.exclude');
         return electronApi.discovery.exclude(id);
       },
       include: async (id: number) => {
-        const electronApi = throwIfNoApi("discovery.include");
+        const electronApi = throwIfNoApi('discovery.include');
         return electronApi.discovery.include(id);
       },
       list: async (stepId: number) => {
         if (!api) return [];
         return api.discovery.list(stepId);
       },
-      update: async (
-        id: number,
-        data: Parameters<NonNullable<ElectronAPI>["discovery"]["update"]>[1]
-      ) => {
-        const electronApi = throwIfNoApi("discovery.update");
+      update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['discovery']['update']>[1]) => {
+        const electronApi = throwIfNoApi('discovery.update');
         return electronApi.discovery.update(id, data);
       },
       updatePriority: async (id: number, priority: string) => {
-        const electronApi = throwIfNoApi("discovery.updatePriority");
+        const electronApi = throwIfNoApi('discovery.updatePriority');
         return electronApi.discovery.updatePriority(id, priority);
       },
     }),
@@ -184,11 +167,11 @@ export function useElectronDb() {
   const agents = useMemo(
     () => ({
       activate: async (id: number) => {
-        const electronApi = throwIfNoApi("agent.activate");
+        const electronApi = throwIfNoApi('agent.activate');
         return electronApi.agent.activate(id);
       },
       deactivate: async (id: number) => {
-        const electronApi = throwIfNoApi("agent.deactivate");
+        const electronApi = throwIfNoApi('agent.deactivate');
         return electronApi.agent.deactivate(id);
       },
       get: async (id: number) => {
@@ -200,14 +183,11 @@ export function useElectronDb() {
         return api.agent.list();
       },
       reset: async (id: number) => {
-        const electronApi = throwIfNoApi("agent.reset");
+        const electronApi = throwIfNoApi('agent.reset');
         return electronApi.agent.reset(id);
       },
-      update: async (
-        id: number,
-        data: Parameters<NonNullable<ElectronAPI>["agent"]["update"]>[1]
-      ) => {
-        const electronApi = throwIfNoApi("agent.update");
+      update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['agent']['update']>[1]) => {
+        const electronApi = throwIfNoApi('agent.update');
         return electronApi.agent.update(id, data);
       },
     }),
@@ -216,14 +196,12 @@ export function useElectronDb() {
 
   const templates = useMemo(
     () => ({
-      create: async (
-        data: Parameters<NonNullable<ElectronAPI>["template"]["create"]>[0]
-      ) => {
-        const electronApi = throwIfNoApi("template.create");
+      create: async (data: Parameters<NonNullable<ElectronAPI>['template']['create']>[0]) => {
+        const electronApi = throwIfNoApi('template.create');
         return electronApi.template.create(data);
       },
       delete: async (id: number) => {
-        const electronApi = throwIfNoApi("template.delete");
+        const electronApi = throwIfNoApi('template.delete');
         return electronApi.template.delete(id);
       },
       get: async (id: number) => {
@@ -231,18 +209,15 @@ export function useElectronDb() {
         return api.template.get(id);
       },
       incrementUsage: async (id: number) => {
-        const electronApi = throwIfNoApi("template.incrementUsage");
+        const electronApi = throwIfNoApi('template.incrementUsage');
         return electronApi.template.incrementUsage(id);
       },
       list: async () => {
         if (!api) return [];
         return api.template.list();
       },
-      update: async (
-        id: number,
-        data: Parameters<NonNullable<ElectronAPI>["template"]["update"]>[1]
-      ) => {
-        const electronApi = throwIfNoApi("template.update");
+      update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['template']['update']>[1]) => {
+        const electronApi = throwIfNoApi('template.update');
         return electronApi.template.update(id, data);
       },
     }),
@@ -251,21 +226,16 @@ export function useElectronDb() {
 
   const projects = useMemo(
     () => ({
-      addRepo: async (
-        projectId: number,
-        repoData: Parameters<NonNullable<ElectronAPI>["project"]["addRepo"]>[1]
-      ) => {
-        const electronApi = throwIfNoApi("project.addRepo");
+      addRepo: async (projectId: number, repoData: Parameters<NonNullable<ElectronAPI>['project']['addRepo']>[1]) => {
+        const electronApi = throwIfNoApi('project.addRepo');
         return electronApi.project.addRepo(projectId, repoData);
       },
-      create: async (
-        data: Parameters<NonNullable<ElectronAPI>["project"]["create"]>[0]
-      ) => {
-        const electronApi = throwIfNoApi("project.create");
+      create: async (data: Parameters<NonNullable<ElectronAPI>['project']['create']>[0]) => {
+        const electronApi = throwIfNoApi('project.create');
         return electronApi.project.create(data);
       },
       delete: async (id: number) => {
-        const electronApi = throwIfNoApi("project.delete");
+        const electronApi = throwIfNoApi('project.delete');
         return electronApi.project.delete(id);
       },
       get: async (id: number) => {
@@ -276,11 +246,8 @@ export function useElectronDb() {
         if (!api) return [];
         return api.project.list();
       },
-      update: async (
-        id: number,
-        data: Parameters<NonNullable<ElectronAPI>["project"]["update"]>[1]
-      ) => {
-        const electronApi = throwIfNoApi("project.update");
+      update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['project']['update']>[1]) => {
+        const electronApi = throwIfNoApi('project.update');
         return electronApi.project.update(id, data);
       },
     }),
@@ -289,14 +256,12 @@ export function useElectronDb() {
 
   const repositories = useMemo(
     () => ({
-      create: async (
-        data: Parameters<NonNullable<ElectronAPI>["repository"]["create"]>[0]
-      ) => {
-        const electronApi = throwIfNoApi("repository.create");
+      create: async (data: Parameters<NonNullable<ElectronAPI>['repository']['create']>[0]) => {
+        const electronApi = throwIfNoApi('repository.create');
         return electronApi.repository.create(data);
       },
       delete: async (id: number) => {
-        const electronApi = throwIfNoApi("repository.delete");
+        const electronApi = throwIfNoApi('repository.delete');
         return electronApi.repository.delete(id);
       },
       findByPath: async (path: string) => {
@@ -316,14 +281,11 @@ export function useElectronDb() {
         return api.repository.list();
       },
       setDefault: async (id: number) => {
-        const electronApi = throwIfNoApi("repository.setDefault");
+        const electronApi = throwIfNoApi('repository.setDefault');
         return electronApi.repository.setDefault(id);
       },
-      update: async (
-        id: number,
-        data: Parameters<NonNullable<ElectronAPI>["repository"]["update"]>[1]
-      ) => {
-        const electronApi = throwIfNoApi("repository.update");
+      update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['repository']['update']>[1]) => {
+        const electronApi = throwIfNoApi('repository.update');
         return electronApi.repository.update(id, data);
       },
     }),
@@ -332,14 +294,12 @@ export function useElectronDb() {
 
   const audit = useMemo(
     () => ({
-      create: async (
-        data: Parameters<NonNullable<ElectronAPI>["audit"]["create"]>[0]
-      ) => {
-        const electronApi = throwIfNoApi("audit.create");
+      create: async (data: Parameters<NonNullable<ElectronAPI>['audit']['create']>[0]) => {
+        const electronApi = throwIfNoApi('audit.create');
         return electronApi.audit.create(data);
       },
       export: async (workflowId: number) => {
-        const electronApi = throwIfNoApi("audit.export");
+        const electronApi = throwIfNoApi('audit.export');
         return electronApi.audit.export(workflowId);
       },
       findByStep: async (stepId: number) => {
@@ -361,7 +321,7 @@ export function useElectronDb() {
   const settings = useMemo(
     () => ({
       bulkUpdate: async (updates: Array<{ key: string; value: string }>) => {
-        const electronApi = throwIfNoApi("settings.bulkUpdate");
+        const electronApi = throwIfNoApi('settings.bulkUpdate');
         return electronApi.settings.bulkUpdate(updates);
       },
       get: async (id: number) => {
@@ -381,11 +341,11 @@ export function useElectronDb() {
         return api.settings.list();
       },
       resetToDefault: async (key: string) => {
-        const electronApi = throwIfNoApi("settings.resetToDefault");
+        const electronApi = throwIfNoApi('settings.resetToDefault');
         return electronApi.settings.resetToDefault(key);
       },
       setValue: async (key: string, value: string) => {
-        const electronApi = throwIfNoApi("settings.setValue");
+        const electronApi = throwIfNoApi('settings.setValue');
         return electronApi.settings.setValue(key, value);
       },
     }),
@@ -415,9 +375,7 @@ export function useElectronDialog() {
   }, [api]);
 
   const openFile = useCallback(
-    async (
-      filters?: Array<{ extensions: Array<string>; name: string }>
-    ): Promise<null | string> => {
+    async (filters?: Array<{ extensions: Array<string>; name: string }>): Promise<null | string> => {
       if (!api) return null;
       return api.dialog.openFile(filters);
     },
@@ -447,21 +405,16 @@ export function useElectronFs() {
   const { api, isElectron } = useElectron();
 
   const readFile = useCallback(
-    async (
-      path: string
-    ): Promise<{ content?: string; error?: string; success: boolean }> => {
-      if (!api) return { error: "Not running in Electron", success: false };
+    async (path: string): Promise<{ content?: string; error?: string; success: boolean }> => {
+      if (!api) return { error: 'Not running in Electron', success: false };
       return api.fs.readFile(path);
     },
     [api]
   );
 
   const writeFile = useCallback(
-    async (
-      path: string,
-      content: string
-    ): Promise<{ error?: string; success: boolean }> => {
-      if (!api) return { error: "Not running in Electron", success: false };
+    async (path: string, content: string): Promise<{ error?: string; success: boolean }> => {
+      if (!api) return { error: 'Not running in Electron', success: false };
       return api.fs.writeFile(path, content);
     },
     [api]
@@ -475,7 +428,7 @@ export function useElectronFs() {
       error?: string;
       success: boolean;
     }> => {
-      if (!api) return { error: "Not running in Electron", success: false };
+      if (!api) return { error: 'Not running in Electron', success: false };
       return api.fs.readDirectory(path);
     },
     [api]
@@ -503,7 +456,7 @@ export function useElectronFs() {
       };
       success: boolean;
     }> => {
-      if (!api) return { error: "Not running in Electron", success: false };
+      if (!api) return { error: 'Not running in Electron', success: false };
       return api.fs.stat(path);
     },
     [api]

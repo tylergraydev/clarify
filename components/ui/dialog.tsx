@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef, ReactElement, ReactNode } from "react";
+import type { ComponentPropsWithRef, ReactElement, ReactNode } from 'react';
 
-import { Dialog as BaseDialog } from "@base-ui/react/dialog";
-import { cva, type VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
-import { cloneElement } from "react";
+import { Dialog as BaseDialog } from '@base-ui/react/dialog';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { X } from 'lucide-react';
+import { cloneElement } from 'react';
 
-import { IconButton } from "@/components/ui/icon-button";
-import { cn } from "@/lib/utils";
+import { IconButton } from '@/components/ui/icon-button';
+import { cn } from '@/lib/utils';
 
 export const DialogRoot = BaseDialog.Root;
 export const DialogPortal = BaseDialog.Portal;
@@ -16,11 +16,7 @@ export const DialogPortal = BaseDialog.Portal;
 type DialogTriggerProps = RequiredChildren;
 
 export const DialogTrigger = ({ children }: DialogTriggerProps) => {
-  return (
-    <BaseDialog.Trigger
-      render={(props) => cloneElement(children as ReactElement<object>, props)}
-    />
-  );
+  return <BaseDialog.Trigger render={(props) => cloneElement(children as ReactElement<object>, props)} />;
 };
 
 interface DialogCloseProps {
@@ -33,18 +29,10 @@ interface DialogCloseProps {
 export const DialogClose = ({ children, render }: DialogCloseProps) => {
   // If render prop is provided, use it and pass children to the rendered element
   if (render) {
-    return (
-      <BaseDialog.Close render={(props) => cloneElement(render, props)}>
-        {children}
-      </BaseDialog.Close>
-    );
+    return <BaseDialog.Close render={(props) => cloneElement(render, props)}>{children}</BaseDialog.Close>;
   }
   // Otherwise, clone children with dialog props (avoids nested buttons)
-  return (
-    <BaseDialog.Close
-      render={(props) => cloneElement(children as ReactElement<object>, props)}
-    />
-  );
+  return <BaseDialog.Close render={(props) => cloneElement(children as ReactElement<object>, props)} />;
 };
 
 export const dialogBackdropVariants = cva(
@@ -55,13 +43,13 @@ export const dialogBackdropVariants = cva(
   `,
   {
     defaultVariants: {
-      blur: "default",
+      blur: 'default',
     },
     variants: {
       blur: {
-        default: "backdrop-blur-sm",
-        none: "",
-        strong: "backdrop-blur-md",
+        default: 'backdrop-blur-sm',
+        none: '',
+        strong: 'backdrop-blur-md',
       },
     },
   }
@@ -70,19 +58,8 @@ export const dialogBackdropVariants = cva(
 type DialogBackdropProps = ComponentPropsWithRef<typeof BaseDialog.Backdrop> &
   VariantProps<typeof dialogBackdropVariants>;
 
-export const DialogBackdrop = ({
-  blur,
-  className,
-  ref,
-  ...props
-}: DialogBackdropProps) => {
-  return (
-    <BaseDialog.Backdrop
-      className={cn(dialogBackdropVariants({ blur }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const DialogBackdrop = ({ blur, className, ref, ...props }: DialogBackdropProps) => {
+  return <BaseDialog.Backdrop className={cn(dialogBackdropVariants({ blur }), className)} ref={ref} {...props} />;
 };
 
 export const dialogPopupVariants = cva(
@@ -95,70 +72,41 @@ export const dialogPopupVariants = cva(
   {
     defaultVariants: {
       scrollable: false,
-      size: "default",
+      size: 'default',
     },
     variants: {
       scrollable: {
-        false: "",
-        true: "flex max-h-[90vh] flex-col",
+        false: '',
+        true: 'flex max-h-[90vh] flex-col',
       },
       size: {
-        "2xl": "w-full max-w-3xl p-6",
-        default: "w-full max-w-md p-6",
-        lg: "w-full max-w-lg p-8",
-        sm: "w-full max-w-sm p-4",
-        xl: "w-full max-w-2xl p-6",
+        '2xl': 'w-full max-w-3xl p-6',
+        default: 'w-full max-w-md p-6',
+        lg: 'w-full max-w-lg p-8',
+        sm: 'w-full max-w-sm p-4',
+        xl: 'w-full max-w-2xl p-6',
       },
     },
   }
 );
 
-type DialogPopupProps = ComponentPropsWithRef<typeof BaseDialog.Popup> &
-  VariantProps<typeof dialogPopupVariants>;
+type DialogPopupProps = ComponentPropsWithRef<typeof BaseDialog.Popup> & VariantProps<typeof dialogPopupVariants>;
 
-export const DialogPopup = ({
-  className,
-  ref,
-  scrollable,
-  size,
-  ...props
-}: DialogPopupProps) => {
-  return (
-    <BaseDialog.Popup
-      className={cn(dialogPopupVariants({ scrollable, size }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const DialogPopup = ({ className, ref, scrollable, size, ...props }: DialogPopupProps) => {
+  return <BaseDialog.Popup className={cn(dialogPopupVariants({ scrollable, size }), className)} ref={ref} {...props} />;
 };
 
 type DialogTitleProps = ComponentPropsWithRef<typeof BaseDialog.Title>;
 
 export const DialogTitle = ({ className, ref, ...props }: DialogTitleProps) => {
-  return (
-    <BaseDialog.Title
-      className={cn("text-lg font-semibold text-foreground", className)}
-      ref={ref}
-      {...props}
-    />
-  );
+  return <BaseDialog.Title className={cn('text-lg font-semibold text-foreground', className)} ref={ref} {...props} />;
 };
 
-type DialogDescriptionProps = ComponentPropsWithRef<
-  typeof BaseDialog.Description
->;
+type DialogDescriptionProps = ComponentPropsWithRef<typeof BaseDialog.Description>;
 
-export const DialogDescription = ({
-  className,
-  ref,
-  ...props
-}: DialogDescriptionProps) => {
+export const DialogDescription = ({ className, ref, ...props }: DialogDescriptionProps) => {
   return (
-    <BaseDialog.Description
-      className={cn("mt-2 text-sm text-muted-foreground", className)}
-      ref={ref}
-      {...props}
-    />
+    <BaseDialog.Description className={cn('mt-2 text-sm text-muted-foreground', className)} ref={ref} {...props} />
   );
 };
 
@@ -166,7 +114,7 @@ export const DialogDescription = ({
 
 interface DialogCloseButtonProps {
   /** Optional custom aria-label */
-  "aria-label"?: string;
+  'aria-label'?: string;
   /** Optional className for styling */
   className?: string;
 }
@@ -175,19 +123,12 @@ interface DialogCloseButtonProps {
  * An X close button for dialogs.
  * Uses BaseDialog.Close to automatically handle dialog closing.
  */
-export const DialogCloseButton = ({
-  "aria-label": ariaLabel = "Close dialog",
-  className,
-}: DialogCloseButtonProps) => {
+export const DialogCloseButton = ({ 'aria-label': ariaLabel = 'Close dialog', className }: DialogCloseButtonProps) => {
   return (
     <BaseDialog.Close
       render={(props) => (
-        <IconButton
-          {...props}
-          aria-label={ariaLabel}
-          className={cn("shrink-0", className)}
-        >
-          <X aria-hidden={"true"} className={"size-4"} />
+        <IconButton {...props} aria-label={ariaLabel} className={cn('shrink-0', className)}>
+          <X aria-hidden={'true'} className={'size-4'} />
         </IconButton>
       )}
     />
@@ -219,14 +160,12 @@ export const DialogHeader = ({
   showCloseButton = true,
 }: DialogHeaderProps) => {
   return (
-    <div className={cn("flex items-start justify-between gap-4", className)}>
-      <div className={"min-w-0 flex-1"}>{children}</div>
+    <div className={cn('flex items-start justify-between gap-4', className)}>
+      <div className={'min-w-0 flex-1'}>{children}</div>
       {(badges || showCloseButton) && (
-        <div className={"flex shrink-0 items-center gap-2"}>
+        <div className={'flex shrink-0 items-center gap-2'}>
           {badges}
-          {showCloseButton && (
-            <DialogCloseButton aria-label={closeButtonAriaLabel} />
-          )}
+          {showCloseButton && <DialogCloseButton aria-label={closeButtonAriaLabel} />}
         </div>
       )}
     </div>
@@ -245,53 +184,42 @@ interface DialogBodyProps {
  * Use with DialogPopup scrollable={true} for sticky footer behavior.
  */
 export const DialogBody = ({ children, className }: DialogBodyProps) => {
-  return (
-    <div className={cn("flex-1 overflow-y-auto py-4", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('flex-1 overflow-y-auto py-4', className)}>{children}</div>;
 };
 
-export const dialogFooterVariants = cva("flex gap-3 bg-background pt-4", {
+export const dialogFooterVariants = cva('flex gap-3 bg-background pt-4', {
   defaultVariants: {
-    alignment: "end",
+    alignment: 'end',
     sticky: true,
   },
   variants: {
     alignment: {
-      between: "justify-between",
-      center: "justify-center",
-      end: "justify-end",
-      start: "justify-start",
+      between: 'justify-between',
+      center: 'justify-center',
+      end: 'justify-end',
+      start: 'justify-start',
     },
     sticky: {
-      false: "mt-6",
-      true: "-mx-6 -mb-6 border-t border-border px-6 pb-6",
+      false: 'mt-6',
+      true: '-mx-6 -mb-6 border-t border-border px-6 pb-6',
     },
   },
 });
 
-type DialogFooterProps = ComponentPropsWithRef<"div"> &
-  VariantProps<typeof dialogFooterVariants>;
+type DialogFooterProps = ComponentPropsWithRef<'div'> & VariantProps<typeof dialogFooterVariants>;
 
 /**
  * Dialog footer for action buttons.
  * Use sticky={true} (default) with DialogPopup scrollable={true} for sticky footer.
  * Use sticky={false} for non-scrollable dialogs (confirmation dialogs).
  */
-export const DialogFooter = ({
-  alignment,
-  className,
-  ref,
-  sticky,
-  ...props
-}: DialogFooterProps) => {
+export const DialogFooter = ({ alignment, className, ref, sticky, ...props }: DialogFooterProps) => {
   return (
     <div
-      aria-label={"Dialog actions"}
+      aria-label={'Dialog actions'}
       className={cn(dialogFooterVariants({ alignment, sticky }), className)}
       ref={ref}
-      role={"group"}
+      role={'group'}
       {...props}
     />
   );

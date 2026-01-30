@@ -1,9 +1,9 @@
-import { and, asc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull } from 'drizzle-orm';
 
-import type { DrizzleDatabase } from "../index";
+import type { DrizzleDatabase } from '../index';
 
-import { agentSkillInputSchema } from "../../lib/validations/agent";
-import { type AgentSkill, agentSkills, type NewAgentSkill } from "../schema";
+import { agentSkillInputSchema } from '../../lib/validations/agent';
+import { type AgentSkill, agentSkills, type NewAgentSkill } from '../schema';
 
 export interface AgentSkillsRepository {
   create(data: NewAgentSkill): Promise<AgentSkill>;
@@ -13,15 +13,10 @@ export interface AgentSkillsRepository {
   findById(id: number): Promise<AgentSkill | undefined>;
   findRequired(agentId: number): Promise<Array<AgentSkill>>;
   setRequired(id: number, required: boolean): Promise<AgentSkill | undefined>;
-  update(
-    id: number,
-    data: Partial<Omit<NewAgentSkill, "createdAt" | "id">>
-  ): Promise<AgentSkill | undefined>;
+  update(id: number, data: Partial<Omit<NewAgentSkill, 'createdAt' | 'id'>>): Promise<AgentSkill | undefined>;
 }
 
-export function createAgentSkillsRepository(
-  db: DrizzleDatabase
-): AgentSkillsRepository {
+export function createAgentSkillsRepository(db: DrizzleDatabase): AgentSkillsRepository {
   return {
     async create(data: NewAgentSkill): Promise<AgentSkill> {
       // Validate skill name
@@ -31,7 +26,7 @@ export function createAgentSkillsRepository(
 
       const result = await db.insert(agentSkills).values(data).returning();
       if (!result[0]) {
-        throw new Error("Failed to create agent skill");
+        throw new Error('Failed to create agent skill');
       }
       return result[0];
     },
@@ -45,18 +40,11 @@ export function createAgentSkillsRepository(
     },
 
     async findByAgentId(agentId: number): Promise<Array<AgentSkill>> {
-      return db
-        .select()
-        .from(agentSkills)
-        .where(eq(agentSkills.agentId, agentId))
-        .orderBy(asc(agentSkills.orderIndex));
+      return db.select().from(agentSkills).where(eq(agentSkills.agentId, agentId)).orderBy(asc(agentSkills.orderIndex));
     },
 
     async findById(id: number): Promise<AgentSkill | undefined> {
-      const result = await db
-        .select()
-        .from(agentSkills)
-        .where(eq(agentSkills.id, id));
+      const result = await db.select().from(agentSkills).where(eq(agentSkills.id, id));
       return result[0];
     },
 
@@ -64,19 +52,11 @@ export function createAgentSkillsRepository(
       return db
         .select()
         .from(agentSkills)
-        .where(
-          and(
-            eq(agentSkills.agentId, agentId),
-            isNotNull(agentSkills.requiredAt)
-          )
-        )
+        .where(and(eq(agentSkills.agentId, agentId), isNotNull(agentSkills.requiredAt)))
         .orderBy(asc(agentSkills.orderIndex));
     },
 
-    async setRequired(
-      id: number,
-      required: boolean
-    ): Promise<AgentSkill | undefined> {
+    async setRequired(id: number, required: boolean): Promise<AgentSkill | undefined> {
       const now = new Date().toISOString();
       const result = await db
         .update(agentSkills)
@@ -89,10 +69,7 @@ export function createAgentSkillsRepository(
       return result[0];
     },
 
-    async update(
-      id: number,
-      data: Partial<Omit<NewAgentSkill, "createdAt" | "id">>
-    ): Promise<AgentSkill | undefined> {
+    async update(id: number, data: Partial<Omit<NewAgentSkill, 'createdAt' | 'id'>>): Promise<AgentSkill | undefined> {
       // Validate skill name if present
       if (data.skillName !== undefined) {
         agentSkillInputSchema.parse({

@@ -1,11 +1,11 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 import {
   AGENT_SHOW_BUILTIN_STORAGE_KEY,
   AGENT_SHOW_DEACTIVATED_STORAGE_KEY,
   DEFAULT_AGENT_SHOW_BUILTIN,
   DEFAULT_AGENT_SHOW_DEACTIVATED,
-} from "../layout/constants";
+} from '../layout/constants';
 
 /**
  * Agent filter actions interface for modifying state.
@@ -55,7 +55,7 @@ export const useAgentLayoutStore = create<AgentLayoutStore>()((set) => ({
     set({ showBuiltIn: show });
 
     // Persist to electron-store via IPC
-    if (typeof window !== "undefined" && window.electronAPI?.store) {
+    if (typeof window !== 'undefined' && window.electronAPI?.store) {
       window.electronAPI.store.set(AGENT_SHOW_BUILTIN_STORAGE_KEY, show);
     }
   },
@@ -64,7 +64,7 @@ export const useAgentLayoutStore = create<AgentLayoutStore>()((set) => ({
     set({ showDeactivated: show });
 
     // Persist to electron-store via IPC
-    if (typeof window !== "undefined" && window.electronAPI?.store) {
+    if (typeof window !== 'undefined' && window.electronAPI?.store) {
       window.electronAPI.store.set(AGENT_SHOW_DEACTIVATED_STORAGE_KEY, show);
     }
   },

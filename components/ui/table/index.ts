@@ -63,10 +63,7 @@ export { DataTable as default } from './data-table';
 // Sub-Components
 // =============================================================================
 
-export {
-  DataTableColumnHeader,
-  dataTableColumnHeaderVariants,
-} from './data-table-column-header';
+export { DataTableColumnHeader, dataTableColumnHeaderVariants } from './data-table-column-header';
 
 export {
   DataTableDraggableHeader,
@@ -80,15 +77,9 @@ export {
   dataTablePaginationVariants,
 } from './data-table-pagination';
 
-export {
-  DataTableResizeHandle,
-  dataTableResizeHandleVariants,
-} from './data-table-resize-handle';
+export { DataTableResizeHandle, dataTableResizeHandleVariants } from './data-table-resize-handle';
 
-export {
-  DataTableRowActions,
-  dataTableRowActionsButtonVariants,
-} from './data-table-row-actions';
+export { DataTableRowActions, dataTableRowActionsButtonVariants } from './data-table-row-actions';
 
 export {
   DataTableSkeleton,
@@ -97,11 +88,7 @@ export {
   dataTableSkeletonRowVariants,
 } from './data-table-skeleton';
 
-export {
-  DataTableToolbar,
-  dataTableToolbarButtonVariants,
-  dataTableToolbarVariants,
-} from './data-table-toolbar';
+export { DataTableToolbar, dataTableToolbarButtonVariants, dataTableToolbarVariants } from './data-table-toolbar';
 
 // =============================================================================
 // Types
@@ -129,13 +116,6 @@ export type {
 // Hooks
 // =============================================================================
 
-export {
-  getDefaultPersistedKeys,
-  isPersistableStateKey,
-  useTablePersistence,
-} from '@/hooks/use-table-persistence';
+export { getDefaultPersistedKeys, isPersistableStateKey, useTablePersistence } from '@/hooks/use-table-persistence';
 
-export type {
-  UseTablePersistenceOptions,
-  UseTablePersistenceReturn,
-} from '@/hooks/use-table-persistence';
+export type { UseTablePersistenceOptions, UseTablePersistenceReturn } from '@/hooks/use-table-persistence';

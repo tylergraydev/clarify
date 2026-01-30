@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useCallback } from "react";
+import { useCallback } from 'react';
 
-import type { ToolSelection } from "@/types/agent-tools";
+import type { ToolSelection } from '@/types/agent-tools';
 
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { CLAUDE_BUILTIN_TOOLS } from "@/lib/constants/claude-tools";
-import { cn } from "@/lib/utils";
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { CLAUDE_BUILTIN_TOOLS } from '@/lib/constants/claude-tools';
+import { cn } from '@/lib/utils';
 
 interface BuiltinToolsSelectorProps {
   /** Whether the inputs are disabled */
@@ -22,11 +22,7 @@ interface BuiltinToolsSelectorProps {
  * Displays built-in Claude Code tools as a checklist with toggles.
  * Each tool can be enabled/disabled with an optional pattern for argument restrictions.
  */
-export const BuiltinToolsSelector = ({
-  disabled = false,
-  onChange,
-  value,
-}: BuiltinToolsSelectorProps) => {
+export const BuiltinToolsSelector = ({ disabled = false, onChange, value }: BuiltinToolsSelectorProps) => {
   // Get current selection state for a tool
   const getToolSelection = useCallback(
     (toolName: string): ToolSelection | undefined => {
@@ -48,7 +44,7 @@ export const BuiltinToolsSelector = ({
   const getToolPattern = useCallback(
     (toolName: string): string => {
       const selection = getToolSelection(toolName);
-      return selection?.pattern ?? "*";
+      return selection?.pattern ?? '*';
     },
     [getToolSelection]
   );
@@ -73,7 +69,7 @@ export const BuiltinToolsSelector = ({
         // Add new tool selection
         newTools.push({
           enabled: checked,
-          pattern: "*",
+          pattern: '*',
           toolName,
         });
       }
@@ -113,11 +109,9 @@ export const BuiltinToolsSelector = ({
   );
 
   return (
-    <div className={"flex flex-col gap-1"}>
-      <div className={"mb-2 text-sm font-medium text-foreground"}>
-        {"Built-in Tools"}
-      </div>
-      <div className={"flex flex-col gap-2"}>
+    <div className={'flex flex-col gap-1'}>
+      <div className={'mb-2 text-sm font-medium text-foreground'}>{'Built-in Tools'}</div>
+      <div className={'flex flex-col gap-2'}>
         {CLAUDE_BUILTIN_TOOLS.map((tool) => {
           const isEnabled = isToolEnabled(tool.name);
           const pattern = getToolPattern(tool.name);
@@ -125,8 +119,8 @@ export const BuiltinToolsSelector = ({
           return (
             <div
               className={cn(
-                "flex items-center gap-3 rounded-md border border-border px-3 py-2",
-                !isEnabled && "bg-muted/30 opacity-60"
+                'flex items-center gap-3 rounded-md border border-border px-3 py-2',
+                !isEnabled && 'bg-muted/30 opacity-60'
               )}
               key={tool.name}
             >
@@ -134,30 +128,22 @@ export const BuiltinToolsSelector = ({
                 checked={isEnabled}
                 disabled={disabled}
                 onCheckedChange={(checked) => handleToggle(tool.name, checked)}
-                size={"sm"}
+                size={'sm'}
               />
-              <div className={"flex min-w-0 flex-1 items-center gap-3"}>
-                <div className={"flex flex-col"}>
-                  <span className={"font-mono text-sm font-medium"}>
-                    {tool.name}
-                  </span>
-                  <span className={"text-xs text-muted-foreground"}>
-                    {tool.description}
-                  </span>
+              <div className={'flex min-w-0 flex-1 items-center gap-3'}>
+                <div className={'flex flex-col'}>
+                  <span className={'font-mono text-sm font-medium'}>{tool.name}</span>
+                  <span className={'text-xs text-muted-foreground'}>{tool.description}</span>
                 </div>
               </div>
-              <div className={"flex items-center gap-2"}>
-                <span className={"text-xs text-muted-foreground"}>
-                  {"Pattern:"}
-                </span>
+              <div className={'flex items-center gap-2'}>
+                <span className={'text-xs text-muted-foreground'}>{'Pattern:'}</span>
                 <Input
-                  className={"h-7 w-24 font-mono text-xs"}
+                  className={'h-7 w-24 font-mono text-xs'}
                   disabled={disabled || !isEnabled}
-                  onChange={(e) =>
-                    handlePatternChange(tool.name, e.target.value)
-                  }
-                  placeholder={"*"}
-                  value={isEnabled ? pattern : ""}
+                  onChange={(e) => handlePatternChange(tool.name, e.target.value)}
+                  placeholder={'*'}
+                  value={isEnabled ? pattern : ''}
                 />
               </div>
             </div>

@@ -8,8 +8,8 @@ import type {
   RowSelectionState,
   SortingState,
   VisibilityState,
-} from "@tanstack/react-table";
-import type { ReactNode } from "react";
+} from '@tanstack/react-table';
+import type { ReactNode } from 'react';
 
 // =============================================================================
 // Column Definition Types
@@ -22,10 +22,7 @@ import type { ReactNode } from "react";
  * @template TData - The type of data for each row
  * @template TValue - The type of value for this column (defaults to unknown)
  */
-export type DataTableColumnDef<TData, TValue = unknown> = ColumnDef<
-  TData,
-  TValue
-> & {
+export type DataTableColumnDef<TData, TValue = unknown> = ColumnDef<TData, TValue> & {
   /**
    * Whether this column can be filtered using the column filter.
    * When true, the column will appear in filter options.
@@ -52,7 +49,7 @@ export type DataTableColumnDef<TData, TValue = unknown> = ColumnDef<
  * - `compact`: Reduced padding for data-dense views
  * - `comfortable`: Increased padding for better readability
  */
-export type DataTableDensity = "comfortable" | "compact" | "default";
+export type DataTableDensity = 'comfortable' | 'compact' | 'default';
 
 /**
  * Extended empty state props for filtered results.
@@ -164,8 +161,7 @@ export type DataTableRowAction<TData> =
 // =============================================================================
 
 /** Button action that triggers a callback */
-export interface DataTableRowActionButton<TData>
-  extends DataTableRowActionBase<TData> {
+export interface DataTableRowActionButton<TData> extends DataTableRowActionBase<TData> {
   /** Label text for the action */
   label: string;
 
@@ -173,15 +169,14 @@ export interface DataTableRowActionButton<TData>
   onAction: (row: Row<TData>) => void;
 
   /** Action type identifier */
-  type: "button";
+  type: 'button';
 
   /** Visual variant for the action */
-  variant?: "default" | "destructive";
+  variant?: 'default' | 'destructive';
 }
 
 /** Link action that navigates to a URL */
-export interface DataTableRowActionLink<TData>
-  extends DataTableRowActionBase<TData> {
+export interface DataTableRowActionLink<TData> extends DataTableRowActionBase<TData> {
   /** Function to generate the href from row data */
   href: (row: Row<TData>) => string;
 
@@ -189,7 +184,7 @@ export interface DataTableRowActionLink<TData>
   label: string;
 
   /** Action type identifier */
-  type: "link";
+  type: 'link';
 }
 
 // =============================================================================
@@ -199,7 +194,7 @@ export interface DataTableRowActionLink<TData>
 /** Separator between action groups */
 export interface DataTableRowActionSeparator {
   /** Action type identifier */
-  type: "separator";
+  type: 'separator';
 }
 
 // =============================================================================
@@ -224,9 +219,7 @@ export interface DataTableRowActionSeparator {
  * };
  * ```
  */
-export type DataTableRowStyleCallback<TData> = (
-  row: Row<TData>
-) => string | undefined;
+export type DataTableRowStyleCallback<TData> = (row: Row<TData>) => string | undefined;
 
 /**
  * Represents the complete state of a DataTable.
@@ -266,13 +259,13 @@ export type PartialDataTableState = Partial<DataTableState>;
 
 /** Keys that can be persisted to electron-store */
 export type PersistableStateKey =
-  | "columnFilters"
-  | "columnOrder"
-  | "columnSizing"
-  | "columnVisibility"
-  | "globalFilter"
-  | "pagination"
-  | "sorting";
+  | 'columnFilters'
+  | 'columnOrder'
+  | 'columnSizing'
+  | 'columnVisibility'
+  | 'globalFilter'
+  | 'pagination'
+  | 'sorting';
 
 /** Base action type for row actions */
 interface DataTableRowActionBase<TData> {
@@ -294,7 +287,7 @@ interface DataTableRowActionBase<TData> {
  * Module augmentation to extend TanStack Table's ColumnMeta interface.
  * This adds custom metadata fields that can be accessed on any column.
  */
-declare module "@tanstack/react-table" {
+declare module '@tanstack/react-table' {
   // These generics are required by TanStack Table's interface signature
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData, TValue> {
@@ -319,5 +312,4 @@ declare module "@tanstack/react-table" {
  * type RowType = ExtractRowType<typeof columns>; // User
  * ```
  */
-export type ExtractRowType<T> =
-  T extends Array<DataTableColumnDef<infer TData, unknown>> ? TData : never;
+export type ExtractRowType<T> = T extends Array<DataTableColumnDef<infer TData, unknown>> ? TData : never;

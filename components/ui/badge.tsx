@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const badgeVariants = cva(
   `
@@ -15,14 +15,14 @@ export const badgeVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
-      variant: "default",
+      size: 'default',
+      variant: 'default',
     },
     variants: {
       size: {
-        default: "px-2.5 py-0.5 text-xs",
-        lg: "px-3 py-1 text-sm",
-        sm: "px-2 py-0.5 text-xs",
+        default: 'px-2.5 py-0.5 text-xs',
+        lg: 'px-3 py-1 text-sm',
+        sm: 'px-2 py-0.5 text-xs',
       },
       variant: {
         anthropic: `
@@ -41,7 +41,7 @@ export const badgeVariants = cva(
           bg-amber-200 text-amber-900
           dark:bg-amber-900/60 dark:text-amber-100
         `,
-        "category-builtin": `
+        'category-builtin': `
           bg-amber-200 text-amber-900
           dark:bg-amber-900/60 dark:text-amber-100
         `,
@@ -49,7 +49,7 @@ export const badgeVariants = cva(
           bg-yellow-200 text-yellow-900
           dark:bg-yellow-900/60 dark:text-yellow-100
         `,
-        "claude-cli": `
+        'claude-cli': `
           bg-orange-200 text-orange-900
           dark:bg-orange-900/60 dark:text-orange-100
         `,
@@ -171,21 +171,8 @@ export const badgeVariants = cva(
   }
 );
 
-type BadgeProps = ComponentPropsWithRef<"span"> &
-  VariantProps<typeof badgeVariants>;
+type BadgeProps = ComponentPropsWithRef<'span'> & VariantProps<typeof badgeVariants>;
 
-export const Badge = ({
-  className,
-  ref,
-  size,
-  variant,
-  ...props
-}: BadgeProps) => {
-  return (
-    <span
-      className={cn(badgeVariants({ className, size, variant }))}
-      ref={ref}
-      {...props}
-    />
-  );
+export const Badge = ({ className, ref, size, variant, ...props }: BadgeProps) => {
+  return <span className={cn(badgeVariants({ className, size, variant }))} ref={ref} {...props} />;
 };

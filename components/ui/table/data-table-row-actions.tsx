@@ -22,11 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-import type {
-  DataTableRowAction,
-  DataTableRowActionButton,
-  DataTableRowActionLink,
-} from './types';
+import type { DataTableRowAction, DataTableRowActionButton, DataTableRowActionLink } from './types';
 
 // =============================================================================
 // CVA Variants
@@ -69,8 +65,7 @@ interface ActionItemProps<TData> {
 // =============================================================================
 
 interface DataTableRowActionsProps<TData>
-  extends ComponentPropsWithRef<'div'>,
-    VariantProps<typeof dataTableRowActionsButtonVariants> {
+  extends ComponentPropsWithRef<'div'>, VariantProps<typeof dataTableRowActionsButtonVariants> {
   /**
    * Array of actions to display in the dropdown menu.
    * Supports button actions, link actions, and separators.
@@ -89,8 +84,7 @@ interface DataTableRowActionsProps<TData>
  * Handles both button and link action types with consistent styling.
  */
 const ActionItem = <TData,>({ action, row, size = 'default' }: ActionItemProps<TData>) => {
-  const isDisabled =
-    typeof action.disabled === 'function' ? action.disabled(row) : action.disabled ?? false;
+  const isDisabled = typeof action.disabled === 'function' ? action.disabled(row) : (action.disabled ?? false);
 
   const variant = action.type === 'button' && action.variant === 'destructive' ? 'destructive' : 'default';
 
@@ -125,12 +119,7 @@ const ActionItem = <TData,>({ action, row, size = 'default' }: ActionItemProps<T
   }
 
   return (
-    <DropdownMenuItem
-      disabled={isDisabled}
-      onClick={handleActionClick}
-      size={menuItemSize}
-      variant={variant}
-    >
+    <DropdownMenuItem disabled={isDisabled} onClick={handleActionClick} size={menuItemSize} variant={variant}>
       {/* Icon */}
       {action.icon && <DropdownMenuItemIcon>{action.icon}</DropdownMenuItemIcon>}
 
@@ -220,24 +209,13 @@ export const DataTableRowActions = <TData,>({
   }
 
   return (
-    <div
-      className={cn('flex justify-start', className)}
-      onClick={(e) => e.stopPropagation()}
-      ref={ref}
-      {...props}
-    >
+    <div className={cn('flex justify-start', className)} onClick={(e) => e.stopPropagation()} ref={ref} {...props}>
       <DropdownMenuRoot>
         <DropdownMenuTrigger>
-          <BaseButton
-            aria-label={'Open row actions menu'}
-            className={cn(dataTableRowActionsButtonVariants({ size }))}
-          >
+          <BaseButton aria-label={'Open row actions menu'} className={cn(dataTableRowActionsButtonVariants({ size }))}>
             <MoreHorizontal
               aria-hidden={'true'}
-              className={cn(
-                size === 'sm' ? 'size-3.5' : 'size-4',
-                'text-muted-foreground'
-              )}
+              className={cn(size === 'sm' ? 'size-3.5' : 'size-4', 'text-muted-foreground')}
             />
             <span className={'sr-only'}>Open menu</span>
           </BaseButton>

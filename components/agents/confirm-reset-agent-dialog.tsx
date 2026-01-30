@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
   DialogClose,
@@ -11,7 +11,7 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 interface ConfirmResetAgentDialogProps {
   /** The agent display name to show in the dialog */
@@ -42,28 +42,26 @@ export const ConfirmResetAgentDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup aria-modal={"true"} role={"alertdialog"}>
+        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle id={"confirm-reset-title"}>
-              {"Reset Agent"}
-            </DialogTitle>
-            <DialogDescription id={"confirm-reset-description"}>
+            <DialogTitle id={'confirm-reset-title'}>{'Reset Agent'}</DialogTitle>
+            <DialogDescription id={'confirm-reset-description'}>
               {`Are you sure you want to reset "${agentName}" to its default configuration?`}
             </DialogDescription>
           </DialogHeader>
 
           {/* Warning */}
           <div
-            aria-live={"polite"}
+            aria-live={'polite'}
             className={
-              "mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30"
+              'mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30'
             }
-            role={"alert"}
+            role={'alert'}
           >
-            <p className={"text-sm text-amber-800 dark:text-amber-200"}>
+            <p className={'text-sm text-amber-800 dark:text-amber-200'}>
               {
-                "This will discard all your customizations including display name, description, system prompt, and color. This action cannot be undone."
+                'This will discard all your customizations including display name, description, system prompt, and color. This action cannot be undone.'
               }
             </p>
           </div>
@@ -71,18 +69,18 @@ export const ConfirmResetAgentDialog = ({
           {/* Actions */}
           <DialogFooter sticky={false}>
             <DialogClose>
-              <Button disabled={isLoading} variant={"outline"}>
-                {"Cancel"}
+              <Button disabled={isLoading} variant={'outline'}>
+                {'Cancel'}
               </Button>
             </DialogClose>
             <Button
-              aria-describedby={"confirm-reset-description"}
+              aria-describedby={'confirm-reset-description'}
               aria-label={`Reset ${agentName} agent to default`}
               disabled={isLoading}
               onClick={handleConfirmClick}
-              variant={"destructive"}
+              variant={'destructive'}
             >
-              {isLoading ? "Resetting..." : "Reset to Default"}
+              {isLoading ? 'Resetting...' : 'Reset to Default'}
             </Button>
           </DialogFooter>
         </DialogPopup>

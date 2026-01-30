@@ -1,13 +1,13 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
-const isElectronBuild = process.env.BUILD_TARGET === "electron";
+const isElectronBuild = process.env.BUILD_TARGET === 'electron';
 
 const nextConfig: NextConfig = {
-  assetPrefix: isElectronBuild ? "./" : undefined,
+  assetPrefix: isElectronBuild ? './' : undefined,
   images: {
     unoptimized: isElectronBuild,
   },
-  output: isElectronBuild ? "export" : undefined,
+  output: isElectronBuild ? 'export' : undefined,
   trailingSlash: isElectronBuild,
 };
 

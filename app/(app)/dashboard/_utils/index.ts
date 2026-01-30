@@ -1,16 +1,6 @@
-import {
-  differenceInHours,
-  differenceInMinutes,
-  formatDistanceToNow,
-  parseISO,
-} from "date-fns";
+import { differenceInHours, differenceInMinutes, formatDistanceToNow, parseISO } from 'date-fns';
 
-import type {
-  WorkflowDurationData,
-  WorkflowProgressData,
-  WorkflowStatus,
-  WorkflowStatusBadgeVariant,
-} from "../_types";
+import type { WorkflowDurationData, WorkflowProgressData, WorkflowStatus, WorkflowStatusBadgeVariant } from '../_types';
 
 // ============================================================================
 // Progress Utilities
@@ -45,9 +35,7 @@ export const calculateProgress = (
  * @param workflow - Object containing currentStepNumber and totalSteps
  * @returns Progress percentage as an integer (0-100)
  */
-export const calculateWorkflowProgress = (
-  workflow: WorkflowProgressData
-): number => {
+export const calculateWorkflowProgress = (workflow: WorkflowProgressData): number => {
   return calculateProgress(workflow.currentStepNumber, workflow.totalSteps);
 };
 
@@ -67,7 +55,7 @@ export const calculateWorkflowProgress = (
  */
 export const calculateElapsedTime = (startedAt: null | string): string => {
   if (!startedAt) {
-    return "Not started";
+    return 'Not started';
   }
 
   const startDate = parseISO(startedAt);
@@ -93,11 +81,9 @@ export const calculateElapsedTime = (startedAt: null | string): string => {
  * formatWorkflowDuration(2700000) // returns "45m"
  * formatWorkflowDuration(0) // returns "0m"
  */
-export const formatWorkflowDuration = (
-  durationMs: null | number | undefined
-): string => {
+export const formatWorkflowDuration = (durationMs: null | number | undefined): string => {
   if (!durationMs || durationMs <= 0) {
-    return "0m";
+    return '0m';
   }
 
   const totalMinutes = Math.floor(durationMs / 60000);
@@ -128,7 +114,7 @@ export const formatWorkflowDuration = (
  */
 export const formatRelativeTime = (timestamp: null | string): string => {
   if (!timestamp) {
-    return "Unknown";
+    return 'Unknown';
   }
 
   return formatDistanceToNow(parseISO(timestamp), { addSuffix: true });
@@ -147,7 +133,7 @@ export const formatRelativeTime = (timestamp: null | string): string => {
  */
 export const formatDurationMinutes = (minutes: number): string => {
   if (minutes === 0) {
-    return "0m";
+    return '0m';
   }
 
   if (minutes < 60) {
@@ -179,22 +165,20 @@ export const formatDurationMinutes = (minutes: number): string => {
  * getStatusBadgeVariant("completed") // returns "completed"
  * getStatusBadgeVariant("failed") // returns "failed"
  */
-export const getStatusBadgeVariant = (
-  status: string
-): WorkflowStatusBadgeVariant => {
+export const getStatusBadgeVariant = (status: string): WorkflowStatusBadgeVariant => {
   switch (status) {
-    case "cancelled":
-    case "failed":
-      return "failed";
-    case "completed":
-      return "completed";
-    case "editing":
-    case "paused":
-      return "clarifying";
-    case "running":
-      return "planning";
+    case 'cancelled':
+    case 'failed':
+      return 'failed';
+    case 'completed':
+      return 'completed';
+    case 'editing':
+    case 'paused':
+      return 'clarifying';
+    case 'running':
+      return 'planning';
     default:
-      return "default";
+      return 'default';
   }
 };
 
@@ -219,7 +203,7 @@ export const formatStatus = (status: string): string => {
  * @returns True if the status is active (running, paused, or editing)
  */
 export const isActiveStatus = (status: WorkflowStatus): boolean => {
-  return status === "running" || status === "paused" || status === "editing";
+  return status === 'running' || status === 'paused' || status === 'editing';
 };
 
 /**
@@ -229,9 +213,7 @@ export const isActiveStatus = (status: WorkflowStatus): boolean => {
  * @returns True if the status is terminal (completed, failed, or cancelled)
  */
 export const isTerminalStatus = (status: WorkflowStatus): boolean => {
-  return (
-    status === "completed" || status === "failed" || status === "cancelled"
-  );
+  return status === 'completed' || status === 'failed' || status === 'cancelled';
 };
 
 // ============================================================================
@@ -247,12 +229,8 @@ export const isTerminalStatus = (status: WorkflowStatus): boolean => {
  * @example
  * calculateAverageDuration([{ status: "completed", durationMs: 3600000 }]) // returns 60
  */
-export const calculateAverageDuration = (
-  workflows: Array<WorkflowDurationData>
-): number => {
-  const completedWorkflows = workflows.filter(
-    (workflow) => workflow.status === "completed"
-  );
+export const calculateAverageDuration = (workflows: Array<WorkflowDurationData>): number => {
+  const completedWorkflows = workflows.filter((workflow) => workflow.status === 'completed');
 
   if (completedWorkflows.length === 0) {
     return 0;
@@ -298,16 +276,12 @@ export const calculateAverageDuration = (
  * @example
  * calculateCompletionRate([{ status: "completed" }, { status: "failed" }]) // returns 50
  */
-export const calculateCompletionRate = (
-  workflows: Array<{ status: string }>
-): number => {
+export const calculateCompletionRate = (workflows: Array<{ status: string }>): number => {
   if (workflows.length === 0) {
     return 0;
   }
 
-  const completedCount = workflows.filter(
-    (workflow) => workflow.status === "completed"
-  ).length;
+  const completedCount = workflows.filter((workflow) => workflow.status === 'completed').length;
 
   return Math.round((completedCount / workflows.length) * 100);
 };

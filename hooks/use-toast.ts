@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Toast } from "@base-ui/react/toast";
+import { Toast } from '@base-ui/react/toast';
 
-import type { ToastType } from "@/components/ui/toast";
+import type { ToastType } from '@/components/ui/toast';
 
 /**
  * Hook to access the toast manager for displaying notifications.
@@ -48,7 +48,7 @@ export const useToast = () => {
     error: (options: ToastOptions) =>
       toastManager.add({
         ...options,
-        type: "error",
+        type: 'error',
       }),
 
     /**
@@ -57,7 +57,7 @@ export const useToast = () => {
     info: (options: ToastOptions) =>
       toastManager.add({
         ...options,
-        type: "info",
+        type: 'info',
       }),
 
     /**
@@ -71,7 +71,7 @@ export const useToast = () => {
     success: (options: ToastOptions) =>
       toastManager.add({
         ...options,
-        type: "success",
+        type: 'success',
       }),
 
     /**
@@ -90,7 +90,7 @@ export const useToast = () => {
     warning: (options: ToastOptions) =>
       toastManager.add({
         ...options,
-        type: "warning",
+        type: 'warning',
       }),
   };
 };

@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { NewProject, NewRepository } from "@/types/electron";
+import type { NewProject, NewRepository } from '@/types/electron';
 
-import { projectKeys } from "@/lib/queries/projects";
-import { repositoryKeys } from "@/lib/queries/repositories";
+import { projectKeys } from '@/lib/queries/projects';
+import { repositoryKeys } from '@/lib/queries/repositories';
 
-import { useElectron } from "../use-electron";
+import { useElectron } from '../use-electron';
 
 // ============================================================================
 // Query Hooks
@@ -22,13 +22,8 @@ export function useAddRepositoryToProject() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: ({
-      projectId,
-      repoData,
-    }: {
-      projectId: number;
-      repoData: NewRepository;
-    }) => api!.project.addRepo(projectId, repoData),
+    mutationFn: ({ projectId, repoData }: { projectId: number; repoData: NewRepository }) =>
+      api!.project.addRepo(projectId, repoData),
     onSuccess: (repository) => {
       // Invalidate project detail cache (project may have updated repository count)
       void queryClient.invalidateQueries({
@@ -54,15 +49,11 @@ export function useArchiveProject() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: (id: number) =>
-      api!.project.update(id, { archivedAt: new Date().toISOString() }),
+    mutationFn: (id: number) => api!.project.update(id, { archivedAt: new Date().toISOString() }),
     onSuccess: (project) => {
       if (project) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          projectKeys.detail(project.id).queryKey,
-          project
-        );
+        queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
         // Invalidate list queries
         void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
       }
@@ -84,7 +75,7 @@ export function useCreateProject() {
   return useMutation({
     mutationFn: async (data: NewProject) => {
       if (!api) {
-        throw new Error("Electron API not available. Please run in Electron.");
+        throw new Error('Electron API not available. Please run in Electron.');
       }
       return api.project.create(data);
     },
@@ -151,10 +142,7 @@ export function useUnarchiveProject() {
     onSuccess: (project) => {
       if (project) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          projectKeys.detail(project.id).queryKey,
-          project
-        );
+        queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
         // Invalidate list queries
         void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
       }
@@ -170,15 +158,11 @@ export function useUpdateProject() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Partial<NewProject>; id: number }) =>
-      api!.project.update(id, data),
+    mutationFn: ({ data, id }: { data: Partial<NewProject>; id: number }) => api!.project.update(id, data),
     onSuccess: (project) => {
       if (project) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          projectKeys.detail(project.id).queryKey,
-          project
-        );
+        queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
         // Invalidate list queries
         void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
       }

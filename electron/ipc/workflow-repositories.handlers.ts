@@ -7,12 +7,12 @@
  * - Removing a repository from a workflow
  * - Setting the primary repository
  */
-import { ipcMain, type IpcMainInvokeEvent } from "electron";
+import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 
-import type { WorkflowRepositoriesRepository } from "../../db/repositories";
-import type { WorkflowRepository } from "../../db/schema";
+import type { WorkflowRepositoriesRepository } from '../../db/repositories';
+import type { WorkflowRepository } from '../../db/schema';
 
-import { IpcChannels } from "./channels";
+import { IpcChannels } from './channels';
 
 /**
  * Register all workflow-repository association IPC handlers.
@@ -25,20 +25,11 @@ export function registerWorkflowRepositoriesHandlers(
   // Add a single repository to a workflow
   ipcMain.handle(
     IpcChannels.workflowRepository.add,
-    (
-      _event: IpcMainInvokeEvent,
-      workflowId: number,
-      repositoryId: number,
-      isPrimary?: boolean
-    ): WorkflowRepository => {
+    (_event: IpcMainInvokeEvent, workflowId: number, repositoryId: number, isPrimary?: boolean): WorkflowRepository => {
       try {
-        return workflowRepositoriesRepository.addToWorkflow(
-          workflowId,
-          repositoryId,
-          isPrimary
-        );
+        return workflowRepositoriesRepository.addToWorkflow(workflowId, repositoryId, isPrimary);
       } catch (error) {
-        console.error("[IPC Error] workflowRepository:add:", error);
+        console.error('[IPC Error] workflowRepository:add:', error);
         throw error;
       }
     }
@@ -54,13 +45,9 @@ export function registerWorkflowRepositoriesHandlers(
       primaryRepositoryId?: number
     ): Array<WorkflowRepository> => {
       try {
-        return workflowRepositoriesRepository.addMultipleToWorkflow(
-          workflowId,
-          repositoryIds,
-          primaryRepositoryId
-        );
+        return workflowRepositoriesRepository.addMultipleToWorkflow(workflowId, repositoryIds, primaryRepositoryId);
       } catch (error) {
-        console.error("[IPC Error] workflowRepository:addMultiple:", error);
+        console.error('[IPC Error] workflowRepository:addMultiple:', error);
         throw error;
       }
     }
@@ -69,14 +56,11 @@ export function registerWorkflowRepositoriesHandlers(
   // List all repositories associated with a workflow
   ipcMain.handle(
     IpcChannels.workflowRepository.list,
-    (
-      _event: IpcMainInvokeEvent,
-      workflowId: number
-    ): Array<WorkflowRepository> => {
+    (_event: IpcMainInvokeEvent, workflowId: number): Array<WorkflowRepository> => {
       try {
         return workflowRepositoriesRepository.findByWorkflowId(workflowId);
       } catch (error) {
-        console.error("[IPC Error] workflowRepository:list:", error);
+        console.error('[IPC Error] workflowRepository:list:', error);
         throw error;
       }
     }
@@ -85,18 +69,11 @@ export function registerWorkflowRepositoriesHandlers(
   // Remove a repository from a workflow
   ipcMain.handle(
     IpcChannels.workflowRepository.remove,
-    (
-      _event: IpcMainInvokeEvent,
-      workflowId: number,
-      repositoryId: number
-    ): boolean => {
+    (_event: IpcMainInvokeEvent, workflowId: number, repositoryId: number): boolean => {
       try {
-        return workflowRepositoriesRepository.removeFromWorkflow(
-          workflowId,
-          repositoryId
-        );
+        return workflowRepositoriesRepository.removeFromWorkflow(workflowId, repositoryId);
       } catch (error) {
-        console.error("[IPC Error] workflowRepository:remove:", error);
+        console.error('[IPC Error] workflowRepository:remove:', error);
         throw error;
       }
     }
@@ -105,18 +82,11 @@ export function registerWorkflowRepositoriesHandlers(
   // Set a repository as the primary for a workflow
   ipcMain.handle(
     IpcChannels.workflowRepository.setPrimary,
-    (
-      _event: IpcMainInvokeEvent,
-      workflowId: number,
-      repositoryId: number
-    ): undefined | WorkflowRepository => {
+    (_event: IpcMainInvokeEvent, workflowId: number, repositoryId: number): undefined | WorkflowRepository => {
       try {
-        return workflowRepositoriesRepository.setPrimary(
-          workflowId,
-          repositoryId
-        );
+        return workflowRepositoriesRepository.setPrimary(workflowId, repositoryId);
       } catch (error) {
-        console.error("[IPC Error] workflowRepository:setPrimary:", error);
+        console.error('[IPC Error] workflowRepository:setPrimary:', error);
         throw error;
       }
     }

@@ -1,4 +1,4 @@
-import { createQueryKeys } from "@lukemorales/query-key-factory";
+import { createQueryKeys } from '@lukemorales/query-key-factory';
 
 /**
  * Query keys for worktree-related queries.
@@ -9,7 +9,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
  * - `worktrees.detail(id)` - Single worktree by ID
  * - `worktrees.byWorkflowId(workflowId)` - Worktree for a specific workflow
  */
-export const worktreeKeys = createQueryKeys("worktrees", {
+export const worktreeKeys = createQueryKeys('worktrees', {
   /**
    * Query key for worktree associated with a workflow.
    */

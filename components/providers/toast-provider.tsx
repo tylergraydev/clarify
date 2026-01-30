@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Toast } from "@base-ui/react/toast";
-import { Fragment } from "react";
+import { Toast } from '@base-ui/react/toast';
+import { Fragment } from 'react';
 
-import type { ToastType } from "@/components/ui/toast";
+import type { ToastType } from '@/components/ui/toast';
 
 import {
   ToastClose,
@@ -14,7 +14,7 @@ import {
   ToastRootStyled,
   ToastTitle,
   ToastViewport,
-} from "@/components/ui/toast";
+} from '@/components/ui/toast';
 
 /** Toast data structure for custom rendering */
 interface ToastData {
@@ -48,20 +48,18 @@ const ToastList = () => {
     <Fragment>
       {toastManager.toasts.map((toast) => {
         const data = toast.data as ToastData | undefined;
-        const type = (toast.type as ToastType) || data?.type || "default";
+        const type = (toast.type as ToastType) || data?.type || 'default';
 
         return (
           <ToastRootStyled key={toast.id} toast={toast} variant={type}>
-            <ToastContent className={"flex items-start gap-3 pr-6"}>
+            <ToastContent className={'flex items-start gap-3 pr-6'}>
               {/* Icon */}
               <ToastIcon type={type} />
 
               {/* Content */}
-              <div className={"flex min-w-0 flex-1 flex-col gap-0.5"}>
+              <div className={'flex min-w-0 flex-1 flex-col gap-0.5'}>
                 {toast.title && <ToastTitle>{toast.title}</ToastTitle>}
-                {toast.description && (
-                  <ToastDescription>{toast.description}</ToastDescription>
-                )}
+                {toast.description && <ToastDescription>{toast.description}</ToastDescription>}
               </div>
             </ToastContent>
             <ToastClose />

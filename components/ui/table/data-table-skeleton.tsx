@@ -91,9 +91,7 @@ export const dataTableSkeletonCellVariants = cva(
 // =============================================================================
 
 interface DataTableSkeletonProps
-  extends ComponentPropsWithRef<'div'>,
-    DataTableLoadingProps,
-    VariantProps<typeof dataTableSkeletonRowVariants> {
+  extends ComponentPropsWithRef<'div'>, DataTableLoadingProps, VariantProps<typeof dataTableSkeletonRowVariants> {
   /**
    * Density variant controlling row height and cell padding.
    * @default 'default'
@@ -144,16 +142,8 @@ export const DataTableSkeleton = ({
         <div className={cn(dataTableSkeletonHeaderVariants({ density }))}>
           <div className={'flex h-full items-center'}>
             {Array.from({ length: columnCount }).map((_, columnIndex) => (
-              <div
-                className={cn(dataTableSkeletonCellVariants({ density }), 'flex-1')}
-                key={`header-${columnIndex}`}
-              >
-                <div
-                  className={cn(
-                    'h-4 animate-pulse rounded-sm bg-muted',
-                    getSkeletonCellWidth(0, columnIndex)
-                  )}
-                />
+              <div className={cn(dataTableSkeletonCellVariants({ density }), 'flex-1')} key={`header-${columnIndex}`}>
+                <div className={cn('h-4 animate-pulse rounded-sm bg-muted', getSkeletonCellWidth(0, columnIndex))} />
               </div>
             ))}
           </div>
@@ -163,10 +153,7 @@ export const DataTableSkeleton = ({
       {/* Row Skeletons */}
       <div>
         {Array.from({ length: rowCount }).map((_, rowIndex) => (
-          <div
-            className={cn(dataTableSkeletonRowVariants({ density }))}
-            key={`row-${rowIndex}`}
-          >
+          <div className={cn(dataTableSkeletonRowVariants({ density }))} key={`row-${rowIndex}`}>
             <div className={'flex h-full items-center'}>
               {Array.from({ length: columnCount }).map((_, columnIndex) => (
                 <div

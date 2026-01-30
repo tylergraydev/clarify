@@ -1,18 +1,15 @@
-import { and, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, or, sql } from 'drizzle-orm';
 
-import type { DrizzleDatabase } from "../index";
+import type { DrizzleDatabase } from '../index';
 
-import {
-  createAgentSchema,
-  updateAgentRepositorySchema,
-} from "../../lib/validations/agent";
-import { type Agent, agents, type NewAgent } from "../schema";
+import { createAgentSchema, updateAgentRepositorySchema } from '../../lib/validations/agent';
+import { type Agent, agents, type NewAgent } from '../schema';
 
 export interface AgentListFilters {
   excludeProjectAgents?: boolean;
   includeDeactivated?: boolean;
   projectId?: number;
-  scope?: "global" | "project";
+  scope?: 'global' | 'project';
   type?: string;
 }
 
@@ -29,14 +26,8 @@ export interface AgentsRepository {
   findByProjectId(projectId: number): Promise<Array<Agent>>;
   findByProjectWithParents(projectId: number): Promise<Array<Agent>>;
   findByType(type: string): Promise<Array<Agent>>;
-  findGlobal(options?: {
-    includeDeactivated?: boolean;
-    type?: string;
-  }): Promise<Array<Agent>>;
-  update(
-    id: number,
-    data: Partial<Omit<NewAgent, "createdAt" | "id">>
-  ): Promise<Agent | undefined>;
+  findGlobal(options?: { includeDeactivated?: boolean; type?: string }): Promise<Array<Agent>>;
+  update(id: number, data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>): Promise<Agent | undefined>;
 }
 
 export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
@@ -56,7 +47,7 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       const validatedData = createAgentSchema.parse(data);
       const result = await db.insert(agents).values(validatedData).returning();
       if (!result[0]) {
-        throw new Error("Failed to create agent");
+        throw new Error('Failed to create agent');
       }
       return result[0];
     },
@@ -80,9 +71,7 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
         return db
           .select()
           .from(agents)
-          .where(
-            and(isNull(agents.deactivatedAt), eq(agents.projectId, projectId))
-          );
+          .where(and(isNull(agents.deactivatedAt), eq(agents.projectId, projectId)));
       }
       return db.select().from(agents).where(isNull(agents.deactivatedAt));
     },
@@ -95,10 +84,10 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       }
 
       // Handle scope filter
-      if (options?.scope === "global") {
+      if (options?.scope === 'global') {
         // Global scope: only agents where projectId IS NULL
         conditions.push(isNull(agents.projectId));
-      } else if (options?.scope === "project" && options?.projectId) {
+      } else if (options?.scope === 'project' && options?.projectId) {
         // Project scope: only agents for the specific project
         conditions.push(eq(agents.projectId, options.projectId));
       } else if (options?.projectId !== undefined) {
@@ -135,10 +124,7 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
     },
 
     async findByName(name: string): Promise<Agent | undefined> {
-      const result = await db
-        .select()
-        .from(agents)
-        .where(eq(agents.name, name));
+      const result = await db.select().from(agents).where(eq(agents.name, name));
       return result[0];
     },
 
@@ -169,10 +155,7 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       return db.select().from(agents).where(eq(agents.type, type));
     },
 
-    async findGlobal(options?: {
-      includeDeactivated?: boolean;
-      type?: string;
-    }): Promise<Array<Agent>> {
+    async findGlobal(options?: { includeDeactivated?: boolean; type?: string }): Promise<Array<Agent>> {
       const conditions = [isNull(agents.projectId)];
 
       if (!options?.includeDeactivated) {
@@ -189,10 +172,7 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
         .where(conditions.length === 1 ? conditions[0] : and(...conditions));
     },
 
-    async update(
-      id: number,
-      data: Partial<Omit<NewAgent, "createdAt" | "id">>
-    ): Promise<Agent | undefined> {
+    async update(id: number, data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>): Promise<Agent | undefined> {
       // Validate input data through Zod schema
       const validatedData = updateAgentRepositorySchema.parse(data);
       const now = new Date().toISOString();

@@ -1,21 +1,17 @@
-"use client";
+'use client';
 
-import type { VariantProps } from "class-variance-authority";
+import type { VariantProps } from 'class-variance-authority';
 
-import { Field } from "@base-ui/react/field";
-import { FolderOpen } from "lucide-react";
+import { Field } from '@base-ui/react/field';
+import { FolderOpen } from 'lucide-react';
 
-import { Button } from "@/components/ui/button";
-import {
-  descriptionVariants,
-  errorVariants,
-  labelVariants,
-} from "@/components/ui/form/field-wrapper";
-import { TanStackFieldRoot } from "@/components/ui/form/tanstack-field-root";
-import { Input, inputVariants } from "@/components/ui/input";
-import { useElectronDialog } from "@/hooks/use-electron";
-import { useFieldContext } from "@/lib/forms/form-hook";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button';
+import { descriptionVariants, errorVariants, labelVariants } from '@/components/ui/form/field-wrapper';
+import { TanStackFieldRoot } from '@/components/ui/form/tanstack-field-root';
+import { Input, inputVariants } from '@/components/ui/input';
+import { useElectronDialog } from '@/hooks/use-electron';
+import { useFieldContext } from '@/lib/forms/form-hook';
+import { cn } from '@/lib/utils';
 
 type PathInputFieldProps = ClassName &
   VariantProps<typeof inputVariants> & {
@@ -62,42 +58,40 @@ export const PathInputField = ({
       <Field.Label className={labelVariants({ size })}>
         {label}
         {isRequired && (
-          <span aria-hidden={"true"} className={"ml-0.5 text-destructive"}>
+          <span aria-hidden={'true'} className={'ml-0.5 text-destructive'}>
             *
           </span>
         )}
       </Field.Label>
 
       {/* Input Group */}
-      <div className={"flex gap-2"}>
+      <div className={'flex gap-2'}>
         <Input
-          className={"flex-1"}
+          className={'flex-1'}
           disabled={isDisabled}
           isInvalid={hasError}
           onBlur={field.handleBlur}
           onChange={(e) => field.handleChange(e.target.value)}
           placeholder={placeholder}
           size={size}
-          type={"text"}
-          value={field.state.value ?? ""}
+          type={'text'}
+          value={field.state.value ?? ''}
         />
         <Button
-          aria-label={"Browse for directory"}
+          aria-label={'Browse for directory'}
           disabled={isDisabled || !isElectron}
           onClick={handleBrowseClick}
-          size={size === "sm" ? "icon-sm" : "icon"}
-          type={"button"}
-          variant={"outline"}
+          size={size === 'sm' ? 'icon-sm' : 'icon'}
+          type={'button'}
+          variant={'outline'}
         >
-          <FolderOpen aria-hidden={"true"} className={cn("size-4")} />
+          <FolderOpen aria-hidden={'true'} className={cn('size-4')} />
         </Button>
       </div>
 
       {/* Description */}
       {description && !hasError && (
-        <Field.Description className={descriptionVariants({ size })}>
-          {description}
-        </Field.Description>
+        <Field.Description className={descriptionVariants({ size })}>{description}</Field.Description>
       )}
 
       {/* Error */}

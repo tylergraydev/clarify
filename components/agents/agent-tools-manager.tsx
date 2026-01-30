@@ -1,34 +1,31 @@
-"use client";
+'use client';
 
-import { Plus, ToggleLeft, ToggleRight, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Plus, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
-import type { AgentTool } from "@/types/electron";
+import type { AgentTool } from '@/types/electron';
 
-import { Button } from "@/components/ui/button";
-import { IconButton } from "@/components/ui/icon-button";
-import { Input } from "@/components/ui/input";
+import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
+import { Input } from '@/components/ui/input';
 import {
   useAgentTools,
   useAllowAgentTool,
   useCreateAgentTool,
   useDeleteAgentTool,
   useDisallowAgentTool,
-} from "@/hooks/queries/use-agent-tools";
-import { cn } from "@/lib/utils";
-import { agentToolInputSchema } from "@/lib/validations/agent";
+} from '@/hooks/queries/use-agent-tools';
+import { cn } from '@/lib/utils';
+import { agentToolInputSchema } from '@/lib/validations/agent';
 
 interface AgentToolsManagerProps {
   agentId: number;
   disabled?: boolean;
 }
 
-export const AgentToolsManager = ({
-  agentId,
-  disabled = false,
-}: AgentToolsManagerProps) => {
-  const [newToolName, setNewToolName] = useState("");
-  const [newToolPattern, setNewToolPattern] = useState("*");
+export const AgentToolsManager = ({ agentId, disabled = false }: AgentToolsManagerProps) => {
+  const [newToolName, setNewToolName] = useState('');
+  const [newToolPattern, setNewToolPattern] = useState('*');
   const [isAdding, setIsAdding] = useState(false);
   const [validationError, setValidationError] = useState<null | string>(null);
 
@@ -51,7 +48,7 @@ export const AgentToolsManager = ({
     if (!result.success) {
       // Get the first error message from Zod issues
       const firstIssue = result.error.issues[0];
-      setValidationError(firstIssue?.message ?? "Invalid input");
+      setValidationError(firstIssue?.message ?? 'Invalid input');
       return;
     }
 
@@ -59,10 +56,10 @@ export const AgentToolsManager = ({
       await createMutation.mutateAsync({
         agentId,
         toolName: result.data.name,
-        toolPattern: result.data.pattern ?? "*",
+        toolPattern: result.data.pattern ?? '*',
       });
-      setNewToolName("");
-      setNewToolPattern("*");
+      setNewToolName('');
+      setNewToolPattern('*');
       setIsAdding(false);
       setValidationError(null);
     } catch {
@@ -93,144 +90,126 @@ export const AgentToolsManager = ({
   const isAllowed = (tool: AgentTool) => tool.disallowedAt === null;
 
   if (isLoading) {
-    return (
-      <div className={"py-4 text-center text-sm text-muted-foreground"}>
-        {"Loading tools..."}
-      </div>
-    );
+    return <div className={'py-4 text-center text-sm text-muted-foreground'}>{'Loading tools...'}</div>;
   }
 
   return (
-    <div className={"flex flex-col gap-3"}>
+    <div className={'flex flex-col gap-3'}>
       {/* Tools List */}
       {tools.length > 0 ? (
-        <div className={"flex flex-col gap-2"}>
+        <div className={'flex flex-col gap-2'}>
           {tools.map((tool) => (
             <div
               className={cn(
-                "flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2",
-                !isAllowed(tool) && "opacity-60"
+                'flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2',
+                !isAllowed(tool) && 'opacity-60'
               )}
               key={tool.id}
             >
-              <div className={"min-w-0 flex-1"}>
-                <div className={"flex items-center gap-2"}>
-                  <span className={"font-mono text-sm font-medium"}>
-                    {tool.toolName}
-                  </span>
-                  {tool.toolPattern !== "*" && (
-                    <span className={"text-xs text-muted-foreground"}>
-                      {"("}
+              <div className={'min-w-0 flex-1'}>
+                <div className={'flex items-center gap-2'}>
+                  <span className={'font-mono text-sm font-medium'}>{tool.toolName}</span>
+                  {tool.toolPattern !== '*' && (
+                    <span className={'text-xs text-muted-foreground'}>
+                      {'('}
                       {tool.toolPattern}
-                      {")"}
+                      {')'}
                     </span>
                   )}
                 </div>
-                {!isAllowed(tool) && (
-                  <span className={"text-xs text-muted-foreground"}>
-                    {"Disallowed"}
-                  </span>
-                )}
+                {!isAllowed(tool) && <span className={'text-xs text-muted-foreground'}>{'Disallowed'}</span>}
               </div>
-              <div className={"flex items-center gap-1"}>
+              <div className={'flex items-center gap-1'}>
                 <IconButton
-                  aria-label={isAllowed(tool) ? "Disallow tool" : "Allow tool"}
-                  className={"size-7"}
+                  aria-label={isAllowed(tool) ? 'Disallow tool' : 'Allow tool'}
+                  className={'size-7'}
                   disabled={disabled}
                   onClick={() => handleToggleTool(tool)}
-                  title={isAllowed(tool) ? "Disallow" : "Allow"}
+                  title={isAllowed(tool) ? 'Disallow' : 'Allow'}
                 >
                   {isAllowed(tool) ? (
-                    <ToggleRight className={"size-4 text-green-500"} />
+                    <ToggleRight className={'size-4 text-green-500'} />
                   ) : (
-                    <ToggleLeft className={"size-4 text-muted-foreground"} />
+                    <ToggleLeft className={'size-4 text-muted-foreground'} />
                   )}
                 </IconButton>
                 <IconButton
-                  aria-label={"Delete tool"}
-                  className={"size-7"}
+                  aria-label={'Delete tool'}
+                  className={'size-7'}
                   disabled={disabled}
                   onClick={() => handleDeleteTool(tool)}
-                  title={"Delete"}
+                  title={'Delete'}
                 >
-                  <Trash2 className={"size-4 text-destructive"} />
+                  <Trash2 className={'size-4 text-destructive'} />
                 </IconButton>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className={"py-4 text-center text-sm text-muted-foreground"}>
-          {"No tools configured"}
-        </div>
+        <div className={'py-4 text-center text-sm text-muted-foreground'}>{'No tools configured'}</div>
       )}
 
       {/* Add Tool Form */}
       {isAdding ? (
-        <div
-          className={"flex flex-col gap-2 rounded-md border border-border p-3"}
-        >
-          <div className={"flex flex-col gap-1"}>
-            <div className={"flex gap-2"}>
+        <div className={'flex flex-col gap-2 rounded-md border border-border p-3'}>
+          <div className={'flex flex-col gap-1'}>
+            <div className={'flex gap-2'}>
               <Input
                 autoFocus
-                className={"flex-1"}
+                className={'flex-1'}
                 disabled={disabled || createMutation.isPending}
                 onChange={(e) => {
                   setNewToolName(e.target.value);
                   setValidationError(null);
                 }}
-                placeholder={"Tool name (e.g., Read, Write, Bash)"}
+                placeholder={'Tool name (e.g., Read, Write, Bash)'}
                 value={newToolName}
               />
               <Input
-                className={"w-32"}
+                className={'w-32'}
                 disabled={disabled || createMutation.isPending}
                 onChange={(e) => {
                   setNewToolPattern(e.target.value);
                   setValidationError(null);
                 }}
-                placeholder={"Pattern"}
+                placeholder={'Pattern'}
                 value={newToolPattern}
               />
             </div>
-            {validationError && (
-              <p className={"text-xs text-destructive"}>{validationError}</p>
-            )}
+            {validationError && <p className={'text-xs text-destructive'}>{validationError}</p>}
           </div>
-          <div className={"flex justify-end gap-2"}>
+          <div className={'flex justify-end gap-2'}>
             <Button
               disabled={createMutation.isPending}
               onClick={() => {
                 setIsAdding(false);
                 setValidationError(null);
               }}
-              size={"sm"}
-              variant={"ghost"}
+              size={'sm'}
+              variant={'ghost'}
             >
-              {"Cancel"}
+              {'Cancel'}
             </Button>
             <Button
-              disabled={
-                disabled || !newToolName.trim() || createMutation.isPending
-              }
+              disabled={disabled || !newToolName.trim() || createMutation.isPending}
               onClick={handleAddTool}
-              size={"sm"}
+              size={'sm'}
             >
-              {createMutation.isPending ? "Adding..." : "Add Tool"}
+              {createMutation.isPending ? 'Adding...' : 'Add Tool'}
             </Button>
           </div>
         </div>
       ) : (
         <Button
-          className={"w-full"}
+          className={'w-full'}
           disabled={disabled}
           onClick={() => setIsAdding(true)}
-          size={"sm"}
-          variant={"outline"}
+          size={'sm'}
+          variant={'outline'}
         >
-          <Plus className={"mr-2 size-4"} />
-          {"Add Tool"}
+          <Plus className={'mr-2 size-4'} />
+          {'Add Tool'}
         </Button>
       )}
     </div>

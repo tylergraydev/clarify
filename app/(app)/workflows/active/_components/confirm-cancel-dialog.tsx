@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
   DialogClose,
@@ -9,7 +9,7 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 interface ConfirmCancelDialogProps {
   /** Whether the cancel mutation is in progress */
@@ -40,34 +40,28 @@ export const ConfirmCancelDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup aria-modal={"true"} role={"alertdialog"}>
+        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
-          <DialogTitle id={"confirm-cancel-title"}>
-            {"Cancel Workflow"}
-          </DialogTitle>
-          <DialogDescription id={"confirm-cancel-description"}>
+          <DialogTitle id={'confirm-cancel-title'}>{'Cancel Workflow'}</DialogTitle>
+          <DialogDescription id={'confirm-cancel-description'}>
             {`Are you sure you want to cancel "${workflowName}"? This action cannot be undone and all progress will be lost.`}
           </DialogDescription>
 
           {/* Actions */}
-          <div
-            aria-label={"Confirm cancellation actions"}
-            className={"mt-6 flex justify-end gap-3"}
-            role={"group"}
-          >
+          <div aria-label={'Confirm cancellation actions'} className={'mt-6 flex justify-end gap-3'} role={'group'}>
             <DialogClose>
-              <Button disabled={isLoading} variant={"outline"}>
-                {"Keep Running"}
+              <Button disabled={isLoading} variant={'outline'}>
+                {'Keep Running'}
               </Button>
             </DialogClose>
             <Button
-              aria-describedby={"confirm-cancel-description"}
+              aria-describedby={'confirm-cancel-description'}
               aria-label={`Cancel ${workflowName} workflow permanently`}
               disabled={isLoading}
               onClick={handleConfirmClick}
-              variant={"destructive"}
+              variant={'destructive'}
             >
-              {isLoading ? "Cancelling..." : "Cancel Workflow"}
+              {isLoading ? 'Cancelling...' : 'Cancel Workflow'}
             </Button>
           </div>
         </DialogPopup>

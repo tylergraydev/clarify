@@ -1,32 +1,18 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useEffectEvent,
-  useMemo,
-  useState,
-} from "react";
+import { Fragment, memo, useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 
-import type { AgentToolType } from "@/lib/constants/claude-tools";
-import type {
-  CreateAgentFormData,
-  UpdateAgentFormValues,
-} from "@/lib/validations/agent";
-import type { PendingSkillData } from "@/types/agent-skills";
-import type { CreateToolData, ToolSelection } from "@/types/agent-tools";
-import type { Agent } from "@/types/electron";
+import type { AgentToolType } from '@/lib/constants/claude-tools';
+import type { CreateAgentFormData, UpdateAgentFormValues } from '@/lib/validations/agent';
+import type { PendingSkillData } from '@/types/agent-skills';
+import type { CreateToolData, ToolSelection } from '@/types/agent-tools';
+import type { Agent } from '@/types/electron';
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DialogBackdrop,
   DialogBody,
@@ -39,12 +25,8 @@ import {
   DialogRoot,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  descriptionVariants,
-  fieldWrapperVariants,
-  labelVariants,
-} from "@/components/ui/form/field-wrapper";
+} from '@/components/ui/dialog';
+import { descriptionVariants, fieldWrapperVariants, labelVariants } from '@/components/ui/form/field-wrapper';
 import {
   SelectItem,
   SelectList,
@@ -54,43 +36,29 @@ import {
   SelectRoot,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { agentColors, agentTypes } from "@/db/schema/agents.schema";
-import {
-  useCreateAgentSkill,
-  useSetAgentSkillRequired,
-} from "@/hooks/queries/use-agent-skills";
+} from '@/components/ui/select';
+import { agentColors, agentTypes } from '@/db/schema/agents.schema';
+import { useCreateAgentSkill, useSetAgentSkillRequired } from '@/hooks/queries/use-agent-skills';
 import {
   useAgentTools,
   useAllowAgentTool,
   useCreateAgentTool,
   useDeleteAgentTool,
   useDisallowAgentTool,
-} from "@/hooks/queries/use-agent-tools";
-import {
-  useCreateAgent,
-  useMoveAgent,
-  useResetAgent,
-  useUpdateAgent,
-} from "@/hooks/queries/use-agents";
-import { useProject, useProjects } from "@/hooks/queries/use-projects";
-import { getAgentColorHex } from "@/lib/colors/agent-colors";
-import {
-  CLAUDE_BUILTIN_TOOLS,
-  getDefaultToolsForAgentType,
-  isBuiltinTool,
-} from "@/lib/constants/claude-tools";
-import { useAppForm } from "@/lib/forms/form-hook";
-import {
-  createAgentFormSchema,
-  updateAgentSchema,
-} from "@/lib/validations/agent";
+} from '@/hooks/queries/use-agent-tools';
+import { useCreateAgent, useMoveAgent, useResetAgent, useUpdateAgent } from '@/hooks/queries/use-agents';
+import { useProject, useProjects } from '@/hooks/queries/use-projects';
+import { getAgentColorHex } from '@/lib/colors/agent-colors';
+import { CLAUDE_BUILTIN_TOOLS, getDefaultToolsForAgentType, isBuiltinTool } from '@/lib/constants/claude-tools';
+import { useAppForm } from '@/lib/forms/form-hook';
+import { createAgentFormSchema, updateAgentSchema } from '@/lib/validations/agent';
 
-import { AgentColorPicker } from "./agent-color-picker";
-import { AgentSkillsManager } from "./agent-skills-manager";
-import { AgentSkillsSection } from "./agent-skills-section";
-import { AgentToolsSection } from "./agent-tools-section";
-import { ConfirmResetAgentDialog } from "./confirm-reset-agent-dialog";
+import { AgentColorPicker } from './agent-color-picker';
+import { type AgentHooksData, AgentHooksSection } from './agent-hooks-section';
+import { AgentSkillsManager } from './agent-skills-manager';
+import { AgentSkillsSection } from './agent-skills-section';
+import { AgentToolsSection } from './agent-tools-section';
+import { ConfirmResetAgentDialog } from './confirm-reset-agent-dialog';
 
 type AgentColor = (typeof agentColors)[number];
 interface AgentEditorDialogProps {
@@ -126,15 +94,143 @@ interface AgentInitialData {
 
 type AgentType = (typeof agentTypes)[number];
 
-type EditorMode = "create" | "edit";
+type EditorMode = 'create' | 'edit';
 
 const AGENT_TYPE_OPTIONS = agentTypes.map((type) => ({
   label: type.charAt(0).toUpperCase() + type.slice(1),
   value: type,
 }));
 
+const MODEL_OPTIONS = [
+  { label: 'Inherit', value: '' },
+  { label: 'Sonnet', value: 'sonnet' },
+  { label: 'Opus', value: 'opus' },
+  { label: 'Haiku', value: 'haiku' },
+];
+
+const PERMISSION_MODE_OPTIONS = [
+  { label: 'Default', value: 'default' },
+  { label: 'Accept Edits', value: 'acceptEdits' },
+  { label: "Don't Ask", value: 'dontAsk' },
+  { label: 'Bypass Permissions', value: 'bypassPermissions' },
+  { label: 'Plan', value: 'plan' },
+];
+
+/**
+ * Props for the memoized tools collapsible section
+ */
+interface ToolsCollapsibleSectionProps {
+  customTools: Array<CreateToolData>;
+  isDisabled: boolean;
+  isEditMode: boolean;
+  onCustomToolsChange: (tools: Array<CreateToolData>) => void;
+  onEditModeCustomToolsChange: (tools: Array<CreateToolData>) => Promise<void>;
+  onEditModeToolSelectionsChange: (selections: Array<ToolSelection>) => Promise<void>;
+  onToolSelectionsChange: (selections: Array<ToolSelection>) => void;
+  toolSelections: Array<ToolSelection>;
+}
+
+/**
+ * Memoized tools collapsible section to prevent re-renders when parent state changes
+ */
+const ToolsCollapsibleSection = memo(function ToolsCollapsibleSection({
+  customTools,
+  isDisabled,
+  isEditMode,
+  onCustomToolsChange,
+  onEditModeCustomToolsChange,
+  onEditModeToolSelectionsChange,
+  onToolSelectionsChange,
+  toolSelections,
+}: ToolsCollapsibleSectionProps) {
+  return (
+    <Collapsible className={'rounded-md border border-border'} defaultOpen={!isEditMode}>
+      <CollapsibleTrigger className={'w-full justify-start px-3 py-2'}>{'Allowed Tools'}</CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className={'border-t border-border p-3'}>
+          <AgentToolsSection
+            customTools={customTools}
+            disabled={isDisabled}
+            onCustomToolsChange={isEditMode ? onEditModeCustomToolsChange : onCustomToolsChange}
+            onToolSelectionsChange={isEditMode ? onEditModeToolSelectionsChange : onToolSelectionsChange}
+            toolSelections={toolSelections}
+          />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+});
+
+/**
+ * Props for the memoized skills collapsible section
+ */
+interface SkillsCollapsibleSectionProps {
+  agentId: number | undefined;
+  isDisabled: boolean;
+  isEditAgent: boolean;
+  onSkillsChange: (skills: Array<PendingSkillData>) => void;
+  pendingSkills: Array<PendingSkillData>;
+}
+
+/**
+ * Memoized skills collapsible section to prevent re-renders when parent state changes
+ */
+const SkillsCollapsibleSection = memo(function SkillsCollapsibleSection({
+  agentId,
+  isDisabled,
+  isEditAgent,
+  onSkillsChange,
+  pendingSkills,
+}: SkillsCollapsibleSectionProps) {
+  const isEditAgentWithValidId = isEditAgent && agentId !== undefined;
+
+  return (
+    <Collapsible className={'rounded-md border border-border'}>
+      <CollapsibleTrigger className={'w-full justify-start px-3 py-2'}>{'Referenced Skills'}</CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className={'border-t border-border p-3'}>
+          {isEditAgentWithValidId ? (
+            <AgentSkillsManager agentId={agentId} disabled={isDisabled} />
+          ) : (
+            <AgentSkillsSection disabled={isDisabled} onSkillsChange={onSkillsChange} skills={pendingSkills} />
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+});
+
+/**
+ * Props for the memoized hooks collapsible section
+ */
+interface HooksCollapsibleSectionProps {
+  hooks: AgentHooksData;
+  isDisabled: boolean;
+  onHooksChange: (hooks: AgentHooksData) => void;
+}
+
+/**
+ * Memoized hooks collapsible section to prevent re-renders when parent state changes
+ */
+const HooksCollapsibleSection = memo(function HooksCollapsibleSection({
+  hooks,
+  isDisabled,
+  onHooksChange,
+}: HooksCollapsibleSectionProps) {
+  return (
+    <Collapsible className={'rounded-md border border-border'}>
+      <CollapsibleTrigger className={'w-full justify-start px-3 py-2'}>{'Hooks'}</CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className={'border-t border-border p-3'}>
+          <AgentHooksSection disabled={isDisabled} hooks={hooks} onHooksChange={onHooksChange} />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+});
+
 // Constant for global project option value
-const GLOBAL_PROJECT_VALUE = "__global__";
+const GLOBAL_PROJECT_VALUE = '__global__';
 
 export const AgentEditorDialog = ({
   agent,
@@ -152,28 +248,22 @@ export const AgentEditorDialog = ({
   const isControlled = controlledIsOpen !== undefined;
   const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
   const setIsOpen = useMemo(
-    () =>
-      isControlled
-        ? (open: boolean) => controlledOnOpenChange?.(open)
-        : setInternalIsOpen,
+    () => (isControlled ? (open: boolean) => controlledOnOpenChange?.(open) : setInternalIsOpen),
     [isControlled, controlledOnOpenChange]
   );
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState<"" | AgentColor>("");
-  const [selectedProjectId, setSelectedProjectId] = useState<null | number>(
-    null
-  );
+  const [selectedColor, setSelectedColor] = useState<'' | AgentColor>('');
+  const [selectedProjectId, setSelectedProjectId] = useState<null | number>(null);
 
   // Tool state for both create and edit modes
-  const [toolSelections, setToolSelections] = useState<Array<ToolSelection>>(
-    []
-  );
+  const [toolSelections, setToolSelections] = useState<Array<ToolSelection>>([]);
   const [customTools, setCustomTools] = useState<Array<CreateToolData>>([]);
 
   // Skill state for create mode
-  const [pendingSkills, setPendingSkills] = useState<Array<PendingSkillData>>(
-    []
-  );
+  const [pendingSkills, setPendingSkills] = useState<Array<PendingSkillData>>([]);
+
+  // Hooks state for both create and edit modes
+  const [pendingHooks, setPendingHooks] = useState<AgentHooksData>({});
 
   const createAgentMutation = useCreateAgent();
   const updateAgentMutation = useUpdateAgent();
@@ -205,9 +295,7 @@ export const AgentEditorDialog = ({
   // Build project options for the SelectField
   const projectOptions = useMemo(() => {
     const projectsData = projectsQuery.data ?? [];
-    const options = [
-      { label: "Global (all projects)", value: GLOBAL_PROJECT_VALUE },
-    ];
+    const options = [{ label: 'Global (all projects)', value: GLOBAL_PROJECT_VALUE }];
 
     // Add active (non-archived) projects
     for (const project of projectsData) {
@@ -222,58 +310,104 @@ export const AgentEditorDialog = ({
     return options;
   }, [projectsQuery.data]);
 
-  const isSubmitting =
-    createAgentMutation.isPending || updateAgentMutation.isPending;
-  const isMoving = moveAgentMutation.isPending;
-  const isResetting = resetAgentMutation.isPending;
-  const isEditMode = mode === "edit";
-  const isBuiltIn = agent?.builtInAt !== null;
-  const isCustomized = agent?.parentAgentId !== null;
-  const isDuplicateMode = mode === "create" && initialData !== undefined;
-  const isProjectScoped = !isEditMode && projectId !== undefined;
-  // View-only mode for built-in agents in edit mode
-  const isViewMode = isEditMode && isBuiltIn && !isCustomized;
-  // Show reset button only for customized agents in edit mode, but not in view mode
-  const isResetButtonVisible = isEditMode && isCustomized && !isViewMode;
-  // Disabled state for project selector
-  const isProjectSelectorDisabled = isEditMode
-    ? isSubmitting || isResetting || isMoving || isViewMode
-    : isSubmitting || isResetting;
+  // Memoize derived boolean flags to prevent recalculation on every render
+  const derivedFlags = useMemo(() => {
+    const isSubmitting = createAgentMutation.isPending || updateAgentMutation.isPending;
+    const isMoving = moveAgentMutation.isPending;
+    const isResetting = resetAgentMutation.isPending;
+    const isEditMode = mode === 'edit';
+    const isBuiltIn = agent?.builtInAt !== null;
+    const isCustomized = agent?.parentAgentId !== null;
+    const isDuplicateMode = mode === 'create' && initialData !== undefined;
+    const isProjectScoped = !isEditMode && projectId !== undefined;
+    // View-only mode for built-in agents in edit mode
+    const isViewMode = isEditMode && isBuiltIn && !isCustomized;
+    // Show reset button only for customized agents in edit mode, but not in view mode
+    const isResetButtonVisible = isEditMode && isCustomized && !isViewMode;
+    // Disabled state for project selector
+    const isProjectSelectorDisabled = isEditMode
+      ? isSubmitting || isResetting || isMoving || isViewMode
+      : isSubmitting || isResetting;
+    // Check if we're in edit mode with a valid agent
+    const isEditAgent = isEditMode && agent !== undefined;
+    // Disabled state for collapsible sections
+    const isCollapsibleDisabled = isSubmitting || isResetting || isViewMode;
+
+    return {
+      isBuiltIn,
+      isCollapsibleDisabled,
+      isCustomized,
+      isDuplicateMode,
+      isEditAgent,
+      isEditMode,
+      isMoving,
+      isProjectScoped,
+      isProjectSelectorDisabled,
+      isResetButtonVisible,
+      isResetting,
+      isSubmitting,
+      isViewMode,
+    };
+  }, [
+    agent,
+    createAgentMutation.isPending,
+    initialData,
+    mode,
+    moveAgentMutation.isPending,
+    projectId,
+    resetAgentMutation.isPending,
+    updateAgentMutation.isPending,
+  ]);
+
+  const {
+    isBuiltIn,
+    isCollapsibleDisabled,
+    isDuplicateMode,
+    isEditAgent,
+    isEditMode,
+    isProjectScoped,
+    isProjectSelectorDisabled,
+    isResetButtonVisible,
+    isResetting,
+    isSubmitting,
+    isViewMode,
+  } = derivedFlags;
 
   // Determine validation schema based on mode
-  const validationSchema = isEditMode
-    ? updateAgentSchema
-    : createAgentFormSchema;
+  const validationSchema = isEditMode ? updateAgentSchema : createAgentFormSchema;
 
   // Determine default values based on mode and initialData
-  const getDefaultValues = useCallback(():
-    | CreateAgentFormData
-    | UpdateAgentFormValues => {
+  const getDefaultValues = useCallback((): CreateAgentFormData | UpdateAgentFormValues => {
     if (isEditMode && agent) {
       return {
-        description: agent.description ?? "",
+        description: agent.description ?? '',
         displayName: agent.displayName,
+        model: (agent.model ?? '') as UpdateAgentFormValues['model'],
+        permissionMode: (agent.permissionMode ?? '') as UpdateAgentFormValues['permissionMode'],
         systemPrompt: agent.systemPrompt,
       };
     }
     if (initialData) {
       return {
-        color:
-          (initialData.color as AgentColor) ?? ("" as unknown as AgentColor),
-        description: initialData.description ?? "",
+        color: initialData.color ?? undefined,
+        description: initialData.description ?? '',
         displayName: initialData.displayName,
+        model: '' as CreateAgentFormData['model'],
         name: initialData.name,
+        permissionMode: '' as CreateAgentFormData['permissionMode'],
         systemPrompt: initialData.systemPrompt,
         type: initialData.type,
       };
     }
     return {
-      color: "" as unknown as AgentColor,
-      description: "",
-      displayName: "",
-      name: "",
-      systemPrompt: "",
-      type: "specialist" as AgentType,
+      color: undefined,
+      description: '',
+      displayName: '',
+      model: '' as CreateAgentFormData['model'],
+      name: '',
+      permissionMode: '' as CreateAgentFormData['permissionMode'],
+      systemPrompt: '',
+      type: 'specialist' as AgentType,
     };
   }, [isEditMode, agent, initialData]);
 
@@ -281,13 +415,11 @@ export const AgentEditorDialog = ({
   const initializeToolDefaults = useCallback((type: AgentToolType) => {
     const defaultTools = getDefaultToolsForAgentType(type);
 
-    const selections: Array<ToolSelection> = CLAUDE_BUILTIN_TOOLS.map(
-      (tool) => ({
-        enabled: defaultTools.includes(tool.name),
-        pattern: "*",
-        toolName: tool.name,
-      })
-    );
+    const selections: Array<ToolSelection> = CLAUDE_BUILTIN_TOOLS.map((tool) => ({
+      enabled: defaultTools.includes(tool.name),
+      pattern: '*',
+      toolName: tool.name,
+    }));
 
     setToolSelections(selections);
     setCustomTools([]);
@@ -318,12 +450,17 @@ export const AgentEditorDialog = ({
     onSubmit: async ({ value }) => {
       if (isEditMode && agent) {
         // Update existing agent
+        const updateValue = value as UpdateAgentFormValues;
+        const modelValue = updateValue.model === '' ? null : updateValue.model;
+        const permissionModeValue = updateValue.permissionMode === '' ? null : updateValue.permissionMode;
         await updateAgentMutation.mutateAsync({
           data: {
-            color: selectedColor === "" ? null : selectedColor,
-            description: (value as UpdateAgentFormValues).description,
-            displayName: (value as UpdateAgentFormValues).displayName,
-            systemPrompt: (value as UpdateAgentFormValues).systemPrompt,
+            color: selectedColor === '' ? null : selectedColor,
+            description: updateValue.description,
+            displayName: updateValue.displayName,
+            model: modelValue,
+            permissionMode: permissionModeValue,
+            systemPrompt: updateValue.systemPrompt,
           },
           id: agent.id,
         });
@@ -342,11 +479,15 @@ export const AgentEditorDialog = ({
         // Use selectedProjectId state which tracks the dropdown value
         // This allows users to override the initial projectId prop via the dropdown
         const effectiveProjectId = selectedProjectId;
+        const modelValue = createValue.model === '' ? null : createValue.model;
+        const permissionModeValue = createValue.permissionMode === '' ? null : createValue.permissionMode;
         const result = await createAgentMutation.mutateAsync({
           color: createValue.color,
           description: createValue.description,
           displayName: createValue.displayName,
+          model: modelValue,
           name: createValue.name,
+          permissionMode: permissionModeValue,
           projectId: effectiveProjectId,
           systemPrompt: createValue.systemPrompt,
           type: createValue.type,
@@ -387,7 +528,7 @@ export const AgentEditorDialog = ({
     },
   });
 
-  const updateSelectedColor = useEffectEvent((agentColor: "" | AgentColor) => {
+  const updateSelectedColor = useEffectEvent((agentColor: '' | AgentColor) => {
     setSelectedColor(agentColor);
   });
 
@@ -395,34 +536,30 @@ export const AgentEditorDialog = ({
     initializeToolDefaults(type);
   });
 
-  const updateToolSelections = useEffectEvent(
-    (selections: Array<ToolSelection>) => {
-      setToolSelections(selections);
-    }
-  );
+  const updateToolSelections = useEffectEvent((selections: Array<ToolSelection>) => {
+    setToolSelections(selections);
+  });
 
   const updateCustomTools = useEffectEvent((tools: Array<CreateToolData>) => {
     setCustomTools(tools);
   });
 
-  const updateSelectedProjectId = useEffectEvent(
-    (newProjectId: null | number) => {
-      setSelectedProjectId(newProjectId);
-    }
-  );
+  const updateSelectedProjectId = useEffectEvent((newProjectId: null | number) => {
+    setSelectedProjectId(newProjectId);
+  });
 
   // Reset form, color, and project when agent or initialData changes
   useEffect(() => {
     form.reset(getDefaultValues());
     if (isEditMode && agent) {
-      updateSelectedColor((agent.color as AgentColor) ?? "");
+      updateSelectedColor((agent.color as AgentColor) ?? '');
       updateSelectedProjectId(agent.projectId ?? null);
     } else if (initialData) {
-      updateSelectedColor(initialData.color ?? "");
+      updateSelectedColor(initialData.color ?? '');
       // For create mode (including duplicate), initialize with projectId prop or null
       updateSelectedProjectId(projectId ?? null);
     } else {
-      updateSelectedColor("");
+      updateSelectedColor('');
       // For create mode, initialize with projectId prop or null
       updateSelectedProjectId(projectId ?? null);
     }
@@ -434,10 +571,10 @@ export const AgentEditorDialog = ({
 
     if (!isEditMode) {
       // Create mode: initialize from defaults based on agent type
-      const type = initialData?.type ?? "specialist";
+      const type = initialData?.type ?? 'specialist';
       setToolDefaults(type);
     }
-  }, [isEditMode, isOpen, initialData, initializeToolDefaults]);
+  }, [isEditMode, isOpen, initialData?.type]);
 
   // Initialize tools from existing database records (edit mode)
   useEffect(() => {
@@ -469,7 +606,7 @@ export const AgentEditorDialog = ({
       if (!builtinSelections.some((s) => s.toolName === tool.name)) {
         builtinSelections.push({
           enabled: false,
-          pattern: "*",
+          pattern: '*',
           toolName: tool.name,
         });
       }
@@ -479,14 +616,14 @@ export const AgentEditorDialog = ({
     updateCustomTools(customToolsList);
   }, [isOpen, isEditMode, existingTools]);
 
-  const getInitialColor = useCallback((): "" | AgentColor => {
+  const getInitialColor = useCallback((): '' | AgentColor => {
     if (isEditMode && agent) {
-      return (agent.color as AgentColor) ?? "";
+      return (agent.color as AgentColor) ?? '';
     }
     if (initialData) {
-      return initialData.color ?? "";
+      return initialData.color ?? '';
     }
-    return "";
+    return '';
   }, [isEditMode, agent, initialData]);
 
   const getInitialProjectId = useCallback((): null | number => {
@@ -501,21 +638,14 @@ export const AgentEditorDialog = ({
     form.reset(getDefaultValues());
     setSelectedColor(getInitialColor());
     setSelectedProjectId(getInitialProjectId());
-    // Reset tools and skills state
+    // Reset tools, skills, and hooks state
     if (!isEditMode) {
-      const type = initialData?.type ?? "specialist";
+      const type = initialData?.type ?? 'specialist';
       initializeToolDefaults(type);
       setPendingSkills([]);
+      setPendingHooks({});
     }
-  }, [
-    form,
-    getDefaultValues,
-    getInitialColor,
-    getInitialProjectId,
-    isEditMode,
-    initialData,
-    initializeToolDefaults,
-  ]);
+  }, [form, getDefaultValues, getInitialColor, getInitialProjectId, isEditMode, initialData, initializeToolDefaults]);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
@@ -530,11 +660,12 @@ export const AgentEditorDialog = ({
         form.reset(getDefaultValues());
         setSelectedColor(getInitialColor());
         setSelectedProjectId(getInitialProjectId());
-        // Reset tools and skills for create mode
+        // Reset tools, skills, and hooks for create mode
         if (!isEditMode) {
-          const type = initialData?.type ?? "specialist";
+          const type = initialData?.type ?? 'specialist';
           initializeToolDefaults(type);
           setPendingSkills([]);
+          setPendingHooks({});
         }
       } else {
         resetFormState();
@@ -553,11 +684,11 @@ export const AgentEditorDialog = ({
     ]
   );
 
-  const handleResetClick = () => {
+  const handleResetClick = useCallback(() => {
     setIsResetDialogOpen(true);
-  };
+  }, []);
 
-  const handleConfirmReset = async () => {
+  const handleConfirmReset = useCallback(async () => {
     if (!agent) return;
     try {
       await resetAgentMutation.mutateAsync({
@@ -570,7 +701,7 @@ export const AgentEditorDialog = ({
     } catch {
       // Error handled by mutation
     }
-  };
+  }, [agent, handleClose, onSuccess, resetAgentMutation]);
 
   // Handle agent type change in create mode - reset tool defaults
   const handleAgentTypeChange = useCallback(
@@ -583,8 +714,7 @@ export const AgentEditorDialog = ({
 
   // Handle project change - only update local state, save on form submit
   const handleProjectChange = useCallback((newValue: string) => {
-    const newProjectId =
-      newValue === GLOBAL_PROJECT_VALUE ? null : Number(newValue);
+    const newProjectId = newValue === GLOBAL_PROJECT_VALUE ? null : Number(newValue);
     setSelectedProjectId(newProjectId);
   }, []);
 
@@ -595,9 +725,7 @@ export const AgentEditorDialog = ({
 
       // For each selection change, update the database
       for (const selection of newSelections) {
-        const existingTool = existingTools.find(
-          (t) => t.toolName === selection.toolName
-        );
+        const existingTool = existingTools.find((t) => t.toolName === selection.toolName);
 
         if (existingTool) {
           // Tool exists - toggle allow/disallow based on enabled state
@@ -619,13 +747,7 @@ export const AgentEditorDialog = ({
 
       setToolSelections(newSelections);
     },
-    [
-      agent,
-      existingTools,
-      allowToolMutation,
-      disallowToolMutation,
-      createToolMutation,
-    ]
+    [agent, existingTools, allowToolMutation, disallowToolMutation, createToolMutation]
   );
 
   // Handle custom tool changes in edit mode
@@ -649,9 +771,7 @@ export const AgentEditorDialog = ({
       for (const existingTool of existingTools) {
         if (isBuiltinTool(existingTool.toolName)) continue;
 
-        const stillExists = newCustomTools.some(
-          (t) => t.toolName === existingTool.toolName
-        );
+        const stillExists = newCustomTools.some((t) => t.toolName === existingTool.toolName);
         if (!stillExists) {
           await deleteToolMutation.mutateAsync({
             agentId: agent.id,
@@ -665,39 +785,49 @@ export const AgentEditorDialog = ({
     [agent, existingTools, createToolMutation, deleteToolMutation]
   );
 
-  const agentTypeLabel = agent
-    ? agent.type === "planning"
-      ? "Planning"
-      : agent.type === "specialist"
-        ? "Specialist"
-        : "Review"
-    : null;
+  // Memoize dialog labels to prevent string recreation on every render
+  const dialogLabels = useMemo(() => {
+    const agentTypeLabel = agent
+      ? agent.type === 'planning'
+        ? 'Planning'
+        : agent.type === 'specialist'
+          ? 'Specialist'
+          : 'Review'
+      : null;
 
-  const dialogTitle = isViewMode
-    ? "View Agent"
-    : isEditMode
-      ? "Edit Agent"
-      : isDuplicateMode
-        ? "Duplicate Agent"
-        : "Create Agent";
+    const dialogTitle = isViewMode
+      ? 'View Agent'
+      : isEditMode
+        ? 'Edit Agent'
+        : isDuplicateMode
+          ? 'Duplicate Agent'
+          : 'Create Agent';
 
-  const dialogDescription = isViewMode
-    ? "View the built-in agent configuration. Duplicate to create an editable copy."
-    : isEditMode
-      ? "Customize the agent's display name, description, and system prompt."
-      : isDuplicateMode
-        ? "Create a copy of the agent with your modifications."
-        : "Create a new custom agent with a unique name, type, and system prompt.";
+    const dialogDescription = isViewMode
+      ? 'View the built-in agent configuration. Duplicate to create an editable copy.'
+      : isEditMode
+        ? "Customize the agent's display name, description, and system prompt."
+        : isDuplicateMode
+          ? 'Create a copy of the agent with your modifications.'
+          : 'Create a new custom agent with a unique name, type, and system prompt.';
 
-  const submitLabel = isEditMode
-    ? isSubmitting
-      ? "Saving..."
-      : "Save Changes"
-    : isSubmitting
-      ? "Creating..."
-      : "Create Agent";
+    const submitLabel = isEditMode
+      ? isSubmitting
+        ? 'Saving...'
+        : 'Save Changes'
+      : isSubmitting
+        ? 'Creating...'
+        : 'Create Agent';
 
-  const isEditAgent = isEditMode && agent;
+    return {
+      agentTypeLabel,
+      dialogDescription,
+      dialogTitle,
+      submitLabel,
+    };
+  }, [agent, isDuplicateMode, isEditMode, isSubmitting, isViewMode]);
+
+  const { agentTypeLabel, dialogDescription, dialogTitle, submitLabel } = dialogLabels;
 
   return (
     <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
@@ -707,45 +837,30 @@ export const AgentEditorDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup
-          aria-modal={"true"}
-          role={"dialog"}
-          scrollable={true}
-          size={"xl"}
-        >
+        <DialogPopup aria-modal={'true'} role={'dialog'} scrollable={true} size={'xl'}>
           {/* Header */}
           <DialogHeader
             badges={
               <Fragment>
                 {/* Project Scope Indicator (Create Mode Only) */}
                 {isProjectScoped && projectQuery.data && (
-                  <Badge variant={"project"}>
-                    {`Project: ${projectQuery.data.name}`}
-                  </Badge>
+                  <Badge variant={'project'}>{`Project: ${projectQuery.data.name}`}</Badge>
                 )}
-                {isEditMode && isBuiltIn && (
-                  <Badge variant={"default"}>{"Built-in Agent"}</Badge>
-                )}
-                {isEditMode && !isBuiltIn && (
-                  <Badge variant={"custom"}>{"Custom Agent"}</Badge>
-                )}
-                {isEditMode && agentTypeLabel && (
-                  <Badge variant={"default"}>{agentTypeLabel}</Badge>
-                )}
+                {isEditMode && isBuiltIn && <Badge variant={'default'}>{'Built-in Agent'}</Badge>}
+                {isEditMode && !isBuiltIn && <Badge variant={'custom'}>{'Custom Agent'}</Badge>}
+                {isEditMode && agentTypeLabel && <Badge variant={'default'}>{agentTypeLabel}</Badge>}
               </Fragment>
             }
           >
-            <DialogTitle id={"agent-editor-title"}>{dialogTitle}</DialogTitle>
-            <DialogDescription id={"agent-editor-description"}>
-              {dialogDescription}
-            </DialogDescription>
+            <DialogTitle id={'agent-editor-title'}>{dialogTitle}</DialogTitle>
+            <DialogDescription id={'agent-editor-description'}>{dialogDescription}</DialogDescription>
           </DialogHeader>
 
           {/* Form wraps DialogBody + DialogFooter for submit to work */}
           <form
-            aria-describedby={"agent-editor-description"}
-            aria-labelledby={"agent-editor-title"}
-            className={"flex min-h-0 flex-1 flex-col"}
+            aria-describedby={'agent-editor-description'}
+            aria-labelledby={'agent-editor-title'}
+            className={'flex min-h-0 flex-1 flex-col'}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -753,51 +868,42 @@ export const AgentEditorDialog = ({
             }}
           >
             {/* Scrollable Content */}
-            <DialogBody className={"px-2"}>
+            <DialogBody className={'px-2'}>
               {/* Agent Info Display (Edit Mode Only) */}
               {isEditMode && agent && (
-                <div
-                  className={"rounded-md border border-border bg-muted/50 p-3"}
-                >
-                  <div className={"flex items-center gap-3"}>
+                <div className={'rounded-md border border-border bg-muted/50 p-3'}>
+                  <div className={'flex items-center gap-3'}>
                     {selectedColor && (
                       <div
-                        className={"size-4 rounded-full"}
+                        className={'size-4 rounded-full'}
                         style={{
                           backgroundColor: getAgentColorHex(selectedColor),
                         }}
                       />
                     )}
-                    <div className={"text-sm"}>
-                      <span className={"text-muted-foreground"}>
-                        {"Internal name: "}
-                      </span>
-                      <span className={"font-mono text-foreground"}>
-                        {agent.name}
-                      </span>
+                    <div className={'text-sm'}>
+                      <span className={'text-muted-foreground'}>{'Internal name: '}</span>
+                      <span className={'font-mono text-foreground'}>{agent.name}</span>
                     </div>
                   </div>
                 </div>
               )}
 
-              <fieldset
-                className={"mt-4 flex flex-col gap-4"}
-                disabled={isSubmitting || isResetting || isViewMode}
-              >
-                <legend className={"sr-only"}>{"Agent details"}</legend>
+              <fieldset className={'mt-4 flex flex-col gap-4'} disabled={isSubmitting || isResetting || isViewMode}>
+                <legend className={'sr-only'}>{'Agent details'}</legend>
 
                 {/* Name Field (Create Mode Only) */}
                 {!isEditMode && (
-                  <form.AppField name={"name"}>
+                  <form.AppField name={'name'}>
                     {(field) => (
                       <field.TextField
                         autoFocus={!isDuplicateMode}
                         description={
-                          "A unique identifier using lowercase letters, numbers, and hyphens (e.g., my-custom-agent)"
+                          'A unique identifier using lowercase letters, numbers, and hyphens (e.g., my-custom-agent)'
                         }
                         isRequired
-                        label={"Agent Name"}
-                        placeholder={"my-custom-agent"}
+                        label={'Agent Name'}
+                        placeholder={'my-custom-agent'}
                       />
                     )}
                   </form.AppField>
@@ -805,16 +911,16 @@ export const AgentEditorDialog = ({
 
                 {/* Type Field (Create Mode Only) */}
                 {!isEditMode && (
-                  <form.AppField name={"type"}>
+                  <form.AppField name={'type'}>
                     {(field) => (
                       <field.SelectField
                         description={
-                          "Planning agents handle workflow planning, specialist agents perform specific tasks, review agents validate outputs"
+                          'Planning agents handle workflow planning, specialist agents perform specific tasks, review agents validate outputs'
                         }
-                        label={"Agent Type"}
+                        label={'Agent Type'}
                         onChange={handleAgentTypeChange}
                         options={AGENT_TYPE_OPTIONS}
-                        placeholder={"Select agent type"}
+                        placeholder={'Select agent type'}
                       />
                     )}
                   </form.AppField>
@@ -822,7 +928,7 @@ export const AgentEditorDialog = ({
 
                 {/* Project Assignment Field */}
                 <div className={fieldWrapperVariants()}>
-                  <label className={labelVariants()}>{"Project Assignment"}</label>
+                  <label className={labelVariants()}>{'Project Assignment'}</label>
                   <SelectRoot
                     disabled={isProjectSelectorDisabled}
                     onValueChange={
@@ -835,21 +941,14 @@ export const AgentEditorDialog = ({
                         : (newValue: null | string) => {
                             // For create mode, update local state
                             if (newValue === null) return;
-                            const newProjectId =
-                              newValue === GLOBAL_PROJECT_VALUE
-                                ? null
-                                : Number(newValue);
+                            const newProjectId = newValue === GLOBAL_PROJECT_VALUE ? null : Number(newValue);
                             setSelectedProjectId(newProjectId);
                           }
                     }
-                    value={
-                      selectedProjectId === null
-                        ? GLOBAL_PROJECT_VALUE
-                        : String(selectedProjectId)
-                    }
+                    value={selectedProjectId === null ? GLOBAL_PROJECT_VALUE : String(selectedProjectId)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={"Select project"} />
+                      <SelectValue placeholder={'Select project'} />
                     </SelectTrigger>
                     <SelectPortal>
                       <SelectPositioner>
@@ -867,67 +966,83 @@ export const AgentEditorDialog = ({
                   </SelectRoot>
                   <span className={descriptionVariants()}>
                     {isEditMode
-                      ? "Move this agent to a different project or make it global"
-                      : "Assign this agent to a specific project or make it available globally"}
+                      ? 'Move this agent to a different project or make it global'
+                      : 'Assign this agent to a specific project or make it available globally'}
                   </span>
                 </div>
 
                 {/* Display Name */}
-                <form.AppField name={"displayName"}>
+                <form.AppField name={'displayName'}>
                   {(field) => (
                     <field.TextField
                       autoFocus={isEditMode || isDuplicateMode}
                       isRequired
-                      label={"Display Name"}
-                      placeholder={"Enter display name"}
+                      label={'Display Name'}
+                      placeholder={'Enter display name'}
                     />
                   )}
                 </form.AppField>
 
                 {/* Description */}
-                <form.AppField name={"description"}>
+                <form.AppField name={'description'}>
                   {(field) => (
                     <field.TextareaField
-                      description={
-                        "A brief description of what this agent does"
-                      }
-                      label={"Description"}
+                      description={'A brief description of what this agent does'}
+                      label={'Description'}
                       placeholder={"Describe the agent's purpose..."}
                       rows={3}
                     />
                   )}
                 </form.AppField>
 
+                {/* Model */}
+                <form.AppField name={'model'}>
+                  {(field) => (
+                    <field.SelectField
+                      description={'Model to use for this agent. Leave empty to inherit from parent.'}
+                      label={'Model'}
+                      options={MODEL_OPTIONS}
+                      placeholder={'Select model'}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Permission Mode */}
+                <form.AppField name={'permissionMode'}>
+                  {(field) => (
+                    <field.SelectField
+                      description={'How Claude handles permission requests'}
+                      label={'Permission Mode'}
+                      options={PERMISSION_MODE_OPTIONS}
+                      placeholder={'Select permission mode'}
+                    />
+                  )}
+                </form.AppField>
+
                 {/* Color Picker - Form field for create mode, standalone for edit mode */}
                 {!isEditMode ? (
-                  <form.AppField name={"color"}>
+                  <form.AppField name={'color'}>
                     {(field) => (
-                      <field.ColorPickerField
-                        isDisabled={isSubmitting || isResetting}
-                        isRequired
-                        label={"Color Tag"}
-                      />
+                      <field.ColorPickerField isDisabled={isSubmitting || isResetting} isRequired label={'Color Tag'} />
                     )}
                   </form.AppField>
                 ) : (
                   <AgentColorPicker
                     disabled={isSubmitting || isResetting}
-                    label={"Color Tag"}
+                    label={'Color Tag'}
                     onChange={setSelectedColor}
                     value={selectedColor}
                   />
                 )}
 
                 {/* System Prompt */}
-                <form.AppField name={"systemPrompt"}>
+                <form.AppField name={'systemPrompt'}>
                   {(field) => (
                     <field.TextareaField
-                      description={
-                        "The system prompt that defines how this agent behaves"
-                      }
+                      description={'The system prompt that defines how this agent behaves'}
                       isRequired
-                      label={"System Prompt"}
-                      placeholder={"Enter the system prompt..."}
+                      label={'System Prompt'}
+                      placeholder={'Enter the system prompt...'}
                       rows={12}
                     />
                   )}
@@ -935,90 +1050,58 @@ export const AgentEditorDialog = ({
               </fieldset>
 
               {/* Collapsible sections outside fieldset so they can be expanded in view mode */}
-              <div className={"mt-4 flex flex-col gap-4"}>
-                {/* Tools Section - Show in both create and edit modes */}
-                <Collapsible
-                  className={"rounded-md border border-border"}
-                  defaultOpen={!isEditMode}
-                >
-                  <CollapsibleTrigger
-                    className={"w-full justify-start px-3 py-2"}
-                  >
-                    {"Allowed Tools"}
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className={"border-t border-border p-3"}>
-                      <AgentToolsSection
-                        customTools={customTools}
-                        disabled={isSubmitting || isResetting || isViewMode}
-                        onCustomToolsChange={
-                          isEditMode
-                            ? handleEditModeCustomToolsChange
-                            : setCustomTools
-                        }
-                        onToolSelectionsChange={
-                          isEditMode
-                            ? handleEditModeToolSelectionsChange
-                            : setToolSelections
-                        }
-                        toolSelections={toolSelections}
-                      />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
+              <div className={'mt-4 flex flex-col gap-4'}>
+                {/* Tools Section - Memoized to prevent re-renders */}
+                <ToolsCollapsibleSection
+                  customTools={customTools}
+                  isDisabled={isCollapsibleDisabled}
+                  isEditMode={isEditMode}
+                  onCustomToolsChange={setCustomTools}
+                  onEditModeCustomToolsChange={handleEditModeCustomToolsChange}
+                  onEditModeToolSelectionsChange={handleEditModeToolSelectionsChange}
+                  onToolSelectionsChange={setToolSelections}
+                  toolSelections={toolSelections}
+                />
 
-                {/* Skills Section - Show in both create and edit modes */}
-                <Collapsible className={"rounded-md border border-border"}>
-                  <CollapsibleTrigger
-                    className={"w-full justify-start px-3 py-2"}
-                  >
-                    {"Referenced Skills"}
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className={"border-t border-border p-3"}>
-                      {isEditAgent ? (
-                        <AgentSkillsManager
-                          agentId={agent.id}
-                          disabled={isSubmitting || isResetting || isViewMode}
-                        />
-                      ) : (
-                        <AgentSkillsSection
-                          disabled={isSubmitting || isResetting}
-                          onSkillsChange={setPendingSkills}
-                          skills={pendingSkills}
-                        />
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
+                {/* Skills Section - Memoized to prevent re-renders */}
+                <SkillsCollapsibleSection
+                  agentId={agent?.id}
+                  isDisabled={isCollapsibleDisabled}
+                  isEditAgent={isEditAgent}
+                  onSkillsChange={setPendingSkills}
+                  pendingSkills={pendingSkills}
+                />
+
+                {/* Hooks Section - Memoized to prevent re-renders */}
+                <HooksCollapsibleSection
+                  hooks={pendingHooks}
+                  isDisabled={isCollapsibleDisabled}
+                  onHooksChange={setPendingHooks}
+                />
               </div>
             </DialogBody>
 
             {/* Sticky Footer */}
-            <DialogFooter alignment={"between"}>
+            <DialogFooter alignment={'between'}>
               {/* Reset Button - only for customized agents in edit mode, hidden in view mode */}
               <div>
                 {isResetButtonVisible && (
                   <Button
                     disabled={isSubmitting || isResetting}
                     onClick={handleResetClick}
-                    type={"button"}
-                    variant={"outline"}
+                    type={'button'}
+                    variant={'outline'}
                   >
-                    {"Reset to Default"}
+                    {'Reset to Default'}
                   </Button>
                 )}
               </div>
 
               {/* Cancel and Save Buttons */}
-              <div className={"flex gap-3"}>
+              <div className={'flex gap-3'}>
                 <DialogClose>
-                  <Button
-                    disabled={isSubmitting || isResetting}
-                    type={"button"}
-                    variant={"outline"}
-                  >
-                    {isViewMode ? "Close" : "Cancel"}
+                  <Button disabled={isSubmitting || isResetting} type={'button'} variant={'outline'}>
+                    {isViewMode ? 'Close' : 'Cancel'}
                   </Button>
                 </DialogClose>
                 {!isViewMode && (

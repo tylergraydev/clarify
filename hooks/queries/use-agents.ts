@@ -1,18 +1,13 @@
-"use client";
+'use client';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type {
-  AgentExportBatchItem,
-  AgentImportInput,
-  AgentListFilters,
-  NewAgent,
-} from "@/types/electron";
+import type { AgentExportBatchItem, AgentImportInput, AgentListFilters, NewAgent } from '@/types/electron';
 
-import { agentKeys } from "@/lib/queries/agents";
+import { agentKeys } from '@/lib/queries/agents';
 
-import { useElectron } from "../use-electron";
-import { useToast } from "../use-toast";
+import { useElectron } from '../use-electron';
+import { useToast } from '../use-toast';
 
 // ============================================================================
 // Query Hooks
@@ -27,45 +22,22 @@ export function useActivateAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.agent.activate(id),
+    mutationFn: async (id: number) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.activate(id);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to activate agent",
-        title: "Activation Failed",
+        description: error instanceof Error ? error.message : 'Failed to activate agent',
+        title: 'Activation Failed',
       });
     },
     onSuccess: (agent) => {
       if (agent) {
         // Update detail cache directly
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Invalidate general list queries
-        void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-        // Invalidate all queries (unified view)
-        void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-        // Invalidate active queries
+        // Only invalidate active queries since activation status changed
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
-
-        // Invalidate scope-specific queries based on whether agent has projectId
-        if (agent.projectId) {
-          // Invalidate project-scoped queries for this project
-          void queryClient.invalidateQueries({
-            queryKey: agentKeys.projectScoped._def,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: agentKeys.byProject(agent.projectId).queryKey,
-          });
-        } else {
-          // Invalidate global queries
-          void queryClient.invalidateQueries({
-            queryKey: agentKeys.global._def,
-          });
-        }
-
-        // Invalidate type-specific queries
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byType(agent.type).queryKey,
-        });
       }
     },
   });
@@ -80,11 +52,13 @@ export function useActiveAgents(projectId?: number) {
   return useQuery({
     ...agentKeys.active(projectId),
     enabled: isElectron,
-    queryFn: () =>
-      api!.agent.list({
+    queryFn: async () => {
+      if (!api) throw new Error('API not available');
+      return api.agent.list({
         includeDeactivated: false,
         projectId,
-      }),
+      });
+    },
   });
 }
 
@@ -97,7 +71,10 @@ export function useAgent(id: number) {
   return useQuery({
     ...agentKeys.detail(id),
     enabled: isElectron && id > 0,
-    queryFn: () => api!.agent.get(id),
+    queryFn: async () => {
+      if (!api) throw new Error('API not available');
+      return api.agent.get(id);
+    },
   });
 }
 
@@ -110,7 +87,10 @@ export function useAgents(filters?: AgentListFilters) {
   return useQuery({
     ...agentKeys.list(filters),
     enabled: isElectron,
-    queryFn: () => api!.agent.list(filters),
+    queryFn: async () => {
+      if (!api) throw new Error('API not available');
+      return api.agent.list(filters);
+    },
   });
 }
 
@@ -123,20 +103,26 @@ export function useAgentsByProject(projectId: number) {
   return useQuery({
     ...agentKeys.byProject(projectId),
     enabled: isElectron && projectId > 0,
-    queryFn: () => api!.agent.list({ projectId }),
+    queryFn: async () => {
+      if (!api) throw new Error('API not available');
+      return api.agent.list({ projectId });
+    },
   });
 }
 
 /**
  * Fetch agents filtered by type
  */
-export function useAgentsByType(type: "planning" | "review" | "specialist") {
+export function useAgentsByType(type: 'planning' | 'review' | 'specialist') {
   const { api, isElectron } = useElectron();
 
   return useQuery({
     ...agentKeys.byType(type),
     enabled: isElectron && Boolean(type),
-    queryFn: () => api!.agent.list({ type }),
+    queryFn: async () => {
+      if (!api) throw new Error('API not available');
+      return api.agent.list({ type });
+    },
   });
 }
 
@@ -154,12 +140,14 @@ export function useAllAgents(filters?: {
   return useQuery({
     ...agentKeys.all(filters),
     enabled: isElectron,
-    queryFn: () =>
-      api!.agent.list({
+    queryFn: async () => {
+      if (!api) throw new Error('API not available');
+      return api.agent.list({
         includeDeactivated: filters?.includeDeactivated,
         includeSkills: filters?.includeSkills,
         includeTools: filters?.includeTools,
-      }),
+      });
+    },
   });
 }
 
@@ -173,7 +161,8 @@ export function useBuiltInAgents() {
     ...agentKeys.builtIn,
     enabled: isElectron,
     queryFn: async () => {
-      const agents = await api!.agent.list();
+      if (!api) throw new Error('API not available');
+      const agents = await api.agent.list();
       // Agent is built-in if builtInAt is not null
       return agents.filter((agent) => agent.builtInAt !== null);
     },
@@ -189,55 +178,43 @@ export function useCopyAgentToProject() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({
-      agentId,
-      targetProjectId,
-    }: {
-      agentId: number;
-      targetProjectId: number;
-    }) => api!.agent.copyToProject(agentId, targetProjectId),
+    mutationFn: async ({ agentId, targetProjectId }: { agentId: number; targetProjectId: number }) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.copyToProject(agentId, targetProjectId);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to copy agent",
-        title: "Copy Failed",
+        description: error instanceof Error ? error.message : 'Failed to copy agent',
+        title: 'Copy Failed',
       });
     },
     onSuccess: (result, variables) => {
       if (!result.success) {
         toast.error({
-          description: result.error ?? "Failed to copy agent",
-          title: "Copy Failed",
+          description: result.error ?? 'Failed to copy agent',
+          title: 'Copy Failed',
         });
         return;
       }
 
       const agent = result.agent;
 
-      // Invalidate all agent-related queries to ensure UI consistency
-      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
-      void queryClient.invalidateQueries({
-        queryKey: agentKeys.projectScoped._def,
-      });
+      // Set detail cache for the new agent
+      if (agent) {
+        queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
+      }
+
+      // Invalidate only the target project's queries since a new agent was added there
       void queryClient.invalidateQueries({
         queryKey: agentKeys.byProject(variables.targetProjectId).queryKey,
       });
-      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
-
-      // Update detail cache if we have the agent
-      if (agent) {
-        queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Invalidate type-specific queries
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byType(agent.type).queryKey,
-        });
-      }
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.projectScoped._def,
+      });
 
       toast.success({
-        description: "Agent copied to project successfully",
-        title: "Agent Copied",
+        description: 'Agent copied to project successfully',
+        title: 'Agent Copied',
       });
     },
   });
@@ -252,47 +229,31 @@ export function useCreateAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (data: NewAgent) => api!.agent.create(data),
+    mutationFn: async (data: NewAgent) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.create(data);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to create agent",
-        title: "Create Failed",
+        description: error instanceof Error ? error.message : 'Failed to create agent',
+        title: 'Create Failed',
       });
     },
     onSuccess: (result) => {
       if (!result.success) {
         toast.error({
-          description: result.error ?? "Failed to create agent",
-          title: "Create Failed",
+          description: result.error ?? 'Failed to create agent',
+          title: 'Create Failed',
         });
         return;
       }
-      const agent = result.agent;
-      // Invalidate general list queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-      // Invalidate all queries (unified view)
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-      // Invalidate active queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
 
-      // Invalidate scope-specific queries based on whether agent has projectId
-      if (agent?.projectId) {
-        // Invalidate project-scoped queries for this project
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.projectScoped._def,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byProject(agent.projectId).queryKey,
-        });
-      } else {
-        // Invalidate global queries
-        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
-      }
+      // Invalidate list queries to show the new agent
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
 
       toast.success({
-        description: "Agent created successfully",
-        title: "Agent Created",
+        description: 'Agent created successfully',
+        title: 'Agent Created',
       });
     },
   });
@@ -311,57 +272,42 @@ export function useCreateAgentOverride() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({
-      agentId,
-      projectId,
-    }: {
-      agentId: number;
-      projectId: number;
-    }) => api!.agent.createOverride(agentId, projectId),
+    mutationFn: async ({ agentId, projectId }: { agentId: number; projectId: number }) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.createOverride(agentId, projectId);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to create agent override",
-        title: "Override Failed",
+        description: error instanceof Error ? error.message : 'Failed to create agent override',
+        title: 'Override Failed',
       });
     },
     onSuccess: (result, variables) => {
       if (!result.success) {
         toast.error({
-          description: result.error ?? "Failed to create agent override",
-          title: "Override Failed",
+          description: result.error ?? 'Failed to create agent override',
+          title: 'Override Failed',
         });
         return;
       }
       const agent = result.agent;
 
-      // Invalidate general list queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-      // Invalidate all queries (unified view)
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-      // Invalidate active queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
-      // Invalidate global queries (source agent)
-      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
-      // Invalidate project-scoped queries for the target project
-      void queryClient.invalidateQueries({
-        queryKey: agentKeys.projectScoped._def,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: agentKeys.byProject(variables.projectId).queryKey,
-      });
-
-      // Update detail cache if we have the agent
+      // Set detail cache for the new override
       if (agent) {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
       }
 
+      // Invalidate the specific project's queries since an override was created there
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.byProject(variables.projectId).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.projectScoped._def,
+      });
+
       toast.success({
-        description:
-          "Project override created successfully. You can now customize this agent for your project.",
-        title: "Override Created",
+        description: 'Project override created successfully. You can now customize this agent for your project.',
+        title: 'Override Created',
       });
     },
   });
@@ -376,45 +322,22 @@ export function useDeactivateAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.agent.deactivate(id),
+    mutationFn: async (id: number) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.deactivate(id);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to deactivate agent",
-        title: "Deactivation Failed",
+        description: error instanceof Error ? error.message : 'Failed to deactivate agent',
+        title: 'Deactivation Failed',
       });
     },
     onSuccess: (agent) => {
       if (agent) {
         // Update detail cache directly
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Invalidate general list queries
-        void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-        // Invalidate all queries (unified view)
-        void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-        // Invalidate active queries
+        // Only invalidate active queries since deactivation status changed
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
-
-        // Invalidate scope-specific queries based on whether agent has projectId
-        if (agent.projectId) {
-          // Invalidate project-scoped queries for this project
-          void queryClient.invalidateQueries({
-            queryKey: agentKeys.projectScoped._def,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: agentKeys.byProject(agent.projectId).queryKey,
-          });
-        } else {
-          // Invalidate global queries
-          void queryClient.invalidateQueries({
-            queryKey: agentKeys.global._def,
-          });
-        }
-
-        // Invalidate type-specific queries
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byType(agent.type).queryKey,
-        });
       }
     },
   });
@@ -432,47 +355,23 @@ export function useDeleteAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ id }: { id: number; projectId?: number }) =>
-      api!.agent.delete(id),
+    mutationFn: async ({ id }: { id: number; projectId?: number }) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.delete(id);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to delete agent",
-        title: "Delete Failed",
+        description: error instanceof Error ? error.message : 'Failed to delete agent',
+        title: 'Delete Failed',
       });
     },
     onSuccess: (result, variables) => {
       if (!result.success) {
         toast.error({
-          description: result.error ?? "Failed to delete agent",
-          title: "Delete Failed",
+          description: result.error ?? 'Failed to delete agent',
+          title: 'Delete Failed',
         });
         return;
-      }
-
-      // Invalidate general list queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-      // Invalidate all queries (unified view)
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-      // Invalidate active queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
-      // Invalidate builtIn queries (in case this was related to a built-in override)
-      void queryClient.invalidateQueries({
-        queryKey: agentKeys.builtIn.queryKey,
-      });
-
-      // Invalidate scope-specific queries based on whether agent had projectId
-      if (variables.projectId) {
-        // Invalidate project-scoped queries for this project
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.projectScoped._def,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byProject(variables.projectId).queryKey,
-        });
-      } else {
-        // Invalidate global queries
-        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
       }
 
       // Remove the deleted agent from detail cache
@@ -480,9 +379,12 @@ export function useDeleteAgent() {
         queryKey: agentKeys.detail(variables.id).queryKey,
       });
 
+      // Invalidate list queries to remove the deleted agent from lists
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+
       toast.success({
-        description: "Agent deleted successfully",
-        title: "Agent Deleted",
+        description: 'Agent deleted successfully',
+        title: 'Agent Deleted',
       });
     },
   });
@@ -497,56 +399,31 @@ export function useDuplicateAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.agent.duplicate(id),
+    mutationFn: async (id: number) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.duplicate(id);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to duplicate agent",
-        title: "Duplicate Failed",
+        description: error instanceof Error ? error.message : 'Failed to duplicate agent',
+        title: 'Duplicate Failed',
       });
     },
     onSuccess: (result) => {
       if (!result.success) {
         toast.error({
-          description: result.error ?? "Failed to duplicate agent",
-          title: "Duplicate Failed",
+          description: result.error ?? 'Failed to duplicate agent',
+          title: 'Duplicate Failed',
         });
         return;
       }
 
-      const agent = result.agent;
-
-      // Invalidate general list queries
+      // Invalidate list queries to show the duplicated agent
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-      // Invalidate all queries (unified view)
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-      // Invalidate active queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
-
-      // Invalidate scope-specific queries based on whether duplicated agent has projectId
-      if (agent?.projectId) {
-        // Invalidate project-scoped queries for this project
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.projectScoped._def,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byProject(agent.projectId).queryKey,
-        });
-      } else {
-        // Invalidate global queries
-        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
-      }
-
-      // Invalidate type-specific queries if agent exists
-      if (agent) {
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byType(agent.type).queryKey,
-        });
-      }
 
       toast.success({
-        description: "Agent duplicated successfully",
-        title: "Agent Duplicated",
+        description: 'Agent duplicated successfully',
+        title: 'Agent Duplicated',
       });
     },
   });
@@ -560,12 +437,14 @@ export function useExportAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.agent.export(id),
+    mutationFn: async (id: number) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.export(id);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to export agent",
-        title: "Export Failed",
+        description: error instanceof Error ? error.message : 'Failed to export agent',
+        title: 'Export Failed',
       });
     },
   });
@@ -579,13 +458,14 @@ export function useExportAgentsBatch() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (ids: Array<number>): Promise<Array<AgentExportBatchItem>> =>
-      api!.agent.exportBatch(ids),
+    mutationFn: async (ids: Array<number>): Promise<Array<AgentExportBatchItem>> => {
+      if (!api) throw new Error('API not available');
+      return api.agent.exportBatch(ids);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to export agents",
-        title: "Export Failed",
+        description: error instanceof Error ? error.message : 'Failed to export agents',
+        title: 'Export Failed',
       });
     },
   });
@@ -594,21 +474,20 @@ export function useExportAgentsBatch() {
 /**
  * Fetch global agents (agents with no projectId)
  */
-export function useGlobalAgents(filters?: {
-  includeDeactivated?: boolean;
-  type?: string;
-}) {
+export function useGlobalAgents(filters?: { includeDeactivated?: boolean; type?: string }) {
   const { api, isElectron } = useElectron();
 
   return useQuery({
     ...agentKeys.global(filters),
     enabled: isElectron,
-    queryFn: () =>
-      api!.agent.list({
+    queryFn: async () => {
+      if (!api) throw new Error('API not available');
+      return api.agent.list({
         includeDeactivated: filters?.includeDeactivated,
-        scope: "global",
-        type: filters?.type as AgentListFilters["type"],
-      }),
+        scope: 'global',
+        type: filters?.type as AgentListFilters['type'],
+      });
+    },
   });
 }
 
@@ -621,57 +500,48 @@ export function useImportAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (data: AgentImportInput) => api!.agent.import(data),
+    mutationFn: async (data: AgentImportInput) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.import(data);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to import agent",
-        title: "Import Failed",
+        description: error instanceof Error ? error.message : 'Failed to import agent',
+        title: 'Import Failed',
       });
     },
     onSuccess: (result) => {
       if (!result.success) {
         // Show validation errors
-        const errorMessage = result.errors
-          ?.map((e) => `${e.field}: ${e.message}`)
-          .join("; ");
+        const errorMessage = result.errors?.map((e) => `${e.field}: ${e.message}`).join('; ');
         toast.error({
-          description: errorMessage ?? "Failed to import agent",
-          title: "Import Failed",
+          description: errorMessage ?? 'Failed to import agent',
+          title: 'Import Failed',
         });
         return;
       }
 
       const agent = result.agent;
 
-      // Invalidate all agent-related queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
-      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
-
-      // Update detail cache if we have the agent
+      // Set detail cache for the imported agent
       if (agent) {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Invalidate type-specific queries
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byType(agent.type).queryKey,
-        });
       }
+
+      // Invalidate list queries to show the imported agent
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
 
       // Show warnings if any
       if (result.warnings && result.warnings.length > 0) {
-        const warningMessage = result.warnings
-          .map((w) => `${w.field}: ${w.message}`)
-          .join("; ");
+        const warningMessage = result.warnings.map((w) => `${w.field}: ${w.message}`).join('; ');
         toast.warning({
           description: warningMessage,
-          title: "Agent Imported with Warnings",
+          title: 'Agent Imported with Warnings',
         });
       } else {
         toast.success({
-          description: "Agent imported successfully",
-          title: "Agent Imported",
+          description: 'Agent imported successfully',
+          title: 'Agent Imported',
         });
       }
     },
@@ -688,53 +558,44 @@ export function useMoveAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({
-      agentId,
-      targetProjectId,
-    }: {
-      agentId: number;
-      targetProjectId: null | number;
-    }) => api!.agent.move(agentId, targetProjectId),
+    mutationFn: async ({ agentId, targetProjectId }: { agentId: number; targetProjectId: null | number }) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.move(agentId, targetProjectId);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to move agent",
-        title: "Move Failed",
+        description: error instanceof Error ? error.message : 'Failed to move agent',
+        title: 'Move Failed',
       });
     },
     onSuccess: (result) => {
       if (!result.success) {
         toast.error({
-          description: result.error ?? "Failed to move agent",
-          title: "Move Failed",
+          description: result.error ?? 'Failed to move agent',
+          title: 'Move Failed',
         });
         return;
       }
 
       const agent = result.agent;
 
-      // Invalidate all agent-related queries to ensure UI consistency
-      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      // Update detail cache with new project assignment
+      if (agent) {
+        queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
+      }
+
+      // For move operations, invalidate source and target project caches
+      // Use byProject._def to invalidate all byProject queries (covers source and target)
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
       void queryClient.invalidateQueries({
         queryKey: agentKeys.projectScoped._def,
       });
-      void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
-      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
-
-      // Update detail cache if we have the agent
-      if (agent) {
-        queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Invalidate type-specific queries
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byType(agent.type).queryKey,
-        });
-      }
+      // Also invalidate global in case moving to/from global scope
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
 
       toast.success({
-        description: "Agent moved successfully",
-        title: "Agent Moved",
+        description: 'Agent moved successfully',
+        title: 'Agent Moved',
       });
     },
   });
@@ -743,22 +604,21 @@ export function useMoveAgent() {
 /**
  * Fetch project-scoped agents for a specific project
  */
-export function useProjectAgents(
-  projectId: number,
-  filters?: { includeDeactivated?: boolean; type?: string }
-) {
+export function useProjectAgents(projectId: number, filters?: { includeDeactivated?: boolean; type?: string }) {
   const { api, isElectron } = useElectron();
 
   return useQuery({
     ...agentKeys.projectScoped(projectId, filters),
     enabled: isElectron && projectId > 0,
-    queryFn: () =>
-      api!.agent.list({
+    queryFn: async () => {
+      if (!api) throw new Error('API not available');
+      return api.agent.list({
         includeDeactivated: filters?.includeDeactivated,
         projectId,
-        scope: "project",
-        type: filters?.type as AgentListFilters["type"],
-      }),
+        scope: 'project',
+        type: filters?.type as AgentListFilters['type'],
+      });
+    },
   });
 }
 
@@ -776,61 +636,43 @@ export function useResetAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ id }: { id: number; projectId?: number }) =>
-      api!.agent.reset(id),
+    mutationFn: async ({ id }: { id: number; projectId?: number }) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.reset(id);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to reset agent",
-        title: "Reset Failed",
+        description: error instanceof Error ? error.message : 'Failed to reset agent',
+        title: 'Reset Failed',
       });
     },
     onSuccess: (agent, variables) => {
-      // Invalidate general list queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-      // Invalidate all queries (unified view)
-      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-      // Invalidate active queries
-      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
-      // Invalidate builtIn queries
-      void queryClient.invalidateQueries({
-        queryKey: agentKeys.builtIn.queryKey,
+      // Remove the detail cache for the reset/deleted override
+      queryClient.removeQueries({
+        queryKey: agentKeys.detail(variables.id).queryKey,
       });
 
-      // Handle scope-specific invalidation
-      // For project overrides being reset, we need to invalidate the project cache
-      // The returned agent is the parent (global) agent, not the deleted override
+      // Update detail cache for the returned agent (parent after reset)
+      if (agent) {
+        queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
+      }
+
+      // For project overrides, invalidate project-specific caches
       if (variables.projectId) {
-        // Invalidate project-scoped queries for this project
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.projectScoped._def,
-        });
         void queryClient.invalidateQueries({
           queryKey: agentKeys.byProject(variables.projectId).queryKey,
         });
-        // Also invalidate global since the parent agent may have been reactivated
-        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
-        // Remove the detail cache for the deleted override
-        queryClient.removeQueries({
-          queryKey: agentKeys.detail(variables.id).queryKey,
+        void queryClient.invalidateQueries({
+          queryKey: agentKeys.projectScoped._def,
         });
-      } else {
-        // Invalidate global queries
-        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
       }
 
-      if (agent) {
-        // Update detail cache for the returned agent (parent after reset)
-        queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Invalidate type-specific queries
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byType(agent.type).queryKey,
-        });
-      }
+      // Invalidate global queries since parent may have been reactivated
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
 
       toast.success({
-        description: "Agent reset to default successfully",
-        title: "Agent Reset",
+        description: 'Agent reset to default successfully',
+        title: 'Agent Reset',
       });
     },
   });
@@ -845,57 +687,35 @@ export function useUpdateAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Partial<NewAgent>; id: number }) =>
-      api!.agent.update(id, data),
+    mutationFn: async ({ data, id }: { data: Partial<NewAgent>; id: number }) => {
+      if (!api) throw new Error('API not available');
+      return api.agent.update(id, data);
+    },
     onError: (error) => {
       toast.error({
-        description:
-          error instanceof Error ? error.message : "Failed to update agent",
-        title: "Update Failed",
+        description: error instanceof Error ? error.message : 'Failed to update agent',
+        title: 'Update Failed',
       });
     },
     onSuccess: (result) => {
       if (!result.success) {
         toast.error({
-          description: result.error ?? "Failed to update agent",
-          title: "Update Failed",
+          description: result.error ?? 'Failed to update agent',
+          title: 'Update Failed',
         });
         return;
       }
       const agent = result.agent;
       if (agent) {
-        // Update detail cache directly
+        // Update detail cache directly - this is the primary optimization
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Invalidate list queries
+
+        // Invalidate list queries to reflect updated data in list views
         void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
-        // Invalidate all queries (unified view)
-        void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
-        // Invalidate active queries
-        void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
 
-        // Invalidate scope-specific queries based on whether agent has projectId
-        if (agent.projectId) {
-          // Invalidate project-scoped queries for this project
-          void queryClient.invalidateQueries({
-            queryKey: agentKeys.projectScoped._def,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: agentKeys.byProject(agent.projectId).queryKey,
-          });
-        } else {
-          // Invalidate global queries
-          void queryClient.invalidateQueries({
-            queryKey: agentKeys.global._def,
-          });
-        }
-
-        // Invalidate type-specific queries
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byType(agent.type).queryKey,
-        });
         toast.success({
-          description: "Agent updated successfully",
-          title: "Agent Updated",
+          description: 'Agent updated successfully',
+          title: 'Agent Updated',
         });
       }
     },

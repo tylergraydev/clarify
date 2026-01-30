@@ -182,12 +182,12 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 
 ## 8. Project Documentation Conventions (Important)
 
-| Document Type           | Location                                                      |
-| ----------------------- | ------------------------------------------------------------- |
+| Document Type           | Location                                                              |
+| ----------------------- | --------------------------------------------------------------------- |
 | Design Documents        | `docs/clarify-design-document.md`, `docs/database-design-document.md` |
-| Orchestration Outputs   | `docs/YYYY_MM_DD/orchestration/<feature-name>/`               |
-| Implementation Plans    | `docs/YYYY_MM_DD/plans/<feature-name>-implementation-plan.md` |
-| Implementation Tracking | `docs/YYYY_MM_DD/implementation/<feature-name>/`              |
+| Orchestration Outputs   | `docs/YYYY_MM_DD/orchestration/<feature-name>/`                       |
+| Implementation Plans    | `docs/YYYY_MM_DD/plans/<feature-name>-implementation-plan.md`         |
+| Implementation Tracking | `docs/YYYY_MM_DD/implementation/<feature-name>/`                      |
 
 > **Note**: Always verify that target directories exist before creating new files. Use existing patterns in the codebase as templates for new additions.
 

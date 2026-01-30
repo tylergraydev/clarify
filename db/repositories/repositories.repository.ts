@@ -1,9 +1,9 @@
-import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from 'drizzle-orm';
 
-import type { DrizzleDatabase } from "../index";
-import type { NewRepository, Repository } from "../schema";
+import type { DrizzleDatabase } from '../index';
+import type { NewRepository, Repository } from '../schema';
 
-import { repositories } from "../schema";
+import { repositories } from '../schema';
 
 export interface RepositoriesRepository {
   clearDefault(id: number): Repository | undefined;
@@ -18,9 +18,7 @@ export interface RepositoriesRepository {
   update(id: number, data: Partial<NewRepository>): Repository | undefined;
 }
 
-export function createRepositoriesRepository(
-  db: DrizzleDatabase
-): RepositoriesRepository {
+export function createRepositoriesRepository(db: DrizzleDatabase): RepositoriesRepository {
   return {
     clearDefault(id: number): Repository | undefined {
       return db
@@ -36,58 +34,34 @@ export function createRepositoriesRepository(
     },
 
     delete(id: number): boolean {
-      const result = db
-        .delete(repositories)
-        .where(eq(repositories.id, id))
-        .run();
+      const result = db.delete(repositories).where(eq(repositories.id, id)).run();
       return result.changes > 0;
     },
 
     findAll(options?: { projectId?: number }): Array<Repository> {
       if (options?.projectId) {
-        return db
-          .select()
-          .from(repositories)
-          .where(eq(repositories.projectId, options.projectId))
-          .all();
+        return db.select().from(repositories).where(eq(repositories.projectId, options.projectId)).all();
       }
       return db.select().from(repositories).all();
     },
 
     findById(id: number): Repository | undefined {
-      return db
-        .select()
-        .from(repositories)
-        .where(eq(repositories.id, id))
-        .get();
+      return db.select().from(repositories).where(eq(repositories.id, id)).get();
     },
 
     findByPath(path: string): Repository | undefined {
-      return db
-        .select()
-        .from(repositories)
-        .where(eq(repositories.path, path))
-        .get();
+      return db.select().from(repositories).where(eq(repositories.path, path)).get();
     },
 
     findByProjectId(projectId: number): Array<Repository> {
-      return db
-        .select()
-        .from(repositories)
-        .where(eq(repositories.projectId, projectId))
-        .all();
+      return db.select().from(repositories).where(eq(repositories.projectId, projectId)).all();
     },
 
     findDefault(projectId: number): Repository | undefined {
       return db
         .select()
         .from(repositories)
-        .where(
-          and(
-            eq(repositories.projectId, projectId),
-            isNotNull(repositories.setAsDefaultAt)
-          )
-        )
+        .where(and(eq(repositories.projectId, projectId), isNotNull(repositories.setAsDefaultAt)))
         .get();
     },
 

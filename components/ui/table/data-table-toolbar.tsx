@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import type { Table } from "@tanstack/react-table";
-import type { ChangeEvent, ComponentPropsWithRef, ReactNode } from "react";
+import type { Table } from '@tanstack/react-table';
+import type { ChangeEvent, ComponentPropsWithRef, ReactNode } from 'react';
 
-import { Button as BaseButton } from "@base-ui/react/button";
-import { cva, type VariantProps } from "class-variance-authority";
-import { RotateCcw, Search, Settings2, X } from "lucide-react";
-import { Fragment, useCallback, useMemo, useState } from "react";
+import { Button as BaseButton } from '@base-ui/react/button';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { RotateCcw, Search, Settings2, X } from 'lucide-react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenuGroup,
   DropdownMenuGroupLabel,
@@ -19,11 +19,11 @@ import {
   DropdownMenuRoot,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { IconButton } from "@/components/ui/icon-button";
-import { Input } from "@/components/ui/input";
-import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/dropdown-menu';
+import { IconButton } from '@/components/ui/icon-button';
+import { Input } from '@/components/ui/input';
+import { useDebouncedCallback } from '@/hooks/use-debounced-callback';
+import { cn } from '@/lib/utils';
 
 // =============================================================================
 // Constants
@@ -44,13 +44,13 @@ export const dataTableToolbarVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "py-4",
-        lg: "py-6",
-        sm: "py-2",
+        default: 'py-4',
+        lg: 'py-6',
+        sm: 'py-2',
       },
     },
   }
@@ -67,13 +67,13 @@ export const dataTableToolbarButtonVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "h-9 px-3",
-        lg: "h-10 px-4",
-        sm: "h-8 px-2 text-xs",
+        default: 'h-9 px-3',
+        lg: 'h-10 px-4',
+        sm: 'h-8 px-2 text-xs',
       },
     },
   }
@@ -84,9 +84,7 @@ export const dataTableToolbarButtonVariants = cva(
 // =============================================================================
 
 interface DataTableToolbarProps<TData>
-  extends
-    ComponentPropsWithRef<"div">,
-    VariantProps<typeof dataTableToolbarVariants> {
+  extends ComponentPropsWithRef<'div'>, VariantProps<typeof dataTableToolbarVariants> {
   /**
    * Additional actions to render in the toolbar.
    * Useful for bulk actions, export buttons, etc.
@@ -139,7 +137,7 @@ interface GlobalFilterInputProps {
   onGlobalFilterChange?: (value: string) => void;
   searchPlaceholder: string;
   setGlobalFilter: (value: string) => void;
-  size?: "default" | "lg" | "sm";
+  size?: 'default' | 'lg' | 'sm';
 }
 
 /**
@@ -151,7 +149,7 @@ const GlobalFilterInput = ({
   onGlobalFilterChange,
   searchPlaceholder,
   setGlobalFilter,
-  size = "default",
+  size = 'default',
 }: GlobalFilterInputProps) => {
   const [inputValue, setInputValue] = useState(globalFilter);
 
@@ -164,10 +162,7 @@ const GlobalFilterInput = ({
     [setGlobalFilter, onGlobalFilterChange]
   );
 
-  const { debounced: debouncedSetFilter } = useDebouncedCallback(
-    handleFilterUpdate,
-    { delay: filterDebounceDelay }
-  );
+  const { debounced: debouncedSetFilter } = useDebouncedCallback(handleFilterUpdate, { delay: filterDebounceDelay });
 
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -179,45 +174,35 @@ const GlobalFilterInput = ({
   );
 
   const handleClear = useCallback(() => {
-    setInputValue("");
-    debouncedSetFilter("");
+    setInputValue('');
+    debouncedSetFilter('');
   }, [debouncedSetFilter]);
 
   return (
-    <div className={"relative"}>
+    <div className={'relative'}>
       <Search
-        aria-hidden={"true"}
+        aria-hidden={'true'}
         className={cn(
-          "absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground",
-          size === "sm" ? "size-3.5" : "size-4"
+          'absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground',
+          size === 'sm' ? 'size-3.5' : 'size-4'
         )}
       />
       <Input
-        aria-label={"Search table"}
-        className={cn(
-          "pl-9",
-          inputValue ? "pr-8" : "",
-          size === "sm" ? "w-[180px]" : "w-[240px]"
-        )}
+        aria-label={'Search table'}
+        className={cn('pl-9', inputValue ? 'pr-8' : '', size === 'sm' ? 'w-[180px]' : 'w-[240px]')}
         onChange={handleInputChange}
         placeholder={searchPlaceholder}
         size={size}
-        type={"text"}
+        type={'text'}
         value={inputValue}
       />
       {inputValue && (
         <IconButton
-          aria-label={"Clear search"}
-          className={cn(
-            "absolute top-1/2 right-1 -translate-y-1/2",
-            size === "sm" ? "size-6" : "size-7"
-          )}
+          aria-label={'Clear search'}
+          className={cn('absolute top-1/2 right-1 -translate-y-1/2', size === 'sm' ? 'size-6' : 'size-7')}
           onClick={handleClear}
         >
-          <X
-            aria-hidden={"true"}
-            className={size === "sm" ? "size-3" : "size-3.5"}
-          />
+          <X aria-hidden={'true'} className={size === 'sm' ? 'size-3' : 'size-3.5'} />
         </IconButton>
       )}
     </div>
@@ -225,17 +210,14 @@ const GlobalFilterInput = ({
 };
 
 interface ColumnVisibilityDropdownProps<TData> {
-  size?: "default" | "lg" | "sm";
+  size?: 'default' | 'lg' | 'sm';
   table: Table<TData>;
 }
 
 /**
  * ColumnVisibilityDropdown provides a dropdown menu to toggle column visibility.
  */
-const ColumnVisibilityDropdown = <TData,>({
-  size = "default",
-  table,
-}: ColumnVisibilityDropdownProps<TData>) => {
+const ColumnVisibilityDropdown = <TData,>({ size = 'default', table }: ColumnVisibilityDropdownProps<TData>) => {
   // Get columns that can be hidden
   const hideableColumns = useMemo(() => {
     return table.getAllColumns().filter((column) => column.getCanHide());
@@ -257,51 +239,37 @@ const ColumnVisibilityDropdown = <TData,>({
   return (
     <DropdownMenuRoot>
       <DropdownMenuTrigger>
-        <BaseButton
-          aria-label={"Toggle column visibility"}
-          className={cn(dataTableToolbarButtonVariants({ size }))}
-        >
-          <Settings2
-            aria-hidden={"true"}
-            className={size === "sm" ? "size-3.5" : "size-4"}
-          />
+        <BaseButton aria-label={'Toggle column visibility'} className={cn(dataTableToolbarButtonVariants({ size }))}>
+          <Settings2 aria-hidden={'true'} className={size === 'sm' ? 'size-3.5' : 'size-4'} />
           <span>Columns</span>
         </BaseButton>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuPositioner align={"end"}>
-          <DropdownMenuPopup
-            className={"min-w-[180px]"}
-            size={size === "lg" ? "default" : "sm"}
-          >
+        <DropdownMenuPositioner align={'end'}>
+          <DropdownMenuPopup className={'min-w-[180px]'} size={size === 'lg' ? 'default' : 'sm'}>
             <DropdownMenuGroup>
-              <DropdownMenuGroupLabel size={size === "lg" ? "default" : "sm"}>
-                Toggle columns
-              </DropdownMenuGroupLabel>
+              <DropdownMenuGroupLabel size={size === 'lg' ? 'default' : 'sm'}>Toggle columns</DropdownMenuGroupLabel>
               {hideableColumns.map((column) => {
                 const isColumnVisible = column.getIsVisible();
                 const columnId = column.id;
                 // Try to get a display name from column definition
-                const columnHeader =
-                  typeof column.columnDef.header === "string"
-                    ? column.columnDef.header
-                    : columnId;
+                const columnHeader = typeof column.columnDef.header === 'string' ? column.columnDef.header : columnId;
 
                 return (
                   <DropdownMenuItem
                     closeOnClick={false}
                     key={columnId}
                     onClick={() => column.toggleVisibility(!isColumnVisible)}
-                    size={size === "lg" ? "default" : "sm"}
+                    size={size === 'lg' ? 'default' : 'sm'}
                   >
                     <Checkbox
-                      aria-hidden={"true"}
+                      aria-hidden={'true'}
                       checked={isColumnVisible}
-                      className={"pointer-events-none"}
-                      size={size === "lg" ? "default" : "sm"}
+                      className={'pointer-events-none'}
+                      size={size === 'lg' ? 'default' : 'sm'}
                       tabIndex={-1}
                     />
-                    <span className={"capitalize"}>{columnHeader}</span>
+                    <span className={'capitalize'}>{columnHeader}</span>
                   </DropdownMenuItem>
                 );
               })}
@@ -311,14 +279,8 @@ const ColumnVisibilityDropdown = <TData,>({
             {isHasHiddenColumns && (
               <Fragment>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleResetColumnsClick}
-                  size={size === "lg" ? "default" : "sm"}
-                >
-                  <RotateCcw
-                    aria-hidden={"true"}
-                    className={size === "lg" ? "size-4" : "size-3.5"}
-                  />
+                <DropdownMenuItem onClick={handleResetColumnsClick} size={size === 'lg' ? 'default' : 'sm'}>
+                  <RotateCcw aria-hidden={'true'} className={size === 'lg' ? 'size-4' : 'size-3.5'} />
                   <span>Reset columns</span>
                 </DropdownMenuItem>
               </Fragment>
@@ -379,24 +341,20 @@ export const DataTableToolbar = <TData,>({
   isGlobalFilterEnabled = true,
   onGlobalFilterChange,
   ref,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = 'Search...',
   size,
   table,
   ...props
 }: DataTableToolbarProps<TData>) => {
-  const globalFilter = table.getState().globalFilter ?? "";
+  const globalFilter = table.getState().globalFilter ?? '';
 
   const isHasLeftControls = isGlobalFilterEnabled;
   const isHasRightControls = isColumnVisibilityEnabled || children;
 
   return (
-    <div
-      className={cn(dataTableToolbarVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    >
+    <div className={cn(dataTableToolbarVariants({ size }), className)} ref={ref} {...props}>
       {/* Left Section: Global Filter */}
-      <div className={"flex flex-1 items-center gap-2"}>
+      <div className={'flex flex-1 items-center gap-2'}>
         {isGlobalFilterEnabled && (
           <GlobalFilterInput
             filterDebounceDelay={filterDebounceDelay}
@@ -404,19 +362,17 @@ export const DataTableToolbar = <TData,>({
             onGlobalFilterChange={onGlobalFilterChange}
             searchPlaceholder={searchPlaceholder}
             setGlobalFilter={table.setGlobalFilter}
-            size={size ?? "default"}
+            size={size ?? 'default'}
           />
         )}
-        {!isHasLeftControls && <div className={"flex-1"} />}
+        {!isHasLeftControls && <div className={'flex-1'} />}
       </div>
 
       {/* Right Section: Column Visibility & Custom Actions */}
       {isHasRightControls && (
-        <div className={"flex items-center gap-2"}>
+        <div className={'flex items-center gap-2'}>
           {children}
-          {isColumnVisibilityEnabled && (
-            <ColumnVisibilityDropdown size={size ?? "default"} table={table} />
-          )}
+          {isColumnVisibilityEnabled && <ColumnVisibilityDropdown size={size ?? 'default'} table={table} />}
         </div>
       )}
     </div>

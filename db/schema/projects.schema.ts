@@ -1,23 +1,23 @@
-import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sql } from 'drizzle-orm';
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const projects = sqliteTable(
-  "projects",
+  'projects',
   {
-    archivedAt: text("archived_at"), // null = active, datetime = archived
-    createdAt: text("created_at")
+    archivedAt: text('archived_at'), // null = active, datetime = archived
+    createdAt: text('created_at')
       .default(sql`(CURRENT_TIMESTAMP)`)
       .notNull(),
-    description: text("description"),
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    name: text("name").notNull(),
-    updatedAt: text("updated_at")
+    description: text('description'),
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    updatedAt: text('updated_at')
       .default(sql`(CURRENT_TIMESTAMP)`)
       .notNull(),
   },
   (table) => [
-    index("projects_archived_at_idx").on(table.archivedAt),
-    index("projects_created_at_idx").on(table.createdAt),
+    index('projects_archived_at_idx').on(table.archivedAt),
+    index('projects_created_at_idx').on(table.createdAt),
   ]
 );
 

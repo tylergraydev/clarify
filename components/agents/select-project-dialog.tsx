@@ -126,13 +126,7 @@ export const SelectProjectDialog = ({
 
   // Derived states
   const isConfirmDisabled = isLoading || !selectedValue;
-  const confirmButtonLabel = isLoading
-    ? isMoveMode
-      ? 'Moving...'
-      : 'Copying...'
-    : isMoveMode
-      ? 'Move'
-      : 'Copy';
+  const confirmButtonLabel = isLoading ? (isMoveMode ? 'Moving...' : 'Copying...') : isMoveMode ? 'Move' : 'Copy';
 
   return (
     <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
@@ -142,18 +136,12 @@ export const SelectProjectDialog = ({
           {/* Header */}
           <DialogHeader>
             <DialogTitle id={'select-project-dialog-title'}>{title}</DialogTitle>
-            <DialogDescription id={'select-project-dialog-description'}>
-              {description}
-            </DialogDescription>
+            <DialogDescription id={'select-project-dialog-description'}>{description}</DialogDescription>
           </DialogHeader>
 
           {/* Content */}
           <div className={'mt-4 space-y-4'}>
-            <SelectRoot
-              disabled={isLoading}
-              onValueChange={handleValueChange}
-              value={selectedValue}
-            >
+            <SelectRoot disabled={isLoading} onValueChange={handleValueChange} value={selectedValue}>
               <SelectTrigger aria-label={'Select destination'}>
                 <SelectValue placeholder={'Select a destination...'} />
               </SelectTrigger>

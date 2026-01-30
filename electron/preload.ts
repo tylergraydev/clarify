@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer } from 'electron';
 
 import type {
   Agent,
@@ -25,7 +25,7 @@ import type {
   WorkflowRepository,
   WorkflowStep,
   Worktree,
-} from "../db/schema";
+} from '../db/schema';
 
 /**
  * IPC Channel Constants (Duplicate - Required for Preload)
@@ -38,144 +38,144 @@ import type {
  */
 const IpcChannels = {
   agent: {
-    activate: "agent:activate",
-    copyToProject: "agent:copyToProject",
-    create: "agent:create",
-    createOverride: "agent:createOverride",
-    deactivate: "agent:deactivate",
-    delete: "agent:delete",
-    duplicate: "agent:duplicate",
-    export: "agent:export",
-    exportBatch: "agent:exportBatch",
-    get: "agent:get",
-    import: "agent:import",
-    list: "agent:list",
-    move: "agent:move",
-    reset: "agent:reset",
-    update: "agent:update",
+    activate: 'agent:activate',
+    copyToProject: 'agent:copyToProject',
+    create: 'agent:create',
+    createOverride: 'agent:createOverride',
+    deactivate: 'agent:deactivate',
+    delete: 'agent:delete',
+    duplicate: 'agent:duplicate',
+    export: 'agent:export',
+    exportBatch: 'agent:exportBatch',
+    get: 'agent:get',
+    import: 'agent:import',
+    list: 'agent:list',
+    move: 'agent:move',
+    reset: 'agent:reset',
+    update: 'agent:update',
   },
   agentSkill: {
-    create: "agentSkill:create",
-    delete: "agentSkill:delete",
-    list: "agentSkill:list",
-    setRequired: "agentSkill:setRequired",
-    update: "agentSkill:update",
+    create: 'agentSkill:create',
+    delete: 'agentSkill:delete',
+    list: 'agentSkill:list',
+    setRequired: 'agentSkill:setRequired',
+    update: 'agentSkill:update',
   },
   agentTool: {
-    allow: "agentTool:allow",
-    create: "agentTool:create",
-    delete: "agentTool:delete",
-    disallow: "agentTool:disallow",
-    list: "agentTool:list",
-    update: "agentTool:update",
+    allow: 'agentTool:allow',
+    create: 'agentTool:create',
+    delete: 'agentTool:delete',
+    disallow: 'agentTool:disallow',
+    list: 'agentTool:list',
+    update: 'agentTool:update',
   },
   app: {
-    getPath: "app:getPath",
-    getVersion: "app:getVersion",
+    getPath: 'app:getPath',
+    getVersion: 'app:getVersion',
   },
   audit: {
-    create: "audit:create",
-    export: "audit:export",
-    findByStep: "audit:findByStep",
-    findByWorkflow: "audit:findByWorkflow",
-    list: "audit:list",
+    create: 'audit:create',
+    export: 'audit:export',
+    findByStep: 'audit:findByStep',
+    findByWorkflow: 'audit:findByWorkflow',
+    list: 'audit:list',
   },
   dialog: {
-    openDirectory: "dialog:openDirectory",
-    openFile: "dialog:openFile",
-    saveFile: "dialog:saveFile",
+    openDirectory: 'dialog:openDirectory',
+    openFile: 'dialog:openFile',
+    saveFile: 'dialog:saveFile',
   },
   discovery: {
-    add: "discovery:add",
-    exclude: "discovery:exclude",
-    include: "discovery:include",
-    list: "discovery:list",
-    update: "discovery:update",
-    updatePriority: "discovery:updatePriority",
+    add: 'discovery:add',
+    exclude: 'discovery:exclude',
+    include: 'discovery:include',
+    list: 'discovery:list',
+    update: 'discovery:update',
+    updatePriority: 'discovery:updatePriority',
   },
   fs: {
-    exists: "fs:exists",
-    readDirectory: "fs:readDirectory",
-    readFile: "fs:readFile",
-    stat: "fs:stat",
-    writeFile: "fs:writeFile",
+    exists: 'fs:exists',
+    readDirectory: 'fs:readDirectory',
+    readFile: 'fs:readFile',
+    stat: 'fs:stat',
+    writeFile: 'fs:writeFile',
   },
   project: {
-    addRepo: "project:addRepo",
-    create: "project:create",
-    delete: "project:delete",
-    get: "project:get",
-    list: "project:list",
-    update: "project:update",
+    addRepo: 'project:addRepo',
+    create: 'project:create',
+    delete: 'project:delete',
+    get: 'project:get',
+    list: 'project:list',
+    update: 'project:update',
   },
   repository: {
-    clearDefault: "repository:clearDefault",
-    create: "repository:create",
-    delete: "repository:delete",
-    findByPath: "repository:findByPath",
-    findByProject: "repository:findByProject",
-    get: "repository:get",
-    list: "repository:list",
-    setDefault: "repository:setDefault",
-    update: "repository:update",
+    clearDefault: 'repository:clearDefault',
+    create: 'repository:create',
+    delete: 'repository:delete',
+    findByPath: 'repository:findByPath',
+    findByProject: 'repository:findByProject',
+    get: 'repository:get',
+    list: 'repository:list',
+    setDefault: 'repository:setDefault',
+    update: 'repository:update',
   },
   settings: {
-    bulkUpdate: "settings:bulkUpdate",
-    get: "settings:get",
-    getByCategory: "settings:getByCategory",
-    getByKey: "settings:getByKey",
-    list: "settings:list",
-    resetToDefault: "settings:resetToDefault",
-    setValue: "settings:setValue",
+    bulkUpdate: 'settings:bulkUpdate',
+    get: 'settings:get',
+    getByCategory: 'settings:getByCategory',
+    getByKey: 'settings:getByKey',
+    list: 'settings:list',
+    resetToDefault: 'settings:resetToDefault',
+    setValue: 'settings:setValue',
   },
   step: {
-    complete: "step:complete",
-    edit: "step:edit",
-    fail: "step:fail",
-    get: "step:get",
-    list: "step:list",
-    regenerate: "step:regenerate",
-    skip: "step:skip",
+    complete: 'step:complete',
+    edit: 'step:edit',
+    fail: 'step:fail',
+    get: 'step:get',
+    list: 'step:list',
+    regenerate: 'step:regenerate',
+    skip: 'step:skip',
   },
   store: {
-    delete: "store:delete",
-    get: "store:get",
-    set: "store:set",
+    delete: 'store:delete',
+    get: 'store:get',
+    set: 'store:set',
   },
   template: {
-    activate: "template:activate",
-    create: "template:create",
-    delete: "template:delete",
-    get: "template:get",
-    getPlaceholders: "template:getPlaceholders",
-    incrementUsage: "template:incrementUsage",
-    list: "template:list",
-    update: "template:update",
-    updatePlaceholders: "template:updatePlaceholders",
+    activate: 'template:activate',
+    create: 'template:create',
+    delete: 'template:delete',
+    get: 'template:get',
+    getPlaceholders: 'template:getPlaceholders',
+    incrementUsage: 'template:incrementUsage',
+    list: 'template:list',
+    update: 'template:update',
+    updatePlaceholders: 'template:updatePlaceholders',
   },
   workflow: {
-    cancel: "workflow:cancel",
-    create: "workflow:create",
-    delete: "workflow:delete",
-    get: "workflow:get",
-    getStatistics: "workflow:getStatistics",
-    list: "workflow:list",
-    listHistory: "workflow:listHistory",
-    pause: "workflow:pause",
-    resume: "workflow:resume",
-    start: "workflow:start",
+    cancel: 'workflow:cancel',
+    create: 'workflow:create',
+    delete: 'workflow:delete',
+    get: 'workflow:get',
+    getStatistics: 'workflow:getStatistics',
+    list: 'workflow:list',
+    listHistory: 'workflow:listHistory',
+    pause: 'workflow:pause',
+    resume: 'workflow:resume',
+    start: 'workflow:start',
   },
   workflowRepository: {
-    add: "workflowRepository:add",
-    addMultiple: "workflowRepository:addMultiple",
-    list: "workflowRepository:list",
-    remove: "workflowRepository:remove",
-    setPrimary: "workflowRepository:setPrimary",
+    add: 'workflowRepository:add',
+    addMultiple: 'workflowRepository:addMultiple',
+    list: 'workflowRepository:list',
+    remove: 'workflowRepository:remove',
+    setPrimary: 'workflowRepository:setPrimary',
   },
   worktree: {
-    get: "worktree:get",
-    getByWorkflowId: "worktree:getByWorkflowId",
-    list: "worktree:list",
+    get: 'worktree:get',
+    getByWorkflowId: 'worktree:getByWorkflowId',
+    list: 'worktree:list',
   },
 } as const;
 
@@ -251,8 +251,8 @@ export interface AgentListFilters {
    * - "global": Only agents with projectId IS NULL (global agents)
    * - "project": Only agents with projectId IS NOT NULL (project-specific agents)
    */
-  scope?: "global" | "project";
-  type?: "planning" | "review" | "specialist";
+  scope?: 'global' | 'project';
+  type?: 'planning' | 'review' | 'specialist';
 }
 
 /**
@@ -276,15 +276,9 @@ export interface AgentWithRelations extends Agent {
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<Agent | undefined>;
-    copyToProject(
-      agentId: number,
-      targetProjectId: number
-    ): Promise<AgentOperationResult>;
+    copyToProject(agentId: number, targetProjectId: number): Promise<AgentOperationResult>;
     create(data: NewAgent): Promise<AgentOperationResult>;
-    createOverride(
-      agentId: number,
-      projectId: number
-    ): Promise<AgentOperationResult>;
+    createOverride(agentId: number, projectId: number): Promise<AgentOperationResult>;
     deactivate(id: number): Promise<Agent | undefined>;
     delete(id: number): Promise<AgentOperationResult>;
     duplicate(id: number): Promise<AgentOperationResult>;
@@ -293,10 +287,7 @@ export interface ElectronAPI {
     get(id: number): Promise<Agent | undefined>;
     import(parsedMarkdown: AgentImportInput): Promise<AgentImportResult>;
     list(filters?: AgentListFilters): Promise<Array<AgentWithRelations>>;
-    move(
-      agentId: number,
-      targetProjectId: null | number
-    ): Promise<AgentOperationResult>;
+    move(agentId: number, targetProjectId: null | number): Promise<AgentOperationResult>;
     reset(id: number): Promise<Agent | undefined>;
     update(id: number, data: Partial<NewAgent>): Promise<AgentOperationResult>;
   };
@@ -305,10 +296,7 @@ export interface ElectronAPI {
     delete(id: number): Promise<void>;
     list(agentId: number): Promise<Array<AgentSkill>>;
     setRequired(id: number, required: boolean): Promise<AgentSkill | undefined>;
-    update(
-      id: number,
-      data: Partial<NewAgentSkill>
-    ): Promise<AgentSkill | undefined>;
+    update(id: number, data: Partial<NewAgentSkill>): Promise<AgentSkill | undefined>;
   };
   agentTool: {
     allow(id: number): Promise<AgentTool | undefined>;
@@ -316,38 +304,22 @@ export interface ElectronAPI {
     delete(id: number): Promise<void>;
     disallow(id: number): Promise<AgentTool | undefined>;
     list(agentId: number): Promise<Array<AgentTool>>;
-    update(
-      id: number,
-      data: Partial<NewAgentTool>
-    ): Promise<AgentTool | undefined>;
+    update(id: number, data: Partial<NewAgentTool>): Promise<AgentTool | undefined>;
   };
   app: {
-    getPath(
-      name:
-        | "appData"
-        | "desktop"
-        | "documents"
-        | "downloads"
-        | "home"
-        | "temp"
-        | "userData"
-    ): Promise<string>;
+    getPath(name: 'appData' | 'desktop' | 'documents' | 'downloads' | 'home' | 'temp' | 'userData'): Promise<string>;
     getVersion(): Promise<string>;
   };
   audit: {
     create(data: NewAuditLog): Promise<AuditLog>;
-    export(
-      workflowId: number
-    ): Promise<{ content?: string; error?: string; success: boolean }>;
+    export(workflowId: number): Promise<{ content?: string; error?: string; success: boolean }>;
     findByStep(stepId: number): Promise<Array<AuditLog>>;
     findByWorkflow(workflowId: number): Promise<Array<AuditLog>>;
     list(): Promise<Array<AuditLog>>;
   };
   dialog: {
     openDirectory(): Promise<null | string>;
-    openFile(
-      filters?: Array<{ extensions: Array<string>; name: string }>
-    ): Promise<null | string>;
+    openFile(filters?: Array<{ extensions: Array<string>; name: string }>): Promise<null | string>;
     saveFile(
       defaultPath?: string,
       filters?: Array<{ extensions: Array<string>; name: string }>
@@ -358,14 +330,8 @@ export interface ElectronAPI {
     exclude(id: number): Promise<DiscoveredFile | undefined>;
     include(id: number): Promise<DiscoveredFile | undefined>;
     list(stepId: number): Promise<Array<DiscoveredFile>>;
-    update(
-      id: number,
-      data: Partial<NewDiscoveredFile>
-    ): Promise<DiscoveredFile | undefined>;
-    updatePriority(
-      id: number,
-      priority: string
-    ): Promise<DiscoveredFile | undefined>;
+    update(id: number, data: Partial<NewDiscoveredFile>): Promise<DiscoveredFile | undefined>;
+    updatePriority(id: number, priority: string): Promise<DiscoveredFile | undefined>;
   };
   fs: {
     exists(path: string): Promise<boolean>;
@@ -374,9 +340,7 @@ export interface ElectronAPI {
       error?: string;
       success: boolean;
     }>;
-    readFile(
-      path: string
-    ): Promise<{ content?: string; error?: string; success: boolean }>;
+    readFile(path: string): Promise<{ content?: string; error?: string; success: boolean }>;
     stat(path: string): Promise<{
       error?: string;
       stats?: {
@@ -388,10 +352,7 @@ export interface ElectronAPI {
       };
       success: boolean;
     }>;
-    writeFile(
-      path: string,
-      content: string
-    ): Promise<{ error?: string; success: boolean }>;
+    writeFile(path: string, content: string): Promise<{ error?: string; success: boolean }>;
   };
   project: {
     addRepo(projectId: number, repoData: NewRepository): Promise<Repository>;
@@ -410,15 +371,10 @@ export interface ElectronAPI {
     get(id: number): Promise<Repository | undefined>;
     list(): Promise<Array<Repository>>;
     setDefault(id: number): Promise<Repository | undefined>;
-    update(
-      id: number,
-      data: Partial<NewRepository>
-    ): Promise<Repository | undefined>;
+    update(id: number, data: Partial<NewRepository>): Promise<Repository | undefined>;
   };
   settings: {
-    bulkUpdate(
-      updates: Array<{ key: string; value: string }>
-    ): Promise<Array<Setting>>;
+    bulkUpdate(updates: Array<{ key: string; value: string }>): Promise<Array<Setting>>;
     get(id: number): Promise<Setting | undefined>;
     getByCategory(category: string): Promise<Array<Setting>>;
     getByKey(key: string): Promise<Setting | undefined>;
@@ -427,11 +383,7 @@ export interface ElectronAPI {
     setValue(key: string, value: string): Promise<Setting | undefined>;
   };
   step: {
-    complete(
-      id: number,
-      output?: string,
-      durationMs?: number
-    ): Promise<undefined | WorkflowStep>;
+    complete(id: number, output?: string, durationMs?: number): Promise<undefined | WorkflowStep>;
     edit(id: number, editedOutput: string): Promise<undefined | WorkflowStep>;
     fail(id: number, errorMessage: string): Promise<undefined | WorkflowStep>;
     get(id: number): Promise<undefined | WorkflowStep>;
@@ -452,13 +404,10 @@ export interface ElectronAPI {
     getPlaceholders(templateId: number): Promise<Array<TemplatePlaceholder>>;
     incrementUsage(id: number): Promise<Template | undefined>;
     list(filters?: TemplateListFilters): Promise<Array<Template>>;
-    update(
-      id: number,
-      data: Partial<NewTemplate>
-    ): Promise<Template | undefined>;
+    update(id: number, data: Partial<NewTemplate>): Promise<Template | undefined>;
     updatePlaceholders(
       templateId: number,
-      placeholders: Array<Omit<NewTemplatePlaceholder, "templateId">>
+      placeholders: Array<Omit<NewTemplatePlaceholder, 'templateId'>>
     ): Promise<Array<TemplatePlaceholder>>;
   };
   workflow: {
@@ -466,25 +415,15 @@ export interface ElectronAPI {
     create(data: NewWorkflow): Promise<Workflow>;
     delete(id: number): Promise<boolean>;
     get(id: number): Promise<undefined | Workflow>;
-    getStatistics(filters?: {
-      dateFrom?: string;
-      dateTo?: string;
-      projectId?: number;
-    }): Promise<WorkflowStatistics>;
+    getStatistics(filters?: { dateFrom?: string; dateTo?: string; projectId?: number }): Promise<WorkflowStatistics>;
     list(): Promise<Array<Workflow>>;
-    listHistory(
-      filters?: WorkflowHistoryFilters
-    ): Promise<WorkflowHistoryResult>;
+    listHistory(filters?: WorkflowHistoryFilters): Promise<WorkflowHistoryResult>;
     pause(id: number): Promise<undefined | Workflow>;
     resume(id: number): Promise<undefined | Workflow>;
     start(id: number): Promise<undefined | Workflow>;
   };
   workflowRepository: {
-    add(
-      workflowId: number,
-      repositoryId: number,
-      isPrimary?: boolean
-    ): Promise<WorkflowRepository>;
+    add(workflowId: number, repositoryId: number, isPrimary?: boolean): Promise<WorkflowRepository>;
     addMultiple(
       workflowId: number,
       repositoryIds: Array<number>,
@@ -492,18 +431,12 @@ export interface ElectronAPI {
     ): Promise<Array<WorkflowRepository>>;
     list(workflowId: number): Promise<Array<WorkflowRepository>>;
     remove(workflowId: number, repositoryId: number): Promise<boolean>;
-    setPrimary(
-      workflowId: number,
-      repositoryId: number
-    ): Promise<undefined | WorkflowRepository>;
+    setPrimary(workflowId: number, repositoryId: number): Promise<undefined | WorkflowRepository>;
   };
   worktree: {
     get(id: number): Promise<undefined | Worktree>;
     getByWorkflowId(workflowId: number): Promise<undefined | Worktree>;
-    list(options?: {
-      repositoryId?: number;
-      status?: string;
-    }): Promise<Array<Worktree>>;
+    list(options?: { repositoryId?: number; status?: string }): Promise<Array<Worktree>>;
   };
 }
 
@@ -511,7 +444,7 @@ export interface ElectronAPI {
  * Filters for querying templates
  */
 export interface TemplateListFilters {
-  category?: "backend" | "data" | "electron" | "security" | "ui";
+  category?: 'backend' | 'data' | 'electron' | 'security' | 'ui';
   includeDeactivated?: boolean;
 }
 
@@ -554,58 +487,43 @@ export interface WorkflowStatistics {
 /**
  * Terminal workflow statuses that indicate a workflow has finished execution
  */
-type TerminalStatus = "cancelled" | "completed" | "failed";
+type TerminalStatus = 'cancelled' | 'completed' | 'failed';
 
 /**
  * Valid sort fields for workflow history queries
  */
-type WorkflowHistorySortField =
-  | "completedAt"
-  | "createdAt"
-  | "durationMs"
-  | "featureName"
-  | "status";
+type WorkflowHistorySortField = 'completedAt' | 'createdAt' | 'durationMs' | 'featureName' | 'status';
 
 /**
  * Sort order for workflow history queries
  */
-type WorkflowHistorySortOrder = "asc" | "desc";
+type WorkflowHistorySortOrder = 'asc' | 'desc';
 
 const electronAPI: ElectronAPI = {
   agent: {
     activate: (id) => ipcRenderer.invoke(IpcChannels.agent.activate, id),
     copyToProject: (agentId, targetProjectId) =>
-      ipcRenderer.invoke(
-        IpcChannels.agent.copyToProject,
-        agentId,
-        targetProjectId
-      ),
+      ipcRenderer.invoke(IpcChannels.agent.copyToProject, agentId, targetProjectId),
     create: (data) => ipcRenderer.invoke(IpcChannels.agent.create, data),
-    createOverride: (agentId, projectId) =>
-      ipcRenderer.invoke(IpcChannels.agent.createOverride, agentId, projectId),
+    createOverride: (agentId, projectId) => ipcRenderer.invoke(IpcChannels.agent.createOverride, agentId, projectId),
     deactivate: (id) => ipcRenderer.invoke(IpcChannels.agent.deactivate, id),
     delete: (id) => ipcRenderer.invoke(IpcChannels.agent.delete, id),
     duplicate: (id) => ipcRenderer.invoke(IpcChannels.agent.duplicate, id),
     export: (id) => ipcRenderer.invoke(IpcChannels.agent.export, id),
     exportBatch: (ids) => ipcRenderer.invoke(IpcChannels.agent.exportBatch, ids),
     get: (id) => ipcRenderer.invoke(IpcChannels.agent.get, id),
-    import: (parsedMarkdown) =>
-      ipcRenderer.invoke(IpcChannels.agent.import, parsedMarkdown),
+    import: (parsedMarkdown) => ipcRenderer.invoke(IpcChannels.agent.import, parsedMarkdown),
     list: (filters) => ipcRenderer.invoke(IpcChannels.agent.list, filters),
-    move: (agentId, targetProjectId) =>
-      ipcRenderer.invoke(IpcChannels.agent.move, agentId, targetProjectId),
+    move: (agentId, targetProjectId) => ipcRenderer.invoke(IpcChannels.agent.move, agentId, targetProjectId),
     reset: (id) => ipcRenderer.invoke(IpcChannels.agent.reset, id),
-    update: (id, data) =>
-      ipcRenderer.invoke(IpcChannels.agent.update, id, data),
+    update: (id, data) => ipcRenderer.invoke(IpcChannels.agent.update, id, data),
   },
   agentSkill: {
     create: (data) => ipcRenderer.invoke(IpcChannels.agentSkill.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.agentSkill.delete, id),
     list: (agentId) => ipcRenderer.invoke(IpcChannels.agentSkill.list, agentId),
-    setRequired: (id, required) =>
-      ipcRenderer.invoke(IpcChannels.agentSkill.setRequired, id, required),
-    update: (id, data) =>
-      ipcRenderer.invoke(IpcChannels.agentSkill.update, id, data),
+    setRequired: (id, required) => ipcRenderer.invoke(IpcChannels.agentSkill.setRequired, id, required),
+    update: (id, data) => ipcRenderer.invoke(IpcChannels.agentSkill.update, id, data),
   },
   agentTool: {
     allow: (id) => ipcRenderer.invoke(IpcChannels.agentTool.allow, id),
@@ -613,8 +531,7 @@ const electronAPI: ElectronAPI = {
     delete: (id) => ipcRenderer.invoke(IpcChannels.agentTool.delete, id),
     disallow: (id) => ipcRenderer.invoke(IpcChannels.agentTool.disallow, id),
     list: (agentId) => ipcRenderer.invoke(IpcChannels.agentTool.list, agentId),
-    update: (id, data) =>
-      ipcRenderer.invoke(IpcChannels.agentTool.update, id, data),
+    update: (id, data) => ipcRenderer.invoke(IpcChannels.agentTool.update, id, data),
   },
   app: {
     getPath: (name) => ipcRenderer.invoke(IpcChannels.app.getPath, name),
@@ -622,87 +539,63 @@ const electronAPI: ElectronAPI = {
   },
   audit: {
     create: (data) => ipcRenderer.invoke(IpcChannels.audit.create, data),
-    export: (workflowId) =>
-      ipcRenderer.invoke(IpcChannels.audit.export, workflowId),
-    findByStep: (stepId) =>
-      ipcRenderer.invoke(IpcChannels.audit.findByStep, stepId),
-    findByWorkflow: (workflowId) =>
-      ipcRenderer.invoke(IpcChannels.audit.findByWorkflow, workflowId),
+    export: (workflowId) => ipcRenderer.invoke(IpcChannels.audit.export, workflowId),
+    findByStep: (stepId) => ipcRenderer.invoke(IpcChannels.audit.findByStep, stepId),
+    findByWorkflow: (workflowId) => ipcRenderer.invoke(IpcChannels.audit.findByWorkflow, workflowId),
     list: () => ipcRenderer.invoke(IpcChannels.audit.list),
   },
   dialog: {
     openDirectory: () => ipcRenderer.invoke(IpcChannels.dialog.openDirectory),
-    openFile: (filters) =>
-      ipcRenderer.invoke(IpcChannels.dialog.openFile, filters),
-    saveFile: (defaultPath, filters) =>
-      ipcRenderer.invoke(IpcChannels.dialog.saveFile, defaultPath, filters),
+    openFile: (filters) => ipcRenderer.invoke(IpcChannels.dialog.openFile, filters),
+    saveFile: (defaultPath, filters) => ipcRenderer.invoke(IpcChannels.dialog.saveFile, defaultPath, filters),
   },
   discovery: {
-    add: (stepId, data) =>
-      ipcRenderer.invoke(IpcChannels.discovery.add, stepId, data),
+    add: (stepId, data) => ipcRenderer.invoke(IpcChannels.discovery.add, stepId, data),
     exclude: (id) => ipcRenderer.invoke(IpcChannels.discovery.exclude, id),
     include: (id) => ipcRenderer.invoke(IpcChannels.discovery.include, id),
     list: (stepId) => ipcRenderer.invoke(IpcChannels.discovery.list, stepId),
-    update: (id, data) =>
-      ipcRenderer.invoke(IpcChannels.discovery.update, id, data),
-    updatePriority: (id, priority) =>
-      ipcRenderer.invoke(IpcChannels.discovery.updatePriority, id, priority),
+    update: (id, data) => ipcRenderer.invoke(IpcChannels.discovery.update, id, data),
+    updatePriority: (id, priority) => ipcRenderer.invoke(IpcChannels.discovery.updatePriority, id, priority),
   },
   fs: {
     exists: (path) => ipcRenderer.invoke(IpcChannels.fs.exists, path),
-    readDirectory: (path) =>
-      ipcRenderer.invoke(IpcChannels.fs.readDirectory, path),
+    readDirectory: (path) => ipcRenderer.invoke(IpcChannels.fs.readDirectory, path),
     readFile: (path) => ipcRenderer.invoke(IpcChannels.fs.readFile, path),
     stat: (path) => ipcRenderer.invoke(IpcChannels.fs.stat, path),
-    writeFile: (path, content) =>
-      ipcRenderer.invoke(IpcChannels.fs.writeFile, path, content),
+    writeFile: (path, content) => ipcRenderer.invoke(IpcChannels.fs.writeFile, path, content),
   },
   project: {
-    addRepo: (projectId, repoData) =>
-      ipcRenderer.invoke(IpcChannels.project.addRepo, projectId, repoData),
+    addRepo: (projectId, repoData) => ipcRenderer.invoke(IpcChannels.project.addRepo, projectId, repoData),
     create: (data) => ipcRenderer.invoke(IpcChannels.project.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.project.delete, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.project.get, id),
     list: () => ipcRenderer.invoke(IpcChannels.project.list),
-    update: (id, data) =>
-      ipcRenderer.invoke(IpcChannels.project.update, id, data),
+    update: (id, data) => ipcRenderer.invoke(IpcChannels.project.update, id, data),
   },
   repository: {
-    clearDefault: (id) =>
-      ipcRenderer.invoke(IpcChannels.repository.clearDefault, id),
+    clearDefault: (id) => ipcRenderer.invoke(IpcChannels.repository.clearDefault, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.repository.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.repository.delete, id),
-    findByPath: (path) =>
-      ipcRenderer.invoke(IpcChannels.repository.findByPath, path),
-    findByProject: (projectId) =>
-      ipcRenderer.invoke(IpcChannels.repository.findByProject, projectId),
+    findByPath: (path) => ipcRenderer.invoke(IpcChannels.repository.findByPath, path),
+    findByProject: (projectId) => ipcRenderer.invoke(IpcChannels.repository.findByProject, projectId),
     get: (id) => ipcRenderer.invoke(IpcChannels.repository.get, id),
     list: () => ipcRenderer.invoke(IpcChannels.repository.list),
-    setDefault: (id) =>
-      ipcRenderer.invoke(IpcChannels.repository.setDefault, id),
-    update: (id, data) =>
-      ipcRenderer.invoke(IpcChannels.repository.update, id, data),
+    setDefault: (id) => ipcRenderer.invoke(IpcChannels.repository.setDefault, id),
+    update: (id, data) => ipcRenderer.invoke(IpcChannels.repository.update, id, data),
   },
   settings: {
-    bulkUpdate: (updates) =>
-      ipcRenderer.invoke(IpcChannels.settings.bulkUpdate, updates),
+    bulkUpdate: (updates) => ipcRenderer.invoke(IpcChannels.settings.bulkUpdate, updates),
     get: (id) => ipcRenderer.invoke(IpcChannels.settings.get, id),
-    getByCategory: (category) =>
-      ipcRenderer.invoke(IpcChannels.settings.getByCategory, category),
+    getByCategory: (category) => ipcRenderer.invoke(IpcChannels.settings.getByCategory, category),
     getByKey: (key) => ipcRenderer.invoke(IpcChannels.settings.getByKey, key),
     list: () => ipcRenderer.invoke(IpcChannels.settings.list),
-    resetToDefault: (key) =>
-      ipcRenderer.invoke(IpcChannels.settings.resetToDefault, key),
-    setValue: (key, value) =>
-      ipcRenderer.invoke(IpcChannels.settings.setValue, key, value),
+    resetToDefault: (key) => ipcRenderer.invoke(IpcChannels.settings.resetToDefault, key),
+    setValue: (key, value) => ipcRenderer.invoke(IpcChannels.settings.setValue, key, value),
   },
   step: {
-    complete: (id, output, durationMs) =>
-      ipcRenderer.invoke(IpcChannels.step.complete, id, output, durationMs),
-    edit: (id, editedOutput) =>
-      ipcRenderer.invoke(IpcChannels.step.edit, id, editedOutput),
-    fail: (id, errorMessage) =>
-      ipcRenderer.invoke(IpcChannels.step.fail, id, errorMessage),
+    complete: (id, output, durationMs) => ipcRenderer.invoke(IpcChannels.step.complete, id, output, durationMs),
+    edit: (id, editedOutput) => ipcRenderer.invoke(IpcChannels.step.edit, id, editedOutput),
+    fail: (id, errorMessage) => ipcRenderer.invoke(IpcChannels.step.fail, id, errorMessage),
     get: (id) => ipcRenderer.invoke(IpcChannels.step.get, id),
     list: (workflowId) => ipcRenderer.invoke(IpcChannels.step.list, workflowId),
     regenerate: (id) => ipcRenderer.invoke(IpcChannels.step.regenerate, id),
@@ -710,8 +603,7 @@ const electronAPI: ElectronAPI = {
   },
   store: {
     delete: (key) => ipcRenderer.invoke(IpcChannels.store.delete, key),
-    get: <T>(key: string) =>
-      ipcRenderer.invoke(IpcChannels.store.get, key) as Promise<T | undefined>,
+    get: <T>(key: string) => ipcRenderer.invoke(IpcChannels.store.get, key) as Promise<T | undefined>,
     set: (key, value) => ipcRenderer.invoke(IpcChannels.store.set, key, value),
   },
   template: {
@@ -719,70 +611,41 @@ const electronAPI: ElectronAPI = {
     create: (data) => ipcRenderer.invoke(IpcChannels.template.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.template.delete, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.template.get, id),
-    getPlaceholders: (templateId) =>
-      ipcRenderer.invoke(IpcChannels.template.getPlaceholders, templateId),
-    incrementUsage: (id) =>
-      ipcRenderer.invoke(IpcChannels.template.incrementUsage, id),
+    getPlaceholders: (templateId) => ipcRenderer.invoke(IpcChannels.template.getPlaceholders, templateId),
+    incrementUsage: (id) => ipcRenderer.invoke(IpcChannels.template.incrementUsage, id),
     list: (filters) => ipcRenderer.invoke(IpcChannels.template.list, filters),
-    update: (id, data) =>
-      ipcRenderer.invoke(IpcChannels.template.update, id, data),
+    update: (id, data) => ipcRenderer.invoke(IpcChannels.template.update, id, data),
     updatePlaceholders: (templateId, placeholders) =>
-      ipcRenderer.invoke(
-        IpcChannels.template.updatePlaceholders,
-        templateId,
-        placeholders
-      ),
+      ipcRenderer.invoke(IpcChannels.template.updatePlaceholders, templateId, placeholders),
   },
   workflow: {
     cancel: (id) => ipcRenderer.invoke(IpcChannels.workflow.cancel, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.workflow.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.workflow.delete, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.workflow.get, id),
-    getStatistics: (filters) =>
-      ipcRenderer.invoke(IpcChannels.workflow.getStatistics, filters),
+    getStatistics: (filters) => ipcRenderer.invoke(IpcChannels.workflow.getStatistics, filters),
     list: () => ipcRenderer.invoke(IpcChannels.workflow.list),
-    listHistory: (filters) =>
-      ipcRenderer.invoke(IpcChannels.workflow.listHistory, filters),
+    listHistory: (filters) => ipcRenderer.invoke(IpcChannels.workflow.listHistory, filters),
     pause: (id) => ipcRenderer.invoke(IpcChannels.workflow.pause, id),
     resume: (id) => ipcRenderer.invoke(IpcChannels.workflow.resume, id),
     start: (id) => ipcRenderer.invoke(IpcChannels.workflow.start, id),
   },
   workflowRepository: {
     add: (workflowId, repositoryId, isPrimary) =>
-      ipcRenderer.invoke(
-        IpcChannels.workflowRepository.add,
-        workflowId,
-        repositoryId,
-        isPrimary
-      ),
+      ipcRenderer.invoke(IpcChannels.workflowRepository.add, workflowId, repositoryId, isPrimary),
     addMultiple: (workflowId, repositoryIds, primaryRepositoryId) =>
-      ipcRenderer.invoke(
-        IpcChannels.workflowRepository.addMultiple,
-        workflowId,
-        repositoryIds,
-        primaryRepositoryId
-      ),
-    list: (workflowId) =>
-      ipcRenderer.invoke(IpcChannels.workflowRepository.list, workflowId),
+      ipcRenderer.invoke(IpcChannels.workflowRepository.addMultiple, workflowId, repositoryIds, primaryRepositoryId),
+    list: (workflowId) => ipcRenderer.invoke(IpcChannels.workflowRepository.list, workflowId),
     remove: (workflowId, repositoryId) =>
-      ipcRenderer.invoke(
-        IpcChannels.workflowRepository.remove,
-        workflowId,
-        repositoryId
-      ),
+      ipcRenderer.invoke(IpcChannels.workflowRepository.remove, workflowId, repositoryId),
     setPrimary: (workflowId, repositoryId) =>
-      ipcRenderer.invoke(
-        IpcChannels.workflowRepository.setPrimary,
-        workflowId,
-        repositoryId
-      ),
+      ipcRenderer.invoke(IpcChannels.workflowRepository.setPrimary, workflowId, repositoryId),
   },
   worktree: {
     get: (id) => ipcRenderer.invoke(IpcChannels.worktree.get, id),
-    getByWorkflowId: (workflowId) =>
-      ipcRenderer.invoke(IpcChannels.worktree.getByWorkflowId, workflowId),
+    getByWorkflowId: (workflowId) => ipcRenderer.invoke(IpcChannels.worktree.getByWorkflowId, workflowId),
     list: (options) => ipcRenderer.invoke(IpcChannels.worktree.list, options),
   },
 };
 
-contextBridge.exposeInMainWorld("electronAPI", electronAPI);
+contextBridge.exposeInMainWorld('electronAPI', electronAPI);

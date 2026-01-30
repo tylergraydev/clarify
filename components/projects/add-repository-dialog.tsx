@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState } from 'react';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
   DialogClose,
@@ -12,10 +12,10 @@ import {
   DialogRoot,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { useAddRepositoryToProject } from "@/hooks/queries/use-projects";
-import { useAppForm } from "@/lib/forms/form-hook";
-import { addRepositorySchema } from "@/lib/validations/repository";
+} from '@/components/ui/dialog';
+import { useAddRepositoryToProject } from '@/hooks/queries/use-projects';
+import { useAppForm } from '@/lib/forms/form-hook';
+import { addRepositorySchema } from '@/lib/validations/repository';
 
 interface AddRepositoryDialogProps {
   /** Callback when repository is successfully added */
@@ -26,11 +26,7 @@ interface AddRepositoryDialogProps {
   trigger: ReactNode;
 }
 
-export const AddRepositoryDialog = ({
-  onSuccess,
-  projectId,
-  trigger,
-}: AddRepositoryDialogProps) => {
+export const AddRepositoryDialog = ({ onSuccess, projectId, trigger }: AddRepositoryDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const addRepositoryMutation = useAddRepositoryToProject();
@@ -39,9 +35,9 @@ export const AddRepositoryDialog = ({
 
   const form = useAppForm({
     defaultValues: {
-      defaultBranch: "main",
-      name: "",
-      path: "",
+      defaultBranch: 'main',
+      name: '',
+      path: '',
     },
     onSubmit: async ({ value }) => {
       try {
@@ -57,10 +53,7 @@ export const AddRepositoryDialog = ({
         handleClose();
         onSuccess?.();
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to add repository. Please try again.";
+        const message = error instanceof Error ? error.message : 'Failed to add repository. Please try again.';
         throw new Error(message);
       }
     },
@@ -91,73 +84,63 @@ export const AddRepositoryDialog = ({
         <DialogBackdrop />
         <DialogPopup>
           {/* Header */}
-          <DialogTitle>{"Add Repository"}</DialogTitle>
-          <DialogDescription>
-            {"Add a repository to this project for workflow management."}
-          </DialogDescription>
+          <DialogTitle>{'Add Repository'}</DialogTitle>
+          <DialogDescription>{'Add a repository to this project for workflow management.'}</DialogDescription>
 
           {/* Form */}
           <form
-            className={"mt-6"}
+            className={'mt-6'}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
               void form.handleSubmit();
             }}
           >
-            <div className={"flex flex-col gap-4"}>
+            <div className={'flex flex-col gap-4'}>
               {/* Name Field */}
-              <form.AppField name={"name"}>
+              <form.AppField name={'name'}>
                 {(field) => (
                   <field.TextField
                     autoFocus
                     isRequired
-                    label={"Repository Name"}
-                    placeholder={"Enter repository name"}
+                    label={'Repository Name'}
+                    placeholder={'Enter repository name'}
                   />
                 )}
               </form.AppField>
 
               {/* Path Field */}
-              <form.AppField name={"path"}>
+              <form.AppField name={'path'}>
                 {(field) => (
                   <field.PathInputField
-                    description={
-                      "Select the local directory containing the repository"
-                    }
+                    description={'Select the local directory containing the repository'}
                     isRequired
-                    label={"Repository Path"}
-                    placeholder={"Select or enter repository path"}
+                    label={'Repository Path'}
+                    placeholder={'Select or enter repository path'}
                   />
                 )}
               </form.AppField>
 
               {/* Default Branch Field */}
-              <form.AppField name={"defaultBranch"}>
+              <form.AppField name={'defaultBranch'}>
                 {(field) => (
                   <field.TextField
-                    description={"The default branch to use for workflows"}
-                    label={"Default Branch"}
-                    placeholder={"main"}
+                    description={'The default branch to use for workflows'}
+                    label={'Default Branch'}
+                    placeholder={'main'}
                   />
                 )}
               </form.AppField>
 
               {/* Action Buttons */}
-              <div className={"mt-2 flex justify-end gap-3"}>
+              <div className={'mt-2 flex justify-end gap-3'}>
                 <DialogClose>
-                  <Button
-                    disabled={isSubmitting}
-                    type={"button"}
-                    variant={"outline"}
-                  >
-                    {"Cancel"}
+                  <Button disabled={isSubmitting} type={'button'} variant={'outline'}>
+                    {'Cancel'}
                   </Button>
                 </DialogClose>
                 <form.AppForm>
-                  <form.SubmitButton>
-                    {isSubmitting ? "Adding..." : "Add Repository"}
-                  </form.SubmitButton>
+                  <form.SubmitButton>{isSubmitting ? 'Adding...' : 'Add Repository'}</form.SubmitButton>
                 </form.AppForm>
               </div>
             </div>

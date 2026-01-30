@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef } from 'react';
 
-import { FocusRef } from "@/components/ui/form/focus-management/focus-context";
+import { FocusRef } from '@/components/ui/form/focus-management/focus-context';
 
 interface FieldRegistration {
   name: string;
@@ -69,8 +69,8 @@ export const useFocusManagement = () => {
         field.element.focus();
         // scroll into view with some padding
         field.element.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
+          behavior: 'smooth',
+          block: 'center',
         });
         return field.name;
       }

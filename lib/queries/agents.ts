@@ -1,4 +1,4 @@
-import { createQueryKeys } from "@lukemorales/query-key-factory";
+import { createQueryKeys } from '@lukemorales/query-key-factory';
 
 /**
  * Query keys for agents.
@@ -14,7 +14,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
  * - list: All agents with optional filters
  * - projectScoped: Agents scoped to a specific project with optional filters
  */
-export const agentKeys = createQueryKeys("agents", {
+export const agentKeys = createQueryKeys('agents', {
   /** Active agents, optionally filtered by project */
   active: (projectId?: number) => [{ projectId }],
   /** All agents regardless of scope (for unified table view) */
@@ -33,18 +33,12 @@ export const agentKeys = createQueryKeys("agents", {
   /** Single agent by ID */
   detail: (id: number) => [id],
   /** Global agents (not project-scoped) with optional filters */
-  global: (filters?: { includeDeactivated?: boolean; type?: string }) => [
+  global: (filters?: { includeDeactivated?: boolean; type?: string }) => [{ filters }],
+  /** All agents with optional filters */
+  list: (filters?: { includeDeactivated?: boolean; projectId?: number; type?: string }) => [{ filters }],
+  /** Agents scoped to a specific project with optional filters */
+  projectScoped: (projectId: number, filters?: { includeDeactivated?: boolean; type?: string }) => [
+    projectId,
     { filters },
   ],
-  /** All agents with optional filters */
-  list: (filters?: {
-    includeDeactivated?: boolean;
-    projectId?: number;
-    type?: string;
-  }) => [{ filters }],
-  /** Agents scoped to a specific project with optional filters */
-  projectScoped: (
-    projectId: number,
-    filters?: { includeDeactivated?: boolean; type?: string }
-  ) => [projectId, { filters }],
 });

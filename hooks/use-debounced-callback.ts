@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from 'react';
 
 interface UseDebouncedCallbackOptions {
   /** Delay in milliseconds before the callback is invoked */

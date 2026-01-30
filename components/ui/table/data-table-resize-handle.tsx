@@ -37,7 +37,8 @@ export const dataTableResizeHandleVariants = cva(
 // =============================================================================
 
 interface DataTableResizeHandleProps<TData>
-  extends Omit<ComponentPropsWithRef<'div'>, 'onMouseDown' | 'onTouchStart'>,
+  extends
+    Omit<ComponentPropsWithRef<'div'>, 'onMouseDown' | 'onTouchStart'>,
     VariantProps<typeof dataTableResizeHandleVariants> {
   /**
    * The TanStack Table header instance.
@@ -112,10 +113,7 @@ export const DataTableResizeHandle = <TData,>({
   return (
     <div
       aria-label={'Resize column'}
-      className={cn(
-        dataTableResizeHandleVariants({ isResizing }),
-        className
-      )}
+      className={cn(dataTableResizeHandleVariants({ isResizing }), className)}
       onDoubleClick={() => header.column.resetSize()}
       onMouseDown={header.getResizeHandler()}
       onTouchStart={header.getResizeHandler()}

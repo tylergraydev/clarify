@@ -1,8 +1,8 @@
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNull } from 'drizzle-orm';
 
-import type { DrizzleDatabase } from "../index";
+import type { DrizzleDatabase } from '../index';
 
-import { type NewProject, type Project, projects } from "../schema";
+import { type NewProject, type Project, projects } from '../schema';
 
 export interface ProjectsRepository {
   archive(id: number): Promise<Project | undefined>;
@@ -11,15 +11,10 @@ export interface ProjectsRepository {
   findAll(options?: { includeArchived?: boolean }): Promise<Array<Project>>;
   findById(id: number): Promise<Project | undefined>;
   unarchive(id: number): Promise<Project | undefined>;
-  update(
-    id: number,
-    data: Partial<Omit<NewProject, "createdAt" | "id">>
-  ): Promise<Project | undefined>;
+  update(id: number, data: Partial<Omit<NewProject, 'createdAt' | 'id'>>): Promise<Project | undefined>;
 }
 
-export function createProjectsRepository(
-  db: DrizzleDatabase
-): ProjectsRepository {
+export function createProjectsRepository(db: DrizzleDatabase): ProjectsRepository {
   return {
     async archive(id: number): Promise<Project | undefined> {
       const now = new Date().toISOString();
@@ -34,7 +29,7 @@ export function createProjectsRepository(
     async create(data: NewProject): Promise<Project> {
       const result = await db.insert(projects).values(data).returning();
       if (!result[0]) {
-        throw new Error("Failed to create project");
+        throw new Error('Failed to create project');
       }
       return result[0];
     },
@@ -43,9 +38,7 @@ export function createProjectsRepository(
       await db.delete(projects).where(eq(projects.id, id));
     },
 
-    async findAll(options?: {
-      includeArchived?: boolean;
-    }): Promise<Array<Project>> {
+    async findAll(options?: { includeArchived?: boolean }): Promise<Array<Project>> {
       if (options?.includeArchived) {
         return db.select().from(projects);
       }
@@ -53,10 +46,7 @@ export function createProjectsRepository(
     },
 
     async findById(id: number): Promise<Project | undefined> {
-      const result = await db
-        .select()
-        .from(projects)
-        .where(eq(projects.id, id));
+      const result = await db.select().from(projects).where(eq(projects.id, id));
       return result[0];
     },
 
@@ -70,10 +60,7 @@ export function createProjectsRepository(
       return result[0];
     },
 
-    async update(
-      id: number,
-      data: Partial<Omit<NewProject, "createdAt" | "id">>
-    ): Promise<Project | undefined> {
+    async update(id: number, data: Partial<Omit<NewProject, 'createdAt' | 'id'>>): Promise<Project | undefined> {
       const now = new Date().toISOString();
       const result = await db
         .update(projects)

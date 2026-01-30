@@ -1,57 +1,71 @@
-import YAML from "yaml";
+import YAML from 'yaml';
 
-import type { AgentSkill } from "../../db/schema/agent-skills.schema";
-import type { AgentTool } from "../../db/schema/agent-tools.schema";
-import type { Agent } from "../../db/schema/agents.schema";
+import type { AgentHook } from '../../db/schema/agent-hooks.schema';
+import type { AgentSkill } from '../../db/schema/agent-skills.schema';
+import type { AgentTool } from '../../db/schema/agent-tools.schema';
+import type { Agent } from '../../db/schema/agents.schema';
 
-import { agentColors, agentTypes } from "../../db/schema/agents.schema";
+import { agentColors, agentModels, agentPermissionModes, agentTypes } from '../../db/schema/agents.schema';
 
 /**
  * Current format version for agent markdown files.
  * Increment when making breaking changes to the format.
  */
-export const AGENT_MARKDOWN_FORMAT_VERSION = 1;
+export const AGENT_MARKDOWN_FORMAT_VERSION = 2;
 
 /**
  * Frontmatter structure for agent markdown files.
+ * Matches the official Claude Code subagent specification.
  */
 export interface AgentMarkdownFrontmatter {
+  // Clarify-specific fields (not exported to Claude Code format)
   color?: string;
-  description?: string;
-  displayName: string;
+  // Required by Claude Code spec
+  description: string;
+
+  // Optional Claude Code fields
+  disallowedTools?: Array<string>;
+  displayName?: string;
+  hooks?: AgentMarkdownHooks;
+  model?: (typeof agentModels)[number];
   name: string;
-  skills?: Array<AgentMarkdownSkill>;
-  tools?: Array<AgentMarkdownTool>;
-  type: string;
-  version: number;
+  permissionMode?: (typeof agentPermissionModes)[number];
+
+  skills?: Array<string>;
+  tools?: Array<string>;
+  type?: string;
+  version?: number;
 }
 
 /**
- * Skill configuration in markdown frontmatter format.
+ * Hook entry structure matching Claude Code specification.
  */
-export interface AgentMarkdownSkill {
-  isRequired: boolean;
-  skillName: string;
+export interface AgentMarkdownHookEntry {
+  body: string;
+  matcher?: string;
 }
 
 /**
- * Tool configuration in markdown frontmatter format.
+ * Hooks structure matching Claude Code specification.
  */
-export interface AgentMarkdownTool {
-  pattern?: string;
-  toolName: string;
+export interface AgentMarkdownHooks {
+  PostToolUse?: Array<AgentMarkdownHookEntry>;
+  PreToolUse?: Array<AgentMarkdownHookEntry>;
+  Stop?: Array<AgentMarkdownHookEntry>;
 }
 
 /**
- * Agent data with associated tools and skills for serialization.
+ * Agent data with associated tools, skills, and hooks for serialization.
  */
 export interface AgentWithRelations {
   agent: Pick<
     Agent,
-    "color" | "description" | "displayName" | "name" | "systemPrompt" | "type"
+    'color' | 'description' | 'displayName' | 'model' | 'name' | 'permissionMode' | 'systemPrompt' | 'type'
   >;
-  skills: Array<Pick<AgentSkill, "requiredAt" | "skillName">>;
-  tools: Array<Pick<AgentTool, "toolName" | "toolPattern">>;
+  disallowedTools: Array<Pick<AgentTool, 'toolName'>>;
+  hooks: Array<Pick<AgentHook, 'body' | 'eventType' | 'matcher'>>;
+  skills: Array<Pick<AgentSkill, 'skillName'>>;
+  tools: Array<Pick<AgentTool, 'toolName'>>;
 }
 
 /**
@@ -71,28 +85,31 @@ export class AgentMarkdownParseError extends Error {
     public readonly cause?: unknown
   ) {
     super(message);
-    this.name = "AgentMarkdownParseError";
+    this.name = 'AgentMarkdownParseError';
   }
 }
 
 /**
  * Parses a markdown string with YAML frontmatter into agent data.
  *
- * Expected format:
+ * Expected format (Claude Code subagent specification):
  * ```markdown
  * ---
  * name: my-agent-name
- * displayName: My Agent Display Name
- * type: specialist
- * color: blue
- * description: Optional description
- * version: 1
+ * description: When to use this agent
+ * model: sonnet
+ * permissionMode: default
  * tools:
- *   - toolName: Read
- *     pattern: "*"
+ *   - Read
+ *   - Write
+ * disallowedTools:
+ *   - Edit
  * skills:
- *   - skillName: tanstack-query
- *     isRequired: true
+ *   - tanstack-query
+ * hooks:
+ *   PreToolUse:
+ *     - matcher: Bash
+ *       body: "echo 'Running'"
  * ---
  *
  * System prompt content goes here.
@@ -106,18 +123,14 @@ export function parseAgentMarkdown(markdown: string): ParsedAgentMarkdown {
   const trimmed = markdown.trim();
 
   // Check for frontmatter delimiter
-  if (!trimmed.startsWith("---")) {
-    throw new AgentMarkdownParseError(
-      "Invalid markdown format: missing frontmatter delimiter"
-    );
+  if (!trimmed.startsWith('---')) {
+    throw new AgentMarkdownParseError('Invalid markdown format: missing frontmatter delimiter');
   }
 
   // Find the closing frontmatter delimiter
-  const endDelimiterIndex = trimmed.indexOf("---", 3);
+  const endDelimiterIndex = trimmed.indexOf('---', 3);
   if (endDelimiterIndex === -1) {
-    throw new AgentMarkdownParseError(
-      "Invalid markdown format: missing closing frontmatter delimiter"
-    );
+    throw new AgentMarkdownParseError('Invalid markdown format: missing closing frontmatter delimiter');
   }
 
   // Extract frontmatter YAML and body content
@@ -129,159 +142,213 @@ export function parseAgentMarkdown(markdown: string): ParsedAgentMarkdown {
   try {
     parsedYaml = YAML.parse(frontmatterYaml);
   } catch (error) {
-    throw new AgentMarkdownParseError(
-      "Invalid YAML in frontmatter",
-      error instanceof Error ? error : undefined
-    );
+    throw new AgentMarkdownParseError('Invalid YAML in frontmatter', error instanceof Error ? error : undefined);
   }
 
   // Validate parsed YAML is an object
-  if (typeof parsedYaml !== "object" || parsedYaml === null) {
-    throw new AgentMarkdownParseError("Frontmatter must be a YAML object");
+  if (typeof parsedYaml !== 'object' || parsedYaml === null) {
+    throw new AgentMarkdownParseError('Frontmatter must be a YAML object');
   }
 
   const yaml = parsedYaml as Record<string, unknown>;
 
-  // Validate required fields
-  if (typeof yaml.name !== "string" || yaml.name.length === 0) {
-    throw new AgentMarkdownParseError(
-      "Missing or invalid required field: name"
-    );
+  // Validate required fields (Claude Code spec)
+  if (typeof yaml.name !== 'string' || yaml.name.length === 0) {
+    throw new AgentMarkdownParseError('Missing or invalid required field: name');
   }
 
-  if (typeof yaml.displayName !== "string" || yaml.displayName.length === 0) {
-    throw new AgentMarkdownParseError(
-      "Missing or invalid required field: displayName"
-    );
+  if (typeof yaml.description !== 'string' || yaml.description.length === 0) {
+    throw new AgentMarkdownParseError('Missing or invalid required field: description');
   }
 
-  if (typeof yaml.type !== "string" || !isValidAgentType(yaml.type)) {
-    throw new AgentMarkdownParseError(
-      `Missing or invalid required field: type (must be one of: ${agentTypes.join(", ")})`
-    );
+  // Validate optional model
+  let model: (typeof agentModels)[number] | undefined;
+  if (yaml.model !== undefined) {
+    if (typeof yaml.model !== 'string' || !isValidAgentModel(yaml.model)) {
+      throw new AgentMarkdownParseError(`Invalid model (must be one of: ${agentModels.join(', ')})`);
+    }
+    model = yaml.model;
   }
 
-  // Validate version (default to 1 if not provided)
-  const version =
-    typeof yaml.version === "number" ? yaml.version : AGENT_MARKDOWN_FORMAT_VERSION;
+  // Validate optional permissionMode
+  let permissionMode: (typeof agentPermissionModes)[number] | undefined;
+  if (yaml.permissionMode !== undefined) {
+    if (typeof yaml.permissionMode !== 'string' || !isValidAgentPermissionMode(yaml.permissionMode)) {
+      throw new AgentMarkdownParseError(`Invalid permissionMode (must be one of: ${agentPermissionModes.join(', ')})`);
+    }
+    permissionMode = yaml.permissionMode;
+  }
 
-  // Validate optional color
+  // Parse tools array (simple string array in Claude Code format)
+  let tools: Array<string> | undefined;
+  if (yaml.tools !== undefined) {
+    if (!Array.isArray(yaml.tools)) {
+      throw new AgentMarkdownParseError('Tools must be an array');
+    }
+
+    tools = yaml.tools.map((tool, index) => {
+      if (typeof tool !== 'string' || tool.length === 0) {
+        throw new AgentMarkdownParseError(`Invalid tool at index ${index}: must be a non-empty string`);
+      }
+      return tool;
+    });
+  }
+
+  // Parse disallowedTools array (simple string array)
+  let disallowedTools: Array<string> | undefined;
+  if (yaml.disallowedTools !== undefined) {
+    if (!Array.isArray(yaml.disallowedTools)) {
+      throw new AgentMarkdownParseError('DisallowedTools must be an array');
+    }
+
+    disallowedTools = yaml.disallowedTools.map((tool, index) => {
+      if (typeof tool !== 'string' || tool.length === 0) {
+        throw new AgentMarkdownParseError(`Invalid disallowedTool at index ${index}: must be a non-empty string`);
+      }
+      return tool;
+    });
+  }
+
+  // Parse skills array (simple string array in Claude Code format)
+  let skills: Array<string> | undefined;
+  if (yaml.skills !== undefined) {
+    if (!Array.isArray(yaml.skills)) {
+      throw new AgentMarkdownParseError('Skills must be an array');
+    }
+
+    skills = yaml.skills.map((skill, index) => {
+      if (typeof skill !== 'string' || skill.length === 0) {
+        throw new AgentMarkdownParseError(`Invalid skill at index ${index}: must be a non-empty string`);
+      }
+      return skill;
+    });
+  }
+
+  // Parse hooks object
+  let hooks: AgentMarkdownHooks | undefined;
+  if (yaml.hooks !== undefined) {
+    if (typeof yaml.hooks !== 'object' || yaml.hooks === null) {
+      throw new AgentMarkdownParseError('Hooks must be an object');
+    }
+
+    const hooksObj = yaml.hooks as Record<string, unknown>;
+    hooks = {};
+
+    for (const eventType of ['PreToolUse', 'PostToolUse', 'Stop'] as const) {
+      if (hooksObj[eventType] !== undefined) {
+        if (!Array.isArray(hooksObj[eventType])) {
+          throw new AgentMarkdownParseError(`hooks.${eventType} must be an array`);
+        }
+
+        hooks[eventType] = (hooksObj[eventType] as Array<unknown>).map((entry, index) => {
+          if (typeof entry !== 'object' || entry === null) {
+            throw new AgentMarkdownParseError(`Invalid hook entry at hooks.${eventType}[${index}]: must be an object`);
+          }
+
+          const entryObj = entry as Record<string, unknown>;
+
+          if (typeof entryObj.body !== 'string' || entryObj.body.length === 0) {
+            throw new AgentMarkdownParseError(
+              `Invalid hook entry at hooks.${eventType}[${index}]: missing or invalid body`
+            );
+          }
+
+          const result: AgentMarkdownHookEntry = { body: entryObj.body };
+
+          if (entryObj.matcher !== undefined) {
+            if (typeof entryObj.matcher !== 'string') {
+              throw new AgentMarkdownParseError(
+                `Invalid hook entry at hooks.${eventType}[${index}]: matcher must be a string`
+              );
+            }
+            result.matcher = entryObj.matcher;
+          }
+
+          return result;
+        });
+      }
+    }
+  }
+
+  // Validate optional Clarify-specific fields
+  let displayName: string | undefined;
+  if (yaml.displayName !== undefined) {
+    if (typeof yaml.displayName !== 'string') {
+      throw new AgentMarkdownParseError('displayName must be a string');
+    }
+    displayName = yaml.displayName;
+  }
+
+  let type: string | undefined;
+  if (yaml.type !== undefined) {
+    if (typeof yaml.type !== 'string' || !isValidAgentType(yaml.type)) {
+      throw new AgentMarkdownParseError(`Invalid type (must be one of: ${agentTypes.join(', ')})`);
+    }
+    type = yaml.type;
+  }
+
   let color: string | undefined;
   if (yaml.color !== undefined) {
-    if (typeof yaml.color !== "string" || !isValidAgentColor(yaml.color)) {
-      throw new AgentMarkdownParseError(
-        `Invalid color (must be one of: ${agentColors.join(", ")})`
-      );
+    if (typeof yaml.color !== 'string' || !isValidAgentColor(yaml.color)) {
+      throw new AgentMarkdownParseError(`Invalid color (must be one of: ${agentColors.join(', ')})`);
     }
     color = yaml.color;
   }
 
-  // Validate optional description
-  let description: string | undefined;
-  if (yaml.description !== undefined) {
-    if (typeof yaml.description !== "string") {
-      throw new AgentMarkdownParseError("Description must be a string");
+  let version: number | undefined;
+  if (yaml.version !== undefined) {
+    if (typeof yaml.version !== 'number') {
+      throw new AgentMarkdownParseError('version must be a number');
     }
-    description = yaml.description;
+    version = yaml.version;
   }
 
-  // Parse tools array
-  let tools: Array<AgentMarkdownTool> | undefined;
-  if (yaml.tools !== undefined) {
-    if (!Array.isArray(yaml.tools)) {
-      throw new AgentMarkdownParseError("Tools must be an array");
-    }
-
-    tools = yaml.tools.map((tool, index) => {
-      if (typeof tool !== "object" || tool === null) {
-        throw new AgentMarkdownParseError(
-          `Invalid tool at index ${index}: must be an object`
-        );
-      }
-
-      const toolObj = tool as Record<string, unknown>;
-
-      if (typeof toolObj.toolName !== "string" || toolObj.toolName.length === 0) {
-        throw new AgentMarkdownParseError(
-          `Invalid tool at index ${index}: missing or invalid toolName`
-        );
-      }
-
-      const result: AgentMarkdownTool = {
-        toolName: toolObj.toolName,
-      };
-
-      if (toolObj.pattern !== undefined) {
-        if (typeof toolObj.pattern !== "string") {
-          throw new AgentMarkdownParseError(
-            `Invalid tool at index ${index}: pattern must be a string`
-          );
-        }
-        result.pattern = toolObj.pattern;
-      }
-
-      return result;
-    });
-  }
-
-  // Parse skills array
-  let skills: Array<AgentMarkdownSkill> | undefined;
-  if (yaml.skills !== undefined) {
-    if (!Array.isArray(yaml.skills)) {
-      throw new AgentMarkdownParseError("Skills must be an array");
-    }
-
-    skills = yaml.skills.map((skill, index) => {
-      if (typeof skill !== "object" || skill === null) {
-        throw new AgentMarkdownParseError(
-          `Invalid skill at index ${index}: must be an object`
-        );
-      }
-
-      const skillObj = skill as Record<string, unknown>;
-
-      if (
-        typeof skillObj.skillName !== "string" ||
-        skillObj.skillName.length === 0
-      ) {
-        throw new AgentMarkdownParseError(
-          `Invalid skill at index ${index}: missing or invalid skillName`
-        );
-      }
-
-      // Default isRequired to false if not specified
-      const isRequired =
-        typeof skillObj.isRequired === "boolean" ? skillObj.isRequired : false;
-
-      return {
-        isRequired,
-        skillName: skillObj.skillName,
-      };
-    });
-  }
-
-  // Construct frontmatter object
+  // Construct frontmatter object with required fields
   const frontmatter: AgentMarkdownFrontmatter = {
-    displayName: yaml.displayName,
+    description: yaml.description,
     name: yaml.name,
-    type: yaml.type,
-    version,
   };
 
-  if (color !== undefined) {
-    frontmatter.color = color;
+  // Add optional Claude Code fields
+  if (model !== undefined) {
+    frontmatter.model = model;
   }
 
-  if (description !== undefined) {
-    frontmatter.description = description;
+  if (permissionMode !== undefined) {
+    frontmatter.permissionMode = permissionMode;
   }
 
   if (tools !== undefined && tools.length > 0) {
     frontmatter.tools = tools;
   }
 
+  if (disallowedTools !== undefined && disallowedTools.length > 0) {
+    frontmatter.disallowedTools = disallowedTools;
+  }
+
   if (skills !== undefined && skills.length > 0) {
     frontmatter.skills = skills;
+  }
+
+  if (hooks !== undefined && Object.keys(hooks).length > 0) {
+    frontmatter.hooks = hooks;
+  }
+
+  // Add Clarify-specific fields
+  if (displayName !== undefined) {
+    frontmatter.displayName = displayName;
+  }
+
+  if (type !== undefined) {
+    frontmatter.type = type;
+  }
+
+  if (color !== undefined) {
+    frontmatter.color = color;
+  }
+
+  if (version !== undefined) {
+    frontmatter.version = version;
   }
 
   return {
@@ -292,54 +359,63 @@ export function parseAgentMarkdown(markdown: string): ParsedAgentMarkdown {
 
 /**
  * Serializes agent data with tools and skills to markdown format.
+ * Output matches the official Claude Code subagent specification.
  *
  * @param data - The agent data with relations to serialize
  * @returns The markdown string with YAML frontmatter
  */
 export function serializeAgentToMarkdown(data: AgentWithRelations): string {
-  const { agent, skills, tools } = data;
+  const { agent, disallowedTools, hooks, skills, tools } = data;
 
-  // Build frontmatter object with required fields first
+  // Build frontmatter object with required Claude Code fields first
   const frontmatter: Record<string, unknown> = {
-    displayName: agent.displayName,
+    description: agent.description ?? '',
     name: agent.name,
-    type: agent.type,
   };
 
-  // Add optional fields only if they have values
-  if (agent.color) {
-    frontmatter.color = agent.color;
+  // Add optional Claude Code fields
+  if (agent.model) {
+    frontmatter.model = agent.model;
   }
 
-  if (agent.description) {
-    frontmatter.description = agent.description;
+  if (agent.permissionMode) {
+    frontmatter.permissionMode = agent.permissionMode;
   }
 
-  // Always include version
-  frontmatter.version = AGENT_MARKDOWN_FORMAT_VERSION;
-
-  // Add tools if present
+  // Add tools as simple string array (Claude Code format)
   if (tools.length > 0) {
-    frontmatter.tools = tools.map((tool) => {
-      const toolEntry: AgentMarkdownTool = {
-        toolName: tool.toolName,
-      };
+    frontmatter.tools = tools.map((tool) => tool.toolName);
+  }
 
-      // Only include pattern if it's not the default "*"
-      if (tool.toolPattern && tool.toolPattern !== "*") {
-        toolEntry.pattern = tool.toolPattern;
+  // Add disallowedTools as simple string array
+  if (disallowedTools.length > 0) {
+    frontmatter.disallowedTools = disallowedTools.map((tool) => tool.toolName);
+  }
+
+  // Add skills as simple string array (Claude Code format)
+  if (skills.length > 0) {
+    frontmatter.skills = skills.map((skill) => skill.skillName);
+  }
+
+  // Add hooks if present
+  if (hooks.length > 0) {
+    const hooksObj: AgentMarkdownHooks = {};
+
+    for (const hook of hooks) {
+      const eventType = hook.eventType as keyof AgentMarkdownHooks;
+      if (!hooksObj[eventType]) {
+        hooksObj[eventType] = [];
       }
 
-      return toolEntry;
-    });
-  }
+      const entry: AgentMarkdownHookEntry = { body: hook.body };
+      if (hook.matcher) {
+        entry.matcher = hook.matcher;
+      }
 
-  // Add skills if present
-  if (skills.length > 0) {
-    frontmatter.skills = skills.map((skill) => ({
-      isRequired: skill.requiredAt !== null,
-      skillName: skill.skillName,
-    }));
+      hooksObj[eventType]!.push(entry);
+    }
+
+    frontmatter.hooks = hooksObj;
   }
 
   // Serialize frontmatter to YAML
@@ -374,69 +450,74 @@ export function validateRoundTrip(original: string): boolean {
     const agentData: AgentWithRelations = {
       agent: {
         color: parsed.frontmatter.color ?? null,
-        description: parsed.frontmatter.description ?? null,
-        displayName: parsed.frontmatter.displayName,
+        description: parsed.frontmatter.description,
+        displayName: parsed.frontmatter.displayName ?? parsed.frontmatter.name,
+        model: parsed.frontmatter.model ?? null,
         name: parsed.frontmatter.name,
+        permissionMode: parsed.frontmatter.permissionMode ?? null,
         systemPrompt: parsed.systemPrompt,
-        type: parsed.frontmatter.type,
+        type: parsed.frontmatter.type ?? 'specialist',
       },
-      skills: (parsed.frontmatter.skills ?? []).map((skill) => ({
-        requiredAt: skill.isRequired ? new Date().toISOString() : null,
-        skillName: skill.skillName,
+      disallowedTools: (parsed.frontmatter.disallowedTools ?? []).map((toolName) => ({ toolName })),
+      hooks: [],
+      skills: (parsed.frontmatter.skills ?? []).map((skillName) => ({
+        skillName,
       })),
-      tools: (parsed.frontmatter.tools ?? []).map((tool) => ({
-        toolName: tool.toolName,
-        toolPattern: tool.pattern ?? "*",
-      })),
+      tools: (parsed.frontmatter.tools ?? []).map((toolName) => ({ toolName })),
     };
+
+    // Convert hooks from object to array format
+    if (parsed.frontmatter.hooks) {
+      for (const eventType of ['PreToolUse', 'PostToolUse', 'Stop'] as const) {
+        const eventHooks = parsed.frontmatter.hooks[eventType];
+        if (eventHooks) {
+          for (const hook of eventHooks) {
+            agentData.hooks.push({
+              body: hook.body,
+              eventType,
+              matcher: hook.matcher ?? null,
+            });
+          }
+        }
+      }
+    }
 
     const serialized = serializeAgentToMarkdown(agentData);
     const reparsed = parseAgentMarkdown(serialized);
 
-    // Compare frontmatter fields
+    // Compare required frontmatter fields
     if (parsed.frontmatter.name !== reparsed.frontmatter.name) return false;
-    if (parsed.frontmatter.displayName !== reparsed.frontmatter.displayName)
-      return false;
-    if (parsed.frontmatter.type !== reparsed.frontmatter.type) return false;
-    if (parsed.frontmatter.color !== reparsed.frontmatter.color) return false;
-    if (parsed.frontmatter.description !== reparsed.frontmatter.description)
-      return false;
+    if (parsed.frontmatter.description !== reparsed.frontmatter.description) return false;
 
     // Compare system prompt
     if (parsed.systemPrompt !== reparsed.systemPrompt) return false;
 
-    // Compare tools
+    // Compare optional Claude Code fields
+    if (parsed.frontmatter.model !== reparsed.frontmatter.model) return false;
+    if (parsed.frontmatter.permissionMode !== reparsed.frontmatter.permissionMode) return false;
+
+    // Compare tools (simple string arrays)
     const originalTools = parsed.frontmatter.tools ?? [];
     const reparsedTools = reparsed.frontmatter.tools ?? [];
     if (originalTools.length !== reparsedTools.length) return false;
     for (let i = 0; i < originalTools.length; i++) {
-      const originalTool = originalTools[i];
-      const reparsedTool = reparsedTools[i];
-      if (!originalTool || !reparsedTool) return false;
-      if (originalTool.toolName !== reparsedTool.toolName) return false;
-      // Handle pattern comparison - default "*" should equal undefined
-      const originalPattern = originalTool.pattern;
-      const reparsedPattern = reparsedTool.pattern;
-      if (originalPattern !== reparsedPattern) {
-        // Check if one is "*" and the other is undefined (equivalent)
-        const origIsDefault =
-          originalPattern === "*" || originalPattern === undefined;
-        const reparsedIsDefault =
-          reparsedPattern === "*" || reparsedPattern === undefined;
-        if (!origIsDefault || !reparsedIsDefault) return false;
-      }
+      if (originalTools[i] !== reparsedTools[i]) return false;
     }
 
-    // Compare skills
+    // Compare disallowedTools
+    const originalDisallowed = parsed.frontmatter.disallowedTools ?? [];
+    const reparsedDisallowed = reparsed.frontmatter.disallowedTools ?? [];
+    if (originalDisallowed.length !== reparsedDisallowed.length) return false;
+    for (let i = 0; i < originalDisallowed.length; i++) {
+      if (originalDisallowed[i] !== reparsedDisallowed[i]) return false;
+    }
+
+    // Compare skills (simple string arrays)
     const originalSkills = parsed.frontmatter.skills ?? [];
     const reparsedSkills = reparsed.frontmatter.skills ?? [];
     if (originalSkills.length !== reparsedSkills.length) return false;
     for (let i = 0; i < originalSkills.length; i++) {
-      const originalSkill = originalSkills[i];
-      const reparsedSkill = reparsedSkills[i];
-      if (!originalSkill || !reparsedSkill) return false;
-      if (originalSkill.skillName !== reparsedSkill.skillName) return false;
-      if (originalSkill.isRequired !== reparsedSkill.isRequired) return false;
+      if (originalSkills[i] !== reparsedSkills[i]) return false;
     }
 
     return true;
@@ -448,10 +529,22 @@ export function validateRoundTrip(original: string): boolean {
 /**
  * Validates that a string is a valid agent color.
  */
-function isValidAgentColor(
-  color: string
-): color is (typeof agentColors)[number] {
+function isValidAgentColor(color: string): color is (typeof agentColors)[number] {
   return agentColors.includes(color as (typeof agentColors)[number]);
+}
+
+/**
+ * Validates that a string is a valid agent model.
+ */
+function isValidAgentModel(model: string): model is (typeof agentModels)[number] {
+  return agentModels.includes(model as (typeof agentModels)[number]);
+}
+
+/**
+ * Validates that a string is a valid agent permission mode.
+ */
+function isValidAgentPermissionMode(mode: string): mode is (typeof agentPermissionModes)[number] {
+  return agentPermissionModes.includes(mode as (typeof agentPermissionModes)[number]);
 }
 
 /**

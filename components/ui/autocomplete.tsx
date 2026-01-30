@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Autocomplete as BaseAutocomplete } from "@base-ui/react/autocomplete";
-import { cva, type VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
+import { Autocomplete as BaseAutocomplete } from '@base-ui/react/autocomplete';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { X } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 /* Root */
 export const AutocompleteRoot = BaseAutocomplete.Root;
@@ -23,32 +23,24 @@ export const autocompleteInputVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "h-9 px-3 text-sm",
-        lg: "h-10 px-4 text-base",
-        sm: "h-8 px-2 text-xs",
+        default: 'h-9 px-3 text-sm',
+        lg: 'h-10 px-4 text-base',
+        sm: 'h-8 px-2 text-xs',
       },
     },
   }
 );
 
-type AutocompleteInputProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Input
-> &
+type AutocompleteInputProps = ComponentPropsWithRef<typeof BaseAutocomplete.Input> &
   VariantProps<typeof autocompleteInputVariants> & {
     isInvalid?: boolean;
   };
 
-export const AutocompleteInput = ({
-  className,
-  isInvalid,
-  ref,
-  size,
-  ...props
-}: AutocompleteInputProps) => {
+export const AutocompleteInput = ({ className, isInvalid, ref, size, ...props }: AutocompleteInputProps) => {
   return (
     <BaseAutocomplete.Input
       className={cn(autocompleteInputVariants({ size }), className)}
@@ -60,19 +52,13 @@ export const AutocompleteInput = ({
 };
 
 /* Trigger */
-type AutocompleteTriggerProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Trigger
->;
+type AutocompleteTriggerProps = ComponentPropsWithRef<typeof BaseAutocomplete.Trigger>;
 
-export const AutocompleteTrigger = ({
-  className,
-  ref,
-  ...props
-}: AutocompleteTriggerProps) => {
+export const AutocompleteTrigger = ({ className, ref, ...props }: AutocompleteTriggerProps) => {
   return (
     <BaseAutocomplete.Trigger
       className={cn(
-        "flex items-center justify-center rounded-sm bg-transparent p-0",
+        'flex items-center justify-center rounded-sm bg-transparent p-0',
         `
           text-muted-foreground
           hover:text-foreground
@@ -90,20 +76,13 @@ export const AutocompleteTrigger = ({
 };
 
 /* Clear */
-type AutocompleteClearProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Clear
->;
+type AutocompleteClearProps = ComponentPropsWithRef<typeof BaseAutocomplete.Clear>;
 
-export const AutocompleteClear = ({
-  children,
-  className,
-  ref,
-  ...props
-}: AutocompleteClearProps) => {
+export const AutocompleteClear = ({ children, className, ref, ...props }: AutocompleteClearProps) => {
   return (
     <BaseAutocomplete.Clear
       className={cn(
-        "flex items-center justify-center rounded-sm bg-transparent p-0",
+        'flex items-center justify-center rounded-sm bg-transparent p-0',
         `
           text-muted-foreground
           hover:text-foreground
@@ -117,7 +96,7 @@ export const AutocompleteClear = ({
       ref={ref}
       {...props}
     >
-      {children ?? <X aria-hidden={"true"} className={"size-4"} />}
+      {children ?? <X aria-hidden={'true'} className={'size-4'} />}
     </BaseAutocomplete.Clear>
   );
 };
@@ -126,22 +105,11 @@ export const AutocompleteClear = ({
 export const AutocompletePortal = BaseAutocomplete.Portal;
 
 /* Positioner */
-type AutocompletePositionerProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Positioner
->;
+type AutocompletePositionerProps = ComponentPropsWithRef<typeof BaseAutocomplete.Positioner>;
 
-export const AutocompletePositioner = ({
-  className,
-  ref,
-  ...props
-}: AutocompletePositionerProps) => {
+export const AutocompletePositioner = ({ className, ref, ...props }: AutocompletePositionerProps) => {
   return (
-    <BaseAutocomplete.Positioner
-      className={cn("z-50 outline-none", className)}
-      ref={ref}
-      sideOffset={4}
-      {...props}
-    />
+    <BaseAutocomplete.Positioner className={cn('z-50 outline-none', className)} ref={ref} sideOffset={4} {...props} />
   );
 };
 
@@ -155,48 +123,29 @@ export const autocompletePopupVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "text-sm",
-        lg: "text-base",
-        sm: "text-xs",
+        default: 'text-sm',
+        lg: 'text-base',
+        sm: 'text-xs',
       },
     },
   }
 );
 
-type AutocompletePopupProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Popup
-> &
+type AutocompletePopupProps = ComponentPropsWithRef<typeof BaseAutocomplete.Popup> &
   VariantProps<typeof autocompletePopupVariants>;
 
-export const AutocompletePopup = ({
-  className,
-  ref,
-  size,
-  ...props
-}: AutocompletePopupProps) => {
-  return (
-    <BaseAutocomplete.Popup
-      className={cn(autocompletePopupVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const AutocompletePopup = ({ className, ref, size, ...props }: AutocompletePopupProps) => {
+  return <BaseAutocomplete.Popup className={cn(autocompletePopupVariants({ size }), className)} ref={ref} {...props} />;
 };
 
 /* List */
-type AutocompleteListProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.List
->;
+type AutocompleteListProps = ComponentPropsWithRef<typeof BaseAutocomplete.List>;
 
-export const AutocompleteList = ({
-  className,
-  ref,
-  ...props
-}: AutocompleteListProps) => {
+export const AutocompleteList = ({ className, ref, ...props }: AutocompleteListProps) => {
   return (
     <BaseAutocomplete.List
       className={cn(
@@ -226,48 +175,29 @@ export const autocompleteItemVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "text-sm",
-        lg: "text-base",
-        sm: "text-xs",
+        default: 'text-sm',
+        lg: 'text-base',
+        sm: 'text-xs',
       },
     },
   }
 );
 
-type AutocompleteItemProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Item
-> &
+type AutocompleteItemProps = ComponentPropsWithRef<typeof BaseAutocomplete.Item> &
   VariantProps<typeof autocompleteItemVariants>;
 
-export const AutocompleteItem = ({
-  className,
-  ref,
-  size,
-  ...props
-}: AutocompleteItemProps) => {
-  return (
-    <BaseAutocomplete.Item
-      className={cn(autocompleteItemVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const AutocompleteItem = ({ className, ref, size, ...props }: AutocompleteItemProps) => {
+  return <BaseAutocomplete.Item className={cn(autocompleteItemVariants({ size }), className)} ref={ref} {...props} />;
 };
 
 /* Empty */
-type AutocompleteEmptyProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Empty
->;
+type AutocompleteEmptyProps = ComponentPropsWithRef<typeof BaseAutocomplete.Empty>;
 
-export const AutocompleteEmpty = ({
-  className,
-  ref,
-  ...props
-}: AutocompleteEmptyProps) => {
+export const AutocompleteEmpty = ({ className, ref, ...props }: AutocompleteEmptyProps) => {
   return (
     <BaseAutocomplete.Empty
       className={cn(
@@ -284,15 +214,9 @@ export const AutocompleteEmpty = ({
 };
 
 /* Status */
-type AutocompleteStatusProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Status
->;
+type AutocompleteStatusProps = ComponentPropsWithRef<typeof BaseAutocomplete.Status>;
 
-export const AutocompleteStatus = ({
-  className,
-  ref,
-  ...props
-}: AutocompleteStatusProps) => {
+export const AutocompleteStatus = ({ className, ref, ...props }: AutocompleteStatusProps) => {
   return (
     <BaseAutocomplete.Status
       className={cn(
@@ -311,33 +235,23 @@ export const AutocompleteStatus = ({
 export const AutocompleteGroup = BaseAutocomplete.Group;
 
 /* Group Label */
-export const autocompleteGroupLabelVariants = cva(
-  `px-2 py-1.5 font-semibold text-muted-foreground select-none`,
-  {
-    defaultVariants: {
-      size: "default",
+export const autocompleteGroupLabelVariants = cva(`px-2 py-1.5 font-semibold text-muted-foreground select-none`, {
+  defaultVariants: {
+    size: 'default',
+  },
+  variants: {
+    size: {
+      default: 'text-xs',
+      lg: 'text-sm',
+      sm: 'text-xs',
     },
-    variants: {
-      size: {
-        default: "text-xs",
-        lg: "text-sm",
-        sm: "text-xs",
-      },
-    },
-  }
-);
+  },
+});
 
-type AutocompleteGroupLabelProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.GroupLabel
-> &
+type AutocompleteGroupLabelProps = ComponentPropsWithRef<typeof BaseAutocomplete.GroupLabel> &
   VariantProps<typeof autocompleteGroupLabelVariants>;
 
-export const AutocompleteGroupLabel = ({
-  className,
-  ref,
-  size,
-  ...props
-}: AutocompleteGroupLabelProps) => {
+export const AutocompleteGroupLabel = ({ className, ref, size, ...props }: AutocompleteGroupLabelProps) => {
   return (
     <BaseAutocomplete.GroupLabel
       className={cn(autocompleteGroupLabelVariants({ size }), className)}
@@ -348,34 +262,16 @@ export const AutocompleteGroupLabel = ({
 };
 
 /* Separator */
-type AutocompleteSeparatorProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Separator
->;
+type AutocompleteSeparatorProps = ComponentPropsWithRef<typeof BaseAutocomplete.Separator>;
 
-export const AutocompleteSeparator = ({
-  className,
-  ref,
-  ...props
-}: AutocompleteSeparatorProps) => {
-  return (
-    <BaseAutocomplete.Separator
-      className={cn("-mx-1 my-1 h-px bg-border", className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const AutocompleteSeparator = ({ className, ref, ...props }: AutocompleteSeparatorProps) => {
+  return <BaseAutocomplete.Separator className={cn('-mx-1 my-1 h-px bg-border', className)} ref={ref} {...props} />;
 };
 
 /* Arrow */
-type AutocompleteArrowProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Arrow
->;
+type AutocompleteArrowProps = ComponentPropsWithRef<typeof BaseAutocomplete.Arrow>;
 
-export const AutocompleteArrow = ({
-  className,
-  ref,
-  ...props
-}: AutocompleteArrowProps) => {
+export const AutocompleteArrow = ({ className, ref, ...props }: AutocompleteArrowProps) => {
   return (
     <BaseAutocomplete.Arrow
       className={cn(
@@ -391,22 +287,10 @@ export const AutocompleteArrow = ({
 };
 
 /* Backdrop */
-type AutocompleteBackdropProps = ComponentPropsWithRef<
-  typeof BaseAutocomplete.Backdrop
->;
+type AutocompleteBackdropProps = ComponentPropsWithRef<typeof BaseAutocomplete.Backdrop>;
 
-export const AutocompleteBackdrop = ({
-  className,
-  ref,
-  ...props
-}: AutocompleteBackdropProps) => {
-  return (
-    <BaseAutocomplete.Backdrop
-      className={cn("fixed inset-0", className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const AutocompleteBackdrop = ({ className, ref, ...props }: AutocompleteBackdropProps) => {
+  return <BaseAutocomplete.Backdrop className={cn('fixed inset-0', className)} ref={ref} {...props} />;
 };
 
 /* Value */

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { settingKeys } from "@/lib/queries/settings";
+import { settingKeys } from '@/lib/queries/settings';
 
-import { useElectronDb } from "../use-electron";
+import { useElectronDb } from '../use-electron';
 
 // ============================================================================
 // Query Hooks
@@ -18,19 +18,12 @@ export function useBulkUpdateSettings() {
   const { settings } = useElectronDb();
 
   return useMutation({
-    mutationFn: (updates: Array<{ key: string; value: string }>) =>
-      settings.bulkUpdate(updates),
+    mutationFn: (updates: Array<{ key: string; value: string }>) => settings.bulkUpdate(updates),
     onSuccess: (updatedSettings) => {
       // Update each setting in the cache
       for (const setting of updatedSettings) {
-        queryClient.setQueryData(
-          settingKeys.detail(setting.id).queryKey,
-          setting
-        );
-        queryClient.setQueryData(
-          settingKeys.byKey(setting.key).queryKey,
-          setting
-        );
+        queryClient.setQueryData(settingKeys.detail(setting.id).queryKey, setting);
+        queryClient.setQueryData(settingKeys.byKey(setting.key).queryKey, setting);
       }
       // Invalidate all settings queries to ensure lists are refreshed
       void queryClient.invalidateQueries({ queryKey: settingKeys._def });
@@ -50,15 +43,9 @@ export function useResetSetting() {
     onSuccess: (setting) => {
       if (setting) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          settingKeys.detail(setting.id).queryKey,
-          setting
-        );
+        queryClient.setQueryData(settingKeys.detail(setting.id).queryKey, setting);
         // Update by key cache directly
-        queryClient.setQueryData(
-          settingKeys.byKey(setting.key).queryKey,
-          setting
-        );
+        queryClient.setQueryData(settingKeys.byKey(setting.key).queryKey, setting);
         // Invalidate list and category queries
         void queryClient.invalidateQueries({ queryKey: settingKeys.list._def });
         void queryClient.invalidateQueries({
@@ -112,9 +99,7 @@ export function useSettings(filters?: { category?: string }) {
       const allSettings = await settings.list();
       // Apply client-side filtering if category filter provided
       if (filters?.category) {
-        return allSettings.filter(
-          (setting) => setting.category === filters.category
-        );
+        return allSettings.filter((setting) => setting.category === filters.category);
       }
       return allSettings;
     },
@@ -142,20 +127,13 @@ export function useUpdateSetting() {
   const { settings } = useElectronDb();
 
   return useMutation({
-    mutationFn: ({ key, value }: { key: string; value: string }) =>
-      settings.setValue(key, value),
+    mutationFn: ({ key, value }: { key: string; value: string }) => settings.setValue(key, value),
     onSuccess: (setting) => {
       if (setting) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          settingKeys.detail(setting.id).queryKey,
-          setting
-        );
+        queryClient.setQueryData(settingKeys.detail(setting.id).queryKey, setting);
         // Update by key cache directly
-        queryClient.setQueryData(
-          settingKeys.byKey(setting.key).queryKey,
-          setting
-        );
+        queryClient.setQueryData(settingKeys.byKey(setting.key).queryKey, setting);
         // Invalidate list and category queries
         void queryClient.invalidateQueries({ queryKey: settingKeys.list._def });
         void queryClient.invalidateQueries({

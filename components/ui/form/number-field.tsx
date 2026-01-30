@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import type { VariantProps } from "class-variance-authority";
+import type { VariantProps } from 'class-variance-authority';
 
-import { Field } from "@base-ui/react/field";
+import { Field } from '@base-ui/react/field';
 
 import {
   NumberInputDecrement,
@@ -11,15 +11,11 @@ import {
   NumberInputIncrement,
   NumberInputRoot,
   numberInputVariants,
-} from "@/components/ui/number-input";
-import { useFieldContext } from "@/lib/forms/form-hook";
+} from '@/components/ui/number-input';
+import { useFieldContext } from '@/lib/forms/form-hook';
 
-import {
-  descriptionVariants,
-  errorVariants,
-  labelVariants,
-} from "./field-wrapper";
-import { TanStackFieldRoot } from "./tanstack-field-root";
+import { descriptionVariants, errorVariants, labelVariants } from './field-wrapper';
+import { TanStackFieldRoot } from './tanstack-field-root';
 
 type NumberFieldComponentProps = ClassName &
   VariantProps<typeof numberInputVariants> & {
@@ -77,9 +73,7 @@ export const NumberFieldComponent = ({
 
       {/* Description */}
       {description && !hasError && (
-        <Field.Description className={descriptionVariants({ size })}>
-          {description}
-        </Field.Description>
+        <Field.Description className={descriptionVariants({ size })}>{description}</Field.Description>
       )}
 
       {/* Error */}

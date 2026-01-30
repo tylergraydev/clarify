@@ -292,21 +292,21 @@ type DisplayColumnOptions<TData> = Omit<DataTableColumnDef<TData, unknown>, 'acc
  * ];
  * ```
  */
-export function actionsColumn<TData>(
-  options: ActionsColumnOptions<TData> = {}
-): DataTableColumnDef<TData, unknown> {
+export function actionsColumn<TData>(options: ActionsColumnOptions<TData> = {}): DataTableColumnDef<TData, unknown> {
   const { actions, cell, header = '', id = 'actions', size = 60 } = options;
 
   return {
-    cell: cell ?? (({ row }: CellContext<TData, unknown>) => {
-      // Return actions data for rendering by the DataTableRowActions component
-      const resolvedActions = typeof actions === 'function' ? actions(row) : actions ?? [];
-      return {
-        actions: resolvedActions,
-        row,
-        type: 'row-actions' as const,
-      };
-    }),
+    cell:
+      cell ??
+      (({ row }: CellContext<TData, unknown>) => {
+        // Return actions data for rendering by the DataTableRowActions component
+        const resolvedActions = typeof actions === 'function' ? actions(row) : (actions ?? []);
+        return {
+          actions: resolvedActions,
+          row,
+          type: 'row-actions' as const,
+        };
+      }),
     enableColumnFilter: false,
     enableHiding: false,
     enableResizing: false,
@@ -366,7 +366,7 @@ export function createColumnHelper<TData>() {
      * Supports both string accessor keys and accessor functions.
      */
     accessor: <TValue>(
-      accessor: ((row: TData) => TValue) | keyof TData & string,
+      accessor: ((row: TData) => TValue) | (keyof TData & string),
       options: AccessorColumnOptions<TData, TValue> = {}
     ): DataTableColumnDef<TData, TValue> => {
       if (typeof accessor === 'function') {
@@ -517,15 +517,7 @@ export function dateColumn<TData, TValue = Date | null | string | undefined>(
 export function numberColumn<TData, TValue = number>(
   options: NumberColumnOptions<TData, TValue>
 ): DataTableColumnDef<TData, TValue> {
-  const {
-    accessor,
-    accessorKey,
-    cell,
-    formatNumber,
-    locale = 'en-US',
-    numberFormatOptions,
-    ...rest
-  } = options;
+  const { accessor, accessorKey, cell, formatNumber, locale = 'en-US', numberFormatOptions, ...rest } = options;
 
   const defaultCell = ({ getValue }: CellContext<TData, TValue>): ReactNode => {
     const value = getValue();
@@ -601,9 +593,7 @@ export function numberColumn<TData, TValue = number>(
  * ];
  * ```
  */
-export function selectColumn<TData>(
-  options: SelectColumnOptions<TData> = {}
-): DataTableColumnDef<TData, unknown> {
+export function selectColumn<TData>(options: SelectColumnOptions<TData> = {}): DataTableColumnDef<TData, unknown> {
   const { enableSelectAll = true, header, id = 'select', size = 40 } = options;
 
   return {
@@ -622,18 +612,20 @@ export function selectColumn<TData>(
     enableHiding: false,
     enableResizing: false,
     enableSorting: false,
-    header: header ?? (({ table }) => {
-      if (!enableSelectAll) {
-        return null;
-      }
+    header:
+      header ??
+      (({ table }) => {
+        if (!enableSelectAll) {
+          return null;
+        }
 
-      return {
-        checked: table.getIsAllPageRowsSelected(),
-        indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
-        onCheckedChange: (checked: boolean) => table.toggleAllPageRowsSelected(checked),
-        type: 'checkbox' as const,
-      };
-    }),
+        return {
+          checked: table.getIsAllPageRowsSelected(),
+          indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
+          onCheckedChange: (checked: boolean) => table.toggleAllPageRowsSelected(checked),
+          type: 'checkbox' as const,
+        };
+      }),
     id,
     size,
   };
@@ -775,15 +767,7 @@ export function statusColumn<TData, TValue = string>(
 export function textColumn<TData, TValue = string>(
   options: TextColumnOptions<TData, TValue>
 ): DataTableColumnDef<TData, TValue> {
-  const {
-    accessor,
-    accessorKey,
-    caseInsensitive = true,
-    cell,
-    formatText,
-    maxLength,
-    ...rest
-  } = options;
+  const { accessor, accessorKey, caseInsensitive = true, cell, formatText, maxLength, ...rest } = options;
 
   const defaultCell = ({ getValue }: CellContext<TData, TValue>): ReactNode => {
     const value = getValue();

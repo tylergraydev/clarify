@@ -8,12 +8,12 @@
  * - Resetting settings to default values
  * - Bulk updating multiple settings at once
  */
-import { ipcMain, type IpcMainInvokeEvent } from "electron";
+import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 
-import type { SettingsRepository } from "../../db/repositories";
-import type { Setting } from "../../db/schema";
+import type { SettingsRepository } from '../../db/repositories';
+import type { Setting } from '../../db/schema';
 
-import { IpcChannels } from "./channels";
+import { IpcChannels } from './channels';
 
 /**
  * Data for bulk updating settings
@@ -28,20 +28,15 @@ interface BulkUpdateItem {
  *
  * @param settingsRepository - The settings repository for database operations
  */
-export function registerSettingsHandlers(
-  settingsRepository: SettingsRepository
-): void {
+export function registerSettingsHandlers(settingsRepository: SettingsRepository): void {
   // List settings with optional category filter
   ipcMain.handle(
     IpcChannels.settings.list,
-    async (
-      _event: IpcMainInvokeEvent,
-      options?: { category?: string }
-    ): Promise<Array<Setting>> => {
+    async (_event: IpcMainInvokeEvent, options?: { category?: string }): Promise<Array<Setting>> => {
       try {
         return settingsRepository.findAll(options);
       } catch (error) {
-        console.error("[IPC Error] settings:list:", error);
+        console.error('[IPC Error] settings:list:', error);
         throw error;
       }
     }
@@ -50,14 +45,11 @@ export function registerSettingsHandlers(
   // Get a setting by ID
   ipcMain.handle(
     IpcChannels.settings.get,
-    async (
-      _event: IpcMainInvokeEvent,
-      id: number
-    ): Promise<Setting | undefined> => {
+    async (_event: IpcMainInvokeEvent, id: number): Promise<Setting | undefined> => {
       try {
         return settingsRepository.findById(id);
       } catch (error) {
-        console.error("[IPC Error] settings:get:", error);
+        console.error('[IPC Error] settings:get:', error);
         throw error;
       }
     }
@@ -66,14 +58,11 @@ export function registerSettingsHandlers(
   // Get a setting by key
   ipcMain.handle(
     IpcChannels.settings.getByKey,
-    async (
-      _event: IpcMainInvokeEvent,
-      key: string
-    ): Promise<Setting | undefined> => {
+    async (_event: IpcMainInvokeEvent, key: string): Promise<Setting | undefined> => {
       try {
         return settingsRepository.findByKey(key);
       } catch (error) {
-        console.error("[IPC Error] settings:getByKey:", error);
+        console.error('[IPC Error] settings:getByKey:', error);
         throw error;
       }
     }
@@ -82,14 +71,11 @@ export function registerSettingsHandlers(
   // Get settings by category
   ipcMain.handle(
     IpcChannels.settings.getByCategory,
-    async (
-      _event: IpcMainInvokeEvent,
-      category: string
-    ): Promise<Array<Setting>> => {
+    async (_event: IpcMainInvokeEvent, category: string): Promise<Array<Setting>> => {
       try {
         return settingsRepository.findByCategory(category);
       } catch (error) {
-        console.error("[IPC Error] settings:getByCategory:", error);
+        console.error('[IPC Error] settings:getByCategory:', error);
         throw error;
       }
     }
@@ -98,15 +84,11 @@ export function registerSettingsHandlers(
   // Set a setting value by key
   ipcMain.handle(
     IpcChannels.settings.setValue,
-    async (
-      _event: IpcMainInvokeEvent,
-      key: string,
-      value: string
-    ): Promise<Setting | undefined> => {
+    async (_event: IpcMainInvokeEvent, key: string, value: string): Promise<Setting | undefined> => {
       try {
         return settingsRepository.setValue(key, value);
       } catch (error) {
-        console.error("[IPC Error] settings:setValue:", error);
+        console.error('[IPC Error] settings:setValue:', error);
         throw error;
       }
     }
@@ -115,14 +97,11 @@ export function registerSettingsHandlers(
   // Reset a setting to its default value
   ipcMain.handle(
     IpcChannels.settings.resetToDefault,
-    async (
-      _event: IpcMainInvokeEvent,
-      key: string
-    ): Promise<Setting | undefined> => {
+    async (_event: IpcMainInvokeEvent, key: string): Promise<Setting | undefined> => {
       try {
         return settingsRepository.resetToDefault(key);
       } catch (error) {
-        console.error("[IPC Error] settings:resetToDefault:", error);
+        console.error('[IPC Error] settings:resetToDefault:', error);
         throw error;
       }
     }
@@ -131,10 +110,7 @@ export function registerSettingsHandlers(
   // Bulk update multiple settings at once
   ipcMain.handle(
     IpcChannels.settings.bulkUpdate,
-    async (
-      _event: IpcMainInvokeEvent,
-      updates: Array<BulkUpdateItem>
-    ): Promise<Array<Setting>> => {
+    async (_event: IpcMainInvokeEvent, updates: Array<BulkUpdateItem>): Promise<Array<Setting>> => {
       try {
         const results: Array<Setting> = [];
 
@@ -147,7 +123,7 @@ export function registerSettingsHandlers(
 
         return results;
       } catch (error) {
-        console.error("[IPC Error] settings:bulkUpdate:", error);
+        console.error('[IPC Error] settings:bulkUpdate:', error);
         throw error;
       }
     }

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
-import { cva, type VariantProps } from "class-variance-authority";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Combobox as BaseCombobox } from '@base-ui/react/combobox';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Check, ChevronDown, X } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 /* Root */
 export const ComboboxRoot = BaseCombobox.Root;
@@ -23,13 +23,13 @@ export const comboboxInputVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "h-9 px-3 pr-16 text-sm",
-        lg: "h-10 px-4 pr-18 text-base",
-        sm: "h-8 px-2 pr-14 text-xs",
+        default: 'h-9 px-3 pr-16 text-sm',
+        lg: 'h-10 px-4 pr-18 text-base',
+        sm: 'h-8 px-2 pr-14 text-xs',
       },
     },
   }
@@ -40,13 +40,7 @@ type ComboboxInputProps = ComponentPropsWithRef<typeof BaseCombobox.Input> &
     isInvalid?: boolean;
   };
 
-export const ComboboxInput = ({
-  className,
-  isInvalid,
-  ref,
-  size,
-  ...props
-}: ComboboxInputProps) => {
+export const ComboboxInput = ({ className, isInvalid, ref, size, ...props }: ComboboxInputProps) => {
   return (
     <BaseCombobox.Input
       className={cn(comboboxInputVariants({ size }), className)}
@@ -68,13 +62,13 @@ export const comboboxTriggerVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "size-6",
-        lg: "size-7",
-        sm: "size-5",
+        default: 'size-6',
+        lg: 'size-7',
+        sm: 'size-5',
       },
     },
   }
@@ -83,20 +77,10 @@ export const comboboxTriggerVariants = cva(
 type ComboboxTriggerProps = ComponentPropsWithRef<typeof BaseCombobox.Trigger> &
   VariantProps<typeof comboboxTriggerVariants>;
 
-export const ComboboxTrigger = ({
-  children,
-  className,
-  ref,
-  size,
-  ...props
-}: ComboboxTriggerProps) => {
+export const ComboboxTrigger = ({ children, className, ref, size, ...props }: ComboboxTriggerProps) => {
   return (
-    <BaseCombobox.Trigger
-      className={cn(comboboxTriggerVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    >
-      {children ?? <ChevronDown aria-hidden={"true"} className={"size-4"} />}
+    <BaseCombobox.Trigger className={cn(comboboxTriggerVariants({ size }), className)} ref={ref} {...props}>
+      {children ?? <ChevronDown aria-hidden={'true'} className={'size-4'} />}
     </BaseCombobox.Trigger>
   );
 };
@@ -112,35 +96,24 @@ export const comboboxClearVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "size-6",
-        lg: "size-7",
-        sm: "size-5",
+        default: 'size-6',
+        lg: 'size-7',
+        sm: 'size-5',
       },
     },
   }
 );
 
-type ComboboxClearProps = ComponentPropsWithRef<typeof BaseCombobox.Clear> &
-  VariantProps<typeof comboboxClearVariants>;
+type ComboboxClearProps = ComponentPropsWithRef<typeof BaseCombobox.Clear> & VariantProps<typeof comboboxClearVariants>;
 
-export const ComboboxClear = ({
-  children,
-  className,
-  ref,
-  size,
-  ...props
-}: ComboboxClearProps) => {
+export const ComboboxClear = ({ children, className, ref, size, ...props }: ComboboxClearProps) => {
   return (
-    <BaseCombobox.Clear
-      className={cn(comboboxClearVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    >
-      {children ?? <X aria-hidden={"true"} className={"size-4"} />}
+    <BaseCombobox.Clear className={cn(comboboxClearVariants({ size }), className)} ref={ref} {...props}>
+      {children ?? <X aria-hidden={'true'} className={'size-4'} />}
     </BaseCombobox.Clear>
   );
 };
@@ -149,23 +122,10 @@ export const ComboboxClear = ({
 export const ComboboxPortal = BaseCombobox.Portal;
 
 /* Positioner */
-type ComboboxPositionerProps = ComponentPropsWithRef<
-  typeof BaseCombobox.Positioner
->;
+type ComboboxPositionerProps = ComponentPropsWithRef<typeof BaseCombobox.Positioner>;
 
-export const ComboboxPositioner = ({
-  className,
-  ref,
-  ...props
-}: ComboboxPositionerProps) => {
-  return (
-    <BaseCombobox.Positioner
-      className={cn("z-50 outline-none", className)}
-      ref={ref}
-      sideOffset={4}
-      {...props}
-    />
-  );
+export const ComboboxPositioner = ({ className, ref, ...props }: ComboboxPositionerProps) => {
+  return <BaseCombobox.Positioner className={cn('z-50 outline-none', className)} ref={ref} sideOffset={4} {...props} />;
 };
 
 /* Popup */
@@ -179,44 +139,28 @@ export const comboboxPopupVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "text-sm",
-        lg: "text-base",
-        sm: "text-xs",
+        default: 'text-sm',
+        lg: 'text-base',
+        sm: 'text-xs',
       },
     },
   }
 );
 
-type ComboboxPopupProps = ComponentPropsWithRef<typeof BaseCombobox.Popup> &
-  VariantProps<typeof comboboxPopupVariants>;
+type ComboboxPopupProps = ComponentPropsWithRef<typeof BaseCombobox.Popup> & VariantProps<typeof comboboxPopupVariants>;
 
-export const ComboboxPopup = ({
-  className,
-  ref,
-  size,
-  ...props
-}: ComboboxPopupProps) => {
-  return (
-    <BaseCombobox.Popup
-      className={cn(comboboxPopupVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const ComboboxPopup = ({ className, ref, size, ...props }: ComboboxPopupProps) => {
+  return <BaseCombobox.Popup className={cn(comboboxPopupVariants({ size }), className)} ref={ref} {...props} />;
 };
 
 /* List */
 type ComboboxListProps = ComponentPropsWithRef<typeof BaseCombobox.List>;
 
-export const ComboboxList = ({
-  className,
-  ref,
-  ...props
-}: ComboboxListProps) => {
+export const ComboboxList = ({ className, ref, ...props }: ComboboxListProps) => {
   return (
     <BaseCombobox.List
       className={cn(
@@ -246,54 +190,31 @@ export const comboboxItemVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "text-sm",
-        lg: "text-base",
-        sm: "text-xs",
+        default: 'text-sm',
+        lg: 'text-base',
+        sm: 'text-xs',
       },
     },
   }
 );
 
-type ComboboxItemProps = ComponentPropsWithRef<typeof BaseCombobox.Item> &
-  VariantProps<typeof comboboxItemVariants>;
+type ComboboxItemProps = ComponentPropsWithRef<typeof BaseCombobox.Item> & VariantProps<typeof comboboxItemVariants>;
 
-export const ComboboxItem = ({
-  className,
-  ref,
-  size,
-  ...props
-}: ComboboxItemProps) => {
-  return (
-    <BaseCombobox.Item
-      className={cn(comboboxItemVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const ComboboxItem = ({ className, ref, size, ...props }: ComboboxItemProps) => {
+  return <BaseCombobox.Item className={cn(comboboxItemVariants({ size }), className)} ref={ref} {...props} />;
 };
 
 /* Item Indicator */
-type ComboboxItemIndicatorProps = ComponentPropsWithRef<
-  typeof BaseCombobox.ItemIndicator
->;
+type ComboboxItemIndicatorProps = ComponentPropsWithRef<typeof BaseCombobox.ItemIndicator>;
 
-export const ComboboxItemIndicator = ({
-  children,
-  className,
-  ref,
-  ...props
-}: ComboboxItemIndicatorProps) => {
+export const ComboboxItemIndicator = ({ children, className, ref, ...props }: ComboboxItemIndicatorProps) => {
   return (
-    <BaseCombobox.ItemIndicator
-      className={cn("col-start-1", className)}
-      ref={ref}
-      {...props}
-    >
-      {children ?? <Check className={"size-3"} />}
+    <BaseCombobox.ItemIndicator className={cn('col-start-1', className)} ref={ref} {...props}>
+      {children ?? <Check className={'size-3'} />}
     </BaseCombobox.ItemIndicator>
   );
 };
@@ -301,11 +222,7 @@ export const ComboboxItemIndicator = ({
 /* Empty */
 type ComboboxEmptyProps = ComponentPropsWithRef<typeof BaseCombobox.Empty>;
 
-export const ComboboxEmpty = ({
-  className,
-  ref,
-  ...props
-}: ComboboxEmptyProps) => {
+export const ComboboxEmpty = ({ className, ref, ...props }: ComboboxEmptyProps) => {
   return (
     <BaseCombobox.Empty
       className={cn(
@@ -324,11 +241,7 @@ export const ComboboxEmpty = ({
 /* Status */
 type ComboboxStatusProps = ComponentPropsWithRef<typeof BaseCombobox.Status>;
 
-export const ComboboxStatus = ({
-  className,
-  ref,
-  ...props
-}: ComboboxStatusProps) => {
+export const ComboboxStatus = ({ className, ref, ...props }: ComboboxStatusProps) => {
   return (
     <BaseCombobox.Status
       className={cn(
@@ -347,95 +260,47 @@ export const ComboboxStatus = ({
 export const ComboboxGroup = BaseCombobox.Group;
 
 /* Group Label */
-export const comboboxGroupLabelVariants = cva(
-  `px-2 py-1.5 font-semibold text-muted-foreground select-none`,
-  {
-    defaultVariants: {
-      size: "default",
+export const comboboxGroupLabelVariants = cva(`px-2 py-1.5 font-semibold text-muted-foreground select-none`, {
+  defaultVariants: {
+    size: 'default',
+  },
+  variants: {
+    size: {
+      default: 'text-xs',
+      lg: 'text-sm',
+      sm: 'text-xs',
     },
-    variants: {
-      size: {
-        default: "text-xs",
-        lg: "text-sm",
-        sm: "text-xs",
-      },
-    },
-  }
-);
+  },
+});
 
-type ComboboxGroupLabelProps = ComponentPropsWithRef<
-  typeof BaseCombobox.GroupLabel
-> &
+type ComboboxGroupLabelProps = ComponentPropsWithRef<typeof BaseCombobox.GroupLabel> &
   VariantProps<typeof comboboxGroupLabelVariants>;
 
-export const ComboboxGroupLabel = ({
-  className,
-  ref,
-  size,
-  ...props
-}: ComboboxGroupLabelProps) => {
+export const ComboboxGroupLabel = ({ className, ref, size, ...props }: ComboboxGroupLabelProps) => {
   return (
-    <BaseCombobox.GroupLabel
-      className={cn(comboboxGroupLabelVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    />
+    <BaseCombobox.GroupLabel className={cn(comboboxGroupLabelVariants({ size }), className)} ref={ref} {...props} />
   );
 };
 
 /* Separator */
-type ComboboxSeparatorProps = ComponentPropsWithRef<
-  typeof BaseCombobox.Separator
->;
+type ComboboxSeparatorProps = ComponentPropsWithRef<typeof BaseCombobox.Separator>;
 
-export const ComboboxSeparator = ({
-  className,
-  ref,
-  ...props
-}: ComboboxSeparatorProps) => {
-  return (
-    <BaseCombobox.Separator
-      className={cn("-mx-1 my-1 h-px bg-border", className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const ComboboxSeparator = ({ className, ref, ...props }: ComboboxSeparatorProps) => {
+  return <BaseCombobox.Separator className={cn('-mx-1 my-1 h-px bg-border', className)} ref={ref} {...props} />;
 };
 
 /* Arrow */
 type ComboboxArrowProps = ComponentPropsWithRef<typeof BaseCombobox.Arrow>;
 
-export const ComboboxArrow = ({
-  className,
-  ref,
-  ...props
-}: ComboboxArrowProps) => {
-  return (
-    <BaseCombobox.Arrow
-      className={cn("fill-card stroke-border stroke-1", className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const ComboboxArrow = ({ className, ref, ...props }: ComboboxArrowProps) => {
+  return <BaseCombobox.Arrow className={cn('fill-card stroke-border stroke-1', className)} ref={ref} {...props} />;
 };
 
 /* Backdrop */
-type ComboboxBackdropProps = ComponentPropsWithRef<
-  typeof BaseCombobox.Backdrop
->;
+type ComboboxBackdropProps = ComponentPropsWithRef<typeof BaseCombobox.Backdrop>;
 
-export const ComboboxBackdrop = ({
-  className,
-  ref,
-  ...props
-}: ComboboxBackdropProps) => {
-  return (
-    <BaseCombobox.Backdrop
-      className={cn("fixed inset-0", className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const ComboboxBackdrop = ({ className, ref, ...props }: ComboboxBackdropProps) => {
+  return <BaseCombobox.Backdrop className={cn('fixed inset-0', className)} ref={ref} {...props} />;
 };
 
 /* Value */
@@ -453,11 +318,7 @@ export const ComboboxRow = BaseCombobox.Row;
 /* Chips (for multiple select) */
 type ComboboxChipsProps = ComponentPropsWithRef<typeof BaseCombobox.Chips>;
 
-export const ComboboxChips = ({
-  className,
-  ref,
-  ...props
-}: ComboboxChipsProps) => {
+export const ComboboxChips = ({ className, ref, ...props }: ComboboxChipsProps) => {
   return (
     <BaseCombobox.Chips
       className={cn(
@@ -487,47 +348,28 @@ export const comboboxChipVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "text-sm",
-        lg: "px-2 py-1 text-base",
-        sm: "px-1 py-0.5 text-xs",
+        default: 'text-sm',
+        lg: 'px-2 py-1 text-base',
+        sm: 'px-1 py-0.5 text-xs',
       },
     },
   }
 );
 
-type ComboboxChipProps = ComponentPropsWithRef<typeof BaseCombobox.Chip> &
-  VariantProps<typeof comboboxChipVariants>;
+type ComboboxChipProps = ComponentPropsWithRef<typeof BaseCombobox.Chip> & VariantProps<typeof comboboxChipVariants>;
 
-export const ComboboxChip = ({
-  className,
-  ref,
-  size,
-  ...props
-}: ComboboxChipProps) => {
-  return (
-    <BaseCombobox.Chip
-      className={cn(comboboxChipVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const ComboboxChip = ({ className, ref, size, ...props }: ComboboxChipProps) => {
+  return <BaseCombobox.Chip className={cn(comboboxChipVariants({ size }), className)} ref={ref} {...props} />;
 };
 
 /* Chip Remove */
-type ComboboxChipRemoveProps = ComponentPropsWithRef<
-  typeof BaseCombobox.ChipRemove
->;
+type ComboboxChipRemoveProps = ComponentPropsWithRef<typeof BaseCombobox.ChipRemove>;
 
-export const ComboboxChipRemove = ({
-  children,
-  className,
-  ref,
-  ...props
-}: ComboboxChipRemoveProps) => {
+export const ComboboxChipRemove = ({ children, className, ref, ...props }: ComboboxChipRemoveProps) => {
   return (
     <BaseCombobox.ChipRemove
       className={cn(
@@ -540,7 +382,7 @@ export const ComboboxChipRemove = ({
       ref={ref}
       {...props}
     >
-      {children ?? <X aria-hidden={"true"} className={"size-3"} />}
+      {children ?? <X aria-hidden={'true'} className={'size-3'} />}
     </BaseCombobox.ChipRemove>
   );
 };

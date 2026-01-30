@@ -1,14 +1,11 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import {
-  AGENT_SHOW_BUILTIN_STORAGE_KEY,
-  AGENT_SHOW_DEACTIVATED_STORAGE_KEY,
-} from "@/lib/layout/constants";
-import { useAgentLayoutStore } from "@/lib/stores/agent-layout-store";
+import { AGENT_SHOW_BUILTIN_STORAGE_KEY, AGENT_SHOW_DEACTIVATED_STORAGE_KEY } from '@/lib/layout/constants';
+import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
 
 interface AgentLayoutProviderProps {
   children: ReactNode;
@@ -32,18 +29,14 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
   useEffect(() => {
     const hydrateStore = async () => {
       // Check if running in Electron environment
-      if (typeof window !== "undefined" && window.electronAPI?.store) {
+      if (typeof window !== 'undefined' && window.electronAPI?.store) {
         // Hydrate show built-in preference
-        const persistedShowBuiltIn =
-          await window.electronAPI.store.get<boolean>(
-            AGENT_SHOW_BUILTIN_STORAGE_KEY
-          );
+        const persistedShowBuiltIn = await window.electronAPI.store.get<boolean>(AGENT_SHOW_BUILTIN_STORAGE_KEY);
 
         // Hydrate show deactivated preference
-        const persistedShowDeactivated =
-          await window.electronAPI.store.get<boolean>(
-            AGENT_SHOW_DEACTIVATED_STORAGE_KEY
-          );
+        const persistedShowDeactivated = await window.electronAPI.store.get<boolean>(
+          AGENT_SHOW_DEACTIVATED_STORAGE_KEY
+        );
 
         // Build state update object
         const stateUpdate: Partial<{
@@ -52,12 +45,12 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
         }> = {};
 
         // Validate and add showBuiltIn to update
-        if (typeof persistedShowBuiltIn === "boolean") {
+        if (typeof persistedShowBuiltIn === 'boolean') {
           stateUpdate.showBuiltIn = persistedShowBuiltIn;
         }
 
         // Validate and add showDeactivated to update
-        if (typeof persistedShowDeactivated === "boolean") {
+        if (typeof persistedShowDeactivated === 'boolean') {
           stateUpdate.showDeactivated = persistedShowDeactivated;
         }
 

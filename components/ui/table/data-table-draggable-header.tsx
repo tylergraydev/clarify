@@ -57,7 +57,8 @@ export const dataTableDropIndicatorVariants = cva(
 // =============================================================================
 
 interface DataTableDraggableHeaderProps<TData>
-  extends Omit<ComponentPropsWithRef<'div'>, 'onDrag' | 'onDragEnd' | 'onDragOver' | 'onDragStart' | 'onDrop'>,
+  extends
+    Omit<ComponentPropsWithRef<'div'>, 'onDrag' | 'onDragEnd' | 'onDragOver' | 'onDragStart' | 'onDrop'>,
     VariantProps<typeof dataTableDraggableHeaderVariants> {
   /**
    * The TanStack Table header instance.
@@ -235,11 +236,7 @@ export const DataTableDraggableHeader = <TData,>({
   // Render header content without drag wrapper if not enabled
   if (!isReorderEnabled) {
     return (
-      <div
-        className={cn('flex items-center', className)}
-        ref={ref}
-        {...props}
-      >
+      <div className={cn('flex items-center', className)} ref={ref} {...props}>
         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
       </div>
     );
@@ -263,10 +260,7 @@ export const DataTableDraggableHeader = <TData,>({
     >
       {/* Drop Indicator */}
       {isDragOver && !isDragging && (
-        <div
-          aria-hidden={'true'}
-          className={cn(dataTableDropIndicatorVariants({ position: dropPosition }))}
-        />
+        <div aria-hidden={'true'} className={cn(dataTableDropIndicatorVariants({ position: dropPosition }))} />
       )}
 
       {/* Header Content */}

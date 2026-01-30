@@ -15,6 +15,13 @@
       "when": 1769735581790,
       "tag": "0001_faulty_hardball",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1769815526122,
+      "tag": "0002_crazy_hitman",
+      "breakpoints": true
     }
   ]
 }

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 
-import { worktreeKeys } from "@/lib/queries/worktrees";
+import { worktreeKeys } from '@/lib/queries/worktrees';
 
-import { useElectron } from "../use-electron";
+import { useElectron } from '../use-electron';
 
 // ============================================================================
 // Query Hooks
@@ -40,10 +40,7 @@ export function useWorktreeByWorkflowId(workflowId: null | number | undefined) {
 /**
  * Fetch all worktrees with optional filters
  */
-export function useWorktrees(options?: {
-  repositoryId?: number;
-  status?: string;
-}) {
+export function useWorktrees(options?: { repositoryId?: number; status?: string }) {
   const { api, isElectron } = useElectron();
 
   return useQuery({

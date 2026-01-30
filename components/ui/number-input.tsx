@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { NumberField } from "@base-ui/react/number-field";
-import { cva, type VariantProps } from "class-variance-authority";
-import { Minus, Plus } from "lucide-react";
+import { NumberField } from '@base-ui/react/number-field';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Minus, Plus } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const numberInputVariants = cva(
   `
@@ -20,13 +20,13 @@ export const numberInputVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "h-9 w-20 text-sm",
-        lg: "h-10 w-24 text-base",
-        sm: "h-8 w-16 text-xs",
+        default: 'h-9 w-20 text-sm',
+        lg: 'h-10 w-24 text-base',
+        sm: 'h-8 w-16 text-xs',
       },
     },
   }
@@ -42,13 +42,13 @@ export const numberButtonVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "size-9",
-        lg: "size-10",
-        sm: "size-8",
+        default: 'size-9',
+        lg: 'size-10',
+        sm: 'size-8',
       },
     },
   }
@@ -60,90 +60,48 @@ export const NumberInputRoot = NumberField.Root;
 /* Group */
 type NumberInputGroupProps = ComponentPropsWithRef<typeof NumberField.Group>;
 
-export const NumberInputGroup = ({
-  className,
-  ref,
-  ...props
-}: NumberInputGroupProps) => {
-  return (
-    <NumberField.Group className={cn("flex", className)} ref={ref} {...props} />
-  );
+export const NumberInputGroup = ({ className, ref, ...props }: NumberInputGroupProps) => {
+  return <NumberField.Group className={cn('flex', className)} ref={ref} {...props} />;
 };
 
 /* Input */
-type NumberInputFieldProps = Omit<
-  ComponentPropsWithRef<typeof NumberField.Input>,
-  "size"
-> &
+type NumberInputFieldProps = Omit<ComponentPropsWithRef<typeof NumberField.Input>, 'size'> &
   VariantProps<typeof numberInputVariants>;
 
-export const NumberInputField = ({
-  className,
-  ref,
-  size,
-  ...props
-}: NumberInputFieldProps) => {
-  return (
-    <NumberField.Input
-      className={cn(numberInputVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const NumberInputField = ({ className, ref, size, ...props }: NumberInputFieldProps) => {
+  return <NumberField.Input className={cn(numberInputVariants({ size }), className)} ref={ref} {...props} />;
 };
 
 /* Decrement Button */
-type NumberInputDecrementProps = ComponentPropsWithRef<
-  typeof NumberField.Decrement
-> &
+type NumberInputDecrementProps = ComponentPropsWithRef<typeof NumberField.Decrement> &
   VariantProps<typeof numberButtonVariants>;
 
-export const NumberInputDecrement = ({
-  className,
-  ref,
-  size,
-  ...props
-}: NumberInputDecrementProps) => {
+export const NumberInputDecrement = ({ className, ref, size, ...props }: NumberInputDecrementProps) => {
   return (
     <NumberField.Decrement
-      aria-label={"Decrease value"}
-      className={cn(
-        numberButtonVariants({ size }),
-        "rounded-l-md border-r-0",
-        className
-      )}
+      aria-label={'Decrease value'}
+      className={cn(numberButtonVariants({ size }), 'rounded-l-md border-r-0', className)}
       ref={ref}
       {...props}
     >
-      <Minus aria-hidden={"true"} className={"size-3.5"} />
+      <Minus aria-hidden={'true'} className={'size-3.5'} />
     </NumberField.Decrement>
   );
 };
 
 /* Increment Button */
-type NumberInputIncrementProps = ComponentPropsWithRef<
-  typeof NumberField.Increment
-> &
+type NumberInputIncrementProps = ComponentPropsWithRef<typeof NumberField.Increment> &
   VariantProps<typeof numberButtonVariants>;
 
-export const NumberInputIncrement = ({
-  className,
-  ref,
-  size,
-  ...props
-}: NumberInputIncrementProps) => {
+export const NumberInputIncrement = ({ className, ref, size, ...props }: NumberInputIncrementProps) => {
   return (
     <NumberField.Increment
-      aria-label={"Increase value"}
-      className={cn(
-        numberButtonVariants({ size }),
-        "rounded-r-md border-l-0",
-        className
-      )}
+      aria-label={'Increase value'}
+      className={cn(numberButtonVariants({ size }), 'rounded-r-md border-l-0', className)}
       ref={ref}
       {...props}
     >
-      <Plus aria-hidden={"true"} className={"size-3.5"} />
+      <Plus aria-hidden={'true'} className={'size-3.5'} />
     </NumberField.Increment>
   );
 };

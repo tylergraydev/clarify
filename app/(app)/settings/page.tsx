@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { SettingsFormValues } from "@/lib/validations/settings";
-import type { Setting } from "@/types/electron";
+import type { SettingsFormValues } from '@/lib/validations/settings';
+import type { Setting } from '@/types/electron';
 
-import { QueryErrorBoundary } from "@/components/data/query-error-boundary";
-import { SettingsForm, SettingsSkeleton } from "@/components/settings";
-import { useSettings } from "@/hooks/queries/use-settings";
+import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
+import { SettingsForm, SettingsSkeleton } from '@/components/settings';
+import { useSettings } from '@/hooks/queries/use-settings';
 
 /**
  * Settings page - Main entry point for application settings configuration.
@@ -26,15 +26,11 @@ export default function SettingsPage() {
   const formValues = settings ? transformSettingsToFormValues(settings) : null;
 
   return (
-    <div className={"space-y-6"}>
+    <div className={'space-y-6'}>
       {/* Page heading */}
-      <div className={"space-y-1"}>
-        <h1 className={"text-2xl font-semibold tracking-tight"}>
-          {"Settings"}
-        </h1>
-        <p className={"text-muted-foreground"}>
-          {"Manage your application preferences and configuration."}
-        </p>
+      <div className={'space-y-1'}>
+        <h1 className={'text-2xl font-semibold tracking-tight'}>{'Settings'}</h1>
+        <p className={'text-muted-foreground'}>{'Manage your application preferences and configuration.'}</p>
       </div>
 
       {/* Settings content */}
@@ -67,9 +63,7 @@ export default function SettingsPage() {
  *   logging: { ... }
  * }
  */
-function transformSettingsToFormValues(
-  settings: Array<Setting>
-): SettingsFormValues {
+function transformSettingsToFormValues(settings: Array<Setting>): SettingsFormValues {
   // Create a map for quick lookup by key
   const settingsMap = new Map<string, string>();
   for (const setting of settings) {
@@ -93,47 +87,32 @@ function transformSettingsToFormValues(
   const getBoolean = (key: string, defaultValue: boolean): boolean => {
     const value = settingsMap.get(key);
     if (value === undefined) return defaultValue;
-    return value === "true";
+    return value === 'true';
   };
 
   return {
     logging: {
-      exportLogsWithDatabase: getBoolean(
-        "logging.exportLogsWithDatabase",
-        true
-      ),
-      includeCliOutput: getBoolean("logging.includeCliOutput", true),
-      logExportLocation: getString("logging.logExportLocation", ""),
-      logRetentionDays: getNumber("logging.logRetentionDays", 30),
+      exportLogsWithDatabase: getBoolean('logging.exportLogsWithDatabase', true),
+      includeCliOutput: getBoolean('logging.includeCliOutput', true),
+      logExportLocation: getString('logging.logExportLocation', ''),
+      logRetentionDays: getNumber('logging.logRetentionDays', 30),
     },
     workflow: {
-      clarificationTimeoutSeconds: getNumber(
-        "workflow.clarificationTimeoutSeconds",
-        60
-      ),
-      defaultPauseBehavior: getString(
-        "workflow.defaultPauseBehavior",
-        "auto-pause"
-      ) as "auto-pause" | "continuous" | "quality-gates",
-      discoveryTimeoutSeconds: getNumber(
-        "workflow.discoveryTimeoutSeconds",
-        120
-      ),
-      implementationTimeoutSeconds: getNumber(
-        "workflow.implementationTimeoutSeconds",
-        300
-      ),
-      planningTimeoutSeconds: getNumber("workflow.planningTimeoutSeconds", 180),
-      refinementTimeoutSeconds: getNumber(
-        "workflow.refinementTimeoutSeconds",
-        30
-      ),
+      clarificationTimeoutSeconds: getNumber('workflow.clarificationTimeoutSeconds', 60),
+      defaultPauseBehavior: getString('workflow.defaultPauseBehavior', 'auto-pause') as
+        | 'auto-pause'
+        | 'continuous'
+        | 'quality-gates',
+      discoveryTimeoutSeconds: getNumber('workflow.discoveryTimeoutSeconds', 120),
+      implementationTimeoutSeconds: getNumber('workflow.implementationTimeoutSeconds', 300),
+      planningTimeoutSeconds: getNumber('workflow.planningTimeoutSeconds', 180),
+      refinementTimeoutSeconds: getNumber('workflow.refinementTimeoutSeconds', 30),
     },
     worktree: {
-      autoCleanup: getBoolean("worktree.autoCleanup", true),
-      createFeatureBranch: getBoolean("worktree.createFeatureBranch", true),
-      pushOnCompletion: getBoolean("worktree.pushOnCompletion", false),
-      worktreeLocation: getString("worktree.worktreeLocation", ""),
+      autoCleanup: getBoolean('worktree.autoCleanup', true),
+      createFeatureBranch: getBoolean('worktree.createFeatureBranch', true),
+      pushOnCompletion: getBoolean('worktree.pushOnCompletion', false),
+      worktreeLocation: getString('worktree.worktreeLocation', ''),
     },
   };
 }

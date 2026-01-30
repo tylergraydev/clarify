@@ -79,8 +79,7 @@ export const dataTablePaginationButtonVariants = cva(
 // =============================================================================
 
 interface DataTablePaginationProps<TData>
-  extends ComponentPropsWithRef<'nav'>,
-    VariantProps<typeof dataTablePaginationVariants> {
+  extends ComponentPropsWithRef<'nav'>, VariantProps<typeof dataTablePaginationVariants> {
   /**
    * Whether to show the page size selector.
    * @default true
@@ -193,8 +192,7 @@ const RowCountDisplay = ({ endItem, startItem, totalItems }: RowCountDisplayProp
         'No rows'
       ) : (
         <Fragment>
-          Showing{' '}
-          <span className={'font-medium text-foreground'}>{startItem}</span>
+          Showing <span className={'font-medium text-foreground'}>{startItem}</span>
           {' - '}
           <span className={'font-medium text-foreground'}>{endItem}</span>
           {' of '}
@@ -284,8 +282,7 @@ const NavigationControls = ({
 
       {/* Page Indicator */}
       <span className={'mx-2 text-sm text-muted-foreground'}>
-        Page{' '}
-        <span className={'font-medium text-foreground'}>{pageIndex + 1}</span>
+        Page <span className={'font-medium text-foreground'}>{pageIndex + 1}</span>
         {' of '}
         <span className={'font-medium text-foreground'}>{pageCount || 1}</span>
       </span>

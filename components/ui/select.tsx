@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Select as BaseSelect } from "@base-ui/react/select";
-import { cva, type VariantProps } from "class-variance-authority";
-import { Check, ChevronDown } from "lucide-react";
+import { Select as BaseSelect } from '@base-ui/react/select';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Check, ChevronDown } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const selectTriggerVariants = cva(
   `
@@ -23,13 +23,13 @@ export const selectTriggerVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "h-9 px-3 text-sm",
-        lg: "h-10 px-4 text-base",
-        sm: "h-8 px-2 text-xs",
+        default: 'h-9 px-3 text-sm',
+        lg: 'h-10 px-4 text-base',
+        sm: 'h-8 px-2 text-xs',
       },
     },
   }
@@ -44,13 +44,13 @@ export const selectPopupVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "text-sm",
-        lg: "text-base",
-        sm: "text-xs",
+        default: 'text-sm',
+        lg: 'text-base',
+        sm: 'text-xs',
       },
     },
   }
@@ -65,13 +65,13 @@ export const selectItemVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "text-sm",
-        lg: "text-base",
-        sm: "text-xs",
+        default: 'text-sm',
+        lg: 'text-base',
+        sm: 'text-xs',
       },
     },
   }
@@ -86,14 +86,7 @@ type SelectTriggerProps = ComponentPropsWithRef<typeof BaseSelect.Trigger> &
     isInvalid?: boolean;
   };
 
-export const SelectTrigger = ({
-  children,
-  className,
-  isInvalid,
-  ref,
-  size,
-  ...props
-}: SelectTriggerProps) => {
+export const SelectTrigger = ({ children, className, isInvalid, ref, size, ...props }: SelectTriggerProps) => {
   return (
     <BaseSelect.Trigger
       className={cn(selectTriggerVariants({ size }), className)}
@@ -103,7 +96,7 @@ export const SelectTrigger = ({
     >
       {children}
       <BaseSelect.Icon>
-        <ChevronDown aria-hidden={"true"} className={"size-4 opacity-50"} />
+        <ChevronDown aria-hidden={'true'} className={'size-4 opacity-50'} />
       </BaseSelect.Icon>
     </BaseSelect.Trigger>
   );
@@ -116,19 +109,13 @@ export const SelectValue = BaseSelect.Value;
 export const SelectPortal = BaseSelect.Portal;
 
 /* Positioner */
-type SelectPositionerProps = ComponentPropsWithRef<
-  typeof BaseSelect.Positioner
->;
+type SelectPositionerProps = ComponentPropsWithRef<typeof BaseSelect.Positioner>;
 
-export const SelectPositioner = ({
-  className,
-  ref,
-  ...props
-}: SelectPositionerProps) => {
+export const SelectPositioner = ({ className, ref, ...props }: SelectPositionerProps) => {
   return (
     <BaseSelect.Positioner
       alignItemWithTrigger={false}
-      className={cn("z-100 outline-none", className)}
+      className={cn('z-100 outline-none', className)}
       ref={ref}
       sideOffset={4}
       {...props}
@@ -137,22 +124,10 @@ export const SelectPositioner = ({
 };
 
 /* Popup */
-type SelectPopupProps = ComponentPropsWithRef<typeof BaseSelect.Popup> &
-  VariantProps<typeof selectPopupVariants>;
+type SelectPopupProps = ComponentPropsWithRef<typeof BaseSelect.Popup> & VariantProps<typeof selectPopupVariants>;
 
-export const SelectPopup = ({
-  className,
-  ref,
-  size,
-  ...props
-}: SelectPopupProps) => {
-  return (
-    <BaseSelect.Popup
-      className={cn(selectPopupVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const SelectPopup = ({ className, ref, size, ...props }: SelectPopupProps) => {
+  return <BaseSelect.Popup className={cn(selectPopupVariants({ size }), className)} ref={ref} {...props} />;
 };
 
 /* List */
@@ -162,69 +137,39 @@ export const SelectList = BaseSelect.List;
 export const SelectGroup = BaseSelect.Group;
 
 /* Group Label */
-export const selectGroupLabelVariants = cva(
-  `px-2 py-1.5 font-semibold text-muted-foreground select-none`,
-  {
-    defaultVariants: {
-      size: "default",
+export const selectGroupLabelVariants = cva(`px-2 py-1.5 font-semibold text-muted-foreground select-none`, {
+  defaultVariants: {
+    size: 'default',
+  },
+  variants: {
+    size: {
+      default: 'text-xs',
+      lg: 'text-sm',
+      sm: 'text-xs',
     },
-    variants: {
-      size: {
-        default: "text-xs",
-        lg: "text-sm",
-        sm: "text-xs",
-      },
-    },
-  }
-);
+  },
+});
 
-type SelectGroupLabelProps = ComponentPropsWithRef<
-  typeof BaseSelect.GroupLabel
-> &
+type SelectGroupLabelProps = ComponentPropsWithRef<typeof BaseSelect.GroupLabel> &
   VariantProps<typeof selectGroupLabelVariants>;
 
-export const SelectGroupLabel = ({
-  className,
-  ref,
-  size,
-  ...props
-}: SelectGroupLabelProps) => {
-  return (
-    <BaseSelect.GroupLabel
-      className={cn(selectGroupLabelVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const SelectGroupLabel = ({ className, ref, size, ...props }: SelectGroupLabelProps) => {
+  return <BaseSelect.GroupLabel className={cn(selectGroupLabelVariants({ size }), className)} ref={ref} {...props} />;
 };
 
 /* Item */
-type SelectItemProps = ComponentPropsWithRef<typeof BaseSelect.Item> &
-  VariantProps<typeof selectItemVariants>;
+type SelectItemProps = ComponentPropsWithRef<typeof BaseSelect.Item> & VariantProps<typeof selectItemVariants>;
 
-export const SelectItem = ({
-  children,
-  className,
-  label,
-  ref,
-  size,
-  ...props
-}: SelectItemProps) => {
+export const SelectItem = ({ children, className, label, ref, size, ...props }: SelectItemProps) => {
   // Derive label from children if not explicitly provided
-  const derivedLabel =
-    label ?? (typeof children === "string" ? children : undefined);
+  const derivedLabel = label ?? (typeof children === 'string' ? children : undefined);
 
   return (
-    <BaseSelect.Item
-      className={cn(selectItemVariants({ size }), className)}
-      label={derivedLabel}
-      ref={ref}
-      {...props}
-    >
-      <BaseSelect.ItemIndicator className={"absolute left-2"}>
-        <Check className={"size-3.5"} />
+    <BaseSelect.Item className={cn(selectItemVariants({ size }), className)} label={derivedLabel} ref={ref} {...props}>
+      <BaseSelect.ItemIndicator className={'absolute left-2'}>
+        <Check className={'size-3.5'} />
       </BaseSelect.ItemIndicator>
-      <BaseSelect.ItemText className={"pl-5"}>{children}</BaseSelect.ItemText>
+      <BaseSelect.ItemText className={'pl-5'}>{children}</BaseSelect.ItemText>
     </BaseSelect.Item>
   );
 };

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const alertVariants = cva(
   `
@@ -14,13 +14,13 @@ export const alertVariants = cva(
   `,
   {
     defaultVariants: {
-      variant: "default",
+      variant: 'default',
     },
     variants: {
       variant: {
-        default: "border-border bg-card text-foreground",
-        destructive: "border-destructive/50 bg-destructive/10 text-destructive",
-        info: "border-accent/50 bg-accent/10 text-accent",
+        default: 'border-border bg-card text-foreground',
+        destructive: 'border-destructive/50 bg-destructive/10 text-destructive',
+        info: 'border-accent/50 bg-accent/10 text-accent',
         success: `
           border-green-500/50 bg-green-500/10 text-green-600
           dark:text-green-400
@@ -34,40 +34,20 @@ export const alertVariants = cva(
   }
 );
 
-type AlertProps = ComponentPropsWithRef<"div"> &
-  VariantProps<typeof alertVariants>;
+type AlertProps = ComponentPropsWithRef<'div'> & VariantProps<typeof alertVariants>;
 
 export const Alert = ({ className, ref, variant, ...props }: AlertProps) => {
-  return (
-    <div
-      className={cn(alertVariants({ className, variant }))}
-      ref={ref}
-      role={"alert"}
-      {...props}
-    />
-  );
+  return <div className={cn(alertVariants({ className, variant }))} ref={ref} role={'alert'} {...props} />;
 };
 
-type AlertTitleProps = ComponentPropsWithRef<"h5">;
+type AlertTitleProps = ComponentPropsWithRef<'h5'>;
 
 export const AlertTitle = ({ className, ref, ...props }: AlertTitleProps) => {
-  return (
-    <h5
-      className={cn("leading-none font-medium", className)}
-      ref={ref}
-      {...props}
-    />
-  );
+  return <h5 className={cn('leading-none font-medium', className)} ref={ref} {...props} />;
 };
 
-type AlertDescriptionProps = ComponentPropsWithRef<"p">;
+type AlertDescriptionProps = ComponentPropsWithRef<'p'>;
 
-export const AlertDescription = ({
-  className,
-  ref,
-  ...props
-}: AlertDescriptionProps) => {
-  return (
-    <p className={cn("text-sm opacity-90", className)} ref={ref} {...props} />
-  );
+export const AlertDescription = ({ className, ref, ...props }: AlertDescriptionProps) => {
+  return <p className={cn('text-sm opacity-90', className)} ref={ref} {...props} />;
 };

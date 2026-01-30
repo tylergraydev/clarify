@@ -1,27 +1,24 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
-import type { Agent } from "@/db/schema";
+import type { Agent } from '@/db/schema';
 
-import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
-import { Badge, type badgeVariants } from "@/components/ui/badge";
-import { IconButton } from "@/components/ui/icon-button";
-import { Switch } from "@/components/ui/switch";
-import { getAgentColorClass } from "@/lib/colors/agent-colors";
-import { cn } from "@/lib/utils";
+import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
+import { Badge, type badgeVariants } from '@/components/ui/badge';
+import { IconButton } from '@/components/ui/icon-button';
+import { Switch } from '@/components/ui/switch';
+import { getAgentColorClass } from '@/lib/colors/agent-colors';
+import { cn } from '@/lib/utils';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface AgentListItemProps extends Omit<
-  ComponentPropsWithRef<"li">,
-  "onClick" | "onReset"
-> {
+interface AgentListItemProps extends Omit<ComponentPropsWithRef<'li'>, 'onClick' | 'onReset'> {
   agent: Agent;
   isCreatingOverride?: boolean;
   isDeleting?: boolean;
@@ -35,7 +32,7 @@ interface AgentListItemProps extends Omit<
   onToggleActive?: (agentId: number, isActive: boolean) => void;
   selectedProjectId?: null | number;
 }
-interface AgentListProps extends Omit<ComponentPropsWithRef<"ul">, "onReset"> {
+interface AgentListProps extends Omit<ComponentPropsWithRef<'ul'>, 'onReset'> {
   agents: Array<Agent>;
   isCreatingOverride?: boolean;
   isDeleting?: boolean;
@@ -51,9 +48,9 @@ interface AgentListProps extends Omit<ComponentPropsWithRef<"ul">, "onReset"> {
   selectedProjectId?: null | number;
 }
 
-type AgentType = Agent["type"];
+type AgentType = Agent['type'];
 
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
 // ============================================================================
 // Helper Functions
@@ -61,17 +58,17 @@ type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
 
 const getTypeVariant = (type: AgentType): BadgeVariant => {
   const typeVariantMap: Record<string, BadgeVariant> = {
-    planning: "planning",
-    review: "review",
-    specialist: "specialist",
-    utility: "default",
+    planning: 'planning',
+    review: 'review',
+    specialist: 'specialist',
+    utility: 'default',
   };
 
-  return typeVariantMap[type ?? ""] ?? "default";
+  return typeVariantMap[type ?? ''] ?? 'default';
 };
 
 const formatTypeLabel = (type: AgentType): string => {
-  if (!type) return "Unknown";
+  if (!type) return 'Unknown';
   return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
@@ -110,10 +107,7 @@ const AgentListItem = ({
   const isProjectScoped = agent.projectId !== null;
 
   // Show override action only for global agents when a project is selected
-  const isOverrideAvailable =
-    isGlobalAgent &&
-    selectedProjectId !== null &&
-    selectedProjectId !== undefined;
+  const isOverrideAvailable = isGlobalAgent && selectedProjectId !== null && selectedProjectId !== undefined;
 
   const handleCreateOverrideClick = () => {
     onCreateOverride?.(agent);
@@ -139,150 +133,123 @@ const AgentListItem = ({
     onToggleActive?.(agent.id, checked);
   };
 
-  const isActionDisabled =
-    isCreatingOverride ||
-    isDeleting ||
-    isDuplicating ||
-    isResetting ||
-    isToggling;
+  const isActionDisabled = isCreatingOverride || isDeleting || isDuplicating || isResetting || isToggling;
 
   return (
     <li
       className={cn(
-        "flex items-center gap-4 rounded-md border border-border bg-card px-4 py-3 transition-opacity",
-        !isActive && "opacity-60",
+        'flex items-center gap-4 rounded-md border border-border bg-card px-4 py-3 transition-opacity',
+        !isActive && 'opacity-60',
         className
       )}
       ref={ref}
       {...props}
     >
       {/* Color Indicator */}
-      <div
-        aria-hidden={"true"}
-        className={cn(
-          "size-3 shrink-0 rounded-full",
-          getAgentColorClass(agent.color)
-        )}
-      />
+      <div aria-hidden={'true'} className={cn('size-3 shrink-0 rounded-full', getAgentColorClass(agent.color))} />
 
       {/* Agent Name */}
-      <div className={"min-w-0 flex-1"}>
-        <span className={"truncate text-sm font-medium"}>
-          {agent.displayName}
-        </span>
+      <div className={'min-w-0 flex-1'}>
+        <span className={'truncate text-sm font-medium'}>{agent.displayName}</span>
       </div>
 
       {/* Type Badge */}
-      <Badge
-        className={"shrink-0"}
-        size={"sm"}
-        variant={getTypeVariant(agent.type)}
-      >
+      <Badge className={'shrink-0'} size={'sm'} variant={getTypeVariant(agent.type)}>
         {formatTypeLabel(agent.type)}
       </Badge>
 
       {/* Origin Badges */}
-      <div className={"flex shrink-0 items-center gap-1"}>
+      <div className={'flex shrink-0 items-center gap-1'}>
         {isProjectScoped && (
-          <Badge size={"sm"} variant={"project"}>
-            {"Project"}
+          <Badge size={'sm'} variant={'project'}>
+            {'Project'}
           </Badge>
         )}
         {!isCustomAgent && (
-          <Badge size={"sm"} variant={"category-builtin"}>
-            {"Built-in"}
+          <Badge size={'sm'} variant={'category-builtin'}>
+            {'Built-in'}
           </Badge>
         )}
         {isCustomAgent && (
-          <Badge size={"sm"} variant={"custom"}>
-            {"Custom"}
+          <Badge size={'sm'} variant={'custom'}>
+            {'Custom'}
           </Badge>
         )}
         {isCustomized && (
-          <Badge size={"sm"} variant={"default"}>
-            {"Customized"}
+          <Badge size={'sm'} variant={'default'}>
+            {'Customized'}
           </Badge>
         )}
       </div>
 
       {/* Status Toggle */}
-      <div className={"flex shrink-0 items-center gap-2"}>
-        <span className={"text-xs text-muted-foreground"}>
-          {isActive ? "Active" : "Inactive"}
-        </span>
+      <div className={'flex shrink-0 items-center gap-2'}>
+        <span className={'text-xs text-muted-foreground'}>{isActive ? 'Active' : 'Inactive'}</span>
         <Switch
-          aria-label={isActive ? "Deactivate agent" : "Activate agent"}
+          aria-label={isActive ? 'Deactivate agent' : 'Activate agent'}
           checked={isActive}
           disabled={isToggling}
           onCheckedChange={handleToggleChange}
-          size={"sm"}
+          size={'sm'}
         />
       </div>
 
       {/* Action Buttons */}
-      <div className={"flex shrink-0 items-center gap-1"}>
+      <div className={'flex shrink-0 items-center gap-1'}>
         <IconButton
-          aria-label={isCustomAgent ? "Edit agent" : "View agent"}
+          aria-label={isCustomAgent ? 'Edit agent' : 'View agent'}
           disabled={isActionDisabled}
           onClick={handleEditClick}
-          type={"button"}
+          type={'button'}
         >
           {isCustomAgent ? (
-            <Pencil aria-hidden={"true"} className={"size-4"} />
+            <Pencil aria-hidden={'true'} className={'size-4'} />
           ) : (
-            <Eye aria-hidden={"true"} className={"size-4"} />
+            <Eye aria-hidden={'true'} className={'size-4'} />
           )}
         </IconButton>
         <IconButton
-          aria-label={"Duplicate agent"}
+          aria-label={'Duplicate agent'}
           disabled={isActionDisabled}
           onClick={handleDuplicateClick}
-          type={"button"}
+          type={'button'}
         >
-          <Copy aria-hidden={"true"} className={"size-4"} />
+          <Copy aria-hidden={'true'} className={'size-4'} />
         </IconButton>
         {isOverrideAvailable && (
           <IconButton
-            aria-label={"Create project override for this agent"}
+            aria-label={'Create project override for this agent'}
             disabled={isActionDisabled}
             onClick={handleCreateOverrideClick}
-            type={"button"}
+            type={'button'}
           >
-            <FolderPlus aria-hidden={"true"} className={"size-4"} />
+            <FolderPlus aria-hidden={'true'} className={'size-4'} />
           </IconButton>
         )}
         {isCustomized && (
           <IconButton
-            aria-label={"Reset agent to default"}
+            aria-label={'Reset agent to default'}
             disabled={isActionDisabled}
             onClick={handleResetClick}
-            type={"button"}
+            type={'button'}
           >
-            <RotateCcw aria-hidden={"true"} className={"size-4"} />
+            <RotateCcw aria-hidden={'true'} className={'size-4'} />
           </IconButton>
         )}
         {isCustomAgent && (
           <IconButton
-            aria-label={"Delete agent"}
+            aria-label={'Delete agent'}
             disabled={isActionDisabled}
             onClick={handleDeleteClick}
-            type={"button"}
+            type={'button'}
           >
-            <Trash2
-              aria-hidden={"true"}
-              className={"size-4 text-destructive"}
-            />
+            <Trash2 aria-hidden={'true'} className={'size-4 text-destructive'} />
           </IconButton>
         )}
       </div>
 
       {/* Edit Dialog */}
-      <AgentEditorDialog
-        agent={agent}
-        isOpen={isEditDialogOpen}
-        mode={"edit"}
-        onOpenChange={setIsEditDialogOpen}
-      />
+      <AgentEditorDialog agent={agent} isOpen={isEditDialogOpen} mode={'edit'} onOpenChange={setIsEditDialogOpen} />
     </li>
   );
 };
@@ -323,9 +290,9 @@ export const AgentList = ({
   return (
     <ul
       aria-label={`${agents.length} agents`}
-      className={cn("flex flex-col gap-2", className)}
+      className={cn('flex flex-col gap-2', className)}
       ref={ref}
-      role={"list"}
+      role={'list'}
       {...props}
     >
       {agents.map((agent) => (

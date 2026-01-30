@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef, ReactNode } from "react";
+import type { ComponentPropsWithRef, ReactNode } from 'react';
 
-import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
+import { Tooltip as BaseTooltip } from '@base-ui/react/tooltip';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const TooltipProvider = BaseTooltip.Provider;
 export const TooltipRoot = BaseTooltip.Root;
@@ -15,11 +15,7 @@ export const TooltipArrow = BaseTooltip.Arrow;
 
 type TooltipPopupProps = ComponentPropsWithRef<typeof BaseTooltip.Popup>;
 
-export const TooltipPopup = ({
-  className,
-  ref,
-  ...props
-}: TooltipPopupProps) => {
+export const TooltipPopup = ({ className, ref, ...props }: TooltipPopupProps) => {
   return (
     <BaseTooltip.Popup
       className={cn(
@@ -42,15 +38,13 @@ export const TooltipPopup = ({
 interface TooltipProps {
   children: ReactNode;
   content: ReactNode;
-  side?: "bottom" | "left" | "right" | "top";
+  side?: 'bottom' | 'left' | 'right' | 'top';
 }
 
-export const Tooltip = ({ children, content, side = "top" }: TooltipProps) => {
+export const Tooltip = ({ children, content, side = 'top' }: TooltipProps) => {
   return (
     <TooltipRoot>
-      <TooltipTrigger render={<span className={"inline-flex"} />}>
-        {children}
-      </TooltipTrigger>
+      <TooltipTrigger render={<span className={'inline-flex'} />}>{children}</TooltipTrigger>
       <TooltipPortal>
         <TooltipPositioner side={side} sideOffset={6}>
           <TooltipPopup>{content}</TooltipPopup>

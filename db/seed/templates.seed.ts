@@ -10,16 +10,12 @@
  * - IPC Channel (electron)
  * - Settings Page (ui)
  */
-import { isNotNull } from "drizzle-orm";
+import { isNotNull } from 'drizzle-orm';
 
-import type { DrizzleDatabase } from "../index";
-import type {
-  NewTemplate,
-  NewTemplatePlaceholder,
-  TemplateCategory,
-} from "../schema";
+import type { DrizzleDatabase } from '../index';
+import type { NewTemplate, NewTemplatePlaceholder, TemplateCategory } from '../schema';
 
-import { templatePlaceholders, templates } from "../schema";
+import { templatePlaceholders, templates } from '../schema';
 
 /**
  * Template definition with embedded placeholders
@@ -28,7 +24,7 @@ interface BuiltInTemplateDefinition {
   category: TemplateCategory;
   description: string;
   name: string;
-  placeholders: Array<Omit<NewTemplatePlaceholder, "templateId">>;
+  placeholders: Array<Omit<NewTemplatePlaceholder, 'templateId'>>;
   templateText: string;
 }
 
@@ -37,35 +33,33 @@ interface BuiltInTemplateDefinition {
  */
 const BUILT_IN_TEMPLATES: Array<BuiltInTemplateDefinition> = [
   {
-    category: "data",
-    description:
-      "Complete CRUD feature with database schema, repository, IPC handlers, query hooks, and UI components",
-    name: "CRUD Feature",
+    category: 'data',
+    description: 'Complete CRUD feature with database schema, repository, IPC handlers, query hooks, and UI components',
+    name: 'CRUD Feature',
     placeholders: [
       {
         defaultValue: null,
-        description: "The name of the entity (e.g., Product, User, Order)",
-        displayName: "Entity Name",
-        name: "entityName",
+        description: 'The name of the entity (e.g., Product, User, Order)',
+        displayName: 'Entity Name',
+        name: 'entityName',
         orderIndex: 0,
         requiredAt: new Date().toISOString(),
-        validationPattern: "^[A-Z][a-zA-Z0-9]*$",
+        validationPattern: '^[A-Z][a-zA-Z0-9]*$',
       },
       {
         defaultValue: null,
-        description:
-          "Comma-separated list of fields with types (e.g., name:string, price:number, isActive:boolean)",
-        displayName: "Entity Fields",
-        name: "entityFields",
+        description: 'Comma-separated list of fields with types (e.g., name:string, price:number, isActive:boolean)',
+        displayName: 'Entity Fields',
+        name: 'entityFields',
         orderIndex: 1,
         requiredAt: new Date().toISOString(),
         validationPattern: null,
       },
       {
-        defaultValue: "id",
-        description: "The primary key field name",
-        displayName: "Primary Key",
-        name: "primaryKey",
+        defaultValue: 'id',
+        description: 'The primary key field name',
+        displayName: 'Primary Key',
+        name: 'primaryKey',
         orderIndex: 2,
         requiredAt: null,
         validationPattern: null,
@@ -104,35 +98,33 @@ const BUILT_IN_TEMPLATES: Array<BuiltInTemplateDefinition> = [
 Follow existing patterns in the codebase for consistency.`,
   },
   {
-    category: "ui",
-    description:
-      "TanStack Form component with validation, field components, and error handling",
-    name: "Form Component",
+    category: 'ui',
+    description: 'TanStack Form component with validation, field components, and error handling',
+    name: 'Form Component',
     placeholders: [
       {
         defaultValue: null,
-        description: "The name of the form (e.g., UserProfile, ContactInfo)",
-        displayName: "Form Name",
-        name: "formName",
+        description: 'The name of the form (e.g., UserProfile, ContactInfo)',
+        displayName: 'Form Name',
+        name: 'formName',
         orderIndex: 0,
         requiredAt: new Date().toISOString(),
-        validationPattern: "^[A-Z][a-zA-Z0-9]*$",
+        validationPattern: '^[A-Z][a-zA-Z0-9]*$',
       },
       {
         defaultValue: null,
-        description:
-          "Comma-separated list of form fields (e.g., email, password, confirmPassword)",
-        displayName: "Form Fields",
-        name: "formFields",
+        description: 'Comma-separated list of form fields (e.g., email, password, confirmPassword)',
+        displayName: 'Form Fields',
+        name: 'formFields',
         orderIndex: 1,
         requiredAt: new Date().toISOString(),
         validationPattern: null,
       },
       {
-        defaultValue: "dialog",
-        description: "Where the form will be used (dialog, page, inline)",
-        displayName: "Form Context",
-        name: "formContext",
+        defaultValue: 'dialog',
+        description: 'Where the form will be used (dialog, page, inline)',
+        displayName: 'Form Context',
+        name: 'formContext',
         orderIndex: 2,
         requiredAt: null,
         validationPattern: null,
@@ -168,36 +160,33 @@ Follow existing patterns in the codebase for consistency.`,
 Follow the existing TanStack Form patterns in the codebase.`,
   },
   {
-    category: "backend",
-    description:
-      "External API integration with TanStack Query hooks, error handling, and type definitions",
-    name: "API Integration",
+    category: 'backend',
+    description: 'External API integration with TanStack Query hooks, error handling, and type definitions',
+    name: 'API Integration',
     placeholders: [
       {
         defaultValue: null,
-        description:
-          "The name of the API service (e.g., Stripe, GitHub, Weather)",
-        displayName: "API Name",
-        name: "apiName",
+        description: 'The name of the API service (e.g., Stripe, GitHub, Weather)',
+        displayName: 'API Name',
+        name: 'apiName',
         orderIndex: 0,
         requiredAt: new Date().toISOString(),
-        validationPattern: "^[A-Z][a-zA-Z0-9]*$",
+        validationPattern: '^[A-Z][a-zA-Z0-9]*$',
       },
       {
         defaultValue: null,
-        description: "The base URL for the API",
-        displayName: "Base URL",
-        name: "baseUrl",
+        description: 'The base URL for the API',
+        displayName: 'Base URL',
+        name: 'baseUrl',
         orderIndex: 1,
         requiredAt: new Date().toISOString(),
         validationPattern: null,
       },
       {
         defaultValue: null,
-        description:
-          "Comma-separated list of endpoints to implement (e.g., getUsers, createOrder)",
-        displayName: "Endpoints",
-        name: "endpoints",
+        description: 'Comma-separated list of endpoints to implement (e.g., getUsers, createOrder)',
+        displayName: 'Endpoints',
+        name: 'endpoints',
         orderIndex: 2,
         requiredAt: new Date().toISOString(),
         validationPattern: null,
@@ -237,35 +226,33 @@ Follow the existing TanStack Form patterns in the codebase.`,
 - Export types from \`types/{{apiName}}.d.ts\``,
   },
   {
-    category: "security",
-    description:
-      "Authentication flow with login/logout, session management, and protected routes",
-    name: "Auth Flow",
+    category: 'security',
+    description: 'Authentication flow with login/logout, session management, and protected routes',
+    name: 'Auth Flow',
     placeholders: [
       {
-        defaultValue: "jwt",
-        description: "The authentication method (jwt, session, oauth)",
-        displayName: "Auth Method",
-        name: "authMethod",
+        defaultValue: 'jwt',
+        description: 'The authentication method (jwt, session, oauth)',
+        displayName: 'Auth Method',
+        name: 'authMethod',
         orderIndex: 0,
         requiredAt: new Date().toISOString(),
         validationPattern: null,
       },
       {
         defaultValue: null,
-        description:
-          "Comma-separated list of OAuth providers (e.g., google, github)",
-        displayName: "OAuth Providers",
-        name: "oauthProviders",
+        description: 'Comma-separated list of OAuth providers (e.g., google, github)',
+        displayName: 'OAuth Providers',
+        name: 'oauthProviders',
         orderIndex: 1,
         requiredAt: null,
         validationPattern: null,
       },
       {
-        defaultValue: "true",
-        description: "Whether to include remember me functionality",
-        displayName: "Remember Me",
-        name: "rememberMe",
+        defaultValue: 'true',
+        description: 'Whether to include remember me functionality',
+        displayName: 'Remember Me',
+        name: 'rememberMe',
         orderIndex: 2,
         requiredAt: null,
         validationPattern: null,
@@ -308,35 +295,33 @@ Follow the existing TanStack Form patterns in the codebase.`,
 Follow security best practices and existing patterns in the codebase.`,
   },
   {
-    category: "ui",
-    description:
-      "Dashboard widget card with data display, loading states, and refresh functionality",
-    name: "Dashboard Widget",
+    category: 'ui',
+    description: 'Dashboard widget card with data display, loading states, and refresh functionality',
+    name: 'Dashboard Widget',
     placeholders: [
       {
         defaultValue: null,
-        description:
-          "The name of the widget (e.g., RecentOrders, SystemStatus)",
-        displayName: "Widget Name",
-        name: "widgetName",
+        description: 'The name of the widget (e.g., RecentOrders, SystemStatus)',
+        displayName: 'Widget Name',
+        name: 'widgetName',
         orderIndex: 0,
         requiredAt: new Date().toISOString(),
-        validationPattern: "^[A-Z][a-zA-Z0-9]*$",
+        validationPattern: '^[A-Z][a-zA-Z0-9]*$',
       },
       {
-        defaultValue: "card",
-        description: "The widget display type (card, chart, table, stat)",
-        displayName: "Display Type",
-        name: "displayType",
+        defaultValue: 'card',
+        description: 'The widget display type (card, chart, table, stat)',
+        displayName: 'Display Type',
+        name: 'displayType',
         orderIndex: 1,
         requiredAt: null,
         validationPattern: null,
       },
       {
         defaultValue: null,
-        description: "The data source for the widget (query hook name)",
-        displayName: "Data Source",
-        name: "dataSource",
+        description: 'The data source for the widget (query hook name)',
+        displayName: 'Data Source',
+        name: 'dataSource',
         orderIndex: 2,
         requiredAt: new Date().toISOString(),
         validationPattern: null,
@@ -374,36 +359,33 @@ Follow security best practices and existing patterns in the codebase.`,
 Add to dashboard page layout following existing widget patterns.`,
   },
   {
-    category: "electron",
-    description:
-      "Complete IPC channel with handlers, preload API, and React hooks",
-    name: "IPC Channel",
+    category: 'electron',
+    description: 'Complete IPC channel with handlers, preload API, and React hooks',
+    name: 'IPC Channel',
     placeholders: [
       {
         defaultValue: null,
-        description:
-          "The purpose of the IPC channel (e.g., FileSystem, Clipboard)",
-        displayName: "Channel Purpose",
-        name: "channelPurpose",
+        description: 'The purpose of the IPC channel (e.g., FileSystem, Clipboard)',
+        displayName: 'Channel Purpose',
+        name: 'channelPurpose',
         orderIndex: 0,
         requiredAt: new Date().toISOString(),
         validationPattern: null,
       },
       {
         defaultValue: null,
-        description: "The handler file prefix (e.g., fs, clipboard)",
-        displayName: "Handler Name",
-        name: "handlerName",
+        description: 'The handler file prefix (e.g., fs, clipboard)',
+        displayName: 'Handler Name',
+        name: 'handlerName',
         orderIndex: 1,
         requiredAt: new Date().toISOString(),
-        validationPattern: "^[a-z][a-z0-9-]*$",
+        validationPattern: '^[a-z][a-z0-9-]*$',
       },
       {
         defaultValue: null,
-        description:
-          "Comma-separated list of operations (e.g., read, write, delete)",
-        displayName: "Operations",
-        name: "operations",
+        description: 'Comma-separated list of operations (e.g., read, write, delete)',
+        displayName: 'Operations',
+        name: 'operations',
         orderIndex: 2,
         requiredAt: new Date().toISOString(),
         validationPattern: null,
@@ -444,36 +426,33 @@ Add to dashboard page layout following existing widget patterns.`,
 Follow existing IPC patterns in the codebase.`,
   },
   {
-    category: "ui",
-    description:
-      "Settings page with form controls, persistence, and reset functionality",
-    name: "Settings Page",
+    category: 'ui',
+    description: 'Settings page with form controls, persistence, and reset functionality',
+    name: 'Settings Page',
     placeholders: [
       {
         defaultValue: null,
-        description:
-          "The settings category name (e.g., Appearance, Notifications)",
-        displayName: "Category Name",
-        name: "categoryName",
+        description: 'The settings category name (e.g., Appearance, Notifications)',
+        displayName: 'Category Name',
+        name: 'categoryName',
         orderIndex: 0,
         requiredAt: new Date().toISOString(),
-        validationPattern: "^[A-Z][a-zA-Z0-9]*$",
+        validationPattern: '^[A-Z][a-zA-Z0-9]*$',
       },
       {
         defaultValue: null,
-        description:
-          "Comma-separated list of settings (e.g., theme:select, notifications:toggle)",
-        displayName: "Settings List",
-        name: "settingsList",
+        description: 'Comma-separated list of settings (e.g., theme:select, notifications:toggle)',
+        displayName: 'Settings List',
+        name: 'settingsList',
         orderIndex: 1,
         requiredAt: new Date().toISOString(),
         validationPattern: null,
       },
       {
-        defaultValue: "true",
-        description: "Whether settings should persist across sessions",
-        displayName: "Persist Settings",
-        name: "persistSettings",
+        defaultValue: 'true',
+        description: 'Whether settings should persist across sessions',
+        displayName: 'Persist Settings',
+        name: 'persistSettings',
         orderIndex: 2,
         requiredAt: null,
         validationPattern: null,
@@ -524,11 +503,7 @@ Follow existing settings page patterns in the codebase.`,
  */
 export function seedBuiltInTemplates(db: DrizzleDatabase): void {
   // Check if built-in templates already exist
-  const existingBuiltIn = db
-    .select()
-    .from(templates)
-    .where(isNotNull(templates.builtInAt))
-    .all();
+  const existingBuiltIn = db.select().from(templates).where(isNotNull(templates.builtInAt)).all();
 
   if (existingBuiltIn.length > 0) {
     // Built-in templates already seeded, skip

@@ -1,9 +1,9 @@
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, desc, eq, lt } from 'drizzle-orm';
 
-import type { DrizzleDatabase } from "../index";
-import type { AuditLog, NewAuditLog } from "../schema";
+import type { DrizzleDatabase } from '../index';
+import type { AuditLog, NewAuditLog } from '../schema';
 
-import { auditLogs } from "../schema";
+import { auditLogs } from '../schema';
 
 export interface AuditLogsRepository {
   create(data: NewAuditLog): AuditLog;
@@ -22,9 +22,7 @@ export interface AuditLogsRepository {
   findRecent(limit: number): Array<AuditLog>;
 }
 
-export function createAuditLogsRepository(
-  db: DrizzleDatabase
-): AuditLogsRepository {
+export function createAuditLogsRepository(db: DrizzleDatabase): AuditLogsRepository {
   return {
     create(data: NewAuditLog): AuditLog {
       return db.insert(auditLogs).values(data).returning().get();
@@ -38,10 +36,7 @@ export function createAuditLogsRepository(
     },
 
     deleteOlderThan(date: string): number {
-      const result = db
-        .delete(auditLogs)
-        .where(lt(auditLogs.timestamp, date))
-        .run();
+      const result = db.delete(auditLogs).where(lt(auditLogs.timestamp, date)).run();
       return result.changes;
     },
 
@@ -110,12 +105,7 @@ export function createAuditLogsRepository(
     },
 
     findRecent(limit: number): Array<AuditLog> {
-      return db
-        .select()
-        .from(auditLogs)
-        .orderBy(desc(auditLogs.timestamp))
-        .limit(limit)
-        .all();
+      return db.select().from(auditLogs).orderBy(desc(auditLogs.timestamp)).limit(limit).all();
     },
   };
 }

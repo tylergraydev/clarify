@@ -1,16 +1,13 @@
-"use client";
+'use client';
 
-import { AlertTriangle, Check, Info, X } from "lucide-react";
+import { AlertTriangle, Info, X } from 'lucide-react';
 
-import type { ParsedAgentMarkdown } from "@/lib/utils/agent-markdown";
-import type {
-  AgentImportValidationResult,
-  AgentImportWarning,
-} from "@/lib/validations/agent-import";
+import type { ParsedAgentMarkdown } from '@/lib/utils/agent-markdown';
+import type { AgentImportValidationResult, AgentImportWarning } from '@/lib/validations/agent-import';
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
   DialogBody,
@@ -22,9 +19,9 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { getAgentColorHex } from "@/lib/colors/agent-colors";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/dialog';
+import { getAgentColorHex } from '@/lib/colors/agent-colors';
+import { cn } from '@/lib/utils';
 
 interface ImportAgentDialogProps {
   /** Whether import is in progress */
@@ -49,12 +46,8 @@ export const ImportAgentDialog = ({
   parsedData,
   validationResult,
 }: ImportAgentDialogProps) => {
-  const hasErrors = validationResult
-    ? !validationResult.success || validationResult.errors.length > 0
-    : false;
-  const hasWarnings = validationResult
-    ? validationResult.warnings.length > 0
-    : false;
+  const hasErrors = validationResult ? !validationResult.success || validationResult.errors.length > 0 : false;
+  const hasWarnings = validationResult ? validationResult.warnings.length > 0 : false;
   const isImportDisabled = isLoading || hasErrors || !parsedData;
 
   const handleImportClick = () => {
@@ -66,25 +59,25 @@ export const ImportAgentDialog = ({
   const frontmatter = parsedData?.frontmatter;
   const toolsCount = frontmatter?.tools?.length ?? 0;
   const skillsCount = frontmatter?.skills?.length ?? 0;
+  const disallowedToolsCount = frontmatter?.disallowedTools?.length ?? 0;
+
+  // Calculate hook counts by event type
+  const preToolUseHooksCount = frontmatter?.hooks?.PreToolUse?.length ?? 0;
+  const postToolUseHooksCount = frontmatter?.hooks?.PostToolUse?.length ?? 0;
+  const stopHooksCount = frontmatter?.hooks?.Stop?.length ?? 0;
+  const totalHooksCount = preToolUseHooksCount + postToolUseHooksCount + stopHooksCount;
 
   return (
     <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup
-          aria-modal={"true"}
-          role={"dialog"}
-          scrollable={true}
-          size={"lg"}
-        >
+        <DialogPopup aria-modal={'true'} role={'dialog'} scrollable={true} size={'lg'}>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle id={"import-agent-title"}>
-              {"Import Agent Preview"}
-            </DialogTitle>
-            <DialogDescription id={"import-agent-description"}>
-              {"Review the agent configuration before importing."}
+            <DialogTitle id={'import-agent-title'}>{'Import Agent Preview'}</DialogTitle>
+            <DialogDescription id={'import-agent-description'}>
+              {'Review the agent configuration before importing.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -92,16 +85,15 @@ export const ImportAgentDialog = ({
           <DialogBody>
             {/* Validation Errors */}
             {hasErrors && validationResult && (
-              <Alert className={"mb-4"} variant={"destructive"}>
-                <X aria-hidden={"true"} className={"size-4"} />
+              <Alert className={'mb-4'} variant={'destructive'}>
+                <X aria-hidden={'true'} className={'size-4'} />
                 <div>
-                  <AlertTitle>{"Validation Errors"}</AlertTitle>
+                  <AlertTitle>{'Validation Errors'}</AlertTitle>
                   <AlertDescription>
-                    <ul className={"mt-2 list-inside list-disc space-y-1"}>
+                    <ul className={'mt-2 list-inside list-disc space-y-1'}>
                       {validationResult.errors.map((error, index) => (
                         <li key={index}>
-                          <span className={"font-medium"}>{error.field}:</span>{" "}
-                          {error.message}
+                          <span className={'font-medium'}>{error.field}:</span> {error.message}
                         </li>
                       ))}
                     </ul>
@@ -112,22 +104,17 @@ export const ImportAgentDialog = ({
 
             {/* Validation Warnings */}
             {hasWarnings && validationResult && (
-              <Alert className={"mb-4"} variant={"warning"}>
-                <AlertTriangle aria-hidden={"true"} className={"size-4"} />
+              <Alert className={'mb-4'} variant={'warning'}>
+                <AlertTriangle aria-hidden={'true'} className={'size-4'} />
                 <div>
-                  <AlertTitle>{"Warnings"}</AlertTitle>
+                  <AlertTitle>{'Warnings'}</AlertTitle>
                   <AlertDescription>
-                    <ul className={"mt-2 list-inside list-disc space-y-1"}>
-                      {validationResult.warnings.map(
-                        (warning: AgentImportWarning, index: number) => (
-                          <li key={index}>
-                            <span className={"font-medium"}>
-                              {warning.field}:
-                            </span>{" "}
-                            {warning.message}
-                          </li>
-                        )
-                      )}
+                    <ul className={'mt-2 list-inside list-disc space-y-1'}>
+                      {validationResult.warnings.map((warning: AgentImportWarning, index: number) => (
+                        <li key={index}>
+                          <span className={'font-medium'}>{warning.field}:</span> {warning.message}
+                        </li>
+                      ))}
                     </ul>
                   </AlertDescription>
                 </div>
@@ -136,98 +123,81 @@ export const ImportAgentDialog = ({
 
             {/* Agent Preview */}
             {frontmatter && (
-              <div className={"space-y-4"}>
+              <div className={'space-y-4'}>
                 {/* Agent Identity */}
                 <section>
-                  <h3
-                    className={
-                      "mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase"
-                    }
-                  >
-                    {"Agent Identity"}
+                  <h3 className={'mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase'}>
+                    {'Agent Identity'}
                   </h3>
-                  <div
-                    className={
-                      "rounded-md border border-border bg-muted/50 p-4"
-                    }
-                  >
+                  <div className={'rounded-md border border-border bg-muted/50 p-4'}>
                     {/* Name and Color */}
-                    <div className={"flex items-center gap-3"}>
+                    <div className={'flex items-center gap-3'}>
                       {frontmatter.color && (
                         <div
                           aria-label={`Agent color: ${frontmatter.color}`}
-                          className={"size-4 shrink-0 rounded-full"}
+                          className={'size-4 shrink-0 rounded-full'}
                           style={{
                             backgroundColor: getAgentColorHex(frontmatter.color),
                           }}
                         />
                       )}
-                      <div className={"min-w-0 flex-1"}>
-                        <p className={"text-base font-semibold text-foreground"}>
-                          {frontmatter.displayName}
-                        </p>
-                        <p className={"font-mono text-sm text-muted-foreground"}>
-                          {frontmatter.name}
-                        </p>
+                      <div className={'min-w-0 flex-1'}>
+                        <p className={'text-base font-semibold text-foreground'}>{frontmatter.displayName}</p>
+                        <p className={'font-mono text-sm text-muted-foreground'}>{frontmatter.name}</p>
                       </div>
                     </div>
 
                     {/* Type Badge */}
-                    <div className={"mt-3 flex items-center gap-2"}>
-                      <Badge variant={getBadgeVariantForType(frontmatter.type)}>
-                        {capitalizeFirstLetter(frontmatter.type)}
+                    <div className={'mt-3 flex items-center gap-2'}>
+                      <Badge variant={getBadgeVariantForType(frontmatter.type ?? 'specialist')}>
+                        {capitalizeFirstLetter(frontmatter.type ?? 'specialist')}
                       </Badge>
                       {frontmatter.color && (
-                        <Badge variant={"default"}>
-                          {capitalizeFirstLetter(frontmatter.color)}
-                        </Badge>
+                        <Badge variant={'default'}>{capitalizeFirstLetter(frontmatter.color)}</Badge>
                       )}
                     </div>
 
+                    {/* Model and Permission Mode */}
+                    {(frontmatter.model || frontmatter.permissionMode) && (
+                      <div className={'mt-3 flex flex-wrap gap-x-4 gap-y-1'}>
+                        {frontmatter.model && (
+                          <p className={'text-sm text-muted-foreground'}>
+                            <span className={'font-medium text-foreground'}>{'Model:'}</span> {frontmatter.model}
+                          </p>
+                        )}
+                        {frontmatter.permissionMode && (
+                          <p className={'text-sm text-muted-foreground'}>
+                            <span className={'font-medium text-foreground'}>{'Permission Mode:'}</span>{' '}
+                            {frontmatter.permissionMode}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* Description */}
                     {frontmatter.description && (
-                      <p className={"mt-3 text-sm text-muted-foreground"}>
-                        {frontmatter.description}
-                      </p>
+                      <p className={'mt-3 text-sm text-muted-foreground'}>{frontmatter.description}</p>
                     )}
                   </div>
                 </section>
 
                 {/* Tools Section */}
                 <section>
-                  <h3
-                    className={
-                      "mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase"
-                    }
-                  >
+                  <h3 className={'mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase'}>
                     {`Tools (${toolsCount})`}
                   </h3>
-                  <div
-                    className={
-                      "rounded-md border border-border bg-muted/50 p-4"
-                    }
-                  >
+                  <div className={'rounded-md border border-border bg-muted/50 p-4'}>
                     {toolsCount > 0 ? (
-                      <div className={"flex flex-wrap gap-2"}>
-                        {frontmatter.tools?.map((tool, index) => {
-                          const hasCustomPattern =
-                            tool.pattern && tool.pattern !== "*";
-
-                          return (
-                            <Badge key={index} variant={"default"}>
-                              {tool.toolName}
-                              {hasCustomPattern && (
-                                <span
-                                  className={"ml-1 opacity-70"}
-                                >{`(${tool.pattern})`}</span>
-                              )}
-                            </Badge>
-                          );
-                        })}
+                      <div className={'flex flex-wrap gap-2'}>
+                        {frontmatter.tools?.map((toolName, index) => (
+                          <Badge key={index} variant={'default'}>
+                            {toolName}
+                          </Badge>
+                        ))}
                       </div>
                     ) : (
-                      <p className={"text-sm text-muted-foreground"}>
-                        {"No tools configured. Agent will have no tool restrictions."}
+                      <p className={'text-sm text-muted-foreground'}>
+                        {'No tools configured. Agent will have no tool restrictions.'}
                       </p>
                     )}
                   </div>
@@ -235,76 +205,99 @@ export const ImportAgentDialog = ({
 
                 {/* Skills Section */}
                 <section>
-                  <h3
-                    className={
-                      "mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase"
-                    }
-                  >
+                  <h3 className={'mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase'}>
                     {`Skills (${skillsCount})`}
                   </h3>
-                  <div
-                    className={
-                      "rounded-md border border-border bg-muted/50 p-4"
-                    }
-                  >
+                  <div className={'rounded-md border border-border bg-muted/50 p-4'}>
                     {skillsCount > 0 ? (
-                      <div className={"flex flex-wrap gap-2"}>
-                        {frontmatter.skills?.map((skill, index) => (
-                          <Badge
-                            key={index}
-                            variant={skill.isRequired ? "pending" : "default"}
-                          >
-                            {skill.skillName}
-                            {skill.isRequired && (
-                              <Check
-                                aria-hidden={"true"}
-                                className={"ml-1 size-3"}
-                              />
-                            )}
+                      <div className={'flex flex-wrap gap-2'}>
+                        {frontmatter.skills?.map((skillName, index) => (
+                          <Badge key={index} variant={'default'}>
+                            {skillName}
                           </Badge>
                         ))}
                       </div>
                     ) : (
-                      <p className={"text-sm text-muted-foreground"}>
-                        {"No skills configured."}
-                      </p>
+                      <p className={'text-sm text-muted-foreground'}>{'No skills configured.'}</p>
                     )}
                   </div>
                 </section>
 
+                {/* Disallowed Tools Section */}
+                {disallowedToolsCount > 0 && (
+                  <section>
+                    <h3 className={'mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase'}>
+                      {`Disallowed Tools (${disallowedToolsCount})`}
+                    </h3>
+                    <div className={'rounded-md border border-border bg-muted/50 p-4'}>
+                      <div className={'flex flex-wrap gap-2'}>
+                        {frontmatter.disallowedTools?.map((toolName, index) => (
+                          <Badge key={index} variant={'failed'}>
+                            {toolName}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {/* Hooks Section */}
+                {totalHooksCount > 0 && (
+                  <section>
+                    <h3 className={'mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase'}>
+                      {`Hooks (${totalHooksCount})`}
+                    </h3>
+                    <div className={'rounded-md border border-border bg-muted/50 p-4'}>
+                      <div className={'space-y-2'}>
+                        {preToolUseHooksCount > 0 && (
+                          <div className={'flex items-center gap-2'}>
+                            <Badge variant={'default'}>{'PreToolUse'}</Badge>
+                            <span className={'text-sm text-muted-foreground'}>
+                              {preToolUseHooksCount === 1 ? '1 hook' : `${preToolUseHooksCount} hooks`}
+                            </span>
+                          </div>
+                        )}
+                        {postToolUseHooksCount > 0 && (
+                          <div className={'flex items-center gap-2'}>
+                            <Badge variant={'default'}>{'PostToolUse'}</Badge>
+                            <span className={'text-sm text-muted-foreground'}>
+                              {postToolUseHooksCount === 1 ? '1 hook' : `${postToolUseHooksCount} hooks`}
+                            </span>
+                          </div>
+                        )}
+                        {stopHooksCount > 0 && (
+                          <div className={'flex items-center gap-2'}>
+                            <Badge variant={'default'}>{'Stop'}</Badge>
+                            <span className={'text-sm text-muted-foreground'}>
+                              {stopHooksCount === 1 ? '1 hook' : `${stopHooksCount} hooks`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                )}
+
                 {/* System Prompt Preview */}
                 <section>
-                  <h3
-                    className={
-                      "mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase"
-                    }
-                  >
-                    {"System Prompt Preview"}
+                  <h3 className={'mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase'}>
+                    {'System Prompt Preview'}
                   </h3>
-                  <div
-                    className={cn(
-                      "rounded-md border border-border bg-muted/50 p-4",
-                      "max-h-40 overflow-y-auto"
-                    )}
-                  >
-                    <pre
-                      className={
-                        "font-mono text-xs whitespace-pre-wrap text-foreground"
-                      }
-                    >
+                  <div className={cn('rounded-md border border-border bg-muted/50 p-4', 'max-h-40 overflow-y-auto')}>
+                    <pre className={'font-mono text-xs whitespace-pre-wrap text-foreground'}>
                       {parsedData?.systemPrompt
                         ? truncateText(parsedData.systemPrompt, 500)
-                        : "No system prompt provided."}
+                        : 'No system prompt provided.'}
                     </pre>
                   </div>
                 </section>
 
                 {/* Import Info */}
-                <Alert variant={"info"}>
-                  <Info aria-hidden={"true"} className={"size-4"} />
+                <Alert variant={'info'}>
+                  <Info aria-hidden={'true'} className={'size-4'} />
                   <AlertDescription>
                     {
-                      "Importing will create a new custom agent with this configuration. You can edit the agent after import."
+                      'Importing will create a new custom agent with this configuration. You can edit the agent after import.'
                     }
                   </AlertDescription>
                 </Alert>
@@ -313,30 +306,26 @@ export const ImportAgentDialog = ({
 
             {/* No Data State */}
             {!frontmatter && !hasErrors && (
-              <div className={"py-8 text-center text-muted-foreground"}>
-                {"No agent data to preview."}
-              </div>
+              <div className={'py-8 text-center text-muted-foreground'}>{'No agent data to preview.'}</div>
             )}
           </DialogBody>
 
           {/* Footer Actions */}
           <DialogFooter>
             <DialogClose>
-              <Button disabled={isLoading} variant={"outline"}>
-                {"Cancel"}
+              <Button disabled={isLoading} variant={'outline'}>
+                {'Cancel'}
               </Button>
             </DialogClose>
             <Button
-              aria-describedby={"import-agent-description"}
+              aria-describedby={'import-agent-description'}
               aria-label={
-                hasErrors
-                  ? "Cannot import - validation errors"
-                  : `Import agent ${frontmatter?.displayName ?? ""}`
+                hasErrors ? 'Cannot import - validation errors' : `Import agent ${frontmatter?.displayName ?? ''}`
               }
               disabled={isImportDisabled}
               onClick={handleImportClick}
             >
-              {isLoading ? "Importing..." : "Import Agent"}
+              {isLoading ? 'Importing...' : 'Import Agent'}
             </Button>
           </DialogFooter>
         </DialogPopup>
@@ -355,18 +344,16 @@ function capitalizeFirstLetter(str: string): string {
 /**
  * Get badge variant based on agent type.
  */
-function getBadgeVariantForType(
-  type: string
-): "default" | "planning" | "review" | "specialist" {
+function getBadgeVariantForType(type: string): 'default' | 'planning' | 'review' | 'specialist' {
   switch (type) {
-    case "planning":
-      return "planning";
-    case "review":
-      return "review";
-    case "specialist":
-      return "specialist";
+    case 'planning':
+      return 'planning';
+    case 'review':
+      return 'review';
+    case 'specialist':
+      return 'specialist';
     default:
-      return "default";
+      return 'default';
   }
 }
 

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Toast as BaseToast } from "@base-ui/react/toast";
-import { cva, type VariantProps } from "class-variance-authority";
-import { AlertCircle, CheckCircle, Info, Loader2, X } from "lucide-react";
+import { Toast as BaseToast } from '@base-ui/react/toast';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { AlertCircle, CheckCircle, Info, Loader2, X } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const ToastProvider = BaseToast.Provider;
 export const ToastViewport = BaseToast.Viewport;
@@ -28,67 +28,37 @@ export const toastRootVariants = cva(
   `,
   {
     defaultVariants: {
-      variant: "default",
+      variant: 'default',
     },
     variants: {
       variant: {
-        default: "border-border",
-        error: "border-destructive/50",
-        info: "border-accent/50",
-        loading: "border-border",
-        success: "border-green-500/50",
-        warning: "border-amber-500/50",
+        default: 'border-border',
+        error: 'border-destructive/50',
+        info: 'border-accent/50',
+        loading: 'border-border',
+        success: 'border-green-500/50',
+        warning: 'border-amber-500/50',
       },
     },
   }
 );
 
-type ToastRootStyledProps = ComponentPropsWithRef<typeof BaseToast.Root> &
-  VariantProps<typeof toastRootVariants>;
+type ToastRootStyledProps = ComponentPropsWithRef<typeof BaseToast.Root> & VariantProps<typeof toastRootVariants>;
 
-export const ToastRootStyled = ({
-  className,
-  ref,
-  variant,
-  ...props
-}: ToastRootStyledProps) => {
-  return (
-    <BaseToast.Root
-      className={cn(toastRootVariants({ className, variant }))}
-      ref={ref}
-      {...props}
-    />
-  );
+export const ToastRootStyled = ({ className, ref, variant, ...props }: ToastRootStyledProps) => {
+  return <BaseToast.Root className={cn(toastRootVariants({ className, variant }))} ref={ref} {...props} />;
 };
 
 type ToastTitleProps = ComponentPropsWithRef<typeof BaseToast.Title>;
 
 export const ToastTitle = ({ className, ref, ...props }: ToastTitleProps) => {
-  return (
-    <BaseToast.Title
-      className={cn("text-sm font-medium text-foreground", className)}
-      ref={ref}
-      {...props}
-    />
-  );
+  return <BaseToast.Title className={cn('text-sm font-medium text-foreground', className)} ref={ref} {...props} />;
 };
 
-type ToastDescriptionProps = ComponentPropsWithRef<
-  typeof BaseToast.Description
->;
+type ToastDescriptionProps = ComponentPropsWithRef<typeof BaseToast.Description>;
 
-export const ToastDescription = ({
-  className,
-  ref,
-  ...props
-}: ToastDescriptionProps) => {
-  return (
-    <BaseToast.Description
-      className={cn("text-sm text-muted-foreground", className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const ToastDescription = ({ className, ref, ...props }: ToastDescriptionProps) => {
+  return <BaseToast.Description className={cn('text-sm text-muted-foreground', className)} ref={ref} {...props} />;
 };
 
 type ToastCloseProps = ComponentPropsWithRef<typeof BaseToast.Close>;
@@ -109,46 +79,35 @@ export const ToastClose = ({ className, ref, ...props }: ToastCloseProps) => {
       ref={ref}
       {...props}
     >
-      <X className={"size-4"} />
+      <X className={'size-4'} />
     </BaseToast.Close>
   );
 };
 
 /** Toast type to variant icon mapping */
-export type ToastType =
-  | "default"
-  | "error"
-  | "info"
-  | "loading"
-  | "success"
-  | "warning";
+export type ToastType = 'default' | 'error' | 'info' | 'loading' | 'success' | 'warning';
 
-interface ToastIconProps extends ComponentPropsWithRef<"span"> {
+interface ToastIconProps extends ComponentPropsWithRef<'span'> {
   type: ToastType;
 }
 
-export const ToastIcon = ({
-  className,
-  ref,
-  type,
-  ...props
-}: ToastIconProps) => {
-  const iconClasses = cn("size-4 shrink-0", className);
+export const ToastIcon = ({ className, ref, type, ...props }: ToastIconProps) => {
+  const iconClasses = cn('size-4 shrink-0', className);
 
   switch (type) {
-    case "error":
+    case 'error':
       return (
         <span ref={ref} {...props}>
-          <AlertCircle className={cn(iconClasses, "text-destructive")} />
+          <AlertCircle className={cn(iconClasses, 'text-destructive')} />
         </span>
       );
-    case "info":
+    case 'info':
       return (
         <span ref={ref} {...props}>
-          <Info className={cn(iconClasses, "text-accent")} />
+          <Info className={cn(iconClasses, 'text-accent')} />
         </span>
       );
-    case "loading":
+    case 'loading':
       return (
         <span ref={ref} {...props}>
           <Loader2
@@ -161,7 +120,7 @@ export const ToastIcon = ({
           />
         </span>
       );
-    case "success":
+    case 'success':
       return (
         <span ref={ref} {...props}>
           <CheckCircle
@@ -175,7 +134,7 @@ export const ToastIcon = ({
           />
         </span>
       );
-    case "warning":
+    case 'warning':
       return (
         <span ref={ref} {...props}>
           <AlertCircle

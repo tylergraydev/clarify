@@ -1,37 +1,27 @@
-"use client";
+'use client';
 
-import type { OnChangeFn, Row, RowSelectionState } from "@tanstack/react-table";
-import type { ComponentPropsWithRef, ReactNode } from "react";
+import type { OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
+import type { ComponentPropsWithRef, ReactNode } from 'react';
 
-import { format } from "date-fns";
-import {
-  Copy,
-  Download,
-  Eye,
-  FolderInput,
-  FolderOutput,
-  FolderPlus,
-  Pencil,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
-import { Fragment, useCallback, useMemo, useState } from "react";
+import { format } from 'date-fns';
+import { Copy, Download, Eye, FolderInput, FolderOutput, FolderPlus, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
-import type { Agent, AgentSkill, AgentTool, Project } from "@/db/schema";
+import type { Agent, AgentSkill, AgentTool, Project } from '@/db/schema';
 
-import { AgentEditorDialog } from "@/components/agents/agent-editor-dialog";
-import { Badge, type badgeVariants } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
+import { Badge, type badgeVariants } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   createColumnHelper,
   DataTable,
   type DataTableRowAction,
   DataTableRowActions,
   type DataTableRowStyleCallback,
-} from "@/components/ui/table";
-import { Tooltip } from "@/components/ui/tooltip";
-import { getAgentColorClass } from "@/lib/colors/agent-colors";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/table';
+import { Tooltip } from '@/components/ui/tooltip';
+import { getAgentColorClass } from '@/lib/colors/agent-colors';
+import { cn } from '@/lib/utils';
 
 // ============================================================================
 // Types
@@ -46,10 +36,7 @@ export interface AgentWithRelations extends Agent {
   tools?: Array<AgentTool>;
 }
 
-interface AgentTableProps extends Omit<
-  ComponentPropsWithRef<"div">,
-  "onReset"
-> {
+interface AgentTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onReset'> {
   agents: Array<AgentWithRelations>;
   isCopyingToProject?: boolean;
   isCreatingOverride?: boolean;
@@ -68,10 +55,7 @@ interface AgentTableProps extends Omit<
   onExport?: (agent: AgentWithRelations) => void;
   /** Callback fired when global filter (search) changes */
   onGlobalFilterChange?: (value: string) => void;
-  onMoveToProject?: (
-    agent: AgentWithRelations,
-    projectId: null | number
-  ) => void;
+  onMoveToProject?: (agent: AgentWithRelations, projectId: null | number) => void;
   onReset?: (agentId: number) => void;
   /** Callback fired when row selection changes */
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
@@ -84,9 +68,9 @@ interface AgentTableProps extends Omit<
   toolbarContent?: ReactNode;
 }
 
-type AgentType = Agent["type"];
+type AgentType = Agent['type'];
 
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
 // ============================================================================
 // Helper Functions
@@ -94,38 +78,38 @@ type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
 
 const getTypeVariant = (type: AgentType): BadgeVariant => {
   const typeVariantMap: Record<string, BadgeVariant> = {
-    planning: "planning",
-    review: "review",
-    specialist: "specialist",
-    utility: "default",
+    planning: 'planning',
+    review: 'review',
+    specialist: 'specialist',
+    utility: 'default',
   };
 
-  return typeVariantMap[type ?? ""] ?? "default";
+  return typeVariantMap[type ?? ''] ?? 'default';
 };
 
 const formatTypeLabel = (type: AgentType): string => {
-  if (!type) return "Unknown";
+  if (!type) return 'Unknown';
   return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
 const getScopeLabel = (agent: Agent, projects?: Array<Project>): string => {
   if (agent.projectId === null) {
-    return "Global";
+    return 'Global';
   }
   const project = projects?.find((p) => p.id === agent.projectId);
   return project?.name ?? `Project #${agent.projectId}`;
 };
 
 const getStatusLabel = (agent: Agent): string => {
-  return agent.deactivatedAt === null ? "Active" : "Inactive";
+  return agent.deactivatedAt === null ? 'Active' : 'Inactive';
 };
 
 const formatDate = (dateString: null | string | undefined): string => {
-  if (!dateString) return "-";
+  if (!dateString) return '-';
   try {
-    return format(new Date(dateString), "MMM d, yyyy");
+    return format(new Date(dateString), 'MMM d, yyyy');
   } catch {
-    return "-";
+    return '-';
   }
 };
 
@@ -134,6 +118,194 @@ const formatDate = (dateString: null | string | undefined): string => {
 // ============================================================================
 
 const columnHelper = createColumnHelper<AgentWithRelations>();
+
+// ============================================================================
+// Memoized Cell Components
+// ============================================================================
+
+interface ActionsCellProps {
+  isActionDisabled: boolean;
+  onCopyToProject?: (agent: AgentWithRelations, projectId: number) => void;
+  onCreateOverride?: (agent: AgentWithRelations) => void;
+  onDelete?: (agentId: number) => void;
+  onDuplicate?: (agent: AgentWithRelations) => void;
+  onEditClick: (agent: AgentWithRelations) => void;
+  onExport?: (agent: AgentWithRelations) => void;
+  onMoveToProject?: (agent: AgentWithRelations, projectId: null | number) => void;
+  onReset?: (agentId: number) => void;
+  row: Row<AgentWithRelations>;
+}
+
+/**
+ * Memoized actions cell component to prevent recreating action handlers
+ * on every table render.
+ */
+const ActionsCell = memo(function ActionsCell({
+  isActionDisabled,
+  onCopyToProject,
+  onCreateOverride,
+  onDelete,
+  onDuplicate,
+  onEditClick,
+  onExport,
+  onMoveToProject,
+  onReset,
+  row,
+}: ActionsCellProps) {
+  const agent = row.original;
+  const isCustomAgent = agent.builtInAt === null;
+  const isCustomized = agent.parentAgentId !== null;
+  const isGlobalAgent = agent.projectId === null;
+  const isProjectAgent = agent.projectId !== null;
+
+  const actions: Array<DataTableRowAction<AgentWithRelations>> = [];
+
+  // -------------------------------------------------------------------------
+  // Primary Actions - Always available for all agents
+  // -------------------------------------------------------------------------
+
+  // View/Edit action
+  actions.push({
+    disabled: isActionDisabled,
+    icon: isCustomAgent ? (
+      <Pencil aria-hidden={'true'} className={'size-4'} />
+    ) : (
+      <Eye aria-hidden={'true'} className={'size-4'} />
+    ),
+    label: isCustomAgent ? 'Edit' : 'View',
+    onAction: (r) => onEditClick(r.original),
+    type: 'button',
+  });
+
+  // Duplicate action
+  actions.push({
+    disabled: isActionDisabled,
+    icon: <Copy aria-hidden={'true'} className={'size-4'} />,
+    label: 'Duplicate',
+    onAction: (r) => onDuplicate?.(r.original),
+    type: 'button',
+  });
+
+  // -------------------------------------------------------------------------
+  // Export Actions - File-based operations
+  // -------------------------------------------------------------------------
+
+  // Export action
+  if (onExport) {
+    actions.push({
+      disabled: isActionDisabled,
+      icon: <Download aria-hidden={'true'} className={'size-4'} />,
+      label: 'Export',
+      onAction: (r) => onExport(r.original),
+      type: 'button',
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Scope Management Actions - Project/global operations
+  // -------------------------------------------------------------------------
+
+  // Create Project Copy action (only for global agents)
+  if (isGlobalAgent && onCreateOverride) {
+    actions.push({
+      disabled: isActionDisabled,
+      icon: <FolderPlus aria-hidden={'true'} className={'size-4'} />,
+      label: 'Create Project Copy',
+      onAction: (r) => onCreateOverride(r.original),
+      type: 'button',
+    });
+  }
+
+  // Move to Project action (only for custom agents that can be moved)
+  if (onMoveToProject && isCustomAgent) {
+    actions.push({
+      disabled: isActionDisabled,
+      icon: <FolderOutput aria-hidden={'true'} className={'size-4'} />,
+      label: isGlobalAgent ? 'Move to Project' : 'Change Project',
+      onAction: (r) => {
+        onMoveToProject(r.original, null);
+      },
+      type: 'button',
+    });
+  }
+
+  // Copy to Project action (for project-scoped agents to copy to another project)
+  if (isProjectAgent && onCopyToProject) {
+    actions.push({
+      disabled: isActionDisabled,
+      icon: <FolderInput aria-hidden={'true'} className={'size-4'} />,
+      label: 'Copy to Project',
+      onAction: (r) => {
+        onCopyToProject(r.original, 0);
+      },
+      type: 'button',
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Maintenance Actions - Reset and delete operations
+  // -------------------------------------------------------------------------
+
+  // Reset action (conditional)
+  if (isCustomized) {
+    actions.push({
+      disabled: isActionDisabled,
+      icon: <RotateCcw aria-hidden={'true'} className={'size-4'} />,
+      label: 'Reset to Default',
+      onAction: (r) => onReset?.(r.original.id),
+      type: 'button',
+    });
+  }
+
+  // Delete action (conditional)
+  if (isCustomAgent) {
+    actions.push({ type: 'separator' });
+    actions.push({
+      disabled: isActionDisabled,
+      icon: <Trash2 aria-hidden={'true'} className={'size-4 text-destructive'} />,
+      label: 'Delete',
+      onAction: (r) => onDelete?.(r.original.id),
+      type: 'button',
+      variant: 'destructive',
+    });
+  }
+
+  return <DataTableRowActions actions={actions} row={row} size={'sm'} />;
+});
+
+interface StatusCellProps {
+  agent: AgentWithRelations;
+  isToggling: boolean;
+  onToggleActive?: (agentId: number, isActive: boolean) => void;
+}
+
+/**
+ * Memoized status cell component with stable toggle handler
+ * to prevent recreating the handler on every render.
+ */
+const StatusCell = memo(function StatusCell({ agent, isToggling, onToggleActive }: StatusCellProps) {
+  const isActive = agent.deactivatedAt === null;
+
+  const handleToggleChange = useCallback(
+    (checked: boolean) => {
+      onToggleActive?.(agent.id, checked);
+    },
+    [agent.id, onToggleActive]
+  );
+
+  return (
+    <div className={'flex items-center gap-2'} onClick={(e) => e.stopPropagation()}>
+      <span className={'text-xs text-muted-foreground'}>{getStatusLabel(agent)}</span>
+      <Switch
+        aria-label={isActive ? 'Deactivate agent' : 'Activate agent'}
+        checked={isActive}
+        disabled={isToggling}
+        onCheckedChange={handleToggleChange}
+        size={'sm'}
+      />
+    </div>
+  );
+});
 
 // ============================================================================
 // Main Component
@@ -182,8 +354,7 @@ export const AgentTable = ({
   toolbarContent,
   ...props
 }: AgentTableProps) => {
-  const [editDialogAgent, setEditDialogAgent] =
-    useState<AgentWithRelations | null>(null);
+  const [editDialogAgent, setEditDialogAgent] = useState<AgentWithRelations | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleEditClick = useCallback((agent: AgentWithRelations) => {
@@ -205,216 +376,105 @@ export const AgentTable = ({
     [handleEditClick]
   );
 
-  const isActionDisabled =
-    isCreatingOverride ||
-    isCopyingToProject ||
-    isDeleting ||
-    isDuplicating ||
-    isExporting ||
-    isMovingToProject ||
-    isResetting ||
-    isToggling;
-
-  // Define row actions dynamically based on agent state
-  const getRowActions = useCallback(
-    (
-      row: Row<AgentWithRelations>
-    ): Array<DataTableRowAction<AgentWithRelations>> => {
-      const agent = row.original;
-      const isCustomAgent = agent.builtInAt === null;
-      const isCustomized = agent.parentAgentId !== null;
-      const isGlobalAgent = agent.projectId === null;
-      const isProjectAgent = agent.projectId !== null;
-
-      const actions: Array<DataTableRowAction<AgentWithRelations>> = [];
-
-      // View/Edit action
-      actions.push({
-        disabled: isActionDisabled,
-        icon: isCustomAgent ? (
-          <Pencil aria-hidden={"true"} className={"size-4"} />
-        ) : (
-          <Eye aria-hidden={"true"} className={"size-4"} />
-        ),
-        label: isCustomAgent ? "Edit" : "View",
-        onAction: (r) => handleEditClick(r.original),
-        type: "button",
-      });
-
-      // Duplicate action
-      actions.push({
-        disabled: isActionDisabled,
-        icon: <Copy aria-hidden={"true"} className={"size-4"} />,
-        label: "Duplicate",
-        onAction: (r) => onDuplicate?.(r.original),
-        type: "button",
-      });
-
-      // Export action
-      if (onExport) {
-        actions.push({
-          disabled: isActionDisabled,
-          icon: <Download aria-hidden={"true"} className={"size-4"} />,
-          label: "Export",
-          onAction: (r) => onExport(r.original),
-          type: "button",
-        });
-      }
-
-      // Create Project Copy action (only for global agents)
-      if (isGlobalAgent && onCreateOverride) {
-        actions.push({
-          disabled: isActionDisabled,
-          icon: <FolderPlus aria-hidden={"true"} className={"size-4"} />,
-          label: "Create Project Copy",
-          onAction: (r) => onCreateOverride(r.original),
-          type: "button",
-        });
-      }
-
-      // Move to Project action (only for custom agents that can be moved)
-      if (onMoveToProject && isCustomAgent) {
-        actions.push({
-          disabled: isActionDisabled,
-          icon: <FolderOutput aria-hidden={"true"} className={"size-4"} />,
-          label: isGlobalAgent ? "Move to Project" : "Change Project",
-          onAction: (r) => {
-            // This will trigger the parent to show a project selection dialog
-            // For now, we pass null as a signal to show the dialog
-            onMoveToProject(r.original, null);
-          },
-          type: "button",
-        });
-      }
-
-      // Copy to Project action (for project-scoped agents to copy to another project)
-      if (isProjectAgent && onCopyToProject) {
-        actions.push({
-          disabled: isActionDisabled,
-          icon: <FolderInput aria-hidden={"true"} className={"size-4"} />,
-          label: "Copy to Project",
-          onAction: (r) => {
-            // This will trigger the parent to show a project selection dialog
-            // For now, we pass 0 as a signal to show the dialog
-            onCopyToProject(r.original, 0);
-          },
-          type: "button",
-        });
-      }
-
-      // Reset action (conditional)
-      if (isCustomized) {
-        actions.push({
-          disabled: isActionDisabled,
-          icon: <RotateCcw aria-hidden={"true"} className={"size-4"} />,
-          label: "Reset to Default",
-          onAction: (r) => onReset?.(r.original.id),
-          type: "button",
-        });
-      }
-
-      // Delete action (conditional)
-      if (isCustomAgent) {
-        actions.push({ type: "separator" });
-        actions.push({
-          disabled: isActionDisabled,
-          icon: (
-            <Trash2
-              aria-hidden={"true"}
-              className={"size-4 text-destructive"}
-            />
-          ),
-          label: "Delete",
-          onAction: (r) => onDelete?.(r.original.id),
-          type: "button",
-          variant: "destructive",
-        });
-      }
-
-      return actions;
-    },
+  // Memoize isActionDisabled to prevent unnecessary re-renders
+  const isActionDisabled = useMemo(
+    () =>
+      isCreatingOverride ||
+      isCopyingToProject ||
+      isDeleting ||
+      isDuplicating ||
+      isExporting ||
+      isMovingToProject ||
+      isResetting ||
+      isToggling,
     [
-      handleEditClick,
-      isActionDisabled,
-      onCopyToProject,
-      onCreateOverride,
-      onDelete,
-      onDuplicate,
-      onExport,
-      onMoveToProject,
-      onReset,
+      isCopyingToProject,
+      isCreatingOverride,
+      isDeleting,
+      isDuplicating,
+      isExporting,
+      isMovingToProject,
+      isResetting,
+      isToggling,
     ]
   );
 
   // Row style callback for built-in and inactive agents
-  const rowStyleCallback: DataTableRowStyleCallback<AgentWithRelations> =
-    useCallback((row) => {
-      const isActive = row.original.deactivatedAt === null;
-      const isBuiltIn = row.original.builtInAt !== null;
+  const rowStyleCallback: DataTableRowStyleCallback<AgentWithRelations> = useCallback((row) => {
+    const isActive = row.original.deactivatedAt === null;
+    const isBuiltIn = row.original.builtInAt !== null;
 
-      // Apply subtle background for built-in agents, reduced opacity for inactive
-      if (!isActive) {
-        return isBuiltIn ? "bg-muted/30 opacity-60" : "opacity-60";
-      }
+    // Apply subtle background for built-in agents, reduced opacity for inactive
+    if (!isActive) {
+      return isBuiltIn ? 'bg-muted/30 opacity-60' : 'opacity-60';
+    }
 
-      return isBuiltIn ? "bg-muted/30" : undefined;
-    }, []);
+    return isBuiltIn ? 'bg-muted/30' : undefined;
+  }, []);
 
   // Define columns using the column helper
+  // Dependencies are minimized by extracting dynamic cell content
+  // into memoized components (ActionsCell, StatusCell)
   const columns = useMemo(
     () => [
       // Actions column (first for easy access)
+      // Uses memoized ActionsCell to avoid recreating action handlers
       columnHelper.display({
-        cell: ({ row }) => {
-          const actions = getRowActions(row);
-          return (
-            <DataTableRowActions actions={actions} row={row} size={"sm"} />
-          );
-        },
+        cell: ({ row }) => (
+          <ActionsCell
+            isActionDisabled={isActionDisabled}
+            onCopyToProject={onCopyToProject}
+            onCreateOverride={onCreateOverride}
+            onDelete={onDelete}
+            onDuplicate={onDuplicate}
+            onEditClick={handleEditClick}
+            onExport={onExport}
+            onMoveToProject={onMoveToProject}
+            onReset={onReset}
+            row={row}
+          />
+        ),
         enableHiding: false,
         enableResizing: false,
         enableSorting: false,
-        header: "",
-        id: "actions",
+        header: '',
+        id: 'actions',
         meta: {
-          cellClassName: "text-left",
-          headerClassName: "text-left",
+          cellClassName: 'text-left',
+          headerClassName: 'text-left',
         },
         size: 30,
       }),
 
       // Name column with color indicator
-      columnHelper.accessor("displayName", {
+      columnHelper.accessor('displayName', {
         cell: ({ row }) => {
           const agent = row.original;
           const isCustomAgent = agent.builtInAt === null;
           const isCustomized = agent.parentAgentId !== null;
 
           return (
-            <div className={"flex items-center gap-2"}>
+            <div className={'flex items-center gap-2'}>
               {/* Color Indicator */}
               <div
-                aria-hidden={"true"}
-                className={cn(
-                  "size-3 shrink-0 rounded-full",
-                  getAgentColorClass(agent.color)
-                )}
+                aria-hidden={'true'}
+                className={cn('size-3 shrink-0 rounded-full', getAgentColorClass(agent.color))}
               />
 
               {/* Agent Name */}
               {agent.description ? (
-                <Tooltip content={agent.description} side={"bottom"}>
+                <Tooltip content={agent.description} side={'bottom'}>
                   <button
                     className={cn(
-                      "cursor-pointer text-left font-medium text-foreground hover:text-accent",
-                      "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0",
-                      "focus-visible:outline-none"
+                      'cursor-pointer text-left font-medium text-foreground hover:text-accent',
+                      'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
+                      'focus-visible:outline-none'
                     )}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleEditClick(agent);
                     }}
-                    type={"button"}
+                    type={'button'}
                   >
                     {agent.displayName}
                   </button>
@@ -422,35 +482,35 @@ export const AgentTable = ({
               ) : (
                 <button
                   className={cn(
-                    "cursor-pointer text-left font-medium text-foreground hover:text-accent",
-                    "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0",
-                    "focus-visible:outline-none"
+                    'cursor-pointer text-left font-medium text-foreground hover:text-accent',
+                    'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
+                    'focus-visible:outline-none'
                   )}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleEditClick(agent);
                   }}
-                  type={"button"}
+                  type={'button'}
                 >
                   {agent.displayName}
                 </button>
               )}
 
               {/* Origin Badges */}
-              <div className={"flex items-center gap-1"}>
+              <div className={'flex items-center gap-1'}>
                 {!isCustomAgent && (
-                  <Badge size={"sm"} variant={"category-builtin"}>
-                    {"Built-in"}
+                  <Badge size={'sm'} variant={'category-builtin'}>
+                    {'Built-in'}
                   </Badge>
                 )}
                 {isCustomAgent && (
-                  <Badge size={"sm"} variant={"custom"}>
-                    {"Custom"}
+                  <Badge size={'sm'} variant={'custom'}>
+                    {'Custom'}
                   </Badge>
                 )}
                 {isCustomized && (
-                  <Badge size={"sm"} variant={"default"}>
-                    {"Customized"}
+                  <Badge size={'sm'} variant={'default'}>
+                    {'Customized'}
                   </Badge>
                 )}
               </div>
@@ -458,39 +518,36 @@ export const AgentTable = ({
           );
         },
         enableHiding: false,
-        header: "Name",
+        header: 'Name',
         size: 280,
       }),
 
       // Type column with badge variants
-      columnHelper.accessor("type", {
+      columnHelper.accessor('type', {
         cell: ({ row }) => {
           const agent = row.original;
           return (
-            <Badge size={"sm"} variant={getTypeVariant(agent.type)}>
+            <Badge size={'sm'} variant={getTypeVariant(agent.type)}>
               {formatTypeLabel(agent.type)}
             </Badge>
           );
         },
-        header: "Type",
+        header: 'Type',
         size: 100,
       }),
 
       // Project/Scope column
-      columnHelper.accessor("projectId", {
+      columnHelper.accessor('projectId', {
         cell: ({ row }) => {
           const agent = row.original;
           const isProjectScoped = agent.projectId !== null;
           return (
-            <Badge
-              size={"sm"}
-              variant={isProjectScoped ? "project" : "default"}
-            >
+            <Badge size={'sm'} variant={isProjectScoped ? 'project' : 'default'}>
               {getScopeLabel(agent, projects)}
             </Badge>
           );
         },
-        header: "Project",
+        header: 'Project',
         size: 140,
       }),
 
@@ -499,10 +556,10 @@ export const AgentTable = ({
         cell: ({ row }) => {
           const agent = row.original;
           const toolCount = agent.tools?.length ?? 0;
-          return <span className={"text-muted-foreground"}>{toolCount}</span>;
+          return <span className={'text-muted-foreground'}>{toolCount}</span>;
         },
-        header: "Tools",
-        id: "toolCount",
+        header: 'Tools',
+        id: 'toolCount',
         size: 70,
       }),
 
@@ -511,76 +568,57 @@ export const AgentTable = ({
         cell: ({ row }) => {
           const agent = row.original;
           const skillCount = agent.skills?.length ?? 0;
-          return <span className={"text-muted-foreground"}>{skillCount}</span>;
+          return <span className={'text-muted-foreground'}>{skillCount}</span>;
         },
-        header: "Skills",
-        id: "skillCount",
+        header: 'Skills',
+        id: 'skillCount',
         size: 70,
       }),
 
       // Status column
+      // Uses memoized StatusCell with stable toggle handler
       columnHelper.display({
-        cell: ({ row }) => {
-          const agent = row.original;
-          const isActive = agent.deactivatedAt === null;
-
-          const handleToggleChange = (checked: boolean) => {
-            onToggleActive?.(agent.id, checked);
-          };
-
-          return (
-            <div
-              className={"flex items-center gap-2"}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span className={"text-xs text-muted-foreground"}>
-                {getStatusLabel(agent)}
-              </span>
-              <Switch
-                aria-label={isActive ? "Deactivate agent" : "Activate agent"}
-                checked={isActive}
-                disabled={isToggling}
-                onCheckedChange={handleToggleChange}
-                size={"sm"}
-              />
-            </div>
-          );
-        },
+        cell: ({ row }) => <StatusCell agent={row.original} isToggling={isToggling} onToggleActive={onToggleActive} />,
         enableSorting: false,
-        header: "Status",
-        id: "status",
+        header: 'Status',
+        id: 'status',
         size: 110,
       }),
 
       // Created At column
-      columnHelper.accessor("createdAt", {
+      columnHelper.accessor('createdAt', {
         cell: ({ row }) => {
           const agent = row.original;
-          return (
-            <span className={"text-sm text-muted-foreground"}>
-              {formatDate(agent.createdAt)}
-            </span>
-          );
+          return <span className={'text-sm text-muted-foreground'}>{formatDate(agent.createdAt)}</span>;
         },
-        header: "Created",
+        header: 'Created',
         size: 110,
       }),
 
       // Updated At column
-      columnHelper.accessor("updatedAt", {
+      columnHelper.accessor('updatedAt', {
         cell: ({ row }) => {
           const agent = row.original;
-          return (
-            <span className={"text-sm text-muted-foreground"}>
-              {formatDate(agent.updatedAt)}
-            </span>
-          );
+          return <span className={'text-sm text-muted-foreground'}>{formatDate(agent.updatedAt)}</span>;
         },
-        header: "Updated",
+        header: 'Updated',
         size: 110,
       }),
     ],
-    [getRowActions, handleEditClick, isToggling, onToggleActive, projects]
+    [
+      handleEditClick,
+      isActionDisabled,
+      isToggling,
+      onCopyToProject,
+      onCreateOverride,
+      onDelete,
+      onDuplicate,
+      onExport,
+      onMoveToProject,
+      onReset,
+      onToggleActive,
+      projects,
+    ]
   );
 
   return (
@@ -590,15 +628,15 @@ export const AgentTable = ({
         className={className}
         columns={columns}
         data={agents}
-        density={"default"}
+        density={'default'}
         emptyState={{
           noData: {
-            description: "Create a custom agent to get started.",
-            title: "No agents found",
+            description: 'Create a custom agent to get started.',
+            title: 'No agents found',
           },
           noResults: {
-            description: "Try adjusting your search or filters.",
-            title: "No matching agents",
+            description: 'Try adjusting your search or filters.',
+            title: 'No matching agents',
           },
         }}
         getRowId={(agent) => String(agent.id)}
@@ -609,12 +647,12 @@ export const AgentTable = ({
         onRowClick={handleRowClick}
         onRowSelectionChange={onRowSelectionChange}
         persistence={{
-          persistedKeys: ["columnOrder", "columnVisibility", "columnSizing"],
-          tableId: "agents-table",
+          persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing'],
+          tableId: 'agents-table',
         }}
         ref={ref}
         rowStyleCallback={rowStyleCallback}
-        searchPlaceholder={"Search agents..."}
+        searchPlaceholder={'Search agents...'}
         state={{ rowSelection }}
         toolbarContent={toolbarContent}
         {...props}
@@ -625,7 +663,7 @@ export const AgentTable = ({
         <AgentEditorDialog
           agent={editDialogAgent}
           isOpen={isEditDialogOpen}
-          mode={"edit"}
+          mode={'edit'}
           onOpenChange={handleEditDialogChange}
         />
       )}

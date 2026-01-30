@@ -4,10 +4,10 @@
  * Orchestrates seeding of built-in data (templates, agents, settings)
  * on first run or after migrations. All seed operations are idempotent.
  */
-import type { DrizzleDatabase } from "../index";
+import type { DrizzleDatabase } from '../index';
 
-import { seedBuiltInAgents } from "./agents.seed";
-import { seedBuiltInTemplates } from "./templates.seed";
+import { seedBuiltInAgents } from './agents.seed';
+import { seedBuiltInTemplates } from './templates.seed';
 
 /**
  * Seed the database with built-in data.

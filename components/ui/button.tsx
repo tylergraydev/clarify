@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Button as BaseButton } from "@base-ui/react/button";
-import { cva, type VariantProps } from "class-variance-authority";
+import { Button as BaseButton } from '@base-ui/react/button';
+import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const buttonVariants = cva(
   `
@@ -17,16 +17,16 @@ export const buttonVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
-      variant: "default",
+      size: 'default',
+      variant: 'default',
     },
     variants: {
       size: {
-        default: "h-9 px-4 py-2",
-        icon: "size-9",
-        "icon-sm": "size-8",
-        lg: "h-10 px-6",
-        sm: "h-8 px-3 text-xs",
+        default: 'h-9 px-4 py-2',
+        icon: 'size-9',
+        'icon-sm': 'size-8',
+        lg: 'h-10 px-6',
+        sm: 'h-8 px-3 text-xs',
       },
       variant: {
         default: `
@@ -37,7 +37,7 @@ export const buttonVariants = cva(
           bg-destructive text-destructive-foreground
           hover:bg-destructive/90
         `,
-        ghost: "hover:bg-muted hover:text-foreground",
+        ghost: 'hover:bg-muted hover:text-foreground',
         link: `
           text-accent underline-offset-4
           hover:underline
@@ -55,21 +55,8 @@ export const buttonVariants = cva(
   }
 );
 
-type ButtonProps = ComponentPropsWithRef<typeof BaseButton> &
-  VariantProps<typeof buttonVariants>;
+type ButtonProps = ComponentPropsWithRef<typeof BaseButton> & VariantProps<typeof buttonVariants>;
 
-export const Button = ({
-  className,
-  ref,
-  size,
-  variant,
-  ...props
-}: ButtonProps) => {
-  return (
-    <BaseButton
-      className={cn(buttonVariants({ className, size, variant }))}
-      ref={ref}
-      {...props}
-    />
-  );
+export const Button = ({ className, ref, size, variant, ...props }: ButtonProps) => {
+  return <BaseButton className={cn(buttonVariants({ className, size, variant }))} ref={ref} {...props} />;
 };

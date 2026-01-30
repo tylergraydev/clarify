@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
   DialogClose,
@@ -11,7 +11,7 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 interface ConfirmDeleteAgentDialogProps {
   /** The agent display name to show in the dialog */
@@ -42,28 +42,24 @@ export const ConfirmDeleteAgentDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup aria-modal={"true"} role={"alertdialog"}>
+        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle id={"confirm-delete-agent-title"}>
-              {"Delete Agent"}
-            </DialogTitle>
-            <DialogDescription id={"confirm-delete-agent-description"}>
+            <DialogTitle id={'confirm-delete-agent-title'}>{'Delete Agent'}</DialogTitle>
+            <DialogDescription id={'confirm-delete-agent-description'}>
               {`Are you sure you want to delete "${agentName}"?`}
             </DialogDescription>
           </DialogHeader>
 
           {/* Warning */}
           <div
-            aria-live={"polite"}
-            className={
-              "mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3"
-            }
-            role={"alert"}
+            aria-live={'polite'}
+            className={'mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3'}
+            role={'alert'}
           >
-            <p className={"text-sm text-destructive"}>
+            <p className={'text-sm text-destructive'}>
               {
-                "This action is permanent and cannot be undone. The agent and all its configuration will be permanently removed."
+                'This action is permanent and cannot be undone. The agent and all its configuration will be permanently removed.'
               }
             </p>
           </div>
@@ -71,18 +67,18 @@ export const ConfirmDeleteAgentDialog = ({
           {/* Actions */}
           <DialogFooter sticky={false}>
             <DialogClose>
-              <Button disabled={isLoading} variant={"outline"}>
-                {"Cancel"}
+              <Button disabled={isLoading} variant={'outline'}>
+                {'Cancel'}
               </Button>
             </DialogClose>
             <Button
-              aria-describedby={"confirm-delete-agent-description"}
+              aria-describedby={'confirm-delete-agent-description'}
               aria-label={`Delete ${agentName} agent permanently`}
               disabled={isLoading}
               onClick={handleConfirmClick}
-              variant={"destructive"}
+              variant={'destructive'}
             >
-              {isLoading ? "Deleting..." : "Delete"}
+              {isLoading ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogPopup>

@@ -1,20 +1,15 @@
-"use client";
+'use client';
 
-import type { VariantProps } from "class-variance-authority";
+import type { VariantProps } from 'class-variance-authority';
 
-import { Field } from "@base-ui/react/field";
+import { Field } from '@base-ui/react/field';
 
-import { AgentColorPicker } from "@/components/agents/agent-color-picker";
-import { agentColors } from "@/db/schema/agents.schema";
-import { useFieldContext } from "@/lib/forms/form-hook";
+import { AgentColorPicker } from '@/components/agents/agent-color-picker';
+import { agentColors } from '@/db/schema/agents.schema';
+import { useFieldContext } from '@/lib/forms/form-hook';
 
-import {
-  descriptionVariants,
-  errorVariants,
-  fieldWrapperVariants,
-  labelVariants,
-} from "./field-wrapper";
-import { TanStackFieldRoot } from "./tanstack-field-root";
+import { descriptionVariants, errorVariants, fieldWrapperVariants, labelVariants } from './field-wrapper';
+import { TanStackFieldRoot } from './tanstack-field-root';
 
 type AgentColor = (typeof agentColors)[number];
 
@@ -34,7 +29,7 @@ export const ColorPickerField = ({
   label,
   size,
 }: ColorPickerFieldProps) => {
-  const field = useFieldContext<"" | AgentColor>();
+  const field = useFieldContext<'' | AgentColor>();
 
   const error = field.state.meta.errors[0]?.message;
   const hasError = Boolean(error);
@@ -50,14 +45,10 @@ export const ColorPickerField = ({
       size={size}
     >
       {/* Label */}
-      <Field.Label
-        className={labelVariants({ size })}
-        nativeLabel={false}
-        render={<span />}
-      >
+      <Field.Label className={labelVariants({ size })} nativeLabel={false} render={<span />}>
         {label}
         {isRequired && (
-          <span aria-hidden={"true"} className={"ml-0.5 text-destructive"}>
+          <span aria-hidden={'true'} className={'ml-0.5 text-destructive'}>
             *
           </span>
         )}
@@ -68,14 +59,12 @@ export const ColorPickerField = ({
         disabled={isDisabled}
         hasError={hasError}
         onChange={(color) => field.handleChange(color)}
-        value={field.state.value ?? ""}
+        value={field.state.value ?? ''}
       />
 
       {/* Description */}
       {description && !hasError && (
-        <Field.Description className={descriptionVariants({ size })}>
-          {description}
-        </Field.Description>
+        <Field.Description className={descriptionVariants({ size })}>{description}</Field.Description>
       )}
 
       {/* Error */}

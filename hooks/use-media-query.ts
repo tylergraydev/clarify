@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent, useState } from 'react';
 
 /**
  * Convenience hook to detect mobile viewport (< 768px).
@@ -17,7 +17,7 @@ import { useEffect, useEffectEvent, useState } from "react";
  * ```
  */
 export function useIsMobile(): boolean {
-  return useMediaQuery("(max-width: 767px)");
+  return useMediaQuery('(max-width: 767px)');
 }
 
 /**
@@ -47,8 +47,8 @@ export function useMediaQuery(query: string): boolean {
       updateMatches(event.matches);
     };
 
-    media.addEventListener("change", listener);
-    return () => media.removeEventListener("change", listener);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
   }, [query]);
 
   return matches;

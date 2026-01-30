@@ -1,75 +1,62 @@
-"use client";
+'use client';
 
-import { ArrowLeft, FileText } from "lucide-react";
-import { $path } from "next-typesafe-url";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useEffectEvent,
-  useRef,
-  useState,
-} from "react";
+import { ArrowLeft, FileText } from 'lucide-react';
+import { $path } from 'next-typesafe-url';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 
-import type { CreateWorkflowFormValues } from "@/lib/validations/workflow";
+import type { CreateWorkflowFormValues } from '@/lib/validations/workflow';
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tooltip } from "@/components/ui/tooltip";
-import { TemplatePickerDialog } from "@/components/workflows/template-picker-dialog";
-import { pauseBehaviors, workflowTypes } from "@/db/schema/workflows.schema";
-import { useProjects } from "@/hooks/queries/use-projects";
-import { useRepositoriesByProject } from "@/hooks/queries/use-repositories";
-import { useActiveTemplates } from "@/hooks/queries/use-templates";
-import { useCreateWorkflow } from "@/hooks/queries/use-workflows";
-import { useElectron } from "@/hooks/use-electron";
-import { useAppForm } from "@/lib/forms/form-hook";
-import { createWorkflowSchema } from "@/lib/validations/workflow";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TemplatePickerDialog } from '@/components/workflows/template-picker-dialog';
+import { pauseBehaviors, workflowTypes } from '@/db/schema/workflows.schema';
+import { useProjects } from '@/hooks/queries/use-projects';
+import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
+import { useActiveTemplates } from '@/hooks/queries/use-templates';
+import { useCreateWorkflow } from '@/hooks/queries/use-workflows';
+import { useElectron } from '@/hooks/use-electron';
+import { useAppForm } from '@/lib/forms/form-hook';
+import { createWorkflowSchema } from '@/lib/validations/workflow';
 
 const workflowTypeOptions = workflowTypes.map((type) => ({
-  label: type === "planning" ? "Planning" : "Implementation",
+  label: type === 'planning' ? 'Planning' : 'Implementation',
   value: type,
 }));
 
 const pauseBehaviorOptions = pauseBehaviors.map((behavior) => ({
   label:
-    behavior === "continuous"
-      ? "Continuous (no pauses)"
-      : behavior === "auto_pause"
-        ? "Auto Pause (pause between steps)"
-        : "Gates Only (pause at quality gates)",
+    behavior === 'continuous'
+      ? 'Continuous (no pauses)'
+      : behavior === 'auto_pause'
+        ? 'Auto Pause (pause between steps)'
+        : 'Gates Only (pause at quality gates)',
   value: behavior,
 }));
 
 const defaultValues: CreateWorkflowFormValues = {
-  featureName: "",
-  featureRequest: "",
-  pauseBehavior: "auto_pause",
-  projectId: "",
+  featureName: '',
+  featureRequest: '',
+  pauseBehavior: 'auto_pause',
+  projectId: '',
   repositoryIds: [],
   skipClarification: false,
-  templateId: "",
-  type: "planning",
+  templateId: '',
+  type: 'planning',
 };
 
 export default function NewWorkflowPage() {
   const router = useRouter();
   const [selectedProjectId, setSelectedProjectId] = useState<number>(0);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
-  const previousTemplateIdRef = useRef<string>("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const previousTemplateIdRef = useRef<string>('');
 
   const { api } = useElectron();
   const { data: projects = [] } = useProjects();
   const { data: templates = [] } = useActiveTemplates();
-  const { data: repositories = [] } =
-    useRepositoriesByProject(selectedProjectId);
+  const { data: repositories = [] } = useRepositoriesByProject(selectedProjectId);
   const createWorkflowMutation = useCreateWorkflow({ autoStart: true });
 
   const isSubmitting = createWorkflowMutation.isPending;
@@ -80,7 +67,7 @@ export default function NewWorkflowPage() {
   }));
 
   const templateOptions = [
-    { label: "None", value: "" },
+    { label: 'None', value: '' },
     ...templates.map((template) => ({
       label: template.name,
       value: String(template.id),
@@ -111,25 +98,18 @@ export default function NewWorkflowPage() {
           const primaryRepositoryId = value.primaryRepositoryId
             ? Number(value.primaryRepositoryId)
             : value.repositoryIds[0];
-          await api.workflowRepository.addMultiple(
-            workflow.id,
-            value.repositoryIds,
-            primaryRepositoryId
-          );
+          await api.workflowRepository.addMultiple(workflow.id, value.repositoryIds, primaryRepositoryId);
         }
 
         // Redirect to workflow detail page
         router.push(
           $path({
-            route: "/workflows/[id]",
+            route: '/workflows/[id]',
             routeParams: { id: String(workflow.id) },
           })
         );
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to create workflow. Please try again.";
+        const message = error instanceof Error ? error.message : 'Failed to create workflow. Please try again.';
         throw new Error(message);
       }
     },
@@ -146,9 +126,9 @@ export default function NewWorkflowPage() {
   useEffect(() => {
     const firstProject = projects[0];
     if (firstProject) {
-      const currentProjectId = form.getFieldValue("projectId");
-      if (currentProjectId === "") {
-        form.setFieldValue("projectId", String(firstProject.id));
+      const currentProjectId = form.getFieldValue('projectId');
+      if (currentProjectId === '') {
+        form.setFieldValue('projectId', String(firstProject.id));
         updateSelectedProject(firstProject.id);
       }
     }
@@ -158,18 +138,18 @@ export default function NewWorkflowPage() {
   useEffect(() => {
     const unsubscribe = form.store.subscribe(() => {
       // Track template changes
-      const templateId = form.getFieldValue("templateId") ?? "";
+      const templateId = form.getFieldValue('templateId') ?? '';
       if (templateId !== selectedTemplateId) {
         setSelectedTemplateId(templateId);
       }
 
       // Track project changes to fetch repositories
-      const projectId = form.getFieldValue("projectId");
+      const projectId = form.getFieldValue('projectId');
       const numericProjectId = projectId ? Number(projectId) : 0;
       if (numericProjectId !== selectedProjectId) {
         setSelectedProjectId(numericProjectId);
         // Reset repository selection when project changes
-        form.setFieldValue("repositoryIds", []);
+        form.setFieldValue('repositoryIds', []);
       }
     });
     return () => unsubscribe();
@@ -181,61 +161,53 @@ export default function NewWorkflowPage() {
       previousTemplateIdRef.current = selectedTemplateId;
 
       if (selectedTemplateId) {
-        const selectedTemplate = templates.find(
-          (t) => String(t.id) === selectedTemplateId
-        );
+        const selectedTemplate = templates.find((t) => String(t.id) === selectedTemplateId);
         if (selectedTemplate) {
-          form.setFieldValue("featureRequest", selectedTemplate.templateText);
+          form.setFieldValue('featureRequest', selectedTemplate.templateText);
         }
       }
     }
   }, [selectedTemplateId, templates, form]);
 
   const handleCancel = () => {
-    router.push($path({ route: "/workflows" }));
+    router.push($path({ route: '/workflows' }));
   };
 
   // Handle template insertion from TemplatePicker dialog
   const handleTemplateInsert = useCallback(
     (content: string) => {
-      const currentValue = form.getFieldValue("featureRequest") ?? "";
+      const currentValue = form.getFieldValue('featureRequest') ?? '';
       // Append template content to existing content, with a newline separator if needed
       const newValue = currentValue ? `${currentValue}\n\n${content}` : content;
-      form.setFieldValue("featureRequest", newValue);
+      form.setFieldValue('featureRequest', newValue);
     },
     [form]
   );
 
   return (
-    <div className={"space-y-6"}>
+    <div className={'space-y-6'}>
       {/* Page Header */}
-      <header className={"space-y-1"}>
+      <header className={'space-y-1'}>
         <Link
-          className={
-            "inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-          }
-          href={$path({ route: "/workflows" })}
+          className={'inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground'}
+          href={$path({ route: '/workflows' })}
         >
-          <ArrowLeft aria-hidden={"true"} className={"size-4"} />
-          {"Back to Workflows"}
+          <ArrowLeft aria-hidden={'true'} className={'size-4'} />
+          {'Back to Workflows'}
         </Link>
-        <h1 className={"text-2xl font-semibold tracking-tight"}>
-          {"Create New Workflow"}
-        </h1>
-        <p className={"text-muted-foreground"}>
+        <h1 className={'text-2xl font-semibold tracking-tight'}>{'Create New Workflow'}</h1>
+        <p className={'text-muted-foreground'}>
           {
-            "Create a new workflow to plan or implement a feature. Select a project and describe what you want to build."
+            'Create a new workflow to plan or implement a feature. Select a project and describe what you want to build.'
           }
         </p>
       </header>
 
       {/* Form Card */}
-      <Card className={"max-w-2xl"}>
+      <Card className={'max-w-2xl'}>
         <CardHeader>
-          <CardTitle>{"Workflow Details"}</CardTitle>
-          <CardDescription>
-            {"Fill in the details below to create your workflow."}
-          </CardDescription>
+          <CardTitle>{'Workflow Details'}</CardTitle>
+          <CardDescription>{'Fill in the details below to create your workflow.'}</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -245,28 +217,22 @@ export default function NewWorkflowPage() {
               void form.handleSubmit();
             }}
           >
-            <div className={"flex flex-col gap-4"}>
+            <div className={'flex flex-col gap-4'}>
               {/* Project Selection */}
-              <form.AppField name={"projectId"}>
+              <form.AppField name={'projectId'}>
                 {(field) => (
-                  <field.SelectField
-                    label={"Project"}
-                    options={projectOptions}
-                    placeholder={"Select a project"}
-                  />
+                  <field.SelectField label={'Project'} options={projectOptions} placeholder={'Select a project'} />
                 )}
               </form.AppField>
 
               {/* Repository Selection */}
               {repositoryOptions.length > 0 && (
-                <form.AppField name={"repositoryIds"}>
+                <form.AppField name={'repositoryIds'}>
                   {(field) => (
                     <field.MultiSelectField
-                      description={
-                        "Select the repositories this workflow will work with"
-                      }
+                      description={'Select the repositories this workflow will work with'}
                       isRequired
-                      label={"Repositories"}
+                      label={'Repositories'}
                       options={repositoryOptions}
                     />
                   )}
@@ -274,51 +240,38 @@ export default function NewWorkflowPage() {
               )}
 
               {/* Feature Name */}
-              <form.AppField name={"featureName"}>
+              <form.AppField name={'featureName'}>
                 {(field) => (
-                  <field.TextField
-                    isRequired
-                    label={"Feature Name"}
-                    placeholder={"Enter a short feature title"}
-                  />
+                  <field.TextField isRequired label={'Feature Name'} placeholder={'Enter a short feature title'} />
                 )}
               </form.AppField>
 
               {/* Template Selection */}
-              <form.AppField name={"templateId"}>
+              <form.AppField name={'templateId'}>
                 {(field) => (
                   <field.SelectField
-                    description={
-                      "Select a template to pre-fill the feature request"
-                    }
-                    label={"Template"}
+                    description={'Select a template to pre-fill the feature request'}
+                    label={'Template'}
                     options={templateOptions}
-                    placeholder={"Select a template (optional)"}
+                    placeholder={'Select a template (optional)'}
                   />
                 )}
               </form.AppField>
 
               {/* Feature Request with Template Picker */}
-              <div className={"flex flex-col gap-2"}>
+              <div className={'flex flex-col gap-2'}>
                 {/* Insert Template Button Row */}
-                <div className={"flex justify-end"}>
+                <div className={'flex justify-end'}>
                   <Tooltip
-                    content={
-                      "Browse and insert pre-defined templates with customizable placeholders"
-                    }
-                    side={"top"}
+                    content={'Browse and insert pre-defined templates with customizable placeholders'}
+                    side={'top'}
                   >
                     <TemplatePickerDialog
                       onInsert={handleTemplateInsert}
                       trigger={
-                        <Button
-                          className={"gap-1.5"}
-                          size={"sm"}
-                          type={"button"}
-                          variant={"outline"}
-                        >
-                          <FileText aria-hidden={"true"} className={"size-4"} />
-                          {"Insert Template"}
+                        <Button className={'gap-1.5'} size={'sm'} type={'button'} variant={'outline'}>
+                          <FileText aria-hidden={'true'} className={'size-4'} />
+                          {'Insert Template'}
                         </Button>
                       }
                     />
@@ -326,14 +279,12 @@ export default function NewWorkflowPage() {
                 </div>
 
                 {/* Feature Request Textarea */}
-                <form.AppField name={"featureRequest"}>
+                <form.AppField name={'featureRequest'}>
                   {(field) => (
                     <field.TextareaField
-                      description={
-                        "Describe the feature you want to build in detail"
-                      }
-                      label={"Feature Request"}
-                      placeholder={"Describe the feature you want to build..."}
+                      description={'Describe the feature you want to build in detail'}
+                      label={'Feature Request'}
+                      placeholder={'Describe the feature you want to build...'}
                       rows={6}
                     />
                   )}
@@ -341,59 +292,46 @@ export default function NewWorkflowPage() {
               </div>
 
               {/* Workflow Type */}
-              <form.AppField name={"type"}>
+              <form.AppField name={'type'}>
                 {(field) => (
                   <field.SelectField
-                    description={
-                      "Planning workflows refine requirements, Implementation workflows build features"
-                    }
-                    label={"Workflow Type"}
+                    description={'Planning workflows refine requirements, Implementation workflows build features'}
+                    label={'Workflow Type'}
                     options={workflowTypeOptions}
-                    placeholder={"Select workflow type"}
+                    placeholder={'Select workflow type'}
                   />
                 )}
               </form.AppField>
 
               {/* Pause Behavior */}
-              <form.AppField name={"pauseBehavior"}>
+              <form.AppField name={'pauseBehavior'}>
                 {(field) => (
                   <field.SelectField
-                    description={
-                      "Control how the workflow pauses between steps"
-                    }
-                    label={"Pause Behavior"}
+                    description={'Control how the workflow pauses between steps'}
+                    label={'Pause Behavior'}
                     options={pauseBehaviorOptions}
-                    placeholder={"Select pause behavior"}
+                    placeholder={'Select pause behavior'}
                   />
                 )}
               </form.AppField>
 
               {/* Skip Clarification */}
-              <form.AppField name={"skipClarification"}>
+              <form.AppField name={'skipClarification'}>
                 {(field) => (
                   <field.SwitchField
-                    description={
-                      "Skip the clarification step and proceed directly to refinement"
-                    }
-                    label={"Skip Clarification"}
+                    description={'Skip the clarification step and proceed directly to refinement'}
+                    label={'Skip Clarification'}
                   />
                 )}
               </form.AppField>
 
               {/* Action Buttons */}
-              <div className={"mt-4 flex justify-end gap-3"}>
-                <Button
-                  disabled={isSubmitting}
-                  onClick={handleCancel}
-                  type={"button"}
-                  variant={"outline"}
-                >
-                  {"Cancel"}
+              <div className={'mt-4 flex justify-end gap-3'}>
+                <Button disabled={isSubmitting} onClick={handleCancel} type={'button'} variant={'outline'}>
+                  {'Cancel'}
                 </Button>
                 <form.AppForm>
-                  <form.SubmitButton>
-                    {isSubmitting ? "Creating..." : "Create Workflow"}
-                  </form.SubmitButton>
+                  <form.SubmitButton>{isSubmitting ? 'Creating...' : 'Create Workflow'}</form.SubmitButton>
                 </form.AppForm>
               </div>
             </div>

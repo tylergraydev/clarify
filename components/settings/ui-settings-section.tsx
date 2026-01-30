@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import type { ReactElement } from "react";
+import type { ReactElement } from 'react';
 
-import { ThemeSelector } from "@/components/ui/theme-selector";
+import { ThemeSelector } from '@/components/ui/theme-selector';
 
-import { SettingsSection } from "./settings-section";
+import { SettingsSection } from './settings-section';
 
 /**
  * UI settings section for managing appearance preferences.
@@ -15,7 +15,7 @@ import { SettingsSection } from "./settings-section";
  */
 export const UISettingsSection = (): ReactElement => {
   return (
-    <SettingsSection title={"Appearance"}>
+    <SettingsSection title={'Appearance'}>
       {/* Theme Selection */}
       <ThemeSelector />
     </SettingsSection>

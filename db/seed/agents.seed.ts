@@ -20,12 +20,12 @@
  * Review Agents:
  * - gemini-review
  */
-import { isNotNull } from "drizzle-orm";
+import { isNotNull } from 'drizzle-orm';
 
-import type { DrizzleDatabase } from "../index";
-import type { NewAgent, NewAgentTool } from "../schema";
+import type { DrizzleDatabase } from '../index';
+import type { NewAgent, NewAgentTool } from '../schema';
 
-import { agentColors, agents, agentTools, agentTypes } from "../schema";
+import { agentColors, agents, agentTools, agentTypes } from '../schema';
 
 type AgentColor = (typeof agentColors)[number];
 type AgentType = (typeof agentTypes)[number];
@@ -39,7 +39,7 @@ interface BuiltInAgentDefinition {
   displayName: string;
   name: string;
   systemPrompt: string;
-  tools: Array<Omit<NewAgentTool, "agentId">>;
+  tools: Array<Omit<NewAgentTool, 'agentId'>>;
   type: AgentType;
 }
 
@@ -49,11 +49,11 @@ interface BuiltInAgentDefinition {
 const BUILT_IN_AGENTS: Array<BuiltInAgentDefinition> = [
   // === Planning Agents ===
   {
-    color: "blue",
+    color: 'blue',
     description:
-      "Analyzes feature requests to identify ambiguities, missing requirements, and potential issues that need clarification before implementation.",
-    displayName: "Clarification Agent",
-    name: "clarification-agent",
+      'Analyzes feature requests to identify ambiguities, missing requirements, and potential issues that need clarification before implementation.',
+    displayName: 'Clarification Agent',
+    name: 'clarification-agent',
     systemPrompt: `You are a clarification agent that helps analyze feature requests for completeness and clarity.
 
 Your responsibilities:
@@ -72,18 +72,18 @@ When analyzing a feature request:
 
 Output your analysis in a structured format with clear sections.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
     ],
-    type: "planning",
+    type: 'planning',
   },
   {
-    color: "cyan",
+    color: 'cyan',
     description:
-      "Explores the codebase to discover relevant files, patterns, and existing implementations that inform the implementation plan.",
-    displayName: "File Discovery Agent",
-    name: "file-discovery-agent",
+      'Explores the codebase to discover relevant files, patterns, and existing implementations that inform the implementation plan.',
+    displayName: 'File Discovery Agent',
+    name: 'file-discovery-agent',
     systemPrompt: `You are a file discovery agent that explores codebases to find relevant files for feature implementation.
 
 Your responsibilities:
@@ -102,18 +102,18 @@ When discovering files:
 
 Output a categorized list of discovered files with their relevance and priority.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
     ],
-    type: "planning",
+    type: 'planning',
   },
   {
-    color: "green",
+    color: 'green',
     description:
-      "Creates detailed implementation plans with step-by-step instructions, file modifications, and validation criteria.",
-    displayName: "Implementation Planner",
-    name: "implementation-planner",
+      'Creates detailed implementation plans with step-by-step instructions, file modifications, and validation criteria.',
+    displayName: 'Implementation Planner',
+    name: 'implementation-planner',
     systemPrompt: `You are an implementation planner that creates detailed, actionable plans for feature development.
 
 Your responsibilities:
@@ -136,20 +136,19 @@ When creating a plan:
 
 Output a structured plan with clear steps, file paths, and acceptance criteria.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
     ],
-    type: "planning",
+    type: 'planning',
   },
 
   // === Specialist Agents ===
   {
-    color: "green",
-    description:
-      "Specializes in Drizzle ORM database schema design, migrations, and repository implementations.",
-    displayName: "Database Schema Specialist",
-    name: "database-schema",
+    color: 'green',
+    description: 'Specializes in Drizzle ORM database schema design, migrations, and repository implementations.',
+    displayName: 'Database Schema Specialist',
+    name: 'database-schema',
     systemPrompt: `You are a database schema specialist for Drizzle ORM with SQLite.
 
 Your responsibilities:
@@ -168,21 +167,20 @@ When working on database changes:
 
 Always use the project's established patterns for timestamps, soft deletes, and naming conventions.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Write", toolPattern: "db/**" },
-      { toolName: "Edit", toolPattern: "db/**" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
-      { toolName: "Bash", toolPattern: "pnpm db:*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Write', toolPattern: 'db/**' },
+      { toolName: 'Edit', toolPattern: 'db/**' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
+      { toolName: 'Bash', toolPattern: 'pnpm db:*' },
     ],
-    type: "specialist",
+    type: 'specialist',
   },
   {
-    color: "blue",
-    description:
-      "Specializes in TanStack Query hooks, query keys, mutations, and cache management patterns.",
-    displayName: "TanStack Query Specialist",
-    name: "tanstack-query",
+    color: 'blue',
+    description: 'Specializes in TanStack Query hooks, query keys, mutations, and cache management patterns.',
+    displayName: 'TanStack Query Specialist',
+    name: 'tanstack-query',
     systemPrompt: `You are a TanStack Query specialist for React applications.
 
 Your responsibilities:
@@ -201,22 +199,21 @@ When creating query hooks:
 
 Always follow the established patterns for query keys, mutations, and cache management.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Write", toolPattern: "hooks/queries/**" },
-      { toolName: "Write", toolPattern: "lib/queries/**" },
-      { toolName: "Edit", toolPattern: "hooks/**" },
-      { toolName: "Edit", toolPattern: "lib/**" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Write', toolPattern: 'hooks/queries/**' },
+      { toolName: 'Write', toolPattern: 'lib/queries/**' },
+      { toolName: 'Edit', toolPattern: 'hooks/**' },
+      { toolName: 'Edit', toolPattern: 'lib/**' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
     ],
-    type: "specialist",
+    type: 'specialist',
   },
   {
-    color: "yellow",
-    description:
-      "Specializes in TanStack Form implementations including forms, dialogs, and validation patterns.",
-    displayName: "TanStack Form Specialist",
-    name: "tanstack-form",
+    color: 'yellow',
+    description: 'Specializes in TanStack Form implementations including forms, dialogs, and validation patterns.',
+    displayName: 'TanStack Form Specialist',
+    name: 'tanstack-form',
     systemPrompt: `You are a TanStack Form specialist for React applications.
 
 Your responsibilities:
@@ -235,22 +232,21 @@ When creating forms:
 
 Always use the project's form components and validation patterns.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Write", toolPattern: "components/**" },
-      { toolName: "Write", toolPattern: "lib/validations/**" },
-      { toolName: "Edit", toolPattern: "components/**" },
-      { toolName: "Edit", toolPattern: "lib/**" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Write', toolPattern: 'components/**' },
+      { toolName: 'Write', toolPattern: 'lib/validations/**' },
+      { toolName: 'Edit', toolPattern: 'components/**' },
+      { toolName: 'Edit', toolPattern: 'lib/**' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
     ],
-    type: "specialist",
+    type: 'specialist',
   },
   {
-    color: "yellow",
-    description:
-      "Specializes in creating base form field components for the TanStack Form integration layer.",
-    displayName: "TanStack Form Base Components",
-    name: "tanstack-form-base",
+    color: 'yellow',
+    description: 'Specializes in creating base form field components for the TanStack Form integration layer.',
+    displayName: 'TanStack Form Base Components',
+    name: 'tanstack-form-base',
     systemPrompt: `You are a specialist in creating base form field components for TanStack Form.
 
 Your responsibilities:
@@ -269,20 +265,19 @@ When creating form components:
 
 All components should work seamlessly with the useAppForm hook.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Write", toolPattern: "components/ui/form/**" },
-      { toolName: "Edit", toolPattern: "components/ui/form/**" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Write', toolPattern: 'components/ui/form/**' },
+      { toolName: 'Edit', toolPattern: 'components/ui/form/**' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
     ],
-    type: "specialist",
+    type: 'specialist',
   },
   {
-    color: "cyan",
-    description:
-      "Specializes in Electron IPC handlers, preload scripts, and main-renderer communication patterns.",
-    displayName: "IPC Handler Specialist",
-    name: "ipc-handler",
+    color: 'cyan',
+    description: 'Specializes in Electron IPC handlers, preload scripts, and main-renderer communication patterns.',
+    displayName: 'IPC Handler Specialist',
+    name: 'ipc-handler',
     systemPrompt: `You are an Electron IPC handler specialist.
 
 Your responsibilities:
@@ -301,22 +296,21 @@ When creating IPC handlers:
 
 Always maintain type safety between main and renderer processes.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Write", toolPattern: "electron/**" },
-      { toolName: "Write", toolPattern: "types/**" },
-      { toolName: "Edit", toolPattern: "electron/**" },
-      { toolName: "Edit", toolPattern: "types/**" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Write', toolPattern: 'electron/**' },
+      { toolName: 'Write', toolPattern: 'types/**' },
+      { toolName: 'Edit', toolPattern: 'electron/**' },
+      { toolName: 'Edit', toolPattern: 'types/**' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
     ],
-    type: "specialist",
+    type: 'specialist',
   },
   {
-    color: "red",
-    description:
-      "Specializes in React component development using Base UI primitives and CVA styling patterns.",
-    displayName: "Frontend Component Specialist",
-    name: "frontend-component",
+    color: 'red',
+    description: 'Specializes in React component development using Base UI primitives and CVA styling patterns.',
+    displayName: 'Frontend Component Specialist',
+    name: 'frontend-component',
     systemPrompt: `You are a React frontend component specialist.
 
 Your responsibilities:
@@ -335,22 +329,21 @@ When creating components:
 
 Components should be accessible, reusable, and follow established patterns.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Write", toolPattern: "components/**" },
-      { toolName: "Write", toolPattern: "app/**" },
-      { toolName: "Edit", toolPattern: "components/**" },
-      { toolName: "Edit", toolPattern: "app/**" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Write', toolPattern: 'components/**' },
+      { toolName: 'Write', toolPattern: 'app/**' },
+      { toolName: 'Edit', toolPattern: 'components/**' },
+      { toolName: 'Edit', toolPattern: 'app/**' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
     ],
-    type: "specialist",
+    type: 'specialist',
   },
   {
-    color: "blue",
-    description:
-      "A general-purpose implementation agent for tasks that don't fit a specific specialist category.",
-    displayName: "General Purpose Agent",
-    name: "general-purpose",
+    color: 'blue',
+    description: "A general-purpose implementation agent for tasks that don't fit a specific specialist category.",
+    displayName: 'General Purpose Agent',
+    name: 'general-purpose',
     systemPrompt: `You are a general-purpose implementation agent for software development tasks.
 
 Your responsibilities:
@@ -369,23 +362,22 @@ When implementing features:
 
 You can handle a wide variety of implementation tasks while respecting project conventions.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Write", toolPattern: "*" },
-      { toolName: "Edit", toolPattern: "*" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
-      { toolName: "Bash", toolPattern: "*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Write', toolPattern: '*' },
+      { toolName: 'Edit', toolPattern: '*' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
+      { toolName: 'Bash', toolPattern: '*' },
     ],
-    type: "specialist",
+    type: 'specialist',
   },
 
   // === Review Agents ===
   {
-    color: "green",
-    description:
-      "Reviews code changes and provides feedback on quality, patterns, and potential improvements.",
-    displayName: "Gemini Review Agent",
-    name: "gemini-review",
+    color: 'green',
+    description: 'Reviews code changes and provides feedback on quality, patterns, and potential improvements.',
+    displayName: 'Gemini Review Agent',
+    name: 'gemini-review',
     systemPrompt: `You are a code review agent that analyzes code changes for quality and correctness.
 
 Your responsibilities:
@@ -404,11 +396,11 @@ When reviewing code:
 
 Provide actionable, specific feedback that helps improve code quality.`,
     tools: [
-      { toolName: "Read", toolPattern: "*" },
-      { toolName: "Glob", toolPattern: "*" },
-      { toolName: "Grep", toolPattern: "*" },
+      { toolName: 'Read', toolPattern: '*' },
+      { toolName: 'Glob', toolPattern: '*' },
+      { toolName: 'Grep', toolPattern: '*' },
     ],
-    type: "review",
+    type: 'review',
   },
 ];
 
@@ -421,11 +413,7 @@ Provide actionable, specific feedback that helps improve code quality.`,
  */
 export function seedBuiltInAgents(db: DrizzleDatabase): void {
   // Check if built-in agents already exist
-  const existingBuiltIn = db
-    .select()
-    .from(agents)
-    .where(isNotNull(agents.builtInAt))
-    .all();
+  const existingBuiltIn = db.select().from(agents).where(isNotNull(agents.builtInAt)).all();
 
   if (existingBuiltIn.length > 0) {
     // Built-in agents already seeded, skip

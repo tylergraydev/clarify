@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Download, Filter, RotateCcw, Upload } from "lucide-react";
+import { Download, Filter, RotateCcw, Upload } from 'lucide-react';
 
-import type { Project } from "@/db/schema";
+import type { Project } from '@/db/schema';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   PopoverContent,
   PopoverFooter,
@@ -17,7 +17,7 @@ import {
   PopoverRoot,
   PopoverTitle,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from '@/components/ui/popover';
 import {
   SelectItem,
   SelectList,
@@ -27,20 +27,17 @@ import {
   SelectRoot,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { agentTypes } from "@/db/schema/agents.schema";
-import {
-  DEFAULT_AGENT_SHOW_BUILTIN,
-  DEFAULT_AGENT_SHOW_DEACTIVATED,
-} from "@/lib/layout/constants";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { agentTypes } from '@/db/schema/agents.schema';
+import { DEFAULT_AGENT_SHOW_BUILTIN, DEFAULT_AGENT_SHOW_DEACTIVATED } from '@/lib/layout/constants';
+import { cn } from '@/lib/utils';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface AgentTableToolbarProps extends ComponentPropsWithRef<"div"> {
+interface AgentTableToolbarProps extends ComponentPropsWithRef<'div'> {
   /** Callback when export selected button is clicked */
   onExportSelected?: () => void;
   /** Callback when import button is clicked */
@@ -78,9 +75,9 @@ interface AgentTableToolbarProps extends ComponentPropsWithRef<"div"> {
 // ============================================================================
 
 const STATUS_OPTIONS = [
-  { label: "All statuses", value: "" },
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
+  { label: 'All statuses', value: '' },
+  { label: 'Active', value: 'active' },
+  { label: 'Inactive', value: 'inactive' },
 ] as const;
 
 // ============================================================================
@@ -130,9 +127,9 @@ const FilterCountBadge = ({ count }: FilterCountBadgeProps) => {
   if (count === 0) return null;
   return (
     <span
-      aria-label={`${count} filter${count !== 1 ? "s" : ""} active`}
+      aria-label={`${count} filter${count !== 1 ? 's' : ''} active`}
       className={
-        "ml-1 inline-flex size-5 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground"
+        'ml-1 inline-flex size-5 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground'
       }
     >
       {count}
@@ -199,27 +196,21 @@ export const AgentTableToolbar = ({
   ...props
 }: AgentTableToolbarProps) => {
   // Computed state
-  const activeFilterCount = getActiveFilterCount(
-    typeFilter,
-    projectFilter,
-    statusFilter,
-    showBuiltIn,
-    showDeactivated
-  );
+  const activeFilterCount = getActiveFilterCount(typeFilter, projectFilter, statusFilter, showBuiltIn, showDeactivated);
   const hasActiveFilters = activeFilterCount > 0;
   const isExportDisabled = selectedCount === 0;
 
   // Handlers
   const handleTypeChange = (value: null | string) => {
-    onTypeFilterChange(value === "" ? null : value);
+    onTypeFilterChange(value === '' ? null : value);
   };
 
   const handleProjectChange = (value: null | string) => {
-    onProjectFilterChange(value === "" ? null : value);
+    onProjectFilterChange(value === '' ? null : value);
   };
 
   const handleStatusChange = (value: null | string) => {
-    onStatusFilterChange(value === "" ? null : value);
+    onStatusFilterChange(value === '' ? null : value);
   };
 
   const handleShowBuiltInToggle = (isChecked: boolean) => {
@@ -249,69 +240,46 @@ export const AgentTableToolbar = ({
   };
 
   return (
-    <div
-      className={cn("flex items-center gap-3", className)}
-      ref={ref}
-      {...props}
-    >
+    <div className={cn('flex items-center gap-3', className)} ref={ref} {...props}>
       {/* Filters Popover */}
       <PopoverRoot>
         <PopoverTrigger>
           <Button
-            aria-label={`Filters${hasActiveFilters ? `, ${activeFilterCount} active` : ""}`}
-            size={"sm"}
-            variant={"outline"}
+            aria-label={`Filters${hasActiveFilters ? `, ${activeFilterCount} active` : ''}`}
+            size={'sm'}
+            variant={'outline'}
           >
-            <Filter aria-hidden={"true"} className={"size-4"} />
-            {"Filters"}
+            <Filter aria-hidden={'true'} className={'size-4'} />
+            {'Filters'}
             <FilterCountBadge count={activeFilterCount} />
           </Button>
         </PopoverTrigger>
         <PopoverPortal>
-          <PopoverPositioner align={"start"}>
-            <PopoverPopup className={"w-72"}>
+          <PopoverPositioner align={'start'}>
+            <PopoverPopup className={'w-72'}>
               <PopoverHeader>
-                <PopoverTitle>{"Filters"}</PopoverTitle>
+                <PopoverTitle>{'Filters'}</PopoverTitle>
               </PopoverHeader>
 
-              <PopoverContent className={"space-y-4"}>
+              <PopoverContent className={'space-y-4'}>
                 {/* Type Filter */}
-                <div className={"space-y-1.5"}>
-                  <label
-                    className={"text-xs font-medium text-muted-foreground"}
-                    id={"filter-type-label"}
-                  >
-                    {"Type"}
+                <div className={'space-y-1.5'}>
+                  <label className={'text-xs font-medium text-muted-foreground'} id={'filter-type-label'}>
+                    {'Type'}
                   </label>
-                  <SelectRoot
-                    onValueChange={handleTypeChange}
-                    value={typeFilter ?? ""}
-                  >
-                    <SelectTrigger
-                      aria-labelledby={"filter-type-label"}
-                      className={"w-full"}
-                      size={"sm"}
-                    >
-                      <SelectValue placeholder={"All types"} />
+                  <SelectRoot onValueChange={handleTypeChange} value={typeFilter ?? ''}>
+                    <SelectTrigger aria-labelledby={'filter-type-label'} className={'w-full'} size={'sm'}>
+                      <SelectValue placeholder={'All types'} />
                     </SelectTrigger>
                     <SelectPortal>
                       <SelectPositioner>
-                        <SelectPopup size={"sm"}>
+                        <SelectPopup size={'sm'}>
                           <SelectList>
-                            <SelectItem
-                              label={"All types"}
-                              size={"sm"}
-                              value={""}
-                            >
-                              {"All types"}
+                            <SelectItem label={'All types'} size={'sm'} value={''}>
+                              {'All types'}
                             </SelectItem>
                             {agentTypes.map((type) => (
-                              <SelectItem
-                                key={type}
-                                label={formatTypeLabel(type)}
-                                size={"sm"}
-                                value={type}
-                              >
+                              <SelectItem key={type} label={formatTypeLabel(type)} size={'sm'} value={type}>
                                 {formatTypeLabel(type)}
                               </SelectItem>
                             ))}
@@ -323,49 +291,26 @@ export const AgentTableToolbar = ({
                 </div>
 
                 {/* Project Filter */}
-                <div className={"space-y-1.5"}>
-                  <label
-                    className={"text-xs font-medium text-muted-foreground"}
-                    id={"filter-project-label"}
-                  >
-                    {"Project"}
+                <div className={'space-y-1.5'}>
+                  <label className={'text-xs font-medium text-muted-foreground'} id={'filter-project-label'}>
+                    {'Project'}
                   </label>
-                  <SelectRoot
-                    onValueChange={handleProjectChange}
-                    value={projectFilter ?? ""}
-                  >
-                    <SelectTrigger
-                      aria-labelledby={"filter-project-label"}
-                      className={"w-full"}
-                      size={"sm"}
-                    >
-                      <SelectValue placeholder={"All projects"} />
+                  <SelectRoot onValueChange={handleProjectChange} value={projectFilter ?? ''}>
+                    <SelectTrigger aria-labelledby={'filter-project-label'} className={'w-full'} size={'sm'}>
+                      <SelectValue placeholder={'All projects'} />
                     </SelectTrigger>
                     <SelectPortal>
                       <SelectPositioner>
-                        <SelectPopup size={"sm"}>
+                        <SelectPopup size={'sm'}>
                           <SelectList>
-                            <SelectItem
-                              label={"All projects"}
-                              size={"sm"}
-                              value={""}
-                            >
-                              {"All projects"}
+                            <SelectItem label={'All projects'} size={'sm'} value={''}>
+                              {'All projects'}
                             </SelectItem>
-                            <SelectItem
-                              label={"Global only"}
-                              size={"sm"}
-                              value={"global"}
-                            >
-                              {"Global only"}
+                            <SelectItem label={'Global only'} size={'sm'} value={'global'}>
+                              {'Global only'}
                             </SelectItem>
                             {projects.map((project) => (
-                              <SelectItem
-                                key={project.id}
-                                label={project.name}
-                                size={"sm"}
-                                value={String(project.id)}
-                              >
+                              <SelectItem key={project.id} label={project.name} size={'sm'} value={String(project.id)}>
                                 {project.name}
                               </SelectItem>
                             ))}
@@ -377,35 +322,20 @@ export const AgentTableToolbar = ({
                 </div>
 
                 {/* Status Filter */}
-                <div className={"space-y-1.5"}>
-                  <label
-                    className={"text-xs font-medium text-muted-foreground"}
-                    id={"filter-status-label"}
-                  >
-                    {"Status"}
+                <div className={'space-y-1.5'}>
+                  <label className={'text-xs font-medium text-muted-foreground'} id={'filter-status-label'}>
+                    {'Status'}
                   </label>
-                  <SelectRoot
-                    onValueChange={handleStatusChange}
-                    value={statusFilter ?? ""}
-                  >
-                    <SelectTrigger
-                      aria-labelledby={"filter-status-label"}
-                      className={"w-full"}
-                      size={"sm"}
-                    >
-                      <SelectValue placeholder={"All statuses"} />
+                  <SelectRoot onValueChange={handleStatusChange} value={statusFilter ?? ''}>
+                    <SelectTrigger aria-labelledby={'filter-status-label'} className={'w-full'} size={'sm'}>
+                      <SelectValue placeholder={'All statuses'} />
                     </SelectTrigger>
                     <SelectPortal>
                       <SelectPositioner>
-                        <SelectPopup size={"sm"}>
+                        <SelectPopup size={'sm'}>
                           <SelectList>
                             {STATUS_OPTIONS.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                label={option.label}
-                                size={"sm"}
-                                value={option.value}
-                              >
+                              <SelectItem key={option.value} label={option.label} size={'sm'} value={option.value}>
                                 {option.label}
                               </SelectItem>
                             ))}
@@ -417,43 +347,33 @@ export const AgentTableToolbar = ({
                 </div>
 
                 {/* Separator */}
-                <div
-                  aria-hidden={"true"}
-                  className={"h-px bg-border"}
-                  role={"separator"}
-                />
+                <div aria-hidden={'true'} className={'h-px bg-border'} role={'separator'} />
 
                 {/* Toggle Switches */}
-                <div className={"space-y-3"}>
+                <div className={'space-y-3'}>
                   {/* Show Built-in Toggle */}
-                  <div className={"flex items-center justify-between"}>
-                    <label
-                      className={"text-sm"}
-                      htmlFor={"filter-show-builtin"}
-                    >
-                      {"Show built-in agents"}
+                  <div className={'flex items-center justify-between'}>
+                    <label className={'text-sm'} htmlFor={'filter-show-builtin'}>
+                      {'Show built-in agents'}
                     </label>
                     <Switch
                       checked={showBuiltIn}
-                      id={"filter-show-builtin"}
+                      id={'filter-show-builtin'}
                       onCheckedChange={handleShowBuiltInToggle}
-                      size={"sm"}
+                      size={'sm'}
                     />
                   </div>
 
                   {/* Show Deactivated Toggle */}
-                  <div className={"flex items-center justify-between"}>
-                    <label
-                      className={"text-sm"}
-                      htmlFor={"filter-show-deactivated"}
-                    >
-                      {"Show deactivated agents"}
+                  <div className={'flex items-center justify-between'}>
+                    <label className={'text-sm'} htmlFor={'filter-show-deactivated'}>
+                      {'Show deactivated agents'}
                     </label>
                     <Switch
                       checked={showDeactivated}
-                      id={"filter-show-deactivated"}
+                      id={'filter-show-deactivated'}
                       onCheckedChange={handleShowDeactivatedToggle}
-                      size={"sm"}
+                      size={'sm'}
                     />
                   </div>
                 </div>
@@ -462,14 +382,9 @@ export const AgentTableToolbar = ({
               {/* Reset Filters Button */}
               {hasActiveFilters && (
                 <PopoverFooter>
-                  <Button
-                    className={"w-full"}
-                    onClick={handleResetFilters}
-                    size={"sm"}
-                    variant={"ghost"}
-                  >
-                    <RotateCcw aria-hidden={"true"} className={"size-4"} />
-                    {"Reset Filters"}
+                  <Button className={'w-full'} onClick={handleResetFilters} size={'sm'} variant={'ghost'}>
+                    <RotateCcw aria-hidden={'true'} className={'size-4'} />
+                    {'Reset Filters'}
                   </Button>
                 </PopoverFooter>
               )}
@@ -479,42 +394,37 @@ export const AgentTableToolbar = ({
       </PopoverRoot>
 
       {/* Actions Separator */}
-      {(onImport || onExportSelected) && (
-        <div
-          aria-hidden={"true"}
-          className={"mx-1 h-5 w-px shrink-0 bg-border"}
-        />
-      )}
+      {(onImport || onExportSelected) && <div aria-hidden={'true'} className={'mx-1 h-5 w-px shrink-0 bg-border'} />}
 
       {/* Import/Export Actions */}
       {onImport && (
         <Button
-          aria-label={"Import agents"}
-          className={"shrink-0"}
+          aria-label={'Import agents'}
+          className={'shrink-0'}
           onClick={handleImportClick}
-          size={"sm"}
-          variant={"outline"}
+          size={'sm'}
+          variant={'outline'}
         >
-          <Upload aria-hidden={"true"} className={"size-4"} />
-          {"Import"}
+          <Upload aria-hidden={'true'} className={'size-4'} />
+          {'Import'}
         </Button>
       )}
 
       {onExportSelected && (
         <Button
-          aria-label={`Export ${selectedCount} selected agent${selectedCount !== 1 ? "s" : ""}`}
-          className={"shrink-0"}
+          aria-label={`Export ${selectedCount} selected agent${selectedCount !== 1 ? 's' : ''}`}
+          className={'shrink-0'}
           disabled={isExportDisabled}
           onClick={handleExportSelectedClick}
-          size={"sm"}
-          variant={"outline"}
+          size={'sm'}
+          variant={'outline'}
         >
-          <Download aria-hidden={"true"} className={"size-4"} />
-          {"Export Selected"}
+          <Download aria-hidden={'true'} className={'size-4'} />
+          {'Export Selected'}
           {selectedCount > 0 && (
             <span
               className={
-                "ml-1 inline-flex size-5 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground"
+                'ml-1 inline-flex size-5 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground'
               }
             >
               {selectedCount}

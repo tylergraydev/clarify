@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { NewWorkflow, WorkflowHistoryFilters } from "@/types/electron";
+import type { NewWorkflow, WorkflowHistoryFilters } from '@/types/electron';
 
-import { workflowKeys } from "@/lib/queries/workflows";
+import { workflowKeys } from '@/lib/queries/workflows';
 
-import { useElectron } from "../use-electron";
+import { useElectron } from '../use-electron';
 
 // ============================================================================
 // Query Hooks
@@ -24,10 +24,7 @@ export function useCancelWorkflow() {
     onSuccess: (workflow) => {
       if (workflow) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          workflowKeys.detail(workflow.id).queryKey,
-          workflow
-        );
+        queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);
         // Invalidate list queries
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.list._def,
@@ -66,10 +63,7 @@ export function useCreateWorkflow(options?: { autoStart?: boolean }) {
     onSuccess: (workflow) => {
       if (workflow) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          workflowKeys.detail(workflow.id).queryKey,
-          workflow
-        );
+        queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);
         // Invalidate list queries
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.list._def,
@@ -121,10 +115,7 @@ export function usePauseWorkflow() {
     onSuccess: (workflow) => {
       if (workflow) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          workflowKeys.detail(workflow.id).queryKey,
-          workflow
-        );
+        queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);
         // Invalidate list queries
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.list._def,
@@ -160,10 +151,7 @@ export function useResumeWorkflow() {
     onSuccess: (workflow) => {
       if (workflow) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          workflowKeys.detail(workflow.id).queryKey,
-          workflow
-        );
+        queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);
         // Invalidate list queries
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.list._def,
@@ -195,10 +183,7 @@ export function useStartWorkflow() {
     onSuccess: (workflow) => {
       if (workflow) {
         // Update detail cache directly
-        queryClient.setQueryData(
-          workflowKeys.detail(workflow.id).queryKey,
-          workflow
-        );
+        queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);
         // Invalidate list queries
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.list._def,
@@ -264,7 +249,7 @@ export function useWorkflowsByProject(projectId: number) {
 /**
  * Active workflow statuses for filtering
  */
-const ACTIVE_STATUSES = ["running", "paused", "editing"] as const;
+const ACTIVE_STATUSES = ['running', 'paused', 'editing'] as const;
 
 /**
  * Fetch active workflows (running, paused, editing) with automatic polling
@@ -279,9 +264,7 @@ export function useActiveWorkflows(options?: { enabled?: boolean }) {
     enabled: isElectron && enabledOption,
     queryFn: async () => {
       const workflows = await api!.workflow.list();
-      return workflows.filter((w) =>
-        ACTIVE_STATUSES.includes(w.status as (typeof ACTIVE_STATUSES)[number])
-      );
+      return workflows.filter((w) => ACTIVE_STATUSES.includes(w.status as (typeof ACTIVE_STATUSES)[number]));
     },
     refetchInterval: 5000,
   });
@@ -305,11 +288,7 @@ export function useWorkflowHistory(filters?: WorkflowHistoryFilters) {
  * Fetch aggregate statistics for terminal-status workflows
  * Includes completion rates, average duration, and status counts
  */
-export function useWorkflowStatistics(filters?: {
-  dateFrom?: string;
-  dateTo?: string;
-  projectId?: number;
-}) {
+export function useWorkflowStatistics(filters?: { dateFrom?: string; dateTo?: string; projectId?: number }) {
   const { api, isElectron } = useElectron();
 
   return useQuery({

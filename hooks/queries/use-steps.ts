@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { stepKeys } from "@/lib/queries/steps";
-import { workflowKeys } from "@/lib/queries/workflows";
+import { stepKeys } from '@/lib/queries/steps';
+import { workflowKeys } from '@/lib/queries/workflows';
 
-import { useElectron } from "../use-electron";
+import { useElectron } from '../use-electron';
 
 // ============================================================================
 // Query Hooks
@@ -19,15 +19,8 @@ export function useCompleteStep() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: ({
-      durationMs,
-      id,
-      output,
-    }: {
-      durationMs?: number;
-      id: number;
-      output?: string;
-    }) => api!.step.complete(id, output, durationMs),
+    mutationFn: ({ durationMs, id, output }: { durationMs?: number; id: number; output?: string }) =>
+      api!.step.complete(id, output, durationMs),
     onSuccess: (step) => {
       if (step) {
         // Update detail cache directly
@@ -61,8 +54,7 @@ export function useEditStep() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: ({ editedOutput, id }: { editedOutput: string; id: number }) =>
-      api!.step.edit(id, editedOutput),
+    mutationFn: ({ editedOutput, id }: { editedOutput: string; id: number }) => api!.step.edit(id, editedOutput),
     onSuccess: (step) => {
       if (step) {
         // Update detail cache directly
@@ -94,8 +86,7 @@ export function useFailStep() {
   const { api } = useElectron();
 
   return useMutation({
-    mutationFn: ({ errorMessage, id }: { errorMessage: string; id: number }) =>
-      api!.step.fail(id, errorMessage),
+    mutationFn: ({ errorMessage, id }: { errorMessage: string; id: number }) => api!.step.fail(id, errorMessage),
     onSuccess: (step) => {
       if (step) {
         // Update detail cache directly

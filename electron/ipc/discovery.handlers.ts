@@ -8,12 +8,12 @@
  * - Adding user files to discovery
  * - Updating file priorities
  */
-import { ipcMain, type IpcMainInvokeEvent } from "electron";
+import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 
-import type { DiscoveredFilesRepository } from "../../db/repositories";
-import type { DiscoveredFile, NewDiscoveredFile } from "../../db/schema";
+import type { DiscoveredFilesRepository } from '../../db/repositories';
+import type { DiscoveredFile, NewDiscoveredFile } from '../../db/schema';
 
-import { IpcChannels } from "./channels";
+import { IpcChannels } from './channels';
 
 /**
  * Input for batch update operation
@@ -28,24 +28,18 @@ interface BatchUpdateInput {
  *
  * @param discoveredFilesRepository - The discovered files repository for database operations
  */
-export function registerDiscoveryHandlers(
-  discoveredFilesRepository: DiscoveredFilesRepository
-): void {
+export function registerDiscoveryHandlers(discoveredFilesRepository: DiscoveredFilesRepository): void {
   // List discovered files by workflow step
   ipcMain.handle(
     IpcChannels.discovery.list,
-    (
-      _event: IpcMainInvokeEvent,
-      workflowStepId: number,
-      options?: { priority?: string }
-    ): Array<DiscoveredFile> => {
+    (_event: IpcMainInvokeEvent, workflowStepId: number, options?: { priority?: string }): Array<DiscoveredFile> => {
       try {
         return discoveredFilesRepository.findAll({
           priority: options?.priority,
           workflowStepId,
         });
       } catch (error) {
-        console.error("[IPC Error] discovery:list:", error);
+        console.error('[IPC Error] discovery:list:', error);
         throw error;
       }
     }
@@ -54,16 +48,11 @@ export function registerDiscoveryHandlers(
   // Batch update discovered files for a workflow step
   ipcMain.handle(
     IpcChannels.discovery.update,
-    (
-      _event: IpcMainInvokeEvent,
-      updates: Array<BatchUpdateInput>
-    ): Array<DiscoveredFile | undefined> => {
+    (_event: IpcMainInvokeEvent, updates: Array<BatchUpdateInput>): Array<DiscoveredFile | undefined> => {
       try {
-        return updates.map((update) =>
-          discoveredFilesRepository.update(update.id, update.data)
-        );
+        return updates.map((update) => discoveredFilesRepository.update(update.id, update.data));
       } catch (error) {
-        console.error("[IPC Error] discovery:update:", error);
+        console.error('[IPC Error] discovery:update:', error);
         throw error;
       }
     }
@@ -76,7 +65,7 @@ export function registerDiscoveryHandlers(
       try {
         return discoveredFilesRepository.include(id);
       } catch (error) {
-        console.error("[IPC Error] discovery:include:", error);
+        console.error('[IPC Error] discovery:include:', error);
         throw error;
       }
     }
@@ -89,39 +78,32 @@ export function registerDiscoveryHandlers(
       try {
         return discoveredFilesRepository.exclude(id);
       } catch (error) {
-        console.error("[IPC Error] discovery:exclude:", error);
+        console.error('[IPC Error] discovery:exclude:', error);
         throw error;
       }
     }
   );
 
   // Add a user file to discovery
-  ipcMain.handle(
-    IpcChannels.discovery.add,
-    (_event: IpcMainInvokeEvent, data: NewDiscoveredFile): DiscoveredFile => {
-      try {
-        const file = discoveredFilesRepository.create(data);
-        // Mark as user-added
-        return discoveredFilesRepository.markUserAdded(file.id) ?? file;
-      } catch (error) {
-        console.error("[IPC Error] discovery:add:", error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.discovery.add, (_event: IpcMainInvokeEvent, data: NewDiscoveredFile): DiscoveredFile => {
+    try {
+      const file = discoveredFilesRepository.create(data);
+      // Mark as user-added
+      return discoveredFilesRepository.markUserAdded(file.id) ?? file;
+    } catch (error) {
+      console.error('[IPC Error] discovery:add:', error);
+      throw error;
     }
-  );
+  });
 
   // Update file priority
   ipcMain.handle(
     IpcChannels.discovery.updatePriority,
-    (
-      _event: IpcMainInvokeEvent,
-      id: number,
-      priority: string
-    ): DiscoveredFile | undefined => {
+    (_event: IpcMainInvokeEvent, id: number, priority: string): DiscoveredFile | undefined => {
       try {
         return discoveredFilesRepository.updatePriority(id, priority);
       } catch (error) {
-        console.error("[IPC Error] discovery:updatePriority:", error);
+        console.error('[IPC Error] discovery:updatePriority:', error);
         throw error;
       }
     }

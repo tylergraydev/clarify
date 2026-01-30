@@ -1,18 +1,15 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from 'drizzle-orm';
 
-import type { DrizzleDatabase } from "../index";
-import type { NewWorktree, Worktree } from "../schema";
+import type { DrizzleDatabase } from '../index';
+import type { NewWorktree, Worktree } from '../schema';
 
-import { worktrees } from "../schema";
+import { worktrees } from '../schema';
 
 export interface WorktreesRepository {
   create(data: NewWorktree): Worktree;
   delete(id: number): boolean;
   findActive(repositoryId: number): Array<Worktree>;
-  findAll(options?: {
-    repositoryId?: number;
-    status?: string;
-  }): Array<Worktree>;
+  findAll(options?: { repositoryId?: number; status?: string }): Array<Worktree>;
   findById(id: number): undefined | Worktree;
   findByPath(path: string): undefined | Worktree;
   findByRepositoryId(repositoryId: number): Array<Worktree>;
@@ -21,9 +18,7 @@ export interface WorktreesRepository {
   updateStatus(id: number, status: string): undefined | Worktree;
 }
 
-export function createWorktreesRepository(
-  db: DrizzleDatabase
-): WorktreesRepository {
+export function createWorktreesRepository(db: DrizzleDatabase): WorktreesRepository {
   return {
     create(data: NewWorktree): Worktree {
       return db.insert(worktrees).values(data).returning().get();
@@ -38,19 +33,11 @@ export function createWorktreesRepository(
       return db
         .select()
         .from(worktrees)
-        .where(
-          and(
-            eq(worktrees.repositoryId, repositoryId),
-            eq(worktrees.status, "active")
-          )
-        )
+        .where(and(eq(worktrees.repositoryId, repositoryId), eq(worktrees.status, 'active')))
         .all();
     },
 
-    findAll(options?: {
-      repositoryId?: number;
-      status?: string;
-    }): Array<Worktree> {
+    findAll(options?: { repositoryId?: number; status?: string }): Array<Worktree> {
       if (!options || (!options.repositoryId && !options.status)) {
         return db.select().from(worktrees).all();
       }
@@ -79,19 +66,11 @@ export function createWorktreesRepository(
     },
 
     findByRepositoryId(repositoryId: number): Array<Worktree> {
-      return db
-        .select()
-        .from(worktrees)
-        .where(eq(worktrees.repositoryId, repositoryId))
-        .all();
+      return db.select().from(worktrees).where(eq(worktrees.repositoryId, repositoryId)).all();
     },
 
     findByWorkflowId(workflowId: number): undefined | Worktree {
-      return db
-        .select()
-        .from(worktrees)
-        .where(eq(worktrees.workflowId, workflowId))
-        .get();
+      return db.select().from(worktrees).where(eq(worktrees.workflowId, workflowId)).get();
     },
 
     update(id: number, data: Partial<NewWorktree>): undefined | Worktree {

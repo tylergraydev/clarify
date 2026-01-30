@@ -1,4 +1,4 @@
-import type { MouseEvent, ReactNode } from "react";
+import type { MouseEvent, ReactNode } from 'react';
 
 declare global {
   type ButtonMouseEvent = MouseEvent<HTMLButtonElement, globalThis.MouseEvent>;

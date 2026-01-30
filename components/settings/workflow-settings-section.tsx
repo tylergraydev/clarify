@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import type { ReactElement } from "react";
+import type { ReactElement } from 'react';
 
-import { SettingsSection } from "./settings-section";
+import { SettingsSection } from './settings-section';
 
 /**
  * Minimal form interface for settings section components.
@@ -38,43 +38,36 @@ interface WorkflowSettingsSectionProps {
 
 const pauseBehaviorOptions = [
   {
-    description: "Run all steps without pausing",
-    label: "Continuous",
-    value: "continuous",
+    description: 'Run all steps without pausing',
+    label: 'Continuous',
+    value: 'continuous',
   },
   {
-    description: "Pause after each step for review",
-    label: "Auto-Pause",
-    value: "auto-pause",
+    description: 'Pause after each step for review',
+    label: 'Auto-Pause',
+    value: 'auto-pause',
   },
   {
-    description: "Only pause at quality gate checkpoints",
-    label: "Quality Gates Only",
-    value: "quality-gates",
+    description: 'Only pause at quality gate checkpoints',
+    label: 'Quality Gates Only',
+    value: 'quality-gates',
   },
 ];
 
-export const WorkflowSettingsSection = ({
-  form,
-}: WorkflowSettingsSectionProps): ReactElement => {
+export const WorkflowSettingsSection = ({ form }: WorkflowSettingsSectionProps): ReactElement => {
   return (
-    <SettingsSection title={"Workflow Execution"}>
+    <SettingsSection title={'Workflow Execution'}>
       {/* Default Pause Behavior */}
-      <form.AppField name={"workflow.defaultPauseBehavior"}>
-        {(field) => (
-          <field.RadioField
-            label={"Default Pause Behavior"}
-            options={pauseBehaviorOptions}
-          />
-        )}
+      <form.AppField name={'workflow.defaultPauseBehavior'}>
+        {(field) => <field.RadioField label={'Default Pause Behavior'} options={pauseBehaviorOptions} />}
       </form.AppField>
 
       {/* Clarification Timeout */}
-      <form.AppField name={"workflow.clarificationTimeoutSeconds"}>
+      <form.AppField name={'workflow.clarificationTimeoutSeconds'}>
         {(field) => (
           <field.NumberField
-            description={"Maximum time for the clarification step (seconds)"}
-            label={"Clarification Timeout"}
+            description={'Maximum time for the clarification step (seconds)'}
+            label={'Clarification Timeout'}
             max={600}
             min={10}
             step={10}
@@ -83,11 +76,11 @@ export const WorkflowSettingsSection = ({
       </form.AppField>
 
       {/* Refinement Timeout */}
-      <form.AppField name={"workflow.refinementTimeoutSeconds"}>
+      <form.AppField name={'workflow.refinementTimeoutSeconds'}>
         {(field) => (
           <field.NumberField
-            description={"Maximum time for the refinement step (seconds)"}
-            label={"Refinement Timeout"}
+            description={'Maximum time for the refinement step (seconds)'}
+            label={'Refinement Timeout'}
             max={600}
             min={10}
             step={10}
@@ -96,11 +89,11 @@ export const WorkflowSettingsSection = ({
       </form.AppField>
 
       {/* Discovery Timeout */}
-      <form.AppField name={"workflow.discoveryTimeoutSeconds"}>
+      <form.AppField name={'workflow.discoveryTimeoutSeconds'}>
         {(field) => (
           <field.NumberField
-            description={"Maximum time for the file discovery step (seconds)"}
-            label={"Discovery Timeout"}
+            description={'Maximum time for the file discovery step (seconds)'}
+            label={'Discovery Timeout'}
             max={600}
             min={10}
             step={10}
@@ -109,11 +102,11 @@ export const WorkflowSettingsSection = ({
       </form.AppField>
 
       {/* Planning Timeout */}
-      <form.AppField name={"workflow.planningTimeoutSeconds"}>
+      <form.AppField name={'workflow.planningTimeoutSeconds'}>
         {(field) => (
           <field.NumberField
-            description={"Maximum time for the planning step (seconds)"}
-            label={"Planning Timeout"}
+            description={'Maximum time for the planning step (seconds)'}
+            label={'Planning Timeout'}
             max={600}
             min={10}
             step={10}
@@ -122,11 +115,11 @@ export const WorkflowSettingsSection = ({
       </form.AppField>
 
       {/* Implementation Timeout */}
-      <form.AppField name={"workflow.implementationTimeoutSeconds"}>
+      <form.AppField name={'workflow.implementationTimeoutSeconds'}>
         {(field) => (
           <field.NumberField
-            description={"Maximum time for the implementation step (seconds)"}
-            label={"Implementation Timeout"}
+            description={'Maximum time for the implementation step (seconds)'}
+            label={'Implementation Timeout'}
             max={600}
             min={10}
             step={10}

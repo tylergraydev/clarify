@@ -1,6 +1,6 @@
-import { createQueryKeys } from "@lukemorales/query-key-factory";
+import { createQueryKeys } from '@lukemorales/query-key-factory';
 
-export const settingKeys = createQueryKeys("settings", {
+export const settingKeys = createQueryKeys('settings', {
   all: null,
   byCategory: (category: string) => [category],
   byKey: (key: string) => [key],

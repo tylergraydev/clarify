@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
-import { cva, type VariantProps } from "class-variance-authority";
-import { Check } from "lucide-react";
+import { Checkbox as BaseCheckbox } from '@base-ui/react/checkbox';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Check } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const checkboxVariants = cva(
   `
@@ -20,54 +20,44 @@ export const checkboxVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "size-4",
-        lg: "size-5",
-        sm: "size-3.5",
+        default: 'size-4',
+        lg: 'size-5',
+        sm: 'size-3.5',
       },
     },
   }
 );
 
-export const checkboxIconVariants = cva("", {
+export const checkboxIconVariants = cva('', {
   defaultVariants: {
-    size: "default",
+    size: 'default',
   },
   variants: {
     size: {
-      default: "size-3",
-      lg: "size-3.5",
-      sm: "size-2.5",
+      default: 'size-3',
+      lg: 'size-3.5',
+      sm: 'size-2.5',
     },
   },
 });
 
-type CheckboxProps = Omit<
-  ComponentPropsWithRef<typeof BaseCheckbox.Root>,
-  "children"
-> &
+type CheckboxProps = Omit<ComponentPropsWithRef<typeof BaseCheckbox.Root>, 'children'> &
   VariantProps<typeof checkboxVariants>;
 
 export const Checkbox = ({ className, ref, size, ...props }: CheckboxProps) => {
   return (
-    <BaseCheckbox.Root
-      className={cn(checkboxVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    >
+    <BaseCheckbox.Root className={cn(checkboxVariants({ size }), className)} ref={ref} {...props}>
       <BaseCheckbox.Indicator
         className={`
         flex
         data-unchecked:hidden
       `}
       >
-        <Check
-          aria-hidden={"true"}
-          className={cn(checkboxIconVariants({ size }))}
-        />
+        <Check aria-hidden={'true'} className={cn(checkboxIconVariants({ size }))} />
       </BaseCheckbox.Indicator>
     </BaseCheckbox.Root>
   );

@@ -3,7 +3,7 @@
 import type { RowSelectionState } from '@tanstack/react-table';
 
 import { Plus } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useReducer, useState } from 'react';
 
 import type { AgentWithRelations } from '@/components/agents/agent-table';
 import type { ParsedAgentMarkdown } from '@/lib/utils/agent-markdown';
@@ -36,22 +36,55 @@ import { useToast } from '@/hooks/use-toast';
 import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
 import { cn } from '@/lib/utils';
 import { parseAgentMarkdown } from '@/lib/utils/agent-markdown';
-import {
-  prepareAgentImportData,
-  validateAgentImport,
-} from '@/lib/validations/agent-import';
+import { prepareAgentImportData, validateAgentImport } from '@/lib/validations/agent-import';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type ProjectFilterValue = null | string;
-type StatusFilterValue = null | string;
-type TypeFilterValue = null | string;
+interface DeleteDialogState {
+  agent: AgentWithRelations | null;
+  isOpen: boolean;
+}
+type DialogAction =
+  | { payload: { agent: AgentWithRelations; mode: 'copy' | 'move' }; type: 'OPEN_PROJECT_DIALOG' }
+  | { payload: { agent: AgentWithRelations }; type: 'OPEN_DELETE_DIALOG' }
+  | {
+      payload: { parsedData: ParsedAgentMarkdown; validationResult: AgentImportValidationResult };
+      type: 'OPEN_IMPORT_DIALOG';
+    }
+  | { type: 'CLOSE_DELETE_DIALOG' }
+  | { type: 'CLOSE_IMPORT_DIALOG' }
+  | { type: 'CLOSE_PROJECT_DIALOG' };
+interface DialogState {
+  delete: DeleteDialogState;
+  import: ImportDialogState;
+  project: ProjectDialogState;
+}
+
+type FilterValue = null | string;
+
+interface ImportDialogState {
+  isOpen: boolean;
+  parsedData: null | ParsedAgentMarkdown;
+  validationResult: AgentImportValidationResult | null;
+}
+
+interface ProjectDialogState {
+  agent: AgentWithRelations | null;
+  isOpen: boolean;
+  mode: 'copy' | 'move';
+}
 
 // ============================================================================
-// Main Component
+// Dialog State Reducer
 // ============================================================================
+
+const initialDialogState: DialogState = {
+  delete: { agent: null, isOpen: false },
+  import: { isOpen: false, parsedData: null, validationResult: null },
+  project: { agent: null, isOpen: false, mode: 'move' },
+};
 
 /**
  * Agents page - Unified view for managing all agents.
@@ -66,35 +99,18 @@ type TypeFilterValue = null | string;
 export default function AgentsPage() {
   // Filter state
   const [searchFilter, setSearchFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState<TypeFilterValue>(null);
-  const [projectFilter, setProjectFilter] = useState<ProjectFilterValue>(null);
-  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>(null);
+  const [typeFilter, setTypeFilter] = useState<FilterValue>(null);
+  const [projectFilter, setProjectFilter] = useState<FilterValue>(null);
+  const [statusFilter, setStatusFilter] = useState<FilterValue>(null);
 
   // Persisted state from Zustand store
-  const { setShowBuiltIn, setShowDeactivated, showBuiltIn, showDeactivated } =
-    useAgentLayoutStore();
+  const { setShowBuiltIn, setShowDeactivated, showBuiltIn, showDeactivated } = useAgentLayoutStore();
 
-  // Dialog state
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [agentToDelete, setAgentToDelete] = useState<AgentWithRelations | null>(
-    null
-  );
-  const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
-  const [projectDialogMode, setProjectDialogMode] = useState<'copy' | 'move'>(
-    'move'
-  );
-  const [agentForProjectDialog, setAgentForProjectDialog] =
-    useState<AgentWithRelations | null>(null);
+  // Consolidated dialog state using reducer
+  const [dialogState, dispatchDialog] = useReducer(dialogReducer, initialDialogState);
 
   // Row selection state for batch operations
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-
-  // Import dialog state
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [parsedImportData, setParsedImportData] =
-    useState<null | ParsedAgentMarkdown>(null);
-  const [importValidationResult, setImportValidationResult] =
-    useState<AgentImportValidationResult | null>(null);
 
   // Hooks for API access
   const { api } = useElectron();
@@ -120,31 +136,7 @@ export default function AgentsPage() {
   const moveAgentMutation = useMoveAgent();
   const resetMutation = useResetAgent();
 
-  // Filter handlers
-  const handleSearchFilterChange = useCallback((value: string) => {
-    setSearchFilter(value);
-  }, []);
-
-  const handleTypeFilterChange = (value: null | string) => {
-    setTypeFilter(value);
-  };
-
-  const handleProjectFilterChange = (value: null | string) => {
-    setProjectFilter(value);
-  };
-
-  const handleStatusFilterChange = (value: null | string) => {
-    setStatusFilter(value);
-  };
-
-  const handleShowBuiltInChange = (value: boolean) => {
-    setShowBuiltIn(value);
-  };
-
-  const handleShowDeactivatedChange = (value: boolean) => {
-    setShowDeactivated(value);
-  };
-
+  // Filter handlers - using state setters directly (stable references)
   const handleResetFilters = useCallback(() => {
     setTypeFilter(null);
     setProjectFilter(null);
@@ -181,69 +173,57 @@ export default function AgentsPage() {
     [allAgents, resetMutation]
   );
 
-  const handleDeleteClick = useCallback((agentId: number) => {
-    // Find the agent to get its name
-    const agent = allAgents?.find((a) => a.id === agentId);
-    if (agent) {
-      setAgentToDelete(agent);
-      setIsDeleteDialogOpen(true);
-    }
-  }, [allAgents]);
+  const handleDeleteClick = useCallback(
+    (agentId: number) => {
+      const agent = allAgents?.find((a) => a.id === agentId);
+      if (agent) {
+        dispatchDialog({ payload: { agent }, type: 'OPEN_DELETE_DIALOG' });
+      }
+    },
+    [allAgents]
+  );
 
   const handleDeleteConfirm = useCallback(() => {
+    const agentToDelete = dialogState.delete.agent;
     if (agentToDelete) {
       deleteMutation.mutate(
         { id: agentToDelete.id, projectId: agentToDelete.projectId ?? undefined },
         {
           onSettled: () => {
-            setIsDeleteDialogOpen(false);
-            setAgentToDelete(null);
+            dispatchDialog({ type: 'CLOSE_DELETE_DIALOG' });
           },
         }
       );
     }
-  }, [agentToDelete, deleteMutation]);
+  }, [dialogState.delete.agent, deleteMutation]);
 
-  const handleDeleteCancel = useCallback(() => {
-    setIsDeleteDialogOpen(false);
-    setAgentToDelete(null);
+  const handleDeleteDialogOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      dispatchDialog({ type: 'CLOSE_DELETE_DIALOG' });
+    }
   }, []);
 
   // Move/Copy handlers - projectId parameter is ignored since we show a selection dialog
-  const handleMoveToProject: (
-    agent: AgentWithRelations,
-    projectId: null | number
-  ) => void = useCallback((agent) => {
-    // Open project selection dialog for move
-    setAgentForProjectDialog(agent);
-    setProjectDialogMode('move');
-    setIsProjectDialogOpen(true);
+  const handleMoveToProject: (agent: AgentWithRelations, projectId: null | number) => void = useCallback((agent) => {
+    dispatchDialog({ payload: { agent, mode: 'move' }, type: 'OPEN_PROJECT_DIALOG' });
   }, []);
 
-  const handleCopyToProject: (
-    agent: AgentWithRelations,
-    projectId: number
-  ) => void = useCallback((agent) => {
-    // Open project selection dialog for copy
-    setAgentForProjectDialog(agent);
-    setProjectDialogMode('copy');
-    setIsProjectDialogOpen(true);
+  const handleCopyToProject: (agent: AgentWithRelations, projectId: number) => void = useCallback((agent) => {
+    dispatchDialog({ payload: { agent, mode: 'copy' }, type: 'OPEN_PROJECT_DIALOG' });
   }, []);
 
   const handleProjectDialogSelect = useCallback(
     (targetProjectId: null | number) => {
+      const agentForProjectDialog = dialogState.project.agent;
+      const projectDialogMode = dialogState.project.mode;
       if (!agentForProjectDialog) return;
 
       const closeDialog = () => {
-        setIsProjectDialogOpen(false);
-        setAgentForProjectDialog(null);
+        dispatchDialog({ type: 'CLOSE_PROJECT_DIALOG' });
       };
 
       if (projectDialogMode === 'move') {
-        moveAgentMutation.mutate(
-          { agentId: agentForProjectDialog.id, targetProjectId },
-          { onSettled: closeDialog }
-        );
+        moveAgentMutation.mutate({ agentId: agentForProjectDialog.id, targetProjectId }, { onSettled: closeDialog });
       } else {
         // Copy mode - targetProjectId cannot be null for copy
         if (targetProjectId !== null) {
@@ -254,23 +234,14 @@ export default function AgentsPage() {
         }
       }
     },
-    [
-      agentForProjectDialog,
-      copyToProjectMutation,
-      moveAgentMutation,
-      projectDialogMode,
-    ]
+    [dialogState.project.agent, dialogState.project.mode, copyToProjectMutation, moveAgentMutation]
   );
 
-  const handleProjectDialogOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open) {
-        setAgentForProjectDialog(null);
-      }
-      setIsProjectDialogOpen(open);
-    },
-    []
-  );
+  const handleProjectDialogOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      dispatchDialog({ type: 'CLOSE_PROJECT_DIALOG' });
+    }
+  }, []);
 
   // Import/Export handlers
   const handleImportClick = useCallback(async () => {
@@ -283,9 +254,7 @@ export default function AgentsPage() {
     }
 
     // Open file dialog with markdown filter
-    const filePath = await api.dialog.openFile([
-      { extensions: ['md'], name: 'Markdown Files' },
-    ]);
+    const filePath = await api.dialog.openFile([{ extensions: ['md'], name: 'Markdown Files' }]);
 
     if (!filePath) {
       return; // User cancelled
@@ -305,19 +274,19 @@ export default function AgentsPage() {
     // Parse markdown
     try {
       const parsed = parseAgentMarkdown(result.content);
-      setParsedImportData(parsed);
 
       // Validate using prepareAgentImportData and validateAgentImport
       const preparedData = prepareAgentImportData(parsed);
       const validationResult = validateAgentImport(preparedData);
-      setImportValidationResult(validationResult);
 
-      // Open import dialog
-      setIsImportDialogOpen(true);
+      // Open import dialog with parsed data and validation result
+      dispatchDialog({
+        payload: { parsedData: parsed, validationResult },
+        type: 'OPEN_IMPORT_DIALOG',
+      });
     } catch (error) {
       toast.error({
-        description:
-          error instanceof Error ? error.message : 'Failed to parse markdown',
+        description: error instanceof Error ? error.message : 'Failed to parse markdown',
         title: 'Parse Failed',
       });
     }
@@ -327,10 +296,7 @@ export default function AgentsPage() {
     (data: ParsedAgentMarkdown) => {
       importAgentMutation.mutate(data, {
         onSettled: () => {
-          // Close dialog and clear import states
-          setIsImportDialogOpen(false);
-          setParsedImportData(null);
-          setImportValidationResult(null);
+          dispatchDialog({ type: 'CLOSE_IMPORT_DIALOG' });
           // Clear row selection
           setRowSelection({});
         },
@@ -340,10 +306,8 @@ export default function AgentsPage() {
   );
 
   const handleImportDialogOpenChange = useCallback((isOpen: boolean) => {
-    setIsImportDialogOpen(isOpen);
     if (!isOpen) {
-      setParsedImportData(null);
-      setImportValidationResult(null);
+      dispatchDialog({ type: 'CLOSE_IMPORT_DIALOG' });
     }
   }, []);
 
@@ -370,9 +334,7 @@ export default function AgentsPage() {
 
           // Open save dialog with default filename
           const defaultFilename = `${agent.name}.md`;
-          const savePath = await api.dialog.saveFile(defaultFilename, [
-            { extensions: ['md'], name: 'Markdown Files' },
-          ]);
+          const savePath = await api.dialog.saveFile(defaultFilename, [{ extensions: ['md'], name: 'Markdown Files' }]);
 
           if (!savePath) {
             return; // User cancelled
@@ -431,27 +393,34 @@ export default function AgentsPage() {
     // Get markdown content for all selected agents
     exportAgentsBatchMutation.mutate(selectedIds, {
       onSuccess: async (results) => {
+        // Prepare write operations for valid results
+        const writeOperations = results
+          .filter((item): item is typeof item & { markdown: string } => Boolean(item.success && item.markdown))
+          .map((item) => {
+            const filename = `${item.agentName}.md`;
+            const filePath = `${directoryPath}/${filename}`;
+            return api.fs.writeFile(filePath, item.markdown);
+          });
+
+        // Count items that failed to export (no markdown)
+        const exportFailCount = results.length - writeOperations.length;
+
+        // Execute all file writes in parallel using Promise.allSettled
+        const writeResults = await Promise.allSettled(writeOperations);
+
+        // Count successes and failures from write operations
         let successCount = 0;
-        let failCount = 0;
+        let writeFailCount = 0;
 
-        // Write each agent to separate file
-        for (const item of results) {
-          if (!item.success || !item.markdown) {
-            failCount++;
-            continue;
-          }
-
-          const filename = `${item.agentName}.md`;
-          const filePath = `${directoryPath}/${filename}`;
-
-          const writeResult = await api.fs.writeFile(filePath, item.markdown);
-
-          if (writeResult.success) {
+        for (const writeResult of writeResults) {
+          if (writeResult.status === 'fulfilled' && writeResult.value.success) {
             successCount++;
           } else {
-            failCount++;
+            writeFailCount++;
           }
         }
+
+        const totalFailCount = exportFailCount + writeFailCount;
 
         // Clear row selection on success
         if (successCount > 0) {
@@ -459,14 +428,14 @@ export default function AgentsPage() {
         }
 
         // Show toast notification with count
-        if (failCount === 0) {
+        if (totalFailCount === 0) {
           toast.success({
             description: `Exported ${successCount} agent${successCount !== 1 ? 's' : ''} successfully`,
             title: 'Export Complete',
           });
         } else {
           toast.warning({
-            description: `Exported ${successCount} agent${successCount !== 1 ? 's' : ''}, ${failCount} failed`,
+            description: `Exported ${successCount} agent${successCount !== 1 ? 's' : ''}, ${totalFailCount} failed`,
             title: 'Export Partial',
           });
         }
@@ -476,9 +445,7 @@ export default function AgentsPage() {
 
   const handleRowSelectionChange = useCallback(
     (updater: ((prev: RowSelectionState) => RowSelectionState) | RowSelectionState) => {
-      setRowSelection((prev) =>
-        typeof updater === 'function' ? updater(prev) : updater
-      );
+      setRowSelection((prev) => (typeof updater === 'function' ? updater(prev) : updater));
     },
     []
   );
@@ -502,11 +469,8 @@ export default function AgentsPage() {
       if (searchFilter) {
         const searchLower = searchFilter.toLowerCase();
         const matchesName = agent.name.toLowerCase().includes(searchLower);
-        const matchesDisplayName = agent.displayName
-          .toLowerCase()
-          .includes(searchLower);
-        const matchesDescription =
-          agent.description?.toLowerCase().includes(searchLower) ?? false;
+        const matchesDisplayName = agent.displayName.toLowerCase().includes(searchLower);
+        const matchesDescription = agent.description?.toLowerCase().includes(searchLower) ?? false;
         if (!matchesName && !matchesDisplayName && !matchesDescription) {
           return false;
         }
@@ -520,11 +484,7 @@ export default function AgentsPage() {
       // Filter by project
       if (projectFilter === 'global' && agent.projectId !== null) {
         return false;
-      } else if (
-        projectFilter &&
-        projectFilter !== 'global' &&
-        agent.projectId !== Number(projectFilter)
-      ) {
+      } else if (projectFilter && projectFilter !== 'global' && agent.projectId !== Number(projectFilter)) {
         return false;
       }
 
@@ -546,12 +506,10 @@ export default function AgentsPage() {
   const isFiltered = hasActiveFilters && filteredCount !== totalCount;
 
   // Loading states
-  const isToggling =
-    activateMutation.isPending || deactivateMutation.isPending;
+  const isToggling = activateMutation.isPending || deactivateMutation.isPending;
   const isDeleting = deleteMutation.isPending;
   const isDuplicating = duplicateMutation.isPending;
-  const isExporting =
-    exportAgentMutation.isPending || exportAgentsBatchMutation.isPending;
+  const isExporting = exportAgentMutation.isPending || exportAgentsBatchMutation.isPending;
   const isImporting = importAgentMutation.isPending;
   const isResetting = resetMutation.isPending;
   const isMovingToProject = moveAgentMutation.isPending;
@@ -575,19 +533,13 @@ export default function AgentsPage() {
       <header className={'flex items-start justify-between gap-4'}>
         <div className={'space-y-1'}>
           <div className={'flex items-center gap-3'}>
-            <h1 className={'text-2xl font-semibold tracking-tight'}>
-              {'Agents'}
-            </h1>
+            <h1 className={'text-2xl font-semibold tracking-tight'}>{'Agents'}</h1>
             {/* Result count badge */}
             <Badge size={'sm'} variant={'default'}>
-              {isFiltered
-                ? `${filteredCount} of ${totalCount}`
-                : `${filteredCount}`}
+              {isFiltered ? `${filteredCount} of ${totalCount}` : `${filteredCount}`}
             </Badge>
           </div>
-          <p className={'text-muted-foreground'}>
-            {'Manage and customize AI agents for your workflows.'}
-          </p>
+          <p className={'text-muted-foreground'}>{'Manage and customize AI agents for your workflows.'}</p>
         </div>
 
         {/* Create Agent Button */}
@@ -603,11 +555,7 @@ export default function AgentsPage() {
       </header>
 
       {/* Agent Table with Toolbar */}
-      <section
-        aria-label={'Agents list'}
-        aria-live={'polite'}
-        id={'agent-content'}
-      >
+      <section aria-label={'Agents list'} aria-live={'polite'} id={'agent-content'}>
         <AgentTable
           agents={filteredAgents}
           isCopyingToProject={isCopyingToProject}
@@ -622,7 +570,7 @@ export default function AgentsPage() {
           onDelete={handleDeleteClick}
           onDuplicate={handleDuplicate}
           onExport={handleExportSingle}
-          onGlobalFilterChange={handleSearchFilterChange}
+          onGlobalFilterChange={setSearchFilter}
           onMoveToProject={handleMoveToProject}
           onReset={handleReset}
           onRowSelectionChange={handleRowSelectionChange}
@@ -633,12 +581,12 @@ export default function AgentsPage() {
             <AgentTableToolbar
               onExportSelected={handleExportSelected}
               onImport={handleImportClick}
-              onProjectFilterChange={handleProjectFilterChange}
+              onProjectFilterChange={setProjectFilter}
               onResetFilters={handleResetFilters}
-              onShowBuiltInChange={handleShowBuiltInChange}
-              onShowDeactivatedChange={handleShowDeactivatedChange}
-              onStatusFilterChange={handleStatusFilterChange}
-              onTypeFilterChange={handleTypeFilterChange}
+              onShowBuiltInChange={setShowBuiltIn}
+              onShowDeactivatedChange={setShowDeactivated}
+              onStatusFilterChange={setStatusFilter}
+              onTypeFilterChange={setTypeFilter}
               projectFilter={projectFilter}
               projects={projects ?? []}
               selectedCount={selectedCount}
@@ -653,37 +601,74 @@ export default function AgentsPage() {
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDeleteAgentDialog
-        agentName={agentToDelete?.displayName ?? ''}
+        agentName={dialogState.delete.agent?.displayName ?? ''}
         isLoading={isDeleting}
-        isOpen={isDeleteDialogOpen}
+        isOpen={dialogState.delete.isOpen}
         onConfirm={handleDeleteConfirm}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleDeleteCancel();
-          }
-        }}
+        onOpenChange={handleDeleteDialogOpenChange}
       />
 
       {/* Project Selection Dialog */}
       <SelectProjectDialog
         isLoading={isMovingToProject || isCopyingToProject}
-        isOpen={isProjectDialogOpen}
-        mode={projectDialogMode}
+        isOpen={dialogState.project.isOpen}
+        mode={dialogState.project.mode}
         onOpenChange={handleProjectDialogOpenChange}
         onSelect={handleProjectDialogSelect}
         projects={projects ?? []}
-        sourceAgent={agentForProjectDialog}
+        sourceAgent={dialogState.project.agent}
       />
 
       {/* Import Agent Dialog */}
       <ImportAgentDialog
         isLoading={isImporting}
-        isOpen={isImportDialogOpen}
+        isOpen={dialogState.import.isOpen}
         onImport={handleImportConfirm}
         onOpenChange={handleImportDialogOpenChange}
-        parsedData={parsedImportData}
-        validationResult={importValidationResult}
+        parsedData={dialogState.import.parsedData}
+        validationResult={dialogState.import.validationResult}
       />
     </main>
   );
+}
+
+function dialogReducer(state: DialogState, action: DialogAction): DialogState {
+  switch (action.type) {
+    case 'CLOSE_DELETE_DIALOG':
+      return {
+        ...state,
+        delete: { agent: null, isOpen: false },
+      };
+    case 'CLOSE_IMPORT_DIALOG':
+      return {
+        ...state,
+        import: { isOpen: false, parsedData: null, validationResult: null },
+      };
+    case 'CLOSE_PROJECT_DIALOG':
+      return {
+        ...state,
+        project: { ...state.project, agent: null, isOpen: false },
+      };
+    case 'OPEN_DELETE_DIALOG':
+      return {
+        ...state,
+        delete: { agent: action.payload.agent, isOpen: true },
+      };
+    case 'OPEN_IMPORT_DIALOG':
+      return {
+        ...state,
+        import: {
+          isOpen: true,
+          parsedData: action.payload.parsedData,
+          validationResult: action.payload.validationResult,
+        },
+      };
+    case 'OPEN_PROJECT_DIALOG':
+      return {
+        ...state,
+        project: { agent: action.payload.agent, isOpen: true, mode: action.payload.mode },
+      };
+    default:
+      return state;
+  }
 }

@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Radio as BaseRadio } from "@base-ui/react/radio";
-import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
-import { cva, type VariantProps } from "class-variance-authority";
+import { Radio as BaseRadio } from '@base-ui/react/radio';
+import { RadioGroup as BaseRadioGroup } from '@base-ui/react/radio-group';
+import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const radioGroupVariants = cva(`flex gap-2`, {
   defaultVariants: {
-    orientation: "vertical",
+    orientation: 'vertical',
   },
   variants: {
     orientation: {
-      horizontal: "flex-row items-center",
-      vertical: "flex-col items-start",
+      horizontal: 'flex-row items-center',
+      vertical: 'flex-col items-start',
     },
   },
 });
@@ -31,13 +31,13 @@ export const radioItemVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "size-4",
-        lg: "size-5",
-        sm: "size-3.5",
+        default: 'size-4',
+        lg: 'size-5',
+        sm: 'size-3.5',
       },
     },
   }
@@ -50,50 +50,30 @@ export const radioIndicatorVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "size-1.5",
-        lg: "size-2",
-        sm: "size-1",
+        default: 'size-1.5',
+        lg: 'size-2',
+        sm: 'size-1',
       },
     },
   }
 );
 
-type RadioGroupProps = ComponentPropsWithRef<typeof BaseRadioGroup> &
-  VariantProps<typeof radioGroupVariants>;
+type RadioGroupProps = ComponentPropsWithRef<typeof BaseRadioGroup> & VariantProps<typeof radioGroupVariants>;
 
-export const RadioGroup = ({
-  className,
-  orientation,
-  ref,
-  ...props
-}: RadioGroupProps) => {
-  return (
-    <BaseRadioGroup
-      className={cn(radioGroupVariants({ orientation }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
+export const RadioGroup = ({ className, orientation, ref, ...props }: RadioGroupProps) => {
+  return <BaseRadioGroup className={cn(radioGroupVariants({ orientation }), className)} ref={ref} {...props} />;
 };
 
 interface RadioGroupItemProps
-  extends
-    Omit<ComponentPropsWithRef<typeof BaseRadio.Root>, "children">,
-    VariantProps<typeof radioItemVariants> {
+  extends Omit<ComponentPropsWithRef<typeof BaseRadio.Root>, 'children'>, VariantProps<typeof radioItemVariants> {
   label?: string;
 }
 
-export const RadioGroupItem = ({
-  className,
-  label,
-  ref,
-  size,
-  ...props
-}: RadioGroupItemProps) => {
+export const RadioGroupItem = ({ className, label, ref, size, ...props }: RadioGroupItemProps) => {
   const _hasLabel = Boolean(label);
 
   if (_hasLabel) {
@@ -104,31 +84,17 @@ export const RadioGroupItem = ({
         data-disabled:cursor-not-allowed
       `}
       >
-        <BaseRadio.Root
-          className={cn(radioItemVariants({ size }), className)}
-          ref={ref}
-          {...props}
-        >
-          <BaseRadio.Indicator
-            className={cn(radioIndicatorVariants({ size }))}
-            keepMounted
-          />
+        <BaseRadio.Root className={cn(radioItemVariants({ size }), className)} ref={ref} {...props}>
+          <BaseRadio.Indicator className={cn(radioIndicatorVariants({ size }))} keepMounted />
         </BaseRadio.Root>
-        <span className={"text-foreground"}>{label}</span>
+        <span className={'text-foreground'}>{label}</span>
       </label>
     );
   }
 
   return (
-    <BaseRadio.Root
-      className={cn(radioItemVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    >
-      <BaseRadio.Indicator
-        className={cn(radioIndicatorVariants({ size }))}
-        keepMounted
-      />
+    <BaseRadio.Root className={cn(radioItemVariants({ size }), className)} ref={ref} {...props}>
+      <BaseRadio.Indicator className={cn(radioIndicatorVariants({ size }))} keepMounted />
     </BaseRadio.Root>
   );
 };

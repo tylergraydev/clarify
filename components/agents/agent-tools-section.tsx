@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import type { CreateToolData, ToolSelection } from "@/types/agent-tools";
+import type { CreateToolData, ToolSelection } from '@/types/agent-tools';
 
-import { BuiltinToolsSelector } from "./builtin-tools-selector";
-import { CustomToolsManager } from "./custom-tools-manager";
+import { BuiltinToolsSelector } from './builtin-tools-selector';
+import { CustomToolsManager } from './custom-tools-manager';
 
 interface AgentToolsSectionProps {
   /** Current custom tools */
@@ -33,17 +33,9 @@ export const AgentToolsSection = ({
   toolSelections,
 }: AgentToolsSectionProps) => {
   return (
-    <div className={"flex flex-col gap-4"}>
-      <BuiltinToolsSelector
-        disabled={disabled}
-        onChange={onToolSelectionsChange}
-        value={toolSelections}
-      />
-      <CustomToolsManager
-        disabled={disabled}
-        onChange={onCustomToolsChange}
-        value={customTools}
-      />
+    <div className={'flex flex-col gap-4'}>
+      <BuiltinToolsSelector disabled={disabled} onChange={onToolSelectionsChange} value={toolSelections} />
+      <CustomToolsManager disabled={disabled} onChange={onCustomToolsChange} value={customTools} />
     </div>
   );
 };

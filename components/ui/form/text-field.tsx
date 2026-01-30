@@ -1,18 +1,14 @@
-"use client";
+'use client';
 
-import type { VariantProps } from "class-variance-authority";
+import type { VariantProps } from 'class-variance-authority';
 
-import { Field } from "@base-ui/react/field";
+import { Field } from '@base-ui/react/field';
 
-import { Input, inputVariants } from "@/components/ui/input";
-import { useFieldContext } from "@/lib/forms/form-hook";
+import { Input, inputVariants } from '@/components/ui/input';
+import { useFieldContext } from '@/lib/forms/form-hook';
 
-import {
-  descriptionVariants,
-  errorVariants,
-  labelVariants,
-} from "./field-wrapper";
-import { TanStackFieldRoot } from "./tanstack-field-root";
+import { descriptionVariants, errorVariants, labelVariants } from './field-wrapper';
+import { TanStackFieldRoot } from './tanstack-field-root';
 
 type TextFieldProps = ClassName &
   VariantProps<typeof inputVariants> & {
@@ -22,7 +18,7 @@ type TextFieldProps = ClassName &
     isRequired?: boolean;
     label: string;
     placeholder?: string;
-    type?: "email" | "password" | "text" | "url";
+    type?: 'email' | 'password' | 'text' | 'url';
   };
 
 export const TextField = ({
@@ -34,7 +30,7 @@ export const TextField = ({
   label,
   placeholder,
   size,
-  type = "text",
+  type = 'text',
 }: TextFieldProps) => {
   const field = useFieldContext<string>();
 
@@ -55,7 +51,7 @@ export const TextField = ({
       <Field.Label className={labelVariants({ size })}>
         {label}
         {isRequired && (
-          <span aria-hidden={"true"} className={"ml-0.5 text-destructive"}>
+          <span aria-hidden={'true'} className={'ml-0.5 text-destructive'}>
             *
           </span>
         )}
@@ -71,14 +67,12 @@ export const TextField = ({
         placeholder={placeholder}
         size={size}
         type={type}
-        value={field.state.value ?? ""}
+        value={field.state.value ?? ''}
       />
 
       {/* Description */}
       {description && !hasError && (
-        <Field.Description className={descriptionVariants({ size })}>
-          {description}
-        </Field.Description>
+        <Field.Description className={descriptionVariants({ size })}>{description}</Field.Description>
       )}
 
       {/* Error */}

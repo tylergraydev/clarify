@@ -9,11 +9,12 @@
  * 2. Window-dependent handlers (dialog)
  * 3. Database handlers (project, repository, workflow, etc.)
  */
-import type { BrowserWindow } from "electron";
+import type { BrowserWindow } from 'electron';
 
-import type { DrizzleDatabase } from "../../db";
+import type { DrizzleDatabase } from '../../db';
 
 import {
+  createAgentHooksRepository,
   createAgentSkillsRepository,
   createAgentsRepository,
   createAgentToolsRepository,
@@ -28,28 +29,28 @@ import {
   createWorkflowsRepository,
   createWorkflowStepsRepository,
   createWorktreesRepository,
-} from "../../db/repositories";
-import { registerAgentSkillHandlers } from "./agent-skill.handlers";
-import { registerAgentToolHandlers } from "./agent-tool.handlers";
+} from '../../db/repositories';
+import { registerAgentSkillHandlers } from './agent-skill.handlers';
+import { registerAgentToolHandlers } from './agent-tool.handlers';
 // Handler registration imports (to be implemented in Steps 3-10)
-import { registerAgentHandlers } from "./agent.handlers";
-import { registerAppHandlers } from "./app.handlers";
-import { registerAuditHandlers } from "./audit.handlers";
-import { registerDialogHandlers } from "./dialog.handlers";
-import { registerDiscoveryHandlers } from "./discovery.handlers";
-import { registerFsHandlers } from "./fs.handlers";
-import { registerProjectHandlers } from "./project.handlers";
-import { registerRepositoryHandlers } from "./repository.handlers";
-import { registerSettingsHandlers } from "./settings.handlers";
-import { registerStepHandlers } from "./step.handlers";
-import { registerStoreHandlers } from "./store.handlers";
-import { registerTemplateHandlers } from "./template.handlers";
-import { registerWorkflowRepositoriesHandlers } from "./workflow-repositories.handlers";
-import { registerWorkflowHandlers } from "./workflow.handlers";
-import { registerWorktreeHandlers } from "./worktree.handlers";
+import { registerAgentHandlers } from './agent.handlers';
+import { registerAppHandlers } from './app.handlers';
+import { registerAuditHandlers } from './audit.handlers';
+import { registerDialogHandlers } from './dialog.handlers';
+import { registerDiscoveryHandlers } from './discovery.handlers';
+import { registerFsHandlers } from './fs.handlers';
+import { registerProjectHandlers } from './project.handlers';
+import { registerRepositoryHandlers } from './repository.handlers';
+import { registerSettingsHandlers } from './settings.handlers';
+import { registerStepHandlers } from './step.handlers';
+import { registerStoreHandlers } from './store.handlers';
+import { registerTemplateHandlers } from './template.handlers';
+import { registerWorkflowRepositoriesHandlers } from './workflow-repositories.handlers';
+import { registerWorkflowHandlers } from './workflow.handlers';
+import { registerWorktreeHandlers } from './worktree.handlers';
 
 // Re-export channels for external use
-export { IpcChannels } from "./channels";
+export { IpcChannels } from './channels';
 
 /**
  * Register all IPC handlers with their dependencies.
@@ -57,10 +58,7 @@ export { IpcChannels } from "./channels";
  * @param db - The Drizzle database instance for repository creation
  * @param getMainWindow - Function to get the main BrowserWindow (may be null during startup)
  */
-export function registerAllHandlers(
-  db: DrizzleDatabase,
-  getMainWindow: () => BrowserWindow | null
-): void {
+export function registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => BrowserWindow | null): void {
   // ============================================
   // Stateless handlers (no dependencies)
   // ============================================
@@ -110,11 +108,15 @@ export function registerAllHandlers(
   // Agent skills - skills referenced by agents
   const agentSkillsRepository = createAgentSkillsRepository(db);
 
-  // Register agent handlers (needs tools, skills, and projects repos for duplication/move/copy)
+  // Agent hooks - lifecycle hooks for agents
+  const agentHooksRepository = createAgentHooksRepository(db);
+
+  // Register agent handlers (needs tools, skills, hooks, and projects repos for duplication/move/copy/import/export)
   registerAgentHandlers(
     agentsRepository,
     agentToolsRepository,
     agentSkillsRepository,
+    agentHooksRepository,
     projectsRepository
   );
 
@@ -124,8 +126,7 @@ export function registerAllHandlers(
 
   // Templates - prompt templates for workflows
   const templatesRepository = createTemplatesRepository(db);
-  const templatePlaceholdersRepository =
-    createTemplatePlaceholdersRepository(db);
+  const templatePlaceholdersRepository = createTemplatePlaceholdersRepository(db);
   registerTemplateHandlers(templatesRepository, templatePlaceholdersRepository);
 
   // ============================================
@@ -141,8 +142,7 @@ export function registerAllHandlers(
   registerStepHandlers(workflowStepsRepository);
 
   // Workflow repositories - repository associations for workflows
-  const workflowRepositoriesRepository =
-    createWorkflowRepositoriesRepository(db);
+  const workflowRepositoriesRepository = createWorkflowRepositoriesRepository(db);
   registerWorkflowRepositoriesHandlers(workflowRepositoriesRepository);
 
   // ============================================

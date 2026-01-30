@@ -8,32 +8,27 @@
  * - Setting skill required status
  * - Deleting skills
  */
-import { ipcMain, type IpcMainInvokeEvent } from "electron";
+import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 
-import type { AgentSkillsRepository } from "../../db/repositories";
-import type { AgentSkill, NewAgentSkill } from "../../db/schema";
+import type { AgentSkillsRepository } from '../../db/repositories';
+import type { AgentSkill, NewAgentSkill } from '../../db/schema';
 
-import { IpcChannels } from "./channels";
+import { IpcChannels } from './channels';
 
 /**
  * Register all agent skill-related IPC handlers.
  *
  * @param agentSkillsRepository - The agent skills repository for database operations
  */
-export function registerAgentSkillHandlers(
-  agentSkillsRepository: AgentSkillsRepository
-): void {
+export function registerAgentSkillHandlers(agentSkillsRepository: AgentSkillsRepository): void {
   // List skills for an agent
   ipcMain.handle(
     IpcChannels.agentSkill.list,
-    async (
-      _event: IpcMainInvokeEvent,
-      agentId: number
-    ): Promise<Array<AgentSkill>> => {
+    async (_event: IpcMainInvokeEvent, agentId: number): Promise<Array<AgentSkill>> => {
       try {
         return agentSkillsRepository.findByAgentId(agentId);
       } catch (error) {
-        console.error("[IPC Error] agentSkill:list:", error);
+        console.error('[IPC Error] agentSkill:list:', error);
         throw error;
       }
     }
@@ -42,14 +37,11 @@ export function registerAgentSkillHandlers(
   // Create a new skill for an agent
   ipcMain.handle(
     IpcChannels.agentSkill.create,
-    async (
-      _event: IpcMainInvokeEvent,
-      data: NewAgentSkill
-    ): Promise<AgentSkill> => {
+    async (_event: IpcMainInvokeEvent, data: NewAgentSkill): Promise<AgentSkill> => {
       try {
         return agentSkillsRepository.create(data);
       } catch (error) {
-        console.error("[IPC Error] agentSkill:create:", error);
+        console.error('[IPC Error] agentSkill:create:', error);
         throw error;
       }
     }
@@ -61,12 +53,12 @@ export function registerAgentSkillHandlers(
     async (
       _event: IpcMainInvokeEvent,
       id: number,
-      data: Partial<Omit<NewAgentSkill, "createdAt" | "id">>
+      data: Partial<Omit<NewAgentSkill, 'createdAt' | 'id'>>
     ): Promise<AgentSkill | undefined> => {
       try {
         return agentSkillsRepository.update(id, data);
       } catch (error) {
-        console.error("[IPC Error] agentSkill:update:", error);
+        console.error('[IPC Error] agentSkill:update:', error);
         throw error;
       }
     }
@@ -75,30 +67,23 @@ export function registerAgentSkillHandlers(
   // Set skill required status
   ipcMain.handle(
     IpcChannels.agentSkill.setRequired,
-    async (
-      _event: IpcMainInvokeEvent,
-      id: number,
-      required: boolean
-    ): Promise<AgentSkill | undefined> => {
+    async (_event: IpcMainInvokeEvent, id: number, required: boolean): Promise<AgentSkill | undefined> => {
       try {
         return agentSkillsRepository.setRequired(id, required);
       } catch (error) {
-        console.error("[IPC Error] agentSkill:setRequired:", error);
+        console.error('[IPC Error] agentSkill:setRequired:', error);
         throw error;
       }
     }
   );
 
   // Delete a skill
-  ipcMain.handle(
-    IpcChannels.agentSkill.delete,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
-      try {
-        return agentSkillsRepository.delete(id);
-      } catch (error) {
-        console.error("[IPC Error] agentSkill:delete:", error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agentSkill.delete, async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
+    try {
+      return agentSkillsRepository.delete(id);
+    } catch (error) {
+      console.error('[IPC Error] agentSkill:delete:', error);
+      throw error;
     }
-  );
+  });
 }

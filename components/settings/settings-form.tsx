@@ -1,27 +1,24 @@
-"use client";
+'use client';
 
-import type { ReactElement } from "react";
+import type { ReactElement } from 'react';
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useBulkUpdateSettings } from "@/hooks/queries/use-settings";
-import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { useToast } from "@/hooks/use-toast";
-import { useAppForm } from "@/lib/forms";
-import {
-  settingsFormSchema,
-  type SettingsFormValues,
-} from "@/lib/validations/settings";
+import { useBulkUpdateSettings } from '@/hooks/queries/use-settings';
+import { useDebouncedCallback } from '@/hooks/use-debounced-callback';
+import { useToast } from '@/hooks/use-toast';
+import { useAppForm } from '@/lib/forms';
+import { settingsFormSchema, type SettingsFormValues } from '@/lib/validations/settings';
 
-import type { SettingsFormApi as LoggingFormApi } from "./logging-settings-section";
-import type { SettingsFormApi as WorkflowFormApi } from "./workflow-settings-section";
-import type { SettingsFormApi as WorktreeFormApi } from "./worktree-settings-section";
+import type { SettingsFormApi as LoggingFormApi } from './logging-settings-section';
+import type { SettingsFormApi as WorkflowFormApi } from './workflow-settings-section';
+import type { SettingsFormApi as WorktreeFormApi } from './worktree-settings-section';
 
-import { type AutoSaveState, AutoSaveStatus } from "./auto-save-status";
-import { LoggingSettingsSection } from "./logging-settings-section";
-import { UISettingsSection } from "./ui-settings-section";
-import { WorkflowSettingsSection } from "./workflow-settings-section";
-import { WorktreeSettingsSection } from "./worktree-settings-section";
+import { type AutoSaveState, AutoSaveStatus } from './auto-save-status';
+import { LoggingSettingsSection } from './logging-settings-section';
+import { UISettingsSection } from './ui-settings-section';
+import { WorkflowSettingsSection } from './workflow-settings-section';
+import { WorktreeSettingsSection } from './worktree-settings-section';
 
 interface SettingsFormProps {
   initialValues: SettingsFormValues;
@@ -32,83 +29,78 @@ interface SettingsFormProps {
  * Helper function to convert nested settings form values into flat key-value pairs
  * for the bulk update mutation.
  */
-function flattenSettingsValues(
-  values: SettingsFormValues
-): Array<{ key: string; value: string }> {
+function flattenSettingsValues(values: SettingsFormValues): Array<{ key: string; value: string }> {
   const updates: Array<{ key: string; value: string }> = [];
 
   // Workflow settings
   updates.push({
-    key: "workflow.clarificationTimeoutSeconds",
+    key: 'workflow.clarificationTimeoutSeconds',
     value: String(values.workflow.clarificationTimeoutSeconds),
   });
   updates.push({
-    key: "workflow.defaultPauseBehavior",
+    key: 'workflow.defaultPauseBehavior',
     value: values.workflow.defaultPauseBehavior,
   });
   updates.push({
-    key: "workflow.discoveryTimeoutSeconds",
+    key: 'workflow.discoveryTimeoutSeconds',
     value: String(values.workflow.discoveryTimeoutSeconds),
   });
   updates.push({
-    key: "workflow.implementationTimeoutSeconds",
+    key: 'workflow.implementationTimeoutSeconds',
     value: String(values.workflow.implementationTimeoutSeconds),
   });
   updates.push({
-    key: "workflow.planningTimeoutSeconds",
+    key: 'workflow.planningTimeoutSeconds',
     value: String(values.workflow.planningTimeoutSeconds),
   });
   updates.push({
-    key: "workflow.refinementTimeoutSeconds",
+    key: 'workflow.refinementTimeoutSeconds',
     value: String(values.workflow.refinementTimeoutSeconds),
   });
 
   // Worktree settings
   updates.push({
-    key: "worktree.autoCleanup",
+    key: 'worktree.autoCleanup',
     value: String(values.worktree.autoCleanup),
   });
   updates.push({
-    key: "worktree.createFeatureBranch",
+    key: 'worktree.createFeatureBranch',
     value: String(values.worktree.createFeatureBranch),
   });
   updates.push({
-    key: "worktree.pushOnCompletion",
+    key: 'worktree.pushOnCompletion',
     value: String(values.worktree.pushOnCompletion),
   });
   updates.push({
-    key: "worktree.worktreeLocation",
+    key: 'worktree.worktreeLocation',
     value: values.worktree.worktreeLocation,
   });
 
   // Logging settings
   updates.push({
-    key: "logging.exportLogsWithDatabase",
+    key: 'logging.exportLogsWithDatabase',
     value: String(values.logging.exportLogsWithDatabase),
   });
   updates.push({
-    key: "logging.includeCliOutput",
+    key: 'logging.includeCliOutput',
     value: String(values.logging.includeCliOutput),
   });
   updates.push({
-    key: "logging.logExportLocation",
+    key: 'logging.logExportLocation',
     value: values.logging.logExportLocation,
   });
   updates.push({
-    key: "logging.logRetentionDays",
+    key: 'logging.logRetentionDays',
     value: String(values.logging.logRetentionDays),
   });
 
   return updates;
 }
 
-export const SettingsForm = ({
-  initialValues,
-  onSuccess,
-}: SettingsFormProps): ReactElement => {
+export const SettingsForm = ({ initialValues, onSuccess }: SettingsFormProps): ReactElement => {
   const toast = useToast();
   const bulkUpdateMutation = useBulkUpdateSettings();
-  const [saveStatus, setSaveStatus] = useState<AutoSaveState>("idle");
+  const [saveStatus, setSaveStatus] = useState<AutoSaveState>('idle');
   const savedTimeoutRef = useRef<null | ReturnType<typeof setTimeout>>(null);
   const hasInitializedRef = useRef(false);
 
@@ -130,7 +122,7 @@ export const SettingsForm = ({
 
   const saveSettings = useCallback(
     async (values: SettingsFormValues) => {
-      setSaveStatus("saving");
+      setSaveStatus('saving');
 
       // Clear any existing saved timeout
       if (savedTimeoutRef.current) {
@@ -141,19 +133,19 @@ export const SettingsForm = ({
       try {
         const updates = flattenSettingsValues(values);
         await bulkUpdateMutation.mutateAsync(updates);
-        setSaveStatus("saved");
+        setSaveStatus('saved');
         onSuccess?.();
 
         // Reset to idle after 2 seconds
         savedTimeoutRef.current = setTimeout(() => {
-          setSaveStatus("idle");
+          setSaveStatus('idle');
           savedTimeoutRef.current = null;
         }, 2000);
       } catch {
-        setSaveStatus("error");
+        setSaveStatus('error');
         toast.error({
-          description: "Failed to save settings. Please try again.",
-          title: "Error",
+          description: 'Failed to save settings. Please try again.',
+          title: 'Error',
         });
       }
     },
@@ -186,9 +178,9 @@ export const SettingsForm = ({
 
   return (
     <div>
-      <div className={"flex flex-col gap-6"}>
+      <div className={'flex flex-col gap-6'}>
         {/* Auto-save status indicator */}
-        <div className={"flex justify-end"}>
+        <div className={'flex justify-end'}>
           <AutoSaveStatus state={saveStatus} />
         </div>
 

@@ -40,8 +40,7 @@ export const dataTableColumnHeaderVariants = cva(
 // =============================================================================
 
 interface DataTableColumnHeaderProps<TData, TValue>
-  extends ComponentPropsWithRef<'div'>,
-    VariantProps<typeof dataTableColumnHeaderVariants> {
+  extends ComponentPropsWithRef<'div'>, VariantProps<typeof dataTableColumnHeaderVariants> {
   /**
    * The TanStack Table column instance.
    * Used to access sorting state and handlers.
@@ -88,10 +87,7 @@ const SortIcon = ({ isSorted, sortIndex }: SortIconProps) => {
       <Icon aria-hidden={'true'} className={'size-4'} />
       {/* Multi-sort Priority Indicator */}
       {isMultiSort && (
-        <span
-          aria-label={`Sort priority ${sortIndex + 1}`}
-          className={'text-xs font-normal text-muted-foreground'}
-        >
+        <span aria-label={`Sort priority ${sortIndex + 1}`} className={'text-xs font-normal text-muted-foreground'}>
           {sortIndex + 1}
         </span>
       )}
@@ -154,9 +150,7 @@ export const DataTableColumnHeader = <TData, TValue>({
     return 'none';
   };
 
-  const headerContent = (
-    <span className={'truncate'}>{title}</span>
-  );
+  const headerContent = <span className={'truncate'}>{title}</span>;
 
   // Non-sortable header - render as simple div
   if (!isCanSort) {
@@ -167,11 +161,7 @@ export const DataTableColumnHeader = <TData, TValue>({
         ref={ref}
         {...props}
       >
-        {showTooltip ? (
-          <Tooltip content={title}>{headerContent}</Tooltip>
-        ) : (
-          headerContent
-        )}
+        {showTooltip ? <Tooltip content={title}>{headerContent}</Tooltip> : headerContent}
       </div>
     );
   }
@@ -179,11 +169,7 @@ export const DataTableColumnHeader = <TData, TValue>({
   // Sortable header - render as interactive button
   const buttonContent = (
     <Fragment>
-      {showTooltip ? (
-        <Tooltip content={title}>{headerContent}</Tooltip>
-      ) : (
-        headerContent
-      )}
+      {showTooltip ? <Tooltip content={title}>{headerContent}</Tooltip> : headerContent}
       <SortIcon isSorted={isSorted} sortIndex={sortIndex} />
     </Fragment>
   );

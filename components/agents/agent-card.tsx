@@ -1,49 +1,39 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from "lucide-react";
-import { Fragment } from "react";
+import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { Fragment } from 'react';
 
-import type { Agent } from "@/db/schema";
+import type { Agent } from '@/db/schema';
 
-import { Badge, type badgeVariants } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { getAgentColorClass } from "@/lib/colors/agent-colors";
-import { cn } from "@/lib/utils";
+import { Badge, type badgeVariants } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { getAgentColorClass } from '@/lib/colors/agent-colors';
+import { cn } from '@/lib/utils';
 
-type AgentType = Agent["type"];
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
+type AgentType = Agent['type'];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
 const getTypeVariant = (type: AgentType): BadgeVariant => {
   const typeVariantMap: Record<string, BadgeVariant> = {
-    planning: "planning",
-    review: "review",
-    specialist: "specialist",
-    utility: "default",
+    planning: 'planning',
+    review: 'review',
+    specialist: 'specialist',
+    utility: 'default',
   };
 
-  return typeVariantMap[type ?? ""] ?? "default";
+  return typeVariantMap[type ?? ''] ?? 'default';
 };
 
 const formatTypeLabel = (type: AgentType): string => {
-  if (!type) return "Unknown";
+  if (!type) return 'Unknown';
   return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
-interface AgentCardProps extends Omit<
-  ComponentPropsWithRef<"div">,
-  "onClick" | "onReset"
-> {
+interface AgentCardProps extends Omit<ComponentPropsWithRef<'div'>, 'onClick' | 'onReset'> {
   agent: Agent;
   isCreatingOverride?: boolean;
   isDeleting?: boolean;
@@ -85,10 +75,7 @@ export const AgentCard = ({
   const isProjectScoped = agent.projectId !== null;
 
   // Show override action only for global agents when a project is selected
-  const isOverrideAvailable =
-    isGlobalAgent &&
-    selectedProjectId !== null &&
-    selectedProjectId !== undefined;
+  const isOverrideAvailable = isGlobalAgent && selectedProjectId !== null && selectedProjectId !== undefined;
 
   const handleCreateOverrideClick = () => {
     onCreateOverride?.(agent);
@@ -114,159 +101,129 @@ export const AgentCard = ({
     onToggleActive?.(agent.id, checked);
   };
 
-  const isActionDisabled =
-    isCreatingOverride ||
-    isDeleting ||
-    isDuplicating ||
-    isResetting ||
-    isToggling;
+  const isActionDisabled = isCreatingOverride || isDeleting || isDuplicating || isResetting || isToggling;
 
   return (
-    <Card
-      className={cn(
-        "flex flex-col transition-opacity",
-        !isActive && "opacity-60",
-        className
-      )}
-      ref={ref}
-      {...props}
-    >
+    <Card className={cn('flex flex-col transition-opacity', !isActive && 'opacity-60', className)} ref={ref} {...props}>
       {/* Header */}
-      <CardHeader className={"overflow-hidden"}>
-        <div
-          className={"flex items-start justify-between gap-2 overflow-hidden"}
-        >
-          <div className={"flex min-w-0 flex-1 items-center gap-2"}>
+      <CardHeader className={'overflow-hidden'}>
+        <div className={'flex items-start justify-between gap-2 overflow-hidden'}>
+          <div className={'flex min-w-0 flex-1 items-center gap-2'}>
             {/* Color Indicator */}
-            <div
-              aria-hidden={"true"}
-              className={cn(
-                "size-3 shrink-0 rounded-full",
-                getAgentColorClass(agent.color)
-              )}
-            />
-            <CardTitle className={"truncate"}>{agent.displayName}</CardTitle>
+            <div aria-hidden={'true'} className={cn('size-3 shrink-0 rounded-full', getAgentColorClass(agent.color))} />
+            <CardTitle className={'truncate'}>{agent.displayName}</CardTitle>
           </div>
-          <Badge className={"shrink-0"} variant={getTypeVariant(agent.type)}>
+          <Badge className={'shrink-0'} variant={getTypeVariant(agent.type)}>
             {formatTypeLabel(agent.type)}
           </Badge>
         </div>
-        {agent.description && (
-          <CardDescription className={"line-clamp-2"}>
-            {agent.description}
-          </CardDescription>
-        )}
+        {agent.description && <CardDescription className={'line-clamp-2'}>{agent.description}</CardDescription>}
       </CardHeader>
 
       {/* Content */}
-      <CardContent className={"flex flex-1 flex-col gap-3"}>
+      <CardContent className={'flex flex-1 flex-col gap-3'}>
         {/* Status Indicator */}
-        <div className={"flex items-center justify-between"}>
-          <span className={"text-sm text-muted-foreground"}>
-            {isActive ? "Active" : "Deactivated"}
-          </span>
+        <div className={'flex items-center justify-between'}>
+          <span className={'text-sm text-muted-foreground'}>{isActive ? 'Active' : 'Deactivated'}</span>
           <Switch
-            aria-label={isActive ? "Deactivate agent" : "Activate agent"}
+            aria-label={isActive ? 'Deactivate agent' : 'Activate agent'}
             checked={isActive}
             disabled={isToggling}
             onCheckedChange={handleToggleChange}
-            size={"sm"}
+            size={'sm'}
           />
         </div>
 
         {/* Agent Origin Indicator */}
-        <div className={"flex items-center gap-1"}>
+        <div className={'flex items-center gap-1'}>
           {isProjectScoped && (
-            <Badge size={"sm"} variant={"project"}>
-              {"Project"}
+            <Badge size={'sm'} variant={'project'}>
+              {'Project'}
             </Badge>
           )}
           {!isCustomAgent && (
-            <Badge size={"sm"} variant={"category-builtin"}>
-              {"Built-in"}
+            <Badge size={'sm'} variant={'category-builtin'}>
+              {'Built-in'}
             </Badge>
           )}
           {isCustomAgent && (
-            <Badge size={"sm"} variant={"custom"}>
-              {"Custom"}
+            <Badge size={'sm'} variant={'custom'}>
+              {'Custom'}
             </Badge>
           )}
           {isCustomized && (
-            <Badge size={"sm"} variant={"default"}>
-              {"Customized"}
+            <Badge size={'sm'} variant={'default'}>
+              {'Customized'}
             </Badge>
           )}
         </div>
       </CardContent>
 
       {/* Actions */}
-      <CardFooter className={"gap-2"}>
+      <CardFooter className={'gap-2'}>
         <Button
-          aria-label={isCustomAgent ? "Edit agent" : "View agent"}
+          aria-label={isCustomAgent ? 'Edit agent' : 'View agent'}
           disabled={isActionDisabled}
           onClick={handleEditClick}
-          size={"sm"}
-          variant={"outline"}
+          size={'sm'}
+          variant={'outline'}
         >
           {isCustomAgent ? (
             <Fragment>
-              <Pencil aria-hidden={"true"} className={"size-4"} />
-              {"Edit"}
+              <Pencil aria-hidden={'true'} className={'size-4'} />
+              {'Edit'}
             </Fragment>
           ) : (
             <Fragment>
-              <Eye aria-hidden={"true"} className={"size-4"} />
-              {"View"}
+              <Eye aria-hidden={'true'} className={'size-4'} />
+              {'View'}
             </Fragment>
           )}
         </Button>
         <Button
-          aria-label={"Duplicate agent"}
+          aria-label={'Duplicate agent'}
           disabled={isActionDisabled}
           onClick={handleDuplicateClick}
-          size={"sm"}
-          variant={"ghost"}
+          size={'sm'}
+          variant={'ghost'}
         >
-          <Copy aria-hidden={"true"} className={"size-4"} />
-          {"Duplicate"}
+          <Copy aria-hidden={'true'} className={'size-4'} />
+          {'Duplicate'}
         </Button>
         {isOverrideAvailable && (
           <Button
-            aria-label={"Create project override for this agent"}
+            aria-label={'Create project override for this agent'}
             disabled={isActionDisabled}
             onClick={handleCreateOverrideClick}
-            size={"sm"}
-            variant={"ghost"}
+            size={'sm'}
+            variant={'ghost'}
           >
-            <FolderPlus aria-hidden={"true"} className={"size-4"} />
-            {"Override"}
+            <FolderPlus aria-hidden={'true'} className={'size-4'} />
+            {'Override'}
           </Button>
         )}
         {isCustomized && (
           <Button
-            aria-label={"Reset agent to default"}
+            aria-label={'Reset agent to default'}
             disabled={isActionDisabled}
             onClick={handleResetClick}
-            size={"sm"}
-            variant={"ghost"}
+            size={'sm'}
+            variant={'ghost'}
           >
-            <RotateCcw aria-hidden={"true"} className={"size-4"} />
-            {"Reset"}
+            <RotateCcw aria-hidden={'true'} className={'size-4'} />
+            {'Reset'}
           </Button>
         )}
         {isCustomAgent && (
           <Button
-            aria-label={"Delete agent"}
+            aria-label={'Delete agent'}
             disabled={isActionDisabled}
             onClick={handleDeleteClick}
-            size={"sm"}
-            variant={"ghost"}
+            size={'sm'}
+            variant={'ghost'}
           >
-            <Trash2
-              aria-hidden={"true"}
-              className={"size-4 text-destructive"}
-            />
-            {"Delete"}
+            <Trash2 aria-hidden={'true'} className={'size-4 text-destructive'} />
+            {'Delete'}
           </Button>
         )}
       </CardFooter>

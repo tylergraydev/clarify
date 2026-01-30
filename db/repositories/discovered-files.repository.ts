@@ -1,35 +1,27 @@
-import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from 'drizzle-orm';
 
-import type { DrizzleDatabase } from "../index";
-import type { DiscoveredFile, NewDiscoveredFile } from "../schema";
+import type { DrizzleDatabase } from '../index';
+import type { DiscoveredFile, NewDiscoveredFile } from '../schema';
 
-import { discoveredFiles } from "../schema";
+import { discoveredFiles } from '../schema';
 
 export interface DiscoveredFilesRepository {
   create(data: NewDiscoveredFile): DiscoveredFile;
   createMany(data: Array<NewDiscoveredFile>): Array<DiscoveredFile>;
   delete(id: number): boolean;
   exclude(id: number): DiscoveredFile | undefined;
-  findAll(options?: {
-    priority?: string;
-    workflowStepId?: number;
-  }): Array<DiscoveredFile>;
+  findAll(options?: { priority?: string; workflowStepId?: number }): Array<DiscoveredFile>;
   findById(id: number): DiscoveredFile | undefined;
   findByWorkflowStepId(workflowStepId: number): Array<DiscoveredFile>;
   findIncluded(workflowStepId: number): Array<DiscoveredFile>;
   include(id: number): DiscoveredFile | undefined;
   markUserAdded(id: number): DiscoveredFile | undefined;
   markUserModified(id: number): DiscoveredFile | undefined;
-  update(
-    id: number,
-    data: Partial<NewDiscoveredFile>
-  ): DiscoveredFile | undefined;
+  update(id: number, data: Partial<NewDiscoveredFile>): DiscoveredFile | undefined;
   updatePriority(id: number, priority: string): DiscoveredFile | undefined;
 }
 
-export function createDiscoveredFilesRepository(
-  db: DrizzleDatabase
-): DiscoveredFilesRepository {
+export function createDiscoveredFilesRepository(db: DrizzleDatabase): DiscoveredFilesRepository {
   return {
     create(data: NewDiscoveredFile): DiscoveredFile {
       return db.insert(discoveredFiles).values(data).returning().get();
@@ -43,10 +35,7 @@ export function createDiscoveredFilesRepository(
     },
 
     delete(id: number): boolean {
-      const result = db
-        .delete(discoveredFiles)
-        .where(eq(discoveredFiles.id, id))
-        .run();
+      const result = db.delete(discoveredFiles).where(eq(discoveredFiles.id, id)).run();
       return result.changes > 0;
     },
 
@@ -62,16 +51,11 @@ export function createDiscoveredFilesRepository(
         .get();
     },
 
-    findAll(options?: {
-      priority?: string;
-      workflowStepId?: number;
-    }): Array<DiscoveredFile> {
+    findAll(options?: { priority?: string; workflowStepId?: number }): Array<DiscoveredFile> {
       const conditions = [];
 
       if (options?.workflowStepId !== undefined) {
-        conditions.push(
-          eq(discoveredFiles.workflowStepId, options.workflowStepId)
-        );
+        conditions.push(eq(discoveredFiles.workflowStepId, options.workflowStepId));
       }
       if (options?.priority !== undefined) {
         conditions.push(eq(discoveredFiles.priority, options.priority));
@@ -89,31 +73,18 @@ export function createDiscoveredFilesRepository(
     },
 
     findById(id: number): DiscoveredFile | undefined {
-      return db
-        .select()
-        .from(discoveredFiles)
-        .where(eq(discoveredFiles.id, id))
-        .get();
+      return db.select().from(discoveredFiles).where(eq(discoveredFiles.id, id)).get();
     },
 
     findByWorkflowStepId(workflowStepId: number): Array<DiscoveredFile> {
-      return db
-        .select()
-        .from(discoveredFiles)
-        .where(eq(discoveredFiles.workflowStepId, workflowStepId))
-        .all();
+      return db.select().from(discoveredFiles).where(eq(discoveredFiles.workflowStepId, workflowStepId)).all();
     },
 
     findIncluded(workflowStepId: number): Array<DiscoveredFile> {
       return db
         .select()
         .from(discoveredFiles)
-        .where(
-          and(
-            eq(discoveredFiles.workflowStepId, workflowStepId),
-            isNotNull(discoveredFiles.includedAt)
-          )
-        )
+        .where(and(eq(discoveredFiles.workflowStepId, workflowStepId), isNotNull(discoveredFiles.includedAt)))
         .all();
     },
 
@@ -153,10 +124,7 @@ export function createDiscoveredFilesRepository(
         .get();
     },
 
-    update(
-      id: number,
-      data: Partial<NewDiscoveredFile>
-    ): DiscoveredFile | undefined {
+    update(id: number, data: Partial<NewDiscoveredFile>): DiscoveredFile | undefined {
       return db
         .update(discoveredFiles)
         .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` })

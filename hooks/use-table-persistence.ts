@@ -1,14 +1,11 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type {
-  PartialDataTableState,
-  PersistableStateKey,
-} from "@/components/ui/table/types";
+import type { PartialDataTableState, PersistableStateKey } from '@/components/ui/table/types';
 
-import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { useElectronStore } from "@/hooks/use-electron";
+import { useDebouncedCallback } from '@/hooks/use-debounced-callback';
+import { useElectronStore } from '@/hooks/use-electron';
 
 // =============================================================================
 // Constants
@@ -18,14 +15,10 @@ import { useElectronStore } from "@/hooks/use-electron";
 const DEFAULT_DEBOUNCE_DELAY = 500;
 
 /** Storage key prefix for table state persistence */
-const STORAGE_KEY_PREFIX = "table-state-";
+const STORAGE_KEY_PREFIX = 'table-state-';
 
 /** Default keys to persist if none are specified */
-const DEFAULT_PERSISTED_KEYS: Array<PersistableStateKey> = [
-  "columnOrder",
-  "columnVisibility",
-  "columnSizing",
-];
+const DEFAULT_PERSISTED_KEYS: Array<PersistableStateKey> = ['columnOrder', 'columnVisibility', 'columnSizing'];
 
 // =============================================================================
 // Types
@@ -99,13 +92,13 @@ export function getDefaultPersistedKeys(): Array<PersistableStateKey> {
  */
 export function isPersistableStateKey(key: string): key is PersistableStateKey {
   const validKeys: Array<string> = [
-    "columnFilters",
-    "columnOrder",
-    "columnSizing",
-    "columnVisibility",
-    "globalFilter",
-    "pagination",
-    "sorting",
+    'columnFilters',
+    'columnOrder',
+    'columnSizing',
+    'columnVisibility',
+    'globalFilter',
+    'pagination',
+    'sorting',
   ];
   return validKeys.includes(key);
 }
@@ -200,20 +193,13 @@ export function useTablePersistence({
         const persisted = await store.get<PartialDataTableState>(storageKey);
 
         if (isMounted) {
-          const merged = mergeState(
-            persisted,
-            initialStateRef.current,
-            persistedKeysRef.current
-          );
+          const merged = mergeState(persisted, initialStateRef.current, persistedKeysRef.current);
           setStateInternal(merged);
           setIsLoaded(true);
         }
       } catch (error) {
         // If loading fails, use initial state and mark as loaded
-        console.error(
-          `[useTablePersistence] Failed to load state for ${storageKey}:`,
-          error
-        );
+        console.error(`[useTablePersistence] Failed to load state for ${storageKey}:`, error);
         if (isMounted) {
           setIsLoaded(true);
         }
@@ -264,10 +250,7 @@ export function useTablePersistence({
 /**
  * Filter state object to only include specified keys.
  */
-function filterStateByKeys(
-  state: PartialDataTableState,
-  keys: Array<PersistableStateKey>
-): PartialDataTableState {
+function filterStateByKeys(state: PartialDataTableState, keys: Array<PersistableStateKey>): PartialDataTableState {
   const filtered: PartialDataTableState = {};
 
   for (const key of keys) {

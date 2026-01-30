@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Collapsible as BaseCollapsible } from "@base-ui/react/collapsible";
-import { cva, type VariantProps } from "class-variance-authority";
-import { ChevronRight } from "lucide-react";
+import { Collapsible as BaseCollapsible } from '@base-ui/react/collapsible';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { ChevronRight } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const Collapsible = BaseCollapsible.Root;
 
@@ -20,20 +20,18 @@ export const collapsibleTriggerVariants = cva(
   `,
   {
     defaultVariants: {
-      variant: "default",
+      variant: 'default',
     },
     variants: {
       variant: {
-        default: "hover:bg-muted",
-        ghost: "hover:text-foreground",
+        default: 'hover:bg-muted',
+        ghost: 'hover:text-foreground',
       },
     },
   }
 );
 
-type CollapsibleTriggerProps = ComponentPropsWithRef<
-  typeof BaseCollapsible.Trigger
-> &
+type CollapsibleTriggerProps = ComponentPropsWithRef<typeof BaseCollapsible.Trigger> &
   VariantProps<typeof collapsibleTriggerVariants> & {
     isHideChevron?: boolean;
   };
@@ -47,14 +45,10 @@ export const CollapsibleTrigger = ({
   ...props
 }: CollapsibleTriggerProps) => {
   return (
-    <BaseCollapsible.Trigger
-      className={cn(collapsibleTriggerVariants({ className, variant }))}
-      ref={ref}
-      {...props}
-    >
+    <BaseCollapsible.Trigger className={cn(collapsibleTriggerVariants({ className, variant }))} ref={ref} {...props}>
       {!isHideChevron && (
         <ChevronRight
-          aria-hidden={"true"}
+          aria-hidden={'true'}
           className={`
             size-4 shrink-0 transition-transform duration-200 ease-out
             group-data-panel-open:rotate-90
@@ -76,33 +70,22 @@ export const collapsibleContentVariants = cva(
   `,
   {
     defaultVariants: {
-      variant: "default",
+      variant: 'default',
     },
     variants: {
       variant: {
-        default: "",
-        padded: "pl-6",
+        default: '',
+        padded: 'pl-6',
       },
     },
   }
 );
 
-type CollapsibleContentProps = ComponentPropsWithRef<
-  typeof BaseCollapsible.Panel
-> &
+type CollapsibleContentProps = ComponentPropsWithRef<typeof BaseCollapsible.Panel> &
   VariantProps<typeof collapsibleContentVariants>;
 
-export const CollapsibleContent = ({
-  className,
-  ref,
-  variant,
-  ...props
-}: CollapsibleContentProps) => {
+export const CollapsibleContent = ({ className, ref, variant, ...props }: CollapsibleContentProps) => {
   return (
-    <BaseCollapsible.Panel
-      className={cn(collapsibleContentVariants({ className, variant }))}
-      ref={ref}
-      {...props}
-    />
+    <BaseCollapsible.Panel className={cn(collapsibleContentVariants({ className, variant }))} ref={ref} {...props} />
   );
 };

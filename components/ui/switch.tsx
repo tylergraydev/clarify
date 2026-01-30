@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Switch as BaseSwitch } from "@base-ui/react/switch";
-import { cva, type VariantProps } from "class-variance-authority";
+import { Switch as BaseSwitch } from '@base-ui/react/switch';
+import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const switchVariants = cva(
   `
@@ -19,13 +19,13 @@ export const switchVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "h-5 w-9",
-        lg: "h-6 w-11",
-        sm: "h-4 w-7",
+        default: 'h-5 w-9',
+        lg: 'h-6 w-11',
+        sm: 'h-4 w-7',
       },
     },
   }
@@ -38,7 +38,7 @@ export const switchThumbVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
@@ -62,19 +62,12 @@ export const switchThumbVariants = cva(
   }
 );
 
-type SwitchProps = Omit<
-  ComponentPropsWithRef<typeof BaseSwitch.Root>,
-  "children"
-> &
+type SwitchProps = Omit<ComponentPropsWithRef<typeof BaseSwitch.Root>, 'children'> &
   VariantProps<typeof switchVariants>;
 
 export const Switch = ({ className, ref, size, ...props }: SwitchProps) => {
   return (
-    <BaseSwitch.Root
-      className={cn(switchVariants({ size }), className)}
-      ref={ref}
-      {...props}
-    >
+    <BaseSwitch.Root className={cn(switchVariants({ size }), className)} ref={ref} {...props}>
       <BaseSwitch.Thumb className={switchThumbVariants({ size })} />
     </BaseSwitch.Root>
   );

@@ -1,60 +1,60 @@
-"use client";
+'use client';
 
-import { cva } from "class-variance-authority";
+import { cva } from 'class-variance-authority';
 
 /**
  * CVA variants for form field styling.
  * Used by TanStackFieldRoot and Field subcomponents.
  */
 
-export const fieldWrapperVariants = cva("flex flex-col gap-1.5", {
+export const fieldWrapperVariants = cva('flex flex-col gap-1.5', {
   defaultVariants: {
-    size: "default",
+    size: 'default',
   },
   variants: {
     size: {
-      default: "",
-      lg: "",
-      sm: "",
+      default: '',
+      lg: '',
+      sm: '',
     },
   },
 });
 
-export const labelVariants = cva("font-medium text-foreground", {
+export const labelVariants = cva('font-medium text-foreground', {
   defaultVariants: {
-    size: "default",
+    size: 'default',
   },
   variants: {
     size: {
-      default: "text-sm",
-      lg: "text-base",
-      sm: "text-xs",
+      default: 'text-sm',
+      lg: 'text-base',
+      sm: 'text-xs',
     },
   },
 });
 
-export const descriptionVariants = cva("text-muted-foreground", {
+export const descriptionVariants = cva('text-muted-foreground', {
   defaultVariants: {
-    size: "default",
+    size: 'default',
   },
   variants: {
     size: {
-      default: "text-sm",
-      lg: "text-sm",
-      sm: "text-xs",
+      default: 'text-sm',
+      lg: 'text-sm',
+      sm: 'text-xs',
     },
   },
 });
 
-export const errorVariants = cva("text-destructive", {
+export const errorVariants = cva('text-destructive', {
   defaultVariants: {
-    size: "default",
+    size: 'default',
   },
   variants: {
     size: {
-      default: "text-sm",
-      lg: "text-sm",
-      sm: "text-xs",
+      default: 'text-sm',
+      lg: 'text-sm',
+      sm: 'text-xs',
     },
   },
 });

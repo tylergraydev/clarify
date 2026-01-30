@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import type { stepStatuses } from "@/db/schema/workflow-steps.schema";
+import type { stepStatuses } from '@/db/schema/workflow-steps.schema';
 
-import { Badge, type badgeVariants } from "@/components/ui/badge";
+import { Badge, type badgeVariants } from '@/components/ui/badge';
 
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>["variant"];
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
 type StepStatus = (typeof stepStatuses)[number];
 
 const stepStatusVariantMap: Record<StepStatus, BadgeVariant> = {
-  completed: "completed",
-  editing: "clarifying",
-  failed: "failed",
-  paused: "draft",
-  pending: "default",
-  running: "planning",
-  skipped: "stale",
+  completed: 'completed',
+  editing: 'clarifying',
+  failed: 'failed',
+  paused: 'draft',
+  pending: 'default',
+  running: 'planning',
+  skipped: 'stale',
 };
 
 /**
@@ -26,7 +26,7 @@ const stepStatusVariantMap: Record<StepStatus, BadgeVariant> = {
  * @returns The corresponding badge variant
  */
 export const getStepStatusVariant = (status: StepStatus): BadgeVariant => {
-  return stepStatusVariantMap[status] ?? "default";
+  return stepStatusVariantMap[status] ?? 'default';
 };
 
 /**
@@ -38,18 +38,11 @@ const formatStepStatusLabel = (status: StepStatus): string => {
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
-interface StepStatusBadgeProps extends Omit<
-  ComponentPropsWithRef<typeof Badge>,
-  "variant"
-> {
+interface StepStatusBadgeProps extends Omit<ComponentPropsWithRef<typeof Badge>, 'variant'> {
   status: StepStatus;
 }
 
-export const StepStatusBadge = ({
-  ref,
-  status,
-  ...props
-}: StepStatusBadgeProps) => {
+export const StepStatusBadge = ({ ref, status, ...props }: StepStatusBadgeProps) => {
   return (
     <Badge ref={ref} variant={getStepStatusVariant(status)} {...props}>
       {formatStepStatusLabel(status)}

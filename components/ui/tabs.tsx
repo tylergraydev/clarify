@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { Tabs as BaseTabs } from "@base-ui/react/tabs";
+import { Tabs as BaseTabs } from '@base-ui/react/tabs';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const TabsRoot = BaseTabs.Root;
 
@@ -13,10 +13,7 @@ type TabsListProps = ComponentPropsWithRef<typeof BaseTabs.List>;
 export const TabsList = ({ className, ref, ...props }: TabsListProps) => {
   return (
     <BaseTabs.List
-      className={cn(
-        `relative z-0 flex gap-1 border-b border-border px-1`,
-        className
-      )}
+      className={cn(`relative z-0 flex gap-1 border-b border-border px-1`, className)}
       ref={ref}
       {...props}
     />
@@ -48,11 +45,7 @@ export const TabsTrigger = ({ className, ref, ...props }: TabsTriggerProps) => {
 
 type TabsIndicatorProps = ComponentPropsWithRef<typeof BaseTabs.Indicator>;
 
-export const TabsIndicator = ({
-  className,
-  ref,
-  ...props
-}: TabsIndicatorProps) => {
+export const TabsIndicator = ({ className, ref, ...props }: TabsIndicatorProps) => {
   return (
     <BaseTabs.Indicator
       className={cn(

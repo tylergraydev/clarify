@@ -1,26 +1,20 @@
-import { and, asc, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 
-import type { DrizzleDatabase } from "../index";
-import type { NewWorkflow, Workflow } from "../schema";
+import type { DrizzleDatabase } from '../index';
+import type { NewWorkflow, Workflow } from '../schema';
 
-import { workflows } from "../schema";
+import { workflows } from '../schema';
 
 /**
  * Terminal workflow statuses that indicate a workflow has finished execution
  */
-export const terminalStatuses = ["completed", "failed", "cancelled"] as const;
+export const terminalStatuses = ['completed', 'failed', 'cancelled'] as const;
 export type TerminalStatus = (typeof terminalStatuses)[number];
 
 /**
  * Valid sort fields for workflow history queries
  */
-export const workflowHistorySortFields = [
-  "createdAt",
-  "completedAt",
-  "featureName",
-  "status",
-  "durationMs",
-] as const;
+export const workflowHistorySortFields = ['createdAt', 'completedAt', 'featureName', 'status', 'durationMs'] as const;
 /**
  * Filters for querying workflow history
  */
@@ -46,42 +40,29 @@ export interface WorkflowHistoryResult {
   workflows: Array<Workflow>;
 }
 
-export type WorkflowHistorySortField =
-  (typeof workflowHistorySortFields)[number];
+export type WorkflowHistorySortField = (typeof workflowHistorySortFields)[number];
 
 /**
  * Sort order for workflow history queries
  */
-export type WorkflowHistorySortOrder = "asc" | "desc";
+export type WorkflowHistorySortOrder = 'asc' | 'desc';
 
 export interface WorkflowsRepository {
   complete(id: number, durationMs: number): undefined | Workflow;
   create(data: NewWorkflow): Workflow;
   delete(id: number): boolean;
   fail(id: number, errorMessage: string): undefined | Workflow;
-  findAll(options?: {
-    projectId?: number;
-    status?: string;
-    type?: string;
-  }): Array<Workflow>;
+  findAll(options?: { projectId?: number; status?: string; type?: string }): Array<Workflow>;
   findById(id: number): undefined | Workflow;
   findByProjectId(projectId: number): Array<Workflow>;
   findByStatus(status: string): Array<Workflow>;
   findByType(type: string): Array<Workflow>;
   findHistory(filters?: WorkflowHistoryFilters): WorkflowHistoryResult;
   findRunning(): Array<Workflow>;
-  getHistoryStatistics(filters?: {
-    dateFrom?: string;
-    dateTo?: string;
-    projectId?: number;
-  }): WorkflowStatistics;
+  getHistoryStatistics(filters?: { dateFrom?: string; dateTo?: string; projectId?: number }): WorkflowStatistics;
   start(id: number): undefined | Workflow;
   update(id: number, data: Partial<NewWorkflow>): undefined | Workflow;
-  updateStatus(
-    id: number,
-    status: string,
-    errorMessage?: string
-  ): undefined | Workflow;
+  updateStatus(id: number, status: string, errorMessage?: string): undefined | Workflow;
 }
 
 /**
@@ -95,9 +76,7 @@ export interface WorkflowStatistics {
   successRate: number;
 }
 
-export function createWorkflowsRepository(
-  db: DrizzleDatabase
-): WorkflowsRepository {
+export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsRepository {
   return {
     complete(id: number, durationMs: number): undefined | Workflow {
       return db
@@ -105,7 +84,7 @@ export function createWorkflowsRepository(
         .set({
           completedAt: sql`(CURRENT_TIMESTAMP)`,
           durationMs,
-          status: "completed",
+          status: 'completed',
           updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
         .where(eq(workflows.id, id))
@@ -127,7 +106,7 @@ export function createWorkflowsRepository(
         .update(workflows)
         .set({
           errorMessage,
-          status: "failed",
+          status: 'failed',
           updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
         .where(eq(workflows.id, id))
@@ -135,11 +114,7 @@ export function createWorkflowsRepository(
         .get();
     },
 
-    findAll(options?: {
-      projectId?: number;
-      status?: string;
-      type?: string;
-    }): Array<Workflow> {
+    findAll(options?: { projectId?: number; status?: string; type?: string }): Array<Workflow> {
       const conditions = [];
 
       if (options?.projectId !== undefined) {
@@ -168,19 +143,11 @@ export function createWorkflowsRepository(
     },
 
     findByProjectId(projectId: number): Array<Workflow> {
-      return db
-        .select()
-        .from(workflows)
-        .where(eq(workflows.projectId, projectId))
-        .all();
+      return db.select().from(workflows).where(eq(workflows.projectId, projectId)).all();
     },
 
     findByStatus(status: string): Array<Workflow> {
-      return db
-        .select()
-        .from(workflows)
-        .where(eq(workflows.status, status))
-        .all();
+      return db.select().from(workflows).where(eq(workflows.status, status)).all();
     },
 
     findByType(type: string): Array<Workflow> {
@@ -190,8 +157,8 @@ export function createWorkflowsRepository(
     findHistory(filters?: WorkflowHistoryFilters): WorkflowHistoryResult {
       const limit = filters?.limit ?? 20;
       const offset = filters?.offset ?? 0;
-      const sortBy = filters?.sortBy ?? "completedAt";
-      const sortOrder = filters?.sortOrder ?? "desc";
+      const sortBy = filters?.sortBy ?? 'completedAt';
+      const sortOrder = filters?.sortOrder ?? 'desc';
       const statuses = filters?.statuses ?? [...terminalStatuses];
 
       // Build conditions array
@@ -214,10 +181,7 @@ export function createWorkflowsRepository(
       }
 
       // Search term filter (searches feature name and feature request)
-      if (
-        filters?.searchTerm !== undefined &&
-        filters.searchTerm.trim() !== ""
-      ) {
+      if (filters?.searchTerm !== undefined && filters.searchTerm.trim() !== '') {
         const searchPattern = `%${filters.searchTerm}%`;
         conditions.push(
           sql`(${workflows.featureName} LIKE ${searchPattern} OR ${workflows.featureRequest} LIKE ${searchPattern})`
@@ -227,20 +191,20 @@ export function createWorkflowsRepository(
       // Determine sort column
       const getSortColumn = () => {
         switch (sortBy) {
-          case "completedAt":
+          case 'completedAt':
             return workflows.completedAt;
-          case "createdAt":
+          case 'createdAt':
             return workflows.createdAt;
-          case "durationMs":
+          case 'durationMs':
             return workflows.durationMs;
-          case "featureName":
+          case 'featureName':
             return workflows.featureName;
-          case "status":
+          case 'status':
             return workflows.status;
         }
       };
       const sortColumn = getSortColumn();
-      const orderFn = sortOrder === "asc" ? asc : desc;
+      const orderFn = sortOrder === 'asc' ? asc : desc;
 
       // Get total count for pagination
       const countResult = db
@@ -269,18 +233,10 @@ export function createWorkflowsRepository(
     },
 
     findRunning(): Array<Workflow> {
-      return db
-        .select()
-        .from(workflows)
-        .where(eq(workflows.status, "running"))
-        .all();
+      return db.select().from(workflows).where(eq(workflows.status, 'running')).all();
     },
 
-    getHistoryStatistics(filters?: {
-      dateFrom?: string;
-      dateTo?: string;
-      projectId?: number;
-    }): WorkflowStatistics {
+    getHistoryStatistics(filters?: { dateFrom?: string; dateTo?: string; projectId?: number }): WorkflowStatistics {
       // Build conditions array for terminal statuses
       const conditions = [];
       conditions.push(inArray(workflows.status, [...terminalStatuses]));
@@ -317,8 +273,7 @@ export function createWorkflowsRepository(
       const totalCount = result?.totalCount ?? 0;
 
       // Calculate success rate (completed / total * 100), handle division by zero
-      const successRate =
-        totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+      const successRate = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
       return {
         averageDurationMs: result?.averageDurationMs ?? null,
@@ -334,7 +289,7 @@ export function createWorkflowsRepository(
         .update(workflows)
         .set({
           startedAt: sql`(CURRENT_TIMESTAMP)`,
-          status: "running",
+          status: 'running',
           updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
         .where(eq(workflows.id, id))
@@ -351,11 +306,7 @@ export function createWorkflowsRepository(
         .get();
     },
 
-    updateStatus(
-      id: number,
-      status: string,
-      errorMessage?: string
-    ): undefined | Workflow {
+    updateStatus(id: number, status: string, errorMessage?: string): undefined | Workflow {
       const updateData: Record<string, unknown> = {
         status,
         updatedAt: sql`(CURRENT_TIMESTAMP)`,
@@ -365,12 +316,7 @@ export function createWorkflowsRepository(
         updateData.errorMessage = errorMessage;
       }
 
-      return db
-        .update(workflows)
-        .set(updateData)
-        .where(eq(workflows.id, id))
-        .returning()
-        .get();
+      return db.update(workflows).set(updateData).where(eq(workflows.id, id)).returning().get();
     },
   };
 }

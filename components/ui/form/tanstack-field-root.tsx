@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import type { VariantProps } from "class-variance-authority";
+import type { VariantProps } from 'class-variance-authority';
 
-import { Field } from "@base-ui/react/field";
+import { Field } from '@base-ui/react/field';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
-import { fieldWrapperVariants } from "./field-wrapper";
+import { fieldWrapperVariants } from './field-wrapper';
 
 type TanStackFieldRootProps = ClassName &
   RequiredChildren &

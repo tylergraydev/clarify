@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect } from 'react';
 
-type ModifierKey = "alt" | "ctrl" | "meta" | "shift";
+type ModifierKey = 'alt' | 'ctrl' | 'meta' | 'shift';
 
 interface ShortcutOptions {
   /** Whether the shortcut is enabled */
@@ -37,17 +37,8 @@ interface ShortcutOptions {
  * @param callback - Function to call when shortcut is triggered
  * @param options - Shortcut configuration options
  */
-export const useKeyboardShortcut = (
-  callback: () => void,
-  options: ShortcutOptions
-): void => {
-  const {
-    enabled = true,
-    key,
-    modifiers = [],
-    preventDefault = true,
-    stopPropagation = false,
-  } = options;
+export const useKeyboardShortcut = (callback: () => void, options: ShortcutOptions): void => {
+  const { enabled = true, key, modifiers = [], preventDefault = true, stopPropagation = false } = options;
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -62,10 +53,9 @@ export const useKeyboardShortcut = (
       const ctrlOrMeta = event.ctrlKey || event.metaKey;
 
       // Build expected modifier state
-      const expectsCtrlOrMeta =
-        modifiers.includes("ctrl") || modifiers.includes("meta");
-      const expectsAlt = modifiers.includes("alt");
-      const expectsShift = modifiers.includes("shift");
+      const expectsCtrlOrMeta = modifiers.includes('ctrl') || modifiers.includes('meta');
+      const expectsAlt = modifiers.includes('alt');
+      const expectsShift = modifiers.includes('shift');
 
       // Validate modifier state
       if (expectsCtrlOrMeta !== ctrlOrMeta) return;
@@ -74,10 +64,7 @@ export const useKeyboardShortcut = (
 
       // Ignore if user is typing in an input, textarea, or contenteditable
       const target = event.target as HTMLElement;
-      const isEditable =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable;
+      const isEditable = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
       // Allow shortcuts with ctrl/meta even in editable elements
       // (common pattern for things like Ctrl+K command palettes)
@@ -99,9 +86,9 @@ export const useKeyboardShortcut = (
   useEffect(() => {
     if (!enabled) return;
 
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleKeyDown, enabled]);
 };
@@ -126,13 +113,7 @@ export const useKeyboardShortcuts = (
       for (const shortcut of shortcuts) {
         const {
           callback,
-          options: {
-            enabled = true,
-            key,
-            modifiers = [],
-            preventDefault = true,
-            stopPropagation = false,
-          },
+          options: { enabled = true, key, modifiers = [], preventDefault = true, stopPropagation = false },
         } = shortcut;
 
         if (!enabled) continue;
@@ -146,10 +127,9 @@ export const useKeyboardShortcuts = (
         const ctrlOrMeta = event.ctrlKey || event.metaKey;
 
         // Build expected modifier state
-        const expectsCtrlOrMeta =
-          modifiers.includes("ctrl") || modifiers.includes("meta");
-        const expectsAlt = modifiers.includes("alt");
-        const expectsShift = modifiers.includes("shift");
+        const expectsCtrlOrMeta = modifiers.includes('ctrl') || modifiers.includes('meta');
+        const expectsAlt = modifiers.includes('alt');
+        const expectsShift = modifiers.includes('shift');
 
         // Validate modifier state
         if (expectsCtrlOrMeta !== ctrlOrMeta) continue;
@@ -158,10 +138,7 @@ export const useKeyboardShortcuts = (
 
         // Ignore if user is typing in an input, textarea, or contenteditable
         const target = event.target as HTMLElement;
-        const isEditable =
-          target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.isContentEditable;
+        const isEditable = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
         // Allow shortcuts with ctrl/meta even in editable elements
         if (isEditable && !ctrlOrMeta) continue;
@@ -182,14 +159,12 @@ export const useKeyboardShortcuts = (
   );
 
   useEffect(() => {
-    const hasEnabledShortcuts = shortcuts.some(
-      (s) => s.options.enabled !== false
-    );
+    const hasEnabledShortcuts = shortcuts.some((s) => s.options.enabled !== false);
     if (!hasEnabledShortcuts) return;
 
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleKeyDown, shortcuts]);
 };

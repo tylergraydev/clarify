@@ -1,32 +1,29 @@
-"use client";
+'use client';
 
-import { Plus, Star, StarOff, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Plus, Star, StarOff, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
-import type { AgentSkill } from "@/types/electron";
+import type { AgentSkill } from '@/types/electron';
 
-import { Button } from "@/components/ui/button";
-import { IconButton } from "@/components/ui/icon-button";
-import { Input } from "@/components/ui/input";
+import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
+import { Input } from '@/components/ui/input';
 import {
   useAgentSkills,
   useCreateAgentSkill,
   useDeleteAgentSkill,
   useSetAgentSkillRequired,
-} from "@/hooks/queries/use-agent-skills";
-import { cn } from "@/lib/utils";
-import { agentSkillInputSchema } from "@/lib/validations/agent";
+} from '@/hooks/queries/use-agent-skills';
+import { cn } from '@/lib/utils';
+import { agentSkillInputSchema } from '@/lib/validations/agent';
 
 interface AgentSkillsManagerProps {
   agentId: number;
   disabled?: boolean;
 }
 
-export const AgentSkillsManager = ({
-  agentId,
-  disabled = false,
-}: AgentSkillsManagerProps) => {
-  const [newSkillName, setNewSkillName] = useState("");
+export const AgentSkillsManager = ({ agentId, disabled = false }: AgentSkillsManagerProps) => {
+  const [newSkillName, setNewSkillName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [validationError, setValidationError] = useState<null | string>(null);
 
@@ -47,7 +44,7 @@ export const AgentSkillsManager = ({
     if (!result.success) {
       // Get the first error message from Zod issues
       const firstIssue = result.error.issues[0];
-      setValidationError(firstIssue?.message ?? "Invalid input");
+      setValidationError(firstIssue?.message ?? 'Invalid input');
       return;
     }
 
@@ -56,7 +53,7 @@ export const AgentSkillsManager = ({
         agentId,
         skillName: result.data.name,
       });
-      setNewSkillName("");
+      setNewSkillName('');
       setIsAdding(false);
       setValidationError(null);
     } catch {
@@ -87,82 +84,60 @@ export const AgentSkillsManager = ({
   const isRequired = (skill: AgentSkill) => skill.requiredAt !== null;
 
   if (isLoading) {
-    return (
-      <div className={"py-4 text-center text-sm text-muted-foreground"}>
-        {"Loading skills..."}
-      </div>
-    );
+    return <div className={'py-4 text-center text-sm text-muted-foreground'}>{'Loading skills...'}</div>;
   }
 
   return (
-    <div className={"flex flex-col gap-3"}>
+    <div className={'flex flex-col gap-3'}>
       {/* Skills List */}
       {skills.length > 0 ? (
-        <div className={"flex flex-col gap-2"}>
+        <div className={'flex flex-col gap-2'}>
           {skills.map((skill) => (
             <div
-              className={cn(
-                "flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2"
-              )}
+              className={cn('flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2')}
               key={skill.id}
             >
-              <div className={"min-w-0 flex-1"}>
-                <div className={"flex items-center gap-2"}>
-                  <span className={"font-mono text-sm font-medium"}>
-                    {skill.skillName}
-                  </span>
-                  {isRequired(skill) && (
-                    <span className={"text-xs font-medium text-yellow-500"}>
-                      {"Required"}
-                    </span>
-                  )}
+              <div className={'min-w-0 flex-1'}>
+                <div className={'flex items-center gap-2'}>
+                  <span className={'font-mono text-sm font-medium'}>{skill.skillName}</span>
+                  {isRequired(skill) && <span className={'text-xs font-medium text-yellow-500'}>{'Required'}</span>}
                 </div>
               </div>
-              <div className={"flex items-center gap-1"}>
+              <div className={'flex items-center gap-1'}>
                 <IconButton
-                  aria-label={
-                    isRequired(skill) ? "Mark as optional" : "Mark as required"
-                  }
-                  className={"size-7"}
+                  aria-label={isRequired(skill) ? 'Mark as optional' : 'Mark as required'}
+                  className={'size-7'}
                   disabled={disabled}
                   onClick={() => handleToggleRequired(skill)}
-                  title={
-                    isRequired(skill) ? "Mark as optional" : "Mark as required"
-                  }
+                  title={isRequired(skill) ? 'Mark as optional' : 'Mark as required'}
                 >
                   {isRequired(skill) ? (
-                    <Star
-                      className={"size-4 fill-yellow-500 text-yellow-500"}
-                    />
+                    <Star className={'size-4 fill-yellow-500 text-yellow-500'} />
                   ) : (
-                    <StarOff className={"size-4 text-muted-foreground"} />
+                    <StarOff className={'size-4 text-muted-foreground'} />
                   )}
                 </IconButton>
                 <IconButton
-                  aria-label={"Delete skill"}
-                  className={"size-7"}
+                  aria-label={'Delete skill'}
+                  className={'size-7'}
                   disabled={disabled}
                   onClick={() => handleDeleteSkill(skill)}
-                  title={"Delete"}
+                  title={'Delete'}
                 >
-                  <Trash2 className={"size-4 text-destructive"} />
+                  <Trash2 className={'size-4 text-destructive'} />
                 </IconButton>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className={"py-4 text-center text-sm text-muted-foreground"}>
-          {"No skills configured"}
-        </div>
+        <div className={'py-4 text-center text-sm text-muted-foreground'}>{'No skills configured'}</div>
       )}
 
       {/* Add Skill Form */}
       {isAdding ? (
-        <div
-          className={"flex flex-col gap-2 rounded-md border border-border p-3"}
-        >
-          <div className={"flex flex-col gap-1"}>
+        <div className={'flex flex-col gap-2 rounded-md border border-border p-3'}>
+          <div className={'flex flex-col gap-1'}>
             <Input
               autoFocus
               disabled={disabled || createMutation.isPending}
@@ -170,46 +145,42 @@ export const AgentSkillsManager = ({
                 setNewSkillName(e.target.value);
                 setValidationError(null);
               }}
-              placeholder={"Skill name (e.g., react-coding-conventions)"}
+              placeholder={'Skill name (e.g., react-coding-conventions)'}
               value={newSkillName}
             />
-            {validationError && (
-              <p className={"text-xs text-destructive"}>{validationError}</p>
-            )}
+            {validationError && <p className={'text-xs text-destructive'}>{validationError}</p>}
           </div>
-          <div className={"flex justify-end gap-2"}>
+          <div className={'flex justify-end gap-2'}>
             <Button
               disabled={createMutation.isPending}
               onClick={() => {
                 setIsAdding(false);
                 setValidationError(null);
               }}
-              size={"sm"}
-              variant={"ghost"}
+              size={'sm'}
+              variant={'ghost'}
             >
-              {"Cancel"}
+              {'Cancel'}
             </Button>
             <Button
-              disabled={
-                disabled || !newSkillName.trim() || createMutation.isPending
-              }
+              disabled={disabled || !newSkillName.trim() || createMutation.isPending}
               onClick={handleAddSkill}
-              size={"sm"}
+              size={'sm'}
             >
-              {createMutation.isPending ? "Adding..." : "Add Skill"}
+              {createMutation.isPending ? 'Adding...' : 'Add Skill'}
             </Button>
           </div>
         </div>
       ) : (
         <Button
-          className={"w-full"}
+          className={'w-full'}
           disabled={disabled}
           onClick={() => setIsAdding(true)}
-          size={"sm"}
-          variant={"outline"}
+          size={'sm'}
+          variant={'outline'}
         >
-          <Plus className={"mr-2 size-4"} />
-          {"Add Skill"}
+          <Plus className={'mr-2 size-4'} />
+          {'Add Skill'}
         </Button>
       )}
     </div>

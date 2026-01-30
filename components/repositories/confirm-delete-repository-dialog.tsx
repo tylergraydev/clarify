@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
   DialogClose,
@@ -11,7 +11,7 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 interface ConfirmDeleteRepositoryDialogProps {
   /** Whether the mutation is in progress */
@@ -47,13 +47,11 @@ export const ConfirmDeleteRepositoryDialog = ({
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup aria-modal={"true"} role={"alertdialog"}>
+        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle id={"confirm-delete-repository-title"}>
-              {"Remove Repository"}
-            </DialogTitle>
-            <DialogDescription id={"confirm-delete-repository-description"}>
+            <DialogTitle id={'confirm-delete-repository-title'}>{'Remove Repository'}</DialogTitle>
+            <DialogDescription id={'confirm-delete-repository-description'}>
               {`Are you sure you want to remove "${repositoryName}" from this project? This action cannot be undone.`}
             </DialogDescription>
           </DialogHeader>
@@ -61,14 +59,14 @@ export const ConfirmDeleteRepositoryDialog = ({
           {/* Workflow Warning */}
           {hasWorkflows && (
             <div
-              aria-live={"polite"}
+              aria-live={'polite'}
               className={
-                "mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30"
+                'mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30'
               }
-              role={"alert"}
+              role={'alert'}
             >
-              <p className={"text-sm text-amber-800 dark:text-amber-200"}>
-                {`This repository is associated with ${workflowCount} ${workflowCount === 1 ? "workflow" : "workflows"}. Removing it will not delete workflow history but may affect active workflows.`}
+              <p className={'text-sm text-amber-800 dark:text-amber-200'}>
+                {`This repository is associated with ${workflowCount} ${workflowCount === 1 ? 'workflow' : 'workflows'}. Removing it will not delete workflow history but may affect active workflows.`}
               </p>
             </div>
           )}
@@ -76,18 +74,18 @@ export const ConfirmDeleteRepositoryDialog = ({
           {/* Actions */}
           <DialogFooter sticky={false}>
             <DialogClose>
-              <Button disabled={isLoading} variant={"outline"}>
-                {"Cancel"}
+              <Button disabled={isLoading} variant={'outline'}>
+                {'Cancel'}
               </Button>
             </DialogClose>
             <Button
-              aria-describedby={"confirm-delete-repository-description"}
+              aria-describedby={'confirm-delete-repository-description'}
               aria-label={`Remove ${repositoryName} repository permanently`}
               disabled={isLoading}
               onClick={handleConfirmClick}
-              variant={"destructive"}
+              variant={'destructive'}
             >
-              {isLoading ? "Removing..." : "Remove"}
+              {isLoading ? 'Removing...' : 'Remove'}
             </Button>
           </DialogFooter>
         </DialogPopup>

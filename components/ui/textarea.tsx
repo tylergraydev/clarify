@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export const textareaVariants = cva(
   `
@@ -18,30 +18,24 @@ export const textareaVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        default: "min-h-20 px-3 py-2 text-sm",
-        lg: "min-h-24 px-4 py-3 text-base",
-        sm: "min-h-16 px-2 py-1.5 text-xs",
+        default: 'min-h-20 px-3 py-2 text-sm',
+        lg: 'min-h-24 px-4 py-3 text-base',
+        sm: 'min-h-16 px-2 py-1.5 text-xs',
       },
     },
   }
 );
 
-type TextareaProps = Omit<ComponentPropsWithRef<"textarea">, "size"> &
+type TextareaProps = Omit<ComponentPropsWithRef<'textarea'>, 'size'> &
   VariantProps<typeof textareaVariants> & {
     isInvalid?: boolean;
   };
 
-export const Textarea = ({
-  className,
-  isInvalid,
-  ref,
-  size,
-  ...props
-}: TextareaProps) => {
+export const Textarea = ({ className, isInvalid, ref, size, ...props }: TextareaProps) => {
   return (
     <textarea
       className={cn(textareaVariants({ size }), className)}

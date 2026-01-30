@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva, type VariantProps } from 'class-variance-authority';
 
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 export const buttonGroupVariants = cva(
   `
@@ -14,7 +14,7 @@ export const buttonGroupVariants = cva(
   `,
   {
     defaultVariants: {
-      orientation: "horizontal",
+      orientation: 'horizontal',
     },
     variants: {
       orientation: {
@@ -34,34 +34,24 @@ export const buttonGroupVariants = cva(
   }
 );
 
-type ButtonGroupProps = ComponentPropsWithRef<"div"> &
-  VariantProps<typeof buttonGroupVariants>;
+type ButtonGroupProps = ComponentPropsWithRef<'div'> & VariantProps<typeof buttonGroupVariants>;
 
-export const ButtonGroup = ({
-  className,
-  orientation,
-  ref,
-  ...props
-}: ButtonGroupProps) => {
+export const ButtonGroup = ({ className, orientation, ref, ...props }: ButtonGroupProps) => {
   return (
     <div
       className={cn(buttonGroupVariants({ orientation }), className)}
       data-orientation={orientation}
-      data-slot={"button-group"}
+      data-slot={'button-group'}
       ref={ref}
-      role={"group"}
+      role={'group'}
       {...props}
     />
   );
 };
 
-type ButtonGroupTextProps = ComponentPropsWithRef<"div">;
+type ButtonGroupTextProps = ComponentPropsWithRef<'div'>;
 
-export const ButtonGroupText = ({
-  className,
-  ref,
-  ...props
-}: ButtonGroupTextProps) => {
+export const ButtonGroupText = ({ className, ref, ...props }: ButtonGroupTextProps) => {
   return (
     <div
       className={cn(
@@ -85,7 +75,7 @@ type ButtonGroupSeparatorProps = ComponentPropsWithRef<typeof Separator>;
 
 export const ButtonGroupSeparator = ({
   className,
-  orientation = "vertical",
+  orientation = 'vertical',
   ref,
   ...props
 }: ButtonGroupSeparatorProps) => {
@@ -98,7 +88,7 @@ export const ButtonGroupSeparator = ({
       `,
         className
       )}
-      data-slot={"button-group-separator"}
+      data-slot={'button-group-separator'}
       orientation={orientation}
       ref={ref}
       {...props}

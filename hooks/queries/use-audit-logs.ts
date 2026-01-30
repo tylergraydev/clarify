@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { NewAuditLog } from "@/types/electron";
+import type { NewAuditLog } from '@/types/electron';
 
-import { auditLogKeys } from "@/lib/queries/audit-logs";
+import { auditLogKeys } from '@/lib/queries/audit-logs';
 
-import { useElectron } from "../use-electron";
+import { useElectron } from '../use-electron';
 
 // ============================================================================
 // Query Hooks
@@ -76,8 +76,7 @@ export function useCreateAuditLog() {
       // Invalidate step-specific queries if workflowStepId exists
       if (auditLog.workflowStepId) {
         void queryClient.invalidateQueries({
-          queryKey: auditLogKeys.byWorkflowStep(auditLog.workflowStepId)
-            .queryKey,
+          queryKey: auditLogKeys.byWorkflowStep(auditLog.workflowStepId).queryKey,
         });
       }
     },

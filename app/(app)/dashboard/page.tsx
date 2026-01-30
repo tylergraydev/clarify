@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
-import { ActiveWorkflowsWidget } from "./_components/active-workflows-widget";
-import { QuickActionsWidget } from "./_components/quick-actions-widget";
-import { RecentWorkflowsWidget } from "./_components/recent-workflows-widget";
-import { StatisticsWidget } from "./_components/statistics-widget";
+import { ActiveWorkflowsWidget } from './_components/active-workflows-widget';
+import { QuickActionsWidget } from './_components/quick-actions-widget';
+import { RecentWorkflowsWidget } from './_components/recent-workflows-widget';
+import { StatisticsWidget } from './_components/statistics-widget';
 
 // ============================================================================
 // Page Metadata
@@ -11,8 +11,8 @@ import { StatisticsWidget } from "./_components/statistics-widget";
 
 export const metadata: Metadata = {
   description:
-    "Monitor your active workflows, view recent activity, and access quick actions from your Clarify dashboard.",
-  title: "Dashboard",
+    'Monitor your active workflows, view recent activity, and access quick actions from your Clarify dashboard.',
+  title: 'Dashboard',
 };
 
 // ============================================================================
@@ -35,30 +35,29 @@ export const metadata: Metadata = {
  */
 export default function DashboardPage() {
   return (
-    <div className={"space-y-6"}>
+    <div className={'space-y-6'}>
       {/* Page Heading */}
-      <header className={"space-y-1"}>
-        <h1 className={"text-2xl font-semibold tracking-tight"}>Dashboard</h1>
-        <p className={"text-muted-foreground"}>
-          Welcome to your Clarify workspace. Monitor workflows, track progress,
-          and take action.
+      <header className={'space-y-1'}>
+        <h1 className={'text-2xl font-semibold tracking-tight'}>Dashboard</h1>
+        <p className={'text-muted-foreground'}>
+          Welcome to your Clarify workspace. Monitor workflows, track progress, and take action.
         </p>
       </header>
 
       {/* Quick Actions Section - Prominent at top */}
-      <section aria-labelledby={"quick-actions-heading"}>
-        <h2 className={"sr-only"} id={"quick-actions-heading"}>
+      <section aria-labelledby={'quick-actions-heading'}>
+        <h2 className={'sr-only'} id={'quick-actions-heading'}>
           Quick Actions
         </h2>
         <QuickActionsWidget />
       </section>
 
       {/* Workflows Section - Two-column layout on desktop */}
-      <section aria-labelledby={"workflows-heading"}>
-        <h2 className={"sr-only"} id={"workflows-heading"}>
+      <section aria-labelledby={'workflows-heading'}>
+        <h2 className={'sr-only'} id={'workflows-heading'}>
           Workflows
         </h2>
-        <div className={"grid gap-6 md:grid-cols-2"}>
+        <div className={'grid gap-6 md:grid-cols-2'}>
           {/* Active Workflows - Left column */}
           <ActiveWorkflowsWidget />
 
@@ -68,8 +67,8 @@ export default function DashboardPage() {
       </section>
 
       {/* Statistics Section - Full width */}
-      <section aria-labelledby={"statistics-heading"}>
-        <h2 className={"sr-only"} id={"statistics-heading"}>
+      <section aria-labelledby={'statistics-heading'}>
+        <h2 className={'sr-only'} id={'statistics-heading'}>
           Statistics Overview
         </h2>
         <StatisticsWidget />

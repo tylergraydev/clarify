@@ -1,4 +1,4 @@
-import { createQueryKeys } from "@lukemorales/query-key-factory";
+import { createQueryKeys } from '@lukemorales/query-key-factory';
 
 /**
  * Query keys for project-related queries.
@@ -9,7 +9,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
  * - `projects.archived()` - Only archived projects
  * - `projects.detail(id)` - Single project by ID
  */
-export const projectKeys = createQueryKeys("projects", {
+export const projectKeys = createQueryKeys('projects', {
   /**
    * Query key for archived projects only.
    * Used for dedicated archived projects views.

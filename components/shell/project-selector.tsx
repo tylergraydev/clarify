@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import { cva, type VariantProps } from "class-variance-authority";
-import { ChevronsUpDown, FolderKanban } from "lucide-react";
+import { cva, type VariantProps } from 'class-variance-authority';
+import { ChevronsUpDown, FolderKanban } from 'lucide-react';
 
 import {
   SelectItem,
@@ -14,11 +14,11 @@ import {
   SelectRoot,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Tooltip } from "@/components/ui/tooltip";
-import { useProjects } from "@/hooks/queries/use-projects";
-import { useShellStore } from "@/lib/stores/shell-store";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/select';
+import { Tooltip } from '@/components/ui/tooltip';
+import { useProjects } from '@/hooks/queries/use-projects';
+import { useShellStore } from '@/lib/stores/shell-store';
+import { cn } from '@/lib/utils';
 
 export const projectSelectorTriggerVariants = cva(
   `
@@ -33,36 +33,32 @@ export const projectSelectorTriggerVariants = cva(
   `,
   {
     defaultVariants: {
-      size: "default",
+      size: 'default',
     },
     variants: {
       size: {
-        compact: "h-8 px-2",
-        default: "h-9 px-3",
+        compact: 'h-8 px-2',
+        default: 'h-9 px-3',
       },
     },
   }
 );
 
 interface ProjectSelectorProps
-  extends
-    Omit<ComponentPropsWithRef<"div">, "children" | "onChange">,
-    ProjectSelectorTriggerVariants {
+  extends Omit<ComponentPropsWithRef<'div'>, 'children' | 'onChange'>, ProjectSelectorTriggerVariants {
   isCollapsed?: boolean;
   onProjectChange?: (projectId: string) => void;
   value?: string;
 }
 
-type ProjectSelectorTriggerVariants = VariantProps<
-  typeof projectSelectorTriggerVariants
->;
+type ProjectSelectorTriggerVariants = VariantProps<typeof projectSelectorTriggerVariants>;
 
 export const ProjectSelector = ({
   className,
   isCollapsed = false,
   onProjectChange,
   ref,
-  size = "default",
+  size = 'default',
   value,
   ...props
 }: ProjectSelectorProps) => {
@@ -71,8 +67,7 @@ export const ProjectSelector = ({
 
   // Use explicit value prop if provided, otherwise fall back to shell store
   // Use null (not undefined) when no project is selected to keep Select in controlled mode
-  const controlledValue =
-    value ?? (selectedProjectId !== null ? String(selectedProjectId) : null);
+  const controlledValue = value ?? (selectedProjectId !== null ? String(selectedProjectId) : null);
 
   const handleValueChange = (newValue: null | string) => {
     if (newValue !== null) {
@@ -83,9 +78,7 @@ export const ProjectSelector = ({
     }
   };
 
-  const selectedProject = projects?.find(
-    (p) => String(p.id) === controlledValue
-  );
+  const selectedProject = projects?.find((p) => String(p.id) === controlledValue);
   const hasProjects = projects && projects.length > 0;
 
   // Loading state
@@ -94,24 +87,24 @@ export const ProjectSelector = ({
       <div
         className={cn(
           projectSelectorTriggerVariants({ size }),
-          "cursor-wait opacity-50",
-          isCollapsed && "w-8 justify-center px-0",
+          'cursor-wait opacity-50',
+          isCollapsed && 'w-8 justify-center px-0',
           className
         )}
         ref={ref}
         {...props}
       >
         {/* Icon */}
-        <FolderKanban aria-hidden={"true"} className={"size-4 shrink-0"} />
+        <FolderKanban aria-hidden={'true'} className={'size-4 shrink-0'} />
 
         {/* Label */}
-        {!isCollapsed && <span className={"truncate"}>{"Loading..."}</span>}
+        {!isCollapsed && <span className={'truncate'}>{'Loading...'}</span>}
       </div>
     );
 
     if (isCollapsed) {
       return (
-        <Tooltip content={"Loading projects..."} side={"right"}>
+        <Tooltip content={'Loading projects...'} side={'right'}>
           {loadingContent}
         </Tooltip>
       );
@@ -126,24 +119,24 @@ export const ProjectSelector = ({
       <div
         className={cn(
           projectSelectorTriggerVariants({ size }),
-          "cursor-not-allowed opacity-50",
-          isCollapsed && "w-8 justify-center px-0",
+          'cursor-not-allowed opacity-50',
+          isCollapsed && 'w-8 justify-center px-0',
           className
         )}
         ref={ref}
         {...props}
       >
         {/* Icon */}
-        <FolderKanban aria-hidden={"true"} className={"size-4 shrink-0"} />
+        <FolderKanban aria-hidden={'true'} className={'size-4 shrink-0'} />
 
         {/* Label */}
-        {!isCollapsed && <span className={"truncate"}>{"No projects"}</span>}
+        {!isCollapsed && <span className={'truncate'}>{'No projects'}</span>}
       </div>
     );
 
     if (isCollapsed) {
       return (
-        <Tooltip content={"No projects available"} side={"right"}>
+        <Tooltip content={'No projects available'} side={'right'}>
           {emptyContent}
         </Tooltip>
       );
@@ -155,34 +148,20 @@ export const ProjectSelector = ({
   // Collapsed state with tooltip
   if (isCollapsed) {
     return (
-      <Tooltip
-        content={selectedProject?.name ?? "Select project"}
-        side={"right"}
-      >
+      <Tooltip content={selectedProject?.name ?? 'Select project'} side={'right'}>
         <div ref={ref} {...props}>
           <SelectRoot onValueChange={handleValueChange} value={controlledValue}>
             <SelectTrigger
-              className={cn(
-                projectSelectorTriggerVariants({ size }),
-                "w-8 justify-center px-0",
-                className
-              )}
+              className={cn(projectSelectorTriggerVariants({ size }), 'w-8 justify-center px-0', className)}
             >
-              <FolderKanban
-                aria-hidden={"true"}
-                className={"size-4 shrink-0"}
-              />
+              <FolderKanban aria-hidden={'true'} className={'size-4 shrink-0'} />
             </SelectTrigger>
             <SelectPortal>
               <SelectPositioner>
                 <SelectPopup>
                   <SelectList>
                     {projects.map((project) => (
-                      <SelectItem
-                        key={project.id}
-                        label={project.name}
-                        value={String(project.id)}
-                      >
+                      <SelectItem key={project.id} label={project.name} value={String(project.id)}>
                         {project.name}
                       </SelectItem>
                     ))}
@@ -200,34 +179,22 @@ export const ProjectSelector = ({
   return (
     <div ref={ref} {...props}>
       <SelectRoot onValueChange={handleValueChange} value={controlledValue}>
-        <SelectTrigger
-          className={cn(projectSelectorTriggerVariants({ size }), className)}
-        >
+        <SelectTrigger className={cn(projectSelectorTriggerVariants({ size }), className)}>
           {/* Icon */}
-          <FolderKanban aria-hidden={"true"} className={"size-4 shrink-0"} />
+          <FolderKanban aria-hidden={'true'} className={'size-4 shrink-0'} />
 
           {/* Value */}
-          <SelectValue
-            className={"flex-1 truncate text-left"}
-            placeholder={"Select project"}
-          />
+          <SelectValue className={'flex-1 truncate text-left'} placeholder={'Select project'} />
 
           {/* Chevron */}
-          <ChevronsUpDown
-            aria-hidden={"true"}
-            className={"size-4 shrink-0 opacity-50"}
-          />
+          <ChevronsUpDown aria-hidden={'true'} className={'size-4 shrink-0 opacity-50'} />
         </SelectTrigger>
         <SelectPortal>
           <SelectPositioner>
             <SelectPopup>
               <SelectList>
                 {projects.map((project) => (
-                  <SelectItem
-                    key={project.id}
-                    label={project.name}
-                    value={String(project.id)}
-                  >
+                  <SelectItem key={project.id} label={project.name} value={String(project.id)}>
                     {project.name}
                   </SelectItem>
                 ))}

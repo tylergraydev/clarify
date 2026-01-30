@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import type { ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from 'react';
 
-import Link from "next/link";
+import Link from 'next/link';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 const iconButtonStyles = `
   inline-flex size-9 items-center justify-center rounded-md
@@ -15,22 +15,14 @@ const iconButtonStyles = `
   disabled:pointer-events-none disabled:opacity-50
 `;
 
-type IconButtonProps = ComponentPropsWithRef<"button">;
+type IconButtonProps = ComponentPropsWithRef<'button'>;
 
 export const IconButton = ({ className, ref, ...props }: IconButtonProps) => {
-  return (
-    <button className={cn(iconButtonStyles, className)} ref={ref} {...props} />
-  );
+  return <button className={cn(iconButtonStyles, className)} ref={ref} {...props} />;
 };
 
 type IconButtonLinkProps = ComponentPropsWithRef<typeof Link>;
 
-export const IconButtonLink = ({
-  className,
-  ref,
-  ...props
-}: IconButtonLinkProps) => {
-  return (
-    <Link className={cn(iconButtonStyles, className)} ref={ref} {...props} />
-  );
+export const IconButtonLink = ({ className, ref, ...props }: IconButtonLinkProps) => {
+  return <Link className={cn(iconButtonStyles, className)} ref={ref} {...props} />;
 };

@@ -1,37 +1,28 @@
-import { sql } from "drizzle-orm";
-import {
-  index,
-  integer,
-  sqliteTable,
-  text,
-  uniqueIndex,
-} from "drizzle-orm/sqlite-core";
+import { sql } from 'drizzle-orm';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
-import { repositories } from "./repositories.schema";
-import { workflows } from "./workflows.schema";
+import { repositories } from './repositories.schema';
+import { workflows } from './workflows.schema';
 
 export const workflowRepositories = sqliteTable(
-  "workflow_repositories",
+  'workflow_repositories',
   {
-    createdAt: text("created_at")
+    createdAt: text('created_at')
       .default(sql`(CURRENT_TIMESTAMP)`)
       .notNull(),
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    repositoryId: integer("repository_id")
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    repositoryId: integer('repository_id')
       .notNull()
-      .references(() => repositories.id, { onDelete: "cascade" }),
-    setPrimaryAt: text("set_primary_at"), // null = secondary, datetime = primary repository
-    workflowId: integer("workflow_id")
+      .references(() => repositories.id, { onDelete: 'cascade' }),
+    setPrimaryAt: text('set_primary_at'), // null = secondary, datetime = primary repository
+    workflowId: integer('workflow_id')
       .notNull()
-      .references(() => workflows.id, { onDelete: "cascade" }),
+      .references(() => workflows.id, { onDelete: 'cascade' }),
   },
   (table) => [
-    index("workflow_repositories_repository_id_idx").on(table.repositoryId),
-    index("workflow_repositories_workflow_id_idx").on(table.workflowId),
-    uniqueIndex("workflow_repositories_unique_idx").on(
-      table.workflowId,
-      table.repositoryId
-    ),
+    index('workflow_repositories_repository_id_idx').on(table.repositoryId),
+    index('workflow_repositories_workflow_id_idx').on(table.workflowId),
+    uniqueIndex('workflow_repositories_unique_idx').on(table.workflowId, table.repositoryId),
   ]
 );
 
