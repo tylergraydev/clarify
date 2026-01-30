@@ -18,6 +18,7 @@ interface AgentColorPickerProps extends Omit<
 > {
   disabled?: boolean;
   hasError?: boolean;
+  isRequired?: boolean;
   label?: string;
   onChange?: (color: AgentColor) => void;
   value?: "" | AgentColor | null;
@@ -27,6 +28,7 @@ export const AgentColorPicker = ({
   className,
   disabled = false,
   hasError = false,
+  isRequired,
   label,
   onChange,
   value,
@@ -35,7 +37,14 @@ export const AgentColorPicker = ({
   return (
     <div className={cn("flex flex-col gap-2", className)} {...props}>
       {label && (
-        <span className={"text-sm font-medium text-foreground"}>{label}</span>
+        <span className={"text-sm font-medium text-foreground"}>
+          {label}
+          {isRequired && (
+            <span aria-hidden={"true"} className={"ml-0.5 text-destructive"}>
+              *
+            </span>
+          )}
+        </span>
       )}
       <RadioGroup
         className={cn(

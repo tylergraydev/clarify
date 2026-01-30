@@ -22,6 +22,7 @@ type ColorPickerFieldProps = ClassName &
   VariantProps<typeof fieldWrapperVariants> & {
     description?: string;
     isDisabled?: boolean;
+    isRequired?: boolean;
     label: string;
   };
 
@@ -29,6 +30,7 @@ export const ColorPickerField = ({
   className,
   description,
   isDisabled,
+  isRequired,
   label,
   size,
 }: ColorPickerFieldProps) => {
@@ -54,6 +56,11 @@ export const ColorPickerField = ({
         render={<span />}
       >
         {label}
+        {isRequired && (
+          <span aria-hidden={"true"} className={"ml-0.5 text-destructive"}>
+            *
+          </span>
+        )}
       </Field.Label>
 
       {/* Color Picker */}

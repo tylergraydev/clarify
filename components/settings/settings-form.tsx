@@ -1,8 +1,10 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useBulkUpdateSettings } from "@/hooks/queries/use-settings";
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { useToast } from "@/hooks/use-toast";
 import { useAppForm } from "@/lib/forms";
 import {
@@ -14,6 +16,7 @@ import type { SettingsFormApi as LoggingFormApi } from "./logging-settings-secti
 import type { SettingsFormApi as WorkflowFormApi } from "./workflow-settings-section";
 import type { SettingsFormApi as WorktreeFormApi } from "./worktree-settings-section";
 
+import { AutoSaveStatus, type AutoSaveState } from "./auto-save-status";
 import { LoggingSettingsSection } from "./logging-settings-section";
 import { UISettingsSection } from "./ui-settings-section";
 import { WorkflowSettingsSection } from "./workflow-settings-section";
@@ -104,41 +107,93 @@ export const SettingsForm = ({
 }: SettingsFormProps): ReactElement => {
   const toast = useToast();
   const bulkUpdateMutation = useBulkUpdateSettings();
+  const [saveStatus, setSaveStatus] = useState<AutoSaveState>("idle");
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasInitializedRef = useRef(false);
 
   const form = useAppForm({
     defaultValues: initialValues,
-    onSubmit: async ({ value }) => {
+    validators: {
+      onChange: settingsFormSchema,
+    },
+  });
+
+  // Cleanup saved timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (savedTimeoutRef.current) {
+        clearTimeout(savedTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const saveSettings = useCallback(
+    async (values: SettingsFormValues) => {
+      setSaveStatus("saving");
+
+      // Clear any existing saved timeout
+      if (savedTimeoutRef.current) {
+        clearTimeout(savedTimeoutRef.current);
+        savedTimeoutRef.current = null;
+      }
+
       try {
-        const updates = flattenSettingsValues(value);
+        const updates = flattenSettingsValues(values);
         await bulkUpdateMutation.mutateAsync(updates);
-        toast.success({
-          description: "Your settings have been saved.",
-          title: "Settings saved",
-        });
+        setSaveStatus("saved");
         onSuccess?.();
+
+        // Reset to idle after 2 seconds
+        savedTimeoutRef.current = setTimeout(() => {
+          setSaveStatus("idle");
+          savedTimeoutRef.current = null;
+        }, 2000);
       } catch {
+        setSaveStatus("error");
         toast.error({
           description: "Failed to save settings. Please try again.",
           title: "Error",
         });
       }
     },
-    validators: {
-      onSubmit: settingsFormSchema,
-    },
+    [bulkUpdateMutation, onSuccess, toast]
+  );
+
+  const { debounced: debouncedSave } = useDebouncedCallback(saveSettings, {
+    delay: 500,
   });
 
-  const isSubmitting = bulkUpdateMutation.isPending;
+  // Subscribe to form value changes for auto-save
+  useEffect(() => {
+    const unsubscribe = form.store.subscribe(() => {
+      // Skip the initial subscription trigger
+      if (!hasInitializedRef.current) {
+        hasInitializedRef.current = true;
+        return;
+      }
+
+      const state = form.store.state;
+
+      // Only save if form is valid (no errors)
+      if (state.isValid) {
+        debouncedSave(state.values);
+      }
+    });
+
+    return unsubscribe;
+  }, [form.store, debouncedSave]);
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        void form.handleSubmit();
-      }}
-    >
+    <div>
       <div className={"flex flex-col gap-6"}>
+        {/* Auto-save status indicator */}
+        <div className={"flex justify-end"}>
+          <AutoSaveStatus state={saveStatus} />
+        </div>
+
+        {/* UI Settings Section */}
+        <UISettingsSection />
+
         {/* Workflow Settings Section */}
         <WorkflowSettingsSection form={form as unknown as WorkflowFormApi} />
 
@@ -147,19 +202,7 @@ export const SettingsForm = ({
 
         {/* Logging Settings Section */}
         <LoggingSettingsSection form={form as unknown as LoggingFormApi} />
-
-        {/* UI Settings Section */}
-        <UISettingsSection />
-
-        {/* Form Actions */}
-        <div className={"flex justify-end"}>
-          <form.AppForm>
-            <form.SubmitButton>
-              {isSubmitting ? "Saving..." : "Save Settings"}
-            </form.SubmitButton>
-          </form.AppForm>
-        </div>
       </div>
-    </form>
+    </div>
   );
 };

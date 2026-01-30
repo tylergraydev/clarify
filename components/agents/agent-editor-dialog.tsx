@@ -138,7 +138,8 @@ export const AgentEditorDialog = ({
     }
     if (initialData) {
       return {
-        color: (initialData.color as AgentColor) ?? ("" as unknown as AgentColor),
+        color:
+          (initialData.color as AgentColor) ?? ("" as unknown as AgentColor),
         description: initialData.description ?? "",
         displayName: initialData.displayName,
         name: initialData.name,
@@ -191,11 +192,9 @@ export const AgentEditorDialog = ({
     },
   });
 
-  const updateSelectedColor = useEffectEvent(
-    (agentColor: "" | AgentColor) => {
-      setSelectedColor(agentColor);
-    }
-  );
+  const updateSelectedColor = useEffectEvent((agentColor: "" | AgentColor) => {
+    setSelectedColor(agentColor);
+  });
 
   // Reset form and color when agent or initialData changes
   useEffect(() => {
@@ -336,6 +335,7 @@ export const AgentEditorDialog = ({
           <form
             aria-describedby={"agent-editor-description"}
             aria-labelledby={"agent-editor-title"}
+            className={"flex min-h-0 flex-1 flex-col"}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -343,13 +343,11 @@ export const AgentEditorDialog = ({
             }}
           >
             {/* Scrollable Content */}
-            <DialogBody>
+            <DialogBody className={"px-2"}>
               {/* Agent Info Display (Edit Mode Only) */}
               {isEditMode && agent && (
                 <div
-                  className={
-                    "rounded-md border border-border bg-muted/50 p-3"
-                  }
+                  className={"rounded-md border border-border bg-muted/50 p-3"}
                 >
                   <div className={"flex items-center gap-3"}>
                     {selectedColor && (
@@ -387,6 +385,7 @@ export const AgentEditorDialog = ({
                         description={
                           "A unique identifier using lowercase letters, numbers, and hyphens (e.g., my-custom-agent)"
                         }
+                        isRequired
                         label={"Agent Name"}
                         placeholder={"my-custom-agent"}
                       />
@@ -415,6 +414,7 @@ export const AgentEditorDialog = ({
                   {(field) => (
                     <field.TextField
                       autoFocus={isEditMode || isDuplicateMode}
+                      isRequired
                       label={"Display Name"}
                       placeholder={"Enter display name"}
                     />
@@ -441,6 +441,7 @@ export const AgentEditorDialog = ({
                     {(field) => (
                       <field.ColorPickerField
                         isDisabled={isSubmitting || isResetting}
+                        isRequired
                         label={"Color Tag"}
                       />
                     )}
@@ -461,6 +462,7 @@ export const AgentEditorDialog = ({
                       description={
                         "The system prompt that defines how this agent behaves"
                       }
+                      isRequired
                       label={"System Prompt"}
                       placeholder={"Enter the system prompt..."}
                       rows={12}
