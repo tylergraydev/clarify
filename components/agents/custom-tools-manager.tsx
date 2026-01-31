@@ -163,7 +163,7 @@ export const CustomToolsManager = ({ isDisabled = false, onChange, value }: Cust
             <Button disabled={isDisabled} onClick={handleCancel} size={'sm'} variant={'ghost'}>
               {'Cancel'}
             </Button>
-            <Button disabled={isDisabled || !newToolName.trim()} onClick={handleAddTool} size={'sm'}>
+            <Button disabled={isDisabled || !newToolName.trim()} onClick={handleAddTool} size={'sm'} type={'button'}>
               {'Add Tool'}
             </Button>
           </div>

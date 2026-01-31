@@ -118,7 +118,7 @@ interface AgentListFilters {
    * - "project": Only agents with projectId IS NOT NULL (project-specific agents)
    */
   scope?: 'global' | 'project';
-  type?: string;
+  type?: 'planning' | 'review' | 'specialist';
 }
 
 /**
@@ -272,6 +272,18 @@ export function registerAgentHandlers(
           orderIndex: skill.orderIndex,
           requiredAt: skill.requiredAt,
           skillName: skill.skillName,
+        });
+      }
+
+      // Copy hooks from source agent to duplicated agent
+      const sourceHooks = await agentHooksRepository.findByAgentId(id);
+      for (const hook of sourceHooks) {
+        await agentHooksRepository.create({
+          agentId: duplicatedAgent.id,
+          body: hook.body,
+          eventType: hook.eventType,
+          matcher: hook.matcher,
+          orderIndex: hook.orderIndex,
         });
       }
 
@@ -637,6 +649,18 @@ export function registerAgentHandlers(
           });
         }
 
+        // Copy hooks from source agent to the new agent
+        const sourceHooks = await agentHooksRepository.findByAgentId(agentId);
+        for (const hook of sourceHooks) {
+          await agentHooksRepository.create({
+            agentId: copiedAgent.id,
+            body: hook.body,
+            eventType: hook.eventType,
+            matcher: hook.matcher,
+            orderIndex: hook.orderIndex,
+          });
+        }
+
         return copiedAgent;
       } catch (error) {
         console.error('[IPC Error] agent:copyToProject:', error);
@@ -687,9 +711,10 @@ export function registerAgentHandlers(
         // Create the agent record
         // Default displayName to name if not provided
         // Default type to 'specialist' if not provided
+        // Default color to 'blue' if not provided
         const newAgentData: NewAgent = {
           builtInAt: null, // Imported agents are not built-in
-          color: validatedData.color ?? null,
+          color: validatedData.color ?? 'blue',
           description: validatedData.description,
           displayName: validatedData.displayName ?? validatedData.name,
           model: validatedData.model ?? null,

@@ -23,6 +23,13 @@ interface AgentSkillsManagerProps {
 }
 
 /**
+ * Check if a skill is marked as required.
+ * @param skill - The agent skill to check
+ * @returns true if the skill is required, false otherwise
+ */
+const isSkillRequired = (skill: AgentSkill): boolean => skill.requiredAt !== null;
+
+/**
  * Skills manager component for edit mode with database persistence.
  * Manages agent skills through direct database operations via mutations.
  * Used when editing existing agents with saved skill configurations.
@@ -90,8 +97,6 @@ export const AgentSkillsManager = ({ agentId, isDisabled = false }: AgentSkillsM
     }
   };
 
-  const isRequired = (skill: AgentSkill) => skill.requiredAt !== null;
-
   if (isLoading) {
     return <div className={'py-4 text-center text-sm text-muted-foreground'}>{'Loading skills...'}</div>;
   }
@@ -109,20 +114,20 @@ export const AgentSkillsManager = ({ agentId, isDisabled = false }: AgentSkillsM
               <div className={'min-w-0 flex-1'}>
                 <div className={'flex items-center gap-2'}>
                   <span className={'font-mono text-sm font-medium'}>{skill.skillName}</span>
-                  {isRequired(skill) && (
+                  {isSkillRequired(skill) && (
                     <span className={'text-xs font-medium text-required-indicator'}>{'Required'}</span>
                   )}
                 </div>
               </div>
               <div className={'flex items-center gap-1'}>
                 <IconButton
-                  aria-label={isRequired(skill) ? 'Mark as optional' : 'Mark as required'}
+                  aria-label={isSkillRequired(skill) ? 'Mark as optional' : 'Mark as required'}
                   className={'size-7'}
                   disabled={isDisabled}
                   onClick={() => handleToggleRequired(skill)}
-                  title={isRequired(skill) ? 'Mark as optional' : 'Mark as required'}
+                  title={isSkillRequired(skill) ? 'Mark as optional' : 'Mark as required'}
                 >
-                  {isRequired(skill) ? (
+                  {isSkillRequired(skill) ? (
                     <Star className={'size-4 fill-required-indicator text-required-indicator'} />
                   ) : (
                     <StarOff className={'size-4 text-muted-foreground'} />
@@ -178,6 +183,7 @@ export const AgentSkillsManager = ({ agentId, isDisabled = false }: AgentSkillsM
               disabled={isDisabled || !newSkillName.trim() || createMutation.isPending}
               onClick={handleAddSkill}
               size={'sm'}
+              type={'button'}
             >
               {createMutation.isPending ? 'Adding...' : 'Add Skill'}
             </Button>

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { agentHookKeys } from '@/lib/queries/agent-hooks';
+import { agentKeys } from '@/lib/queries/agents';
 
 import { useElectronDb } from '../use-electron';
 import { useToast } from '../use-toast';
@@ -49,6 +50,10 @@ export function useCreateAgentHook() {
       void queryClient.invalidateQueries({
         queryKey: agentHookKeys.byAgent._def,
       });
+      // Invalidate agent queries that may include embedded hooks
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
+      });
 
       toast.success({
         description: 'Agent hook created successfully',
@@ -82,6 +87,10 @@ export function useDeleteAgentHook() {
       void queryClient.invalidateQueries({
         queryKey: agentHookKeys.byAgent(agentId).queryKey,
       });
+      // Invalidate agent queries that may include embedded hooks
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
+      });
 
       toast.success({
         description: 'Agent hook deleted successfully',
@@ -112,6 +121,10 @@ export function useUpdateAgentHook() {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentHookKeys.byAgent._def,
+      });
+      // Invalidate agent queries that may include embedded hooks
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
       });
 
       toast.success({

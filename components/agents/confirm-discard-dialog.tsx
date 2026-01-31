@@ -32,7 +32,7 @@ interface ConfirmDiscardDialogProps {
  * @param props.onOpenChange - Callback when the dialog open state changes
  */
 export const ConfirmDiscardDialog = ({ isOpen, onConfirm, onOpenChange }: ConfirmDiscardDialogProps) => {
-  const handleConfirmClick = () => {
+  const handleConfirm = () => {
     onConfirm();
   };
 
@@ -58,7 +58,7 @@ export const ConfirmDiscardDialog = ({ isOpen, onConfirm, onOpenChange }: Confir
             <Button
               aria-describedby={'confirm-discard-description'}
               aria-label={'Discard unsaved changes'}
-              onClick={handleConfirmClick}
+              onClick={handleConfirm}
               variant={'destructive'}
             >
               {'Discard'}

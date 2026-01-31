@@ -212,7 +212,10 @@ export const DataTableRowActions = <TData,>({
     <div className={cn('flex justify-start', className)} onClick={(e) => e.stopPropagation()} ref={ref} {...props}>
       <DropdownMenuRoot>
         <DropdownMenuTrigger>
-          <BaseButton aria-label={'Open row actions menu'} className={cn(dataTableRowActionsButtonVariants({ size }))}>
+          <BaseButton
+            aria-label={'Open row actions menu'}
+            className={cn(dataTableRowActionsButtonVariants({ size }), 'p-2')}
+          >
             <MoreHorizontal
               aria-hidden={'true'}
               className={cn(size === 'sm' ? 'size-3.5' : 'size-4', 'text-muted-foreground')}
@@ -222,7 +225,7 @@ export const DataTableRowActions = <TData,>({
         </DropdownMenuTrigger>
         <DropdownMenuPortal>
           <DropdownMenuPositioner align={'end'}>
-            <DropdownMenuPopup className={'min-w-[160px]'} size={size === 'lg' ? 'default' : 'sm'}>
+            <DropdownMenuPopup className={'min-w-40'} size={size === 'lg' ? 'default' : 'sm'}>
               {actions.map((action, index) => {
                 if (action.type === 'separator') {
                   return <DropdownMenuSeparator key={`separator-${index}`} />;

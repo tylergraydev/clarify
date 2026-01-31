@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { AgentListFilters } from '@/types/electron';
 
+import { agentHookKeys } from '@/lib/queries/agent-hooks';
+import { agentSkillKeys } from '@/lib/queries/agent-skills';
+import { agentToolKeys } from '@/lib/queries/agent-tools';
 import { agentKeys } from '@/lib/queries/agents';
 
 import { useElectronDb } from '../use-electron';
@@ -340,6 +343,17 @@ export function useDeleteAgent() {
         queryKey: agentKeys.detail(variables.id).queryKey,
       });
 
+      // Remove child entity caches for the deleted agent
+      queryClient.removeQueries({
+        queryKey: agentToolKeys.byAgent(variables.id).queryKey,
+      });
+      queryClient.removeQueries({
+        queryKey: agentSkillKeys.byAgent(variables.id).queryKey,
+      });
+      queryClient.removeQueries({
+        queryKey: agentHookKeys.byAgent(variables.id).queryKey,
+      });
+
       // Invalidate all relevant queries to remove the deleted agent from lists
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
@@ -348,6 +362,7 @@ export function useDeleteAgent() {
       void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.builtIn.queryKey });
 
       toast.success({
         description: 'Agent deleted successfully',
@@ -590,6 +605,17 @@ export function useResetAgent() {
         queryKey: agentKeys.detail(variables.id).queryKey,
       });
 
+      // Remove child entity caches for the reset agent
+      queryClient.removeQueries({
+        queryKey: agentToolKeys.byAgent(variables.id).queryKey,
+      });
+      queryClient.removeQueries({
+        queryKey: agentSkillKeys.byAgent(variables.id).queryKey,
+      });
+      queryClient.removeQueries({
+        queryKey: agentHookKeys.byAgent(variables.id).queryKey,
+      });
+
       // Update detail cache for the returned agent (parent after reset)
       if (agent) {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
@@ -603,6 +629,7 @@ export function useResetAgent() {
       void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.builtIn.queryKey });
 
       toast.success({
         description: 'Agent reset to default successfully',

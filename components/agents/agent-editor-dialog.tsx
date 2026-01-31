@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { agentColors, agentTypes } from '@/db/schema/agents.schema';
+import { useAgentEditorState } from '@/hooks/agents/use-agent-editor-state';
 import { useCreateAgentHook } from '@/hooks/queries/use-agent-hooks';
 import { useAgentSkills, useCreateAgentSkill, useSetAgentSkillRequired } from '@/hooks/queries/use-agent-skills';
 import {
@@ -346,54 +347,17 @@ export const AgentEditorDialog = ({
   // Build items map for SelectRoot to display labels instead of raw values
   const projectItems = useMemo(() => optionsToItems(projectOptions), [projectOptions]);
 
-  // Memoize derived boolean flags to prevent recalculation on every render
-  const derivedFlags = useMemo(() => {
-    const isSubmitting = createAgentMutation.isPending || updateAgentMutation.isPending;
-    const isMoving = moveAgentMutation.isPending;
-    const isResetting = resetAgentMutation.isPending;
-    const isEditMode = mode === 'edit';
-    const isBuiltIn = agent?.builtInAt !== null;
-    const isCustomized = agent?.parentAgentId !== null;
-    const isDuplicateMode = mode === 'create' && initialData !== undefined;
-    const isProjectScoped = !isEditMode && projectId !== undefined;
-    // View-only mode for built-in agents in edit mode
-    const isViewMode = isEditMode && isBuiltIn && !isCustomized;
-    // Show reset button only for customized agents in edit mode, but not in view mode
-    const isResetButtonVisible = isEditMode && isCustomized && !isViewMode;
-    // Disabled state for project selector
-    const isProjectSelectorDisabled = isEditMode
-      ? isSubmitting || isResetting || isMoving || isViewMode
-      : isSubmitting || isResetting;
-    // Check if we're in edit mode with a valid agent
-    const isEditAgent = isEditMode && agent !== undefined;
-    // Disabled state for collapsible sections
-    const isCollapsibleDisabled = isSubmitting || isResetting || isViewMode;
-
-    return {
-      isBuiltIn,
-      isCollapsibleDisabled,
-      isCustomized,
-      isDuplicateMode,
-      isEditAgent,
-      isEditMode,
-      isMoving,
-      isProjectScoped,
-      isProjectSelectorDisabled,
-      isResetButtonVisible,
-      isResetting,
-      isSubmitting,
-      isViewMode,
-    };
-  }, [
+  // Derive boolean flags using the extracted hook
+  const derivedFlags = useAgentEditorState({
     agent,
-    createAgentMutation.isPending,
-    initialData,
+    hasInitialData: initialData !== undefined,
+    isCreatePending: createAgentMutation.isPending,
+    isMovePending: moveAgentMutation.isPending,
+    isResetPending: resetAgentMutation.isPending,
+    isUpdatePending: updateAgentMutation.isPending,
     mode,
-    moveAgentMutation.isPending,
     projectId,
-    resetAgentMutation.isPending,
-    updateAgentMutation.isPending,
-  ]);
+  });
 
   const {
     isBuiltIn,
@@ -892,7 +856,7 @@ export const AgentEditorDialog = ({
                 {isEditMode && agentTypeLabel && <Badge variant={'default'}>{agentTypeLabel}</Badge>}
               </Fragment>
             }
-            isCloseDisabled={isSubmitting}
+            isCloseDisabled={isSubmitting || isResetting}
           >
             <DialogTitle id={'agent-editor-title'}>{dialogTitle}</DialogTitle>
             <DialogDescription id={'agent-editor-description'}>{dialogDescription}</DialogDescription>

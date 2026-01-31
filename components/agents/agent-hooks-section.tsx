@@ -74,10 +74,10 @@ export const AgentHooksSection = ({ hooks, isDisabled = false, onHooksChange }: 
       return;
     }
 
-    const isStopEventLocal = activeTab === 'Stop';
+    const isStopEvent = activeTab === 'Stop';
     const newEntry: AgentHookEntry = {
       body: trimmedBody,
-      ...(isStopEventLocal ? {} : { matcher: trimmedMatcher || undefined }),
+      ...(isStopEvent ? {} : { matcher: trimmedMatcher || undefined }),
     };
 
     onHooksChange({
@@ -109,7 +109,7 @@ export const AgentHooksSection = ({ hooks, isDisabled = false, onHooksChange }: 
     setNewMatcher('');
   }, []);
 
-  const handleTabChange = useCallback((value: HookEventType | null | number | string) => {
+  const handleTabChange = useCallback((value: null | string) => {
     if (value === 'PreToolUse' || value === 'PostToolUse' || value === 'Stop') {
       setActiveTab(value);
       // Reset form state when switching tabs
@@ -120,9 +120,9 @@ export const AgentHooksSection = ({ hooks, isDisabled = false, onHooksChange }: 
   }, []);
 
   // Derived boolean variables (after handlers per convention)
-  const isStopEvent = activeTab === 'Stop';
-  const isShowEmptyState = currentEntries.length === 0 && !isAddingEntry;
-  const isHasEntries = currentEntries.length > 0;
+  const isStopEventTab = activeTab === 'Stop';
+  const shouldShowEmptyState = currentEntries.length === 0 && !isAddingEntry;
+  const hasEntries = currentEntries.length > 0;
 
   return (
     <Collapsible defaultOpen={false}>
@@ -171,23 +171,23 @@ export const AgentHooksSection = ({ hooks, isDisabled = false, onHooksChange }: 
                   </p>
 
                   {/* Entries list */}
-                  {isHasEntries && (
+                  {hasEntries && (
                     <div className={'flex flex-col gap-2'}>
                       {currentEntries.map((entry, index) => (
                         <HookEntryCard
                           entry={entry}
                           index={index}
                           isDisabled={isDisabled}
-                          isShowMatcher={!isStopEvent}
                           key={`${eventType.value}-${index}`}
                           onDelete={handleDeleteEntry}
+                          shouldShowMatcher={!isStopEventTab}
                         />
                       ))}
                     </div>
                   )}
 
                   {/* Empty state */}
-                  {isShowEmptyState && (
+                  {shouldShowEmptyState && (
                     <div className={'py-4 text-center text-sm text-muted-foreground'}>
                       {'No hooks configured for this event'}
                     </div>
@@ -196,7 +196,7 @@ export const AgentHooksSection = ({ hooks, isDisabled = false, onHooksChange }: 
                   {/* Add entry form */}
                   {isAddingEntry ? (
                     <div className={'flex flex-col gap-3 rounded-md border border-border p-3'}>
-                      {!isStopEvent && (
+                      {!isStopEventTab && (
                         <div className={'flex flex-col gap-1'}>
                           <label className={'text-xs font-medium text-muted-foreground'} htmlFor={'hook-matcher'}>
                             {'Matcher (tool name or pattern)'}
@@ -230,7 +230,7 @@ export const AgentHooksSection = ({ hooks, isDisabled = false, onHooksChange }: 
                         <Button disabled={isDisabled} onClick={handleCancelAdd} size={'sm'} variant={'ghost'}>
                           {'Cancel'}
                         </Button>
-                        <Button disabled={isDisabled || !newBody.trim()} onClick={handleAddEntry} size={'sm'}>
+                        <Button disabled={isDisabled || !newBody.trim()} onClick={handleAddEntry} size={'sm'} type={'button'}>
                           {'Add Hook'}
                         </Button>
                       </div>
@@ -264,16 +264,16 @@ interface HookEntryCardProps {
   index: number;
   /** Whether the card actions are disabled */
   isDisabled?: boolean;
-  /** Whether to show the matcher field */
-  isShowMatcher?: boolean;
   /** Callback when delete is clicked */
   onDelete: (index: number) => void;
+  /** Whether to show the matcher field */
+  shouldShowMatcher?: boolean;
 }
 
 /**
  * Card component for displaying a single hook entry.
  */
-const HookEntryCard = ({ entry, index, isDisabled = false, isShowMatcher = true, onDelete }: HookEntryCardProps) => {
+const HookEntryCard = ({ entry, index, isDisabled = false, onDelete, shouldShowMatcher = true }: HookEntryCardProps) => {
   const handleDeleteClick = useCallback(() => {
     onDelete(index);
   }, [index, onDelete]);
@@ -283,7 +283,7 @@ const HookEntryCard = ({ entry, index, isDisabled = false, isShowMatcher = true,
       {/* Header with matcher and delete button */}
       <div className={'flex items-start justify-between gap-2'}>
         <div className={'flex flex-col gap-1'}>
-          {isShowMatcher && (
+          {shouldShowMatcher && (
             <div className={'flex items-center gap-2'}>
               <span className={'text-xs text-muted-foreground'}>{'Matcher:'}</span>
               <span className={'font-mono text-xs font-medium'}>{entry.matcher || '(all tools)'}</span>

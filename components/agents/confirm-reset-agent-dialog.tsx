@@ -44,7 +44,7 @@ export const ConfirmResetAgentDialog = ({
   onConfirm,
   onOpenChange,
 }: ConfirmResetAgentDialogProps) => {
-  const handleConfirmClick = () => {
+  const handleConfirm = () => {
     onConfirm();
   };
 
@@ -86,7 +86,7 @@ export const ConfirmResetAgentDialog = ({
               aria-describedby={'confirm-reset-description'}
               aria-label={`Reset ${agentName} agent to default`}
               disabled={isLoading}
-              onClick={handleConfirmClick}
+              onClick={handleConfirm}
               variant={'destructive'}
             >
               {isLoading ? 'Resetting...' : 'Reset to Default'}

@@ -24,6 +24,13 @@ interface AgentToolsManagerProps {
 }
 
 /**
+ * Check if a tool is currently allowed (not disallowed).
+ * @param tool - The agent tool to check
+ * @returns true if the tool is allowed, false otherwise
+ */
+const isToolAllowed = (tool: AgentTool): boolean => tool.disallowedAt === null;
+
+/**
  * Tools manager component for edit mode with database persistence.
  * Manages agent tools through direct database operations via mutations.
  * Used when editing existing agents with saved tool configurations.
@@ -96,8 +103,6 @@ export const AgentToolsManager = ({ agentId, isDisabled = false }: AgentToolsMan
     }
   };
 
-  const isAllowed = (tool: AgentTool) => tool.disallowedAt === null;
-
   if (isLoading) {
     return <div className={'py-4 text-center text-sm text-muted-foreground'}>{'Loading tools...'}</div>;
   }
@@ -111,7 +116,7 @@ export const AgentToolsManager = ({ agentId, isDisabled = false }: AgentToolsMan
             <div
               className={cn(
                 'flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2',
-                !isAllowed(tool) && 'opacity-60'
+                !isToolAllowed(tool) && 'opacity-60'
               )}
               key={tool.id}
             >
@@ -126,17 +131,17 @@ export const AgentToolsManager = ({ agentId, isDisabled = false }: AgentToolsMan
                     </span>
                   )}
                 </div>
-                {!isAllowed(tool) && <span className={'text-xs text-muted-foreground'}>{'Disallowed'}</span>}
+                {!isToolAllowed(tool) && <span className={'text-xs text-muted-foreground'}>{'Disallowed'}</span>}
               </div>
               <div className={'flex items-center gap-1'}>
                 <IconButton
-                  aria-label={isAllowed(tool) ? 'Disallow tool' : 'Allow tool'}
+                  aria-label={isToolAllowed(tool) ? 'Disallow tool' : 'Allow tool'}
                   className={'size-7'}
                   disabled={isDisabled}
                   onClick={() => handleToggleTool(tool)}
-                  title={isAllowed(tool) ? 'Disallow' : 'Allow'}
+                  title={isToolAllowed(tool) ? 'Disallow' : 'Allow'}
                 >
-                  {isAllowed(tool) ? (
+                  {isToolAllowed(tool) ? (
                     <ToggleRight className={'size-4 text-success-indicator'} />
                   ) : (
                     <ToggleLeft className={'size-4 text-muted-foreground'} />
@@ -204,6 +209,7 @@ export const AgentToolsManager = ({ agentId, isDisabled = false }: AgentToolsMan
               disabled={isDisabled || !newToolName.trim() || createMutation.isPending}
               onClick={handleAddTool}
               size={'sm'}
+              type={'button'}
             >
               {createMutation.isPending ? 'Adding...' : 'Add Tool'}
             </Button>

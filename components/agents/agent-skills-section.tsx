@@ -163,7 +163,7 @@ export const AgentSkillsSection = ({ isDisabled = false, onSkillsChange, skills 
             >
               {'Cancel'}
             </Button>
-            <Button disabled={isDisabled || !newSkillName.trim()} onClick={handleAddSkill} size={'sm'}>
+            <Button disabled={isDisabled || !newSkillName.trim()} onClick={handleAddSkill} size={'sm'} type={'button'}>
               {'Add Skill'}
             </Button>
           </div>

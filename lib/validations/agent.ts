@@ -142,7 +142,7 @@ export const updateAgentRepositorySchema = z.object({
     .string()
     .trim()
     .min(1, 'Agent name is required')
-    .max(255, 'Agent name is too long')
+    .max(100, 'Agent name is too long')
     .regex(
       /^[a-z][a-z0-9-]*$/,
       'Agent name must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens'
