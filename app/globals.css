@@ -167,6 +167,13 @@
   --table-header-bg: rgba(245, 242, 239, 0.5);
   --table-row-hover-bg: rgba(245, 242, 239, 0.5);
   --table-row-selected-bg: #f5f2ef;
+
+  /* Semantic indicator colors */
+  --warning-bg: #fef3c7; /* amber-100 */
+  --warning-border: #fde68a; /* amber-200 */
+  --warning-text: #b45309; /* amber-700 */
+  --required-indicator: #eab308; /* yellow-500 */
+  --success-indicator: #22c55e; /* green-500 */
 }
 
 /* Dark mode via explicit class - Baltimore Orioles inspired */
@@ -200,6 +207,13 @@
   --table-header-bg: rgba(26, 24, 22, 0.5);
   --table-row-hover-bg: rgba(26, 24, 22, 0.5);
   --table-row-selected-bg: #1a1816;
+
+  /* Semantic indicator colors */
+  --warning-bg: #78350f; /* amber-900 */
+  --warning-border: #92400e; /* amber-800 */
+  --warning-text: #fcd34d; /* amber-300 */
+  --required-indicator: #facc15; /* yellow-400 */
+  --success-indicator: #4ade80; /* green-400 */
 }
 
 /* System mode: apply dark colors only when no explicit class is set - Baltimore Orioles inspired */
@@ -234,6 +248,13 @@
     --table-header-bg: rgba(26, 24, 22, 0.5);
     --table-row-hover-bg: rgba(26, 24, 22, 0.5);
     --table-row-selected-bg: #1a1816;
+
+    /* Semantic indicator colors */
+    --warning-bg: #78350f; /* amber-900 */
+    --warning-border: #92400e; /* amber-800 */
+    --warning-text: #fcd34d; /* amber-300 */
+    --required-indicator: #facc15; /* yellow-400 */
+    --success-indicator: #4ade80; /* green-400 */
   }
 }
 
@@ -255,6 +276,11 @@
   --color-table-header-bg: var(--table-header-bg);
   --color-table-row-hover-bg: var(--table-row-hover-bg);
   --color-table-row-selected-bg: var(--table-row-selected-bg);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-border: var(--warning-border);
+  --color-warning-text: var(--warning-text);
+  --color-required-indicator: var(--required-indicator);
+  --color-success-indicator: var(--success-indicator);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

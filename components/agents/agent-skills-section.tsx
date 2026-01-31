@@ -13,7 +13,7 @@ import { agentSkillInputSchema } from '@/lib/validations/agent';
 
 interface AgentSkillsSectionProps {
   /** Whether the inputs are disabled */
-  disabled?: boolean;
+  isDisabled?: boolean;
   /** Callback when skills change */
   onSkillsChange: (skills: Array<PendingSkillData>) => void;
   /** Current pending skills */
@@ -27,7 +27,7 @@ interface AgentSkillsSectionProps {
  * This is a purely presentational component - state management
  * should be handled by the parent component.
  */
-export const AgentSkillsSection = ({ disabled = false, onSkillsChange, skills }: AgentSkillsSectionProps) => {
+export const AgentSkillsSection = ({ isDisabled = false, onSkillsChange, skills }: AgentSkillsSectionProps) => {
   const [newSkillName, setNewSkillName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [validationError, setValidationError] = useState<null | string>(null);
@@ -90,19 +90,19 @@ export const AgentSkillsSection = ({ disabled = false, onSkillsChange, skills }:
               <div className={'min-w-0 flex-1'}>
                 <div className={'flex items-center gap-2'}>
                   <span className={'font-mono text-sm font-medium'}>{skill.skillName}</span>
-                  {skill.isRequired && <span className={'text-xs font-medium text-yellow-500'}>{'Required'}</span>}
+                  {skill.isRequired && <span className={'text-xs font-medium text-required-indicator'}>{'Required'}</span>}
                 </div>
               </div>
               <div className={'flex items-center gap-1'}>
                 <IconButton
                   aria-label={skill.isRequired ? 'Mark as optional' : 'Mark as required'}
                   className={'size-7'}
-                  disabled={disabled}
+                  disabled={isDisabled}
                   onClick={() => handleToggleRequired(skill.skillName)}
                   title={skill.isRequired ? 'Mark as optional' : 'Mark as required'}
                 >
                   {skill.isRequired ? (
-                    <Star className={'size-4 fill-yellow-500 text-yellow-500'} />
+                    <Star className={'size-4 fill-required-indicator text-required-indicator'} />
                   ) : (
                     <StarOff className={'size-4 text-muted-foreground'} />
                   )}
@@ -110,7 +110,7 @@ export const AgentSkillsSection = ({ disabled = false, onSkillsChange, skills }:
                 <IconButton
                   aria-label={'Delete skill'}
                   className={'size-7'}
-                  disabled={disabled}
+                  disabled={isDisabled}
                   onClick={() => handleDeleteSkill(skill.skillName)}
                   title={'Delete'}
                 >
@@ -130,7 +130,7 @@ export const AgentSkillsSection = ({ disabled = false, onSkillsChange, skills }:
           <div className={'flex flex-col gap-1'}>
             <Input
               autoFocus
-              disabled={disabled}
+              disabled={isDisabled}
               onChange={(e) => {
                 setNewSkillName(e.target.value);
                 setValidationError(null);
@@ -161,7 +161,7 @@ export const AgentSkillsSection = ({ disabled = false, onSkillsChange, skills }:
             >
               {'Cancel'}
             </Button>
-            <Button disabled={disabled || !newSkillName.trim()} onClick={handleAddSkill} size={'sm'}>
+            <Button disabled={isDisabled || !newSkillName.trim()} onClick={handleAddSkill} size={'sm'}>
               {'Add Skill'}
             </Button>
           </div>
@@ -169,7 +169,7 @@ export const AgentSkillsSection = ({ disabled = false, onSkillsChange, skills }:
       ) : (
         <Button
           className={'w-full'}
-          disabled={disabled}
+          disabled={isDisabled}
           onClick={() => setIsAdding(true)}
           size={'sm'}
           variant={'outline'}

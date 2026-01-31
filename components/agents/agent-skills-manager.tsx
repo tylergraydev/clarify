@@ -19,7 +19,7 @@ import { agentSkillInputSchema } from '@/lib/validations/agent';
 
 interface AgentSkillsManagerProps {
   agentId: number;
-  disabled?: boolean;
+  isDisabled?: boolean;
 }
 
 /**
@@ -29,9 +29,9 @@ interface AgentSkillsManagerProps {
  *
  * @param props - Component props
  * @param props.agentId - The ID of the agent to manage skills for
- * @param props.disabled - Whether the inputs are disabled
+ * @param props.isDisabled - Whether the inputs are disabled
  */
-export const AgentSkillsManager = ({ agentId, disabled = false }: AgentSkillsManagerProps) => {
+export const AgentSkillsManager = ({ agentId, isDisabled = false }: AgentSkillsManagerProps) => {
   const [newSkillName, setNewSkillName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [validationError, setValidationError] = useState<null | string>(null);
@@ -109,19 +109,19 @@ export const AgentSkillsManager = ({ agentId, disabled = false }: AgentSkillsMan
               <div className={'min-w-0 flex-1'}>
                 <div className={'flex items-center gap-2'}>
                   <span className={'font-mono text-sm font-medium'}>{skill.skillName}</span>
-                  {isRequired(skill) && <span className={'text-xs font-medium text-yellow-500'}>{'Required'}</span>}
+                  {isRequired(skill) && <span className={'text-xs font-medium text-required-indicator'}>{'Required'}</span>}
                 </div>
               </div>
               <div className={'flex items-center gap-1'}>
                 <IconButton
                   aria-label={isRequired(skill) ? 'Mark as optional' : 'Mark as required'}
                   className={'size-7'}
-                  disabled={disabled}
+                  disabled={isDisabled}
                   onClick={() => handleToggleRequired(skill)}
                   title={isRequired(skill) ? 'Mark as optional' : 'Mark as required'}
                 >
                   {isRequired(skill) ? (
-                    <Star className={'size-4 fill-yellow-500 text-yellow-500'} />
+                    <Star className={'size-4 fill-required-indicator text-required-indicator'} />
                   ) : (
                     <StarOff className={'size-4 text-muted-foreground'} />
                   )}
@@ -129,7 +129,7 @@ export const AgentSkillsManager = ({ agentId, disabled = false }: AgentSkillsMan
                 <IconButton
                   aria-label={'Delete skill'}
                   className={'size-7'}
-                  disabled={disabled}
+                  disabled={isDisabled}
                   onClick={() => handleDeleteSkill(skill)}
                   title={'Delete'}
                 >
@@ -149,7 +149,7 @@ export const AgentSkillsManager = ({ agentId, disabled = false }: AgentSkillsMan
           <div className={'flex flex-col gap-1'}>
             <Input
               autoFocus
-              disabled={disabled || createMutation.isPending}
+              disabled={isDisabled || createMutation.isPending}
               onChange={(e) => {
                 setNewSkillName(e.target.value);
                 setValidationError(null);
@@ -173,7 +173,7 @@ export const AgentSkillsManager = ({ agentId, disabled = false }: AgentSkillsMan
               {'Cancel'}
             </Button>
             <Button
-              disabled={disabled || !newSkillName.trim() || createMutation.isPending}
+              disabled={isDisabled || !newSkillName.trim() || createMutation.isPending}
               onClick={handleAddSkill}
               size={'sm'}
             >
@@ -184,7 +184,7 @@ export const AgentSkillsManager = ({ agentId, disabled = false }: AgentSkillsMan
       ) : (
         <Button
           className={'w-full'}
-          disabled={disabled}
+          disabled={isDisabled}
           onClick={() => setIsAdding(true)}
           size={'sm'}
           variant={'outline'}

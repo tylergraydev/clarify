@@ -65,12 +65,10 @@ export const ConfirmResetAgentDialog = ({
           {/* Warning */}
           <div
             aria-live={'polite'}
-            className={
-              'mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30'
-            }
+            className={'mt-4 rounded-md border border-warning-border bg-warning-bg p-3'}
             role={'alert'}
           >
-            <p className={'text-sm text-amber-800 dark:text-amber-200'}>
+            <p className={'text-sm text-warning-text'}>
               {
                 'This will discard all your customizations including display name, description, system prompt, and color. This action cannot be undone.'
               }

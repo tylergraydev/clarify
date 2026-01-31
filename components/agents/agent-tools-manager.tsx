@@ -20,10 +20,19 @@ import { agentToolInputSchema } from '@/lib/validations/agent';
 
 interface AgentToolsManagerProps {
   agentId: number;
-  disabled?: boolean;
+  isDisabled?: boolean;
 }
 
-export const AgentToolsManager = ({ agentId, disabled = false }: AgentToolsManagerProps) => {
+/**
+ * Tools manager component for edit mode with database persistence.
+ * Manages agent tools through direct database operations via mutations.
+ * Used when editing existing agents with saved tool configurations.
+ *
+ * @param props - Component props
+ * @param props.agentId - The ID of the agent to manage tools for
+ * @param props.isDisabled - Whether the inputs are disabled
+ */
+export const AgentToolsManager = ({ agentId, isDisabled = false }: AgentToolsManagerProps) => {
   const [newToolName, setNewToolName] = useState('');
   const [newToolPattern, setNewToolPattern] = useState('*');
   const [isAdding, setIsAdding] = useState(false);
@@ -123,12 +132,12 @@ export const AgentToolsManager = ({ agentId, disabled = false }: AgentToolsManag
                 <IconButton
                   aria-label={isAllowed(tool) ? 'Disallow tool' : 'Allow tool'}
                   className={'size-7'}
-                  disabled={disabled}
+                  disabled={isDisabled}
                   onClick={() => handleToggleTool(tool)}
                   title={isAllowed(tool) ? 'Disallow' : 'Allow'}
                 >
                   {isAllowed(tool) ? (
-                    <ToggleRight className={'size-4 text-green-500'} />
+                    <ToggleRight className={'size-4 text-success-indicator'} />
                   ) : (
                     <ToggleLeft className={'size-4 text-muted-foreground'} />
                   )}
@@ -136,7 +145,7 @@ export const AgentToolsManager = ({ agentId, disabled = false }: AgentToolsManag
                 <IconButton
                   aria-label={'Delete tool'}
                   className={'size-7'}
-                  disabled={disabled}
+                  disabled={isDisabled}
                   onClick={() => handleDeleteTool(tool)}
                   title={'Delete'}
                 >
@@ -158,7 +167,7 @@ export const AgentToolsManager = ({ agentId, disabled = false }: AgentToolsManag
               <Input
                 autoFocus
                 className={'flex-1'}
-                disabled={disabled || createMutation.isPending}
+                disabled={isDisabled || createMutation.isPending}
                 onChange={(e) => {
                   setNewToolName(e.target.value);
                   setValidationError(null);
@@ -168,7 +177,7 @@ export const AgentToolsManager = ({ agentId, disabled = false }: AgentToolsManag
               />
               <Input
                 className={'w-32'}
-                disabled={disabled || createMutation.isPending}
+                disabled={isDisabled || createMutation.isPending}
                 onChange={(e) => {
                   setNewToolPattern(e.target.value);
                   setValidationError(null);
@@ -192,7 +201,7 @@ export const AgentToolsManager = ({ agentId, disabled = false }: AgentToolsManag
               {'Cancel'}
             </Button>
             <Button
-              disabled={disabled || !newToolName.trim() || createMutation.isPending}
+              disabled={isDisabled || !newToolName.trim() || createMutation.isPending}
               onClick={handleAddTool}
               size={'sm'}
             >
@@ -203,7 +212,7 @@ export const AgentToolsManager = ({ agentId, disabled = false }: AgentToolsManag
       ) : (
         <Button
           className={'w-full'}
-          disabled={disabled}
+          disabled={isDisabled}
           onClick={() => setIsAdding(true)}
           size={'sm'}
           variant={'outline'}

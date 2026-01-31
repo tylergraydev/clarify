@@ -152,7 +152,7 @@ const ToolsCollapsibleSection = memo(function ToolsCollapsibleSection({
         <div className={'border-t border-border p-3'}>
           <AgentToolsSection
             customTools={customTools}
-            disabled={isDisabled}
+            isDisabled={isDisabled}
             onCustomToolsChange={isEditMode ? onEditModeCustomToolsChange : onCustomToolsChange}
             onToolSelectionsChange={isEditMode ? onEditModeToolSelectionsChange : onToolSelectionsChange}
             toolSelections={toolSelections}
@@ -192,9 +192,9 @@ const SkillsCollapsibleSection = memo(function SkillsCollapsibleSection({
       <CollapsibleContent>
         <div className={'border-t border-border p-3'}>
           {isEditAgentWithValidId ? (
-            <AgentSkillsManager agentId={agentId} disabled={isDisabled} />
+            <AgentSkillsManager agentId={agentId} isDisabled={isDisabled} />
           ) : (
-            <AgentSkillsSection disabled={isDisabled} onSkillsChange={onSkillsChange} skills={pendingSkills} />
+            <AgentSkillsSection isDisabled={isDisabled} onSkillsChange={onSkillsChange} skills={pendingSkills} />
           )}
         </div>
       </CollapsibleContent>
@@ -224,7 +224,7 @@ const HooksCollapsibleSection = memo(function HooksCollapsibleSection({
       <CollapsibleTrigger className={'w-full justify-start px-3 py-2'}>{'Hooks'}</CollapsibleTrigger>
       <CollapsibleContent>
         <div className={'border-t border-border p-3'}>
-          <AgentHooksSection disabled={isDisabled} hooks={hooks} onHooksChange={onHooksChange} />
+          <AgentHooksSection hooks={hooks} isDisabled={isDisabled} onHooksChange={onHooksChange} />
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -1061,7 +1061,7 @@ export const AgentEditorDialog = ({
                   </form.AppField>
                 ) : (
                   <AgentColorPicker
-                    disabled={isSubmitting || isResetting}
+                    isDisabled={isSubmitting || isResetting}
                     label={'Color Tag'}
                     onChange={setSelectedColor}
                     value={selectedColor}

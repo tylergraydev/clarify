@@ -22,7 +22,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { useCallback, useMemo, useRef } from 'react';
+import { Fragment, memo, useCallback, useMemo, useRef } from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -146,6 +146,18 @@ export const dataTableRowVariants = cva(
 
 // =============================================================================
 // Component Types
+// =============================================================================
+
+interface DataTableBodyProps<TData> {
+  density: DataTableDensity;
+  isClickable: boolean;
+  onRowClick?: (row: Row<TData>) => void;
+  rows: Array<Row<TData>>;
+  rowStyleCallback?: DataTableRowStyleCallback<TData>;
+}
+
+// =============================================================================
+// Helper Functions
 // =============================================================================
 
 interface DataTableProps<TData, TValue>
@@ -328,7 +340,7 @@ interface DataTableProps<TData, TValue>
 }
 
 // =============================================================================
-// Helper Functions
+// Table Body Component (for memoization during resize)
 // =============================================================================
 
 /**
@@ -367,6 +379,60 @@ function createSelectionColumn<TData>(): DataTableColumnDef<TData, unknown> {
     size: 36,
   };
 }
+
+/**
+ * Internal component for rendering table body rows.
+ * Extracted to enable memoization during column resize operations for 60fps performance.
+ * @see https://tanstack.com/table/latest/docs/framework/react/examples/column-resizing-performant
+ */
+const DataTableBody = <TData,>({
+  density,
+  isClickable,
+  onRowClick,
+  rows,
+  rowStyleCallback,
+}: DataTableBodyProps<TData>) => {
+  return (
+    <Fragment>
+      {rows.map((row) => {
+        const isSelected = row.getIsSelected();
+        const customRowStyle = rowStyleCallback?.(row);
+
+        return (
+          <tr
+            aria-selected={isSelected}
+            className={cn(dataTableRowVariants({ isClickable, isSelected }), customRowStyle)}
+            data-state={isSelected ? 'selected' : undefined}
+            key={row.id}
+            onClick={isClickable ? () => onRowClick?.(row) : undefined}
+          >
+            {row.getVisibleCells().map((cell) => {
+              const cellClassName = cell.column.columnDef.meta?.cellClassName;
+
+              return (
+                <td
+                  className={cn(dataTableCellVariants({ density }), cellClassName)}
+                  key={cell.id}
+                  style={{
+                    width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
+                  }}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              );
+            })}
+          </tr>
+        );
+      })}
+    </Fragment>
+  );
+};
+
+/**
+ * Memoized version of DataTableBody that only re-renders when rows reference changes.
+ * Used during column resize operations to prevent unnecessary re-renders and achieve 60fps resizing.
+ */
+const MemoizedDataTableBody = memo(DataTableBody, (prev, next) => prev.rows === next.rows) as typeof DataTableBody;
 
 // =============================================================================
 // Component
@@ -649,6 +715,9 @@ export const DataTable = <TData, TValue>({
   const columnSizingInfo = table.getState().columnSizingInfo;
   const columnSizing = table.getState().columnSizing;
 
+  // Track whether a column is being resized for memoization
+  const isResizing = !!columnSizingInfo.isResizingColumn;
+
   const tableStyle = useMemo(() => {
     const headers = table.getFlatHeaders();
     const colSizes: Record<string, number | string> = {
@@ -721,40 +790,26 @@ export const DataTable = <TData, TValue>({
               ))}
             </thead>
 
-            {/* Table Body */}
+            {/* Table Body - Uses memoized version during resize for 60fps performance */}
             <tbody>
               {isShowTable &&
-                rows.map((row) => {
-                  const isSelected = row.getIsSelected();
-                  const isClickable = !!onRowClick;
-                  const customRowStyle = rowStyleCallback?.(row);
-
-                  return (
-                    <tr
-                      aria-selected={isSelected}
-                      className={cn(dataTableRowVariants({ isClickable, isSelected }), customRowStyle)}
-                      data-state={isSelected ? 'selected' : undefined}
-                      key={row.id}
-                      onClick={isClickable ? () => handleRowClick(row) : undefined}
-                    >
-                      {row.getVisibleCells().map((cell) => {
-                        const cellClassName = cell.column.columnDef.meta?.cellClassName;
-
-                        return (
-                          <td
-                            className={cn(dataTableCellVariants({ density }), cellClassName)}
-                            key={cell.id}
-                            style={{
-                              width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
-                            }}
-                          >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
+                (isResizing ? (
+                  <MemoizedDataTableBody
+                    density={density}
+                    isClickable={!!onRowClick}
+                    onRowClick={handleRowClick}
+                    rows={rows}
+                    rowStyleCallback={rowStyleCallback}
+                  />
+                ) : (
+                  <DataTableBody
+                    density={density}
+                    isClickable={!!onRowClick}
+                    onRowClick={handleRowClick}
+                    rows={rows}
+                    rowStyleCallback={rowStyleCallback}
+                  />
+                ))}
             </tbody>
           </table>
 

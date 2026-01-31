@@ -34,10 +34,10 @@ export interface AgentHooksData {
 }
 
 interface AgentHooksSectionProps {
-  /** Whether the inputs are disabled */
-  disabled?: boolean;
   /** Current hooks configuration */
   hooks: AgentHooksData;
+  /** Whether the inputs are disabled */
+  isDisabled?: boolean;
   /** Callback when hooks change */
   onHooksChange: (hooks: AgentHooksData) => void;
 }
@@ -54,17 +54,13 @@ const HOOK_EVENT_TYPES: Array<{ label: string; value: HookEventType }> = [
  * Section for managing agent lifecycle hooks.
  * Allows configuring hooks for PreToolUse, PostToolUse, and Stop events.
  */
-export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: AgentHooksSectionProps) => {
+export const AgentHooksSection = ({ hooks, isDisabled = false, onHooksChange }: AgentHooksSectionProps) => {
   const [activeTab, setActiveTab] = useState<HookEventType>('PreToolUse');
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [newBody, setNewBody] = useState('');
   const [newMatcher, setNewMatcher] = useState('');
 
   const currentEntries = useMemo(() => hooks[activeTab] ?? [], [hooks, activeTab]);
-
-  const isStopEvent = activeTab === 'Stop';
-  const isShowEmptyState = currentEntries.length === 0 && !isAddingEntry;
-  const isHasEntries = currentEntries.length > 0;
 
   const getTotalHooksCount = () => {
     return (hooks.PreToolUse?.length ?? 0) + (hooks.PostToolUse?.length ?? 0) + (hooks.Stop?.length ?? 0);
@@ -78,9 +74,10 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
       return;
     }
 
+    const isStopEventLocal = activeTab === 'Stop';
     const newEntry: AgentHookEntry = {
       body: trimmedBody,
-      ...(isStopEvent ? {} : { matcher: trimmedMatcher || undefined }),
+      ...(isStopEventLocal ? {} : { matcher: trimmedMatcher || undefined }),
     };
 
     onHooksChange({
@@ -92,7 +89,7 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
     setNewBody('');
     setNewMatcher('');
     setIsAddingEntry(false);
-  }, [activeTab, currentEntries, hooks, isStopEvent, newBody, newMatcher, onHooksChange]);
+  }, [activeTab, currentEntries, hooks, newBody, newMatcher, onHooksChange]);
 
   const handleDeleteEntry = useCallback(
     (index: number) => {
@@ -121,6 +118,11 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
       setNewMatcher('');
     }
   }, []);
+
+  // Derived boolean variables (after handlers per convention)
+  const isStopEvent = activeTab === 'Stop';
+  const isShowEmptyState = currentEntries.length === 0 && !isAddingEntry;
+  const isHasEntries = currentEntries.length > 0;
 
   return (
     <Collapsible defaultOpen={false}>
@@ -173,9 +175,9 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
                     <div className={'flex flex-col gap-2'}>
                       {currentEntries.map((entry, index) => (
                         <HookEntryCard
-                          disabled={disabled}
                           entry={entry}
                           index={index}
+                          isDisabled={isDisabled}
                           isShowMatcher={!isStopEvent}
                           key={`${eventType.value}-${index}`}
                           onDelete={handleDeleteEntry}
@@ -200,7 +202,7 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
                             {'Matcher (tool name or pattern)'}
                           </label>
                           <Input
-                            disabled={disabled}
+                            disabled={isDisabled}
                             id={'hook-matcher'}
                             onChange={(e) => setNewMatcher(e.target.value)}
                             placeholder={'e.g., Bash, Edit, mcp__*'}
@@ -216,7 +218,7 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
                         <Textarea
                           autoFocus
                           className={'font-mono text-xs'}
-                          disabled={disabled}
+                          disabled={isDisabled}
                           id={'hook-body'}
                           onChange={(e) => setNewBody(e.target.value)}
                           placeholder={'Enter the command or script to run...'}
@@ -225,10 +227,10 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
                         />
                       </div>
                       <div className={'flex justify-end gap-2'}>
-                        <Button disabled={disabled} onClick={handleCancelAdd} size={'sm'} variant={'ghost'}>
+                        <Button disabled={isDisabled} onClick={handleCancelAdd} size={'sm'} variant={'ghost'}>
                           {'Cancel'}
                         </Button>
-                        <Button disabled={disabled || !newBody.trim()} onClick={handleAddEntry} size={'sm'}>
+                        <Button disabled={isDisabled || !newBody.trim()} onClick={handleAddEntry} size={'sm'}>
                           {'Add Hook'}
                         </Button>
                       </div>
@@ -236,7 +238,7 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
                   ) : (
                     <Button
                       className={'w-full'}
-                      disabled={disabled}
+                      disabled={isDisabled}
                       onClick={() => setIsAddingEntry(true)}
                       size={'sm'}
                       variant={'outline'}
@@ -256,12 +258,12 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
 };
 
 interface HookEntryCardProps {
-  /** Whether the card actions are disabled */
-  disabled?: boolean;
   /** The hook entry to display */
   entry: AgentHookEntry;
   /** The index of the entry in the list */
   index: number;
+  /** Whether the card actions are disabled */
+  isDisabled?: boolean;
   /** Whether to show the matcher field */
   isShowMatcher?: boolean;
   /** Callback when delete is clicked */
@@ -271,7 +273,7 @@ interface HookEntryCardProps {
 /**
  * Card component for displaying a single hook entry.
  */
-const HookEntryCard = ({ disabled = false, entry, index, isShowMatcher = true, onDelete }: HookEntryCardProps) => {
+const HookEntryCard = ({ entry, index, isDisabled = false, isShowMatcher = true, onDelete }: HookEntryCardProps) => {
   const handleDeleteClick = useCallback(() => {
     onDelete(index);
   }, [index, onDelete]);
@@ -291,7 +293,7 @@ const HookEntryCard = ({ disabled = false, entry, index, isShowMatcher = true, o
         <IconButton
           aria-label={'Delete hook'}
           className={'size-7'}
-          disabled={disabled}
+          disabled={isDisabled}
           onClick={handleDeleteClick}
           title={'Delete'}
         >

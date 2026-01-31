@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 
 interface BuiltinToolsSelectorProps {
   /** Whether the inputs are disabled */
-  disabled?: boolean;
+  isDisabled?: boolean;
   /** Callback when tool selections change */
   onChange: (tools: Array<ToolSelection>) => void;
   /** Current tool selections */
@@ -22,7 +22,7 @@ interface BuiltinToolsSelectorProps {
  * Displays built-in Claude Code tools as a checklist with toggles.
  * Each tool can be enabled/disabled with an optional pattern for argument restrictions.
  */
-export const BuiltinToolsSelector = ({ disabled = false, onChange, value }: BuiltinToolsSelectorProps) => {
+export const BuiltinToolsSelector = ({ isDisabled = false, onChange, value }: BuiltinToolsSelectorProps) => {
   // Get current selection state for a tool
   const getToolSelection = useCallback(
     (toolName: string): ToolSelection | undefined => {
@@ -126,7 +126,7 @@ export const BuiltinToolsSelector = ({ disabled = false, onChange, value }: Buil
             >
               <Switch
                 checked={isEnabled}
-                disabled={disabled}
+                disabled={isDisabled}
                 onCheckedChange={(checked) => handleToggle(tool.name, checked)}
                 size={'sm'}
               />
@@ -140,7 +140,7 @@ export const BuiltinToolsSelector = ({ disabled = false, onChange, value }: Buil
                 <span className={'text-xs text-muted-foreground'}>{'Pattern:'}</span>
                 <Input
                   className={'h-7 w-24 font-mono text-xs'}
-                  disabled={disabled || !isEnabled}
+                  disabled={isDisabled || !isEnabled}
                   onChange={(e) => handlePatternChange(tool.name, e.target.value)}
                   placeholder={'*'}
                   value={isEnabled ? pattern : ''}

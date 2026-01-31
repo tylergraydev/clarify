@@ -9,7 +9,7 @@ interface AgentToolsSectionProps {
   /** Current custom tools */
   customTools: Array<CreateToolData>;
   /** Whether the inputs are disabled */
-  disabled?: boolean;
+  isDisabled?: boolean;
   /** Callback when custom tools change */
   onCustomToolsChange: (tools: Array<CreateToolData>) => void;
   /** Callback when built-in tool selections change */
@@ -27,15 +27,15 @@ interface AgentToolsSectionProps {
  */
 export const AgentToolsSection = ({
   customTools,
-  disabled = false,
+  isDisabled = false,
   onCustomToolsChange,
   onToolSelectionsChange,
   toolSelections,
 }: AgentToolsSectionProps) => {
   return (
     <div className={'flex flex-col gap-4'}>
-      <BuiltinToolsSelector disabled={disabled} onChange={onToolSelectionsChange} value={toolSelections} />
-      <CustomToolsManager disabled={disabled} onChange={onCustomToolsChange} value={customTools} />
+      <BuiltinToolsSelector isDisabled={isDisabled} onChange={onToolSelectionsChange} value={toolSelections} />
+      <CustomToolsManager isDisabled={isDisabled} onChange={onCustomToolsChange} value={customTools} />
     </div>
   );
 };

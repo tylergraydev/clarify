@@ -10,8 +10,8 @@ import { cn } from '@/lib/utils';
 type AgentColor = (typeof agentColors)[number];
 
 interface AgentColorPickerProps extends Omit<ComponentPropsWithRef<'div'>, 'onChange'> {
-  disabled?: boolean;
   hasError?: boolean;
+  isDisabled?: boolean;
   isRequired?: boolean;
   label?: string;
   onChange?: (color: AgentColor) => void;
@@ -24,8 +24,8 @@ interface AgentColorPickerProps extends Omit<ComponentPropsWithRef<'div'>, 'onCh
  *
  * @param props - Component props
  * @param props.className - Additional CSS classes
- * @param props.disabled - Whether the picker is disabled
  * @param props.hasError - Whether to display error styling
+ * @param props.isDisabled - Whether the picker is disabled
  * @param props.isRequired - Whether a selection is required
  * @param props.label - Label text to display above the picker
  * @param props.onChange - Callback when color selection changes
@@ -34,8 +34,8 @@ interface AgentColorPickerProps extends Omit<ComponentPropsWithRef<'div'>, 'onCh
  */
 export const AgentColorPicker = ({
   className,
-  disabled = false,
   hasError = false,
+  isDisabled = false,
   isRequired,
   label,
   onChange,
@@ -57,7 +57,7 @@ export const AgentColorPicker = ({
       )}
       <RadioGroup
         className={cn('rounded-md border p-2', hasError ? 'border-destructive' : 'border-transparent')}
-        disabled={disabled}
+        disabled={isDisabled}
         onValueChange={(newValue) => onChange?.(newValue as AgentColor)}
         orientation={'horizontal'}
         value={value ?? ''}
@@ -67,11 +67,11 @@ export const AgentColorPicker = ({
             className={cn(
               'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5',
               'transition-colors hover:bg-muted/50',
-              disabled && 'cursor-not-allowed opacity-50'
+              isDisabled && 'cursor-not-allowed opacity-50'
             )}
             key={color}
           >
-            <RadioGroupItem className={'sr-only'} disabled={disabled} value={color} />
+            <RadioGroupItem className={'sr-only'} disabled={isDisabled} value={color} />
             <div
               className={cn(
                 'size-5 rounded-full ring-2 ring-offset-2 ring-offset-background transition-all',

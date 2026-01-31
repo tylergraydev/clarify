@@ -36,7 +36,7 @@ async function createWindow(): Promise<void> {
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:3000');
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
   } else {
     await loadURL?.(mainWindow);
   }

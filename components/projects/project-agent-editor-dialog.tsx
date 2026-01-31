@@ -290,7 +290,7 @@ export const ProjectAgentEditorDialog = ({ agent, onSuccess, projectId, trigger 
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className={'border-t border-border p-3'}>
-                      <AgentToolsManager agentId={agent.id} disabled={isSubmitting || isResetting} />
+                      <AgentToolsManager agentId={agent.id} isDisabled={isSubmitting || isResetting} />
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -302,7 +302,7 @@ export const ProjectAgentEditorDialog = ({ agent, onSuccess, projectId, trigger 
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className={'border-t border-border p-3'}>
-                      <AgentSkillsManager agentId={agent.id} disabled={isSubmitting || isResetting} />
+                      <AgentSkillsManager agentId={agent.id} isDisabled={isSubmitting || isResetting} />
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -313,8 +313,8 @@ export const ProjectAgentEditorDialog = ({ agent, onSuccess, projectId, trigger 
                   <CollapsibleContent>
                     <div className={'border-t border-border p-3'}>
                       <AgentHooksSection
-                        disabled={isSubmitting || isResetting}
                         hooks={pendingHooks}
+                        isDisabled={isSubmitting || isResetting}
                         onHooksChange={setPendingHooks}
                       />
                     </div>

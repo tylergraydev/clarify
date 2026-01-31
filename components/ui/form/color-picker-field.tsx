@@ -21,6 +21,18 @@ type ColorPickerFieldProps = ClassName &
     label: string;
   };
 
+/**
+ * Form field component for color picker selection.
+ * Integrates AgentColorPicker with TanStack Form for form state management.
+ *
+ * @param props - Component props
+ * @param props.className - Additional CSS classes
+ * @param props.description - Helper text displayed below the field
+ * @param props.isDisabled - Whether the field is disabled
+ * @param props.isRequired - Whether the field is required
+ * @param props.label - Label text displayed above the field
+ * @param props.size - Size variant for the field
+ */
 export const ColorPickerField = ({
   className,
   description,
@@ -56,8 +68,8 @@ export const ColorPickerField = ({
 
       {/* Color Picker */}
       <AgentColorPicker
-        disabled={isDisabled}
         hasError={hasError}
+        isDisabled={isDisabled}
         onChange={(color) => field.handleChange(color)}
         value={field.state.value ?? ''}
       />

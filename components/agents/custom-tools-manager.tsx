@@ -22,7 +22,7 @@ interface CustomToolEntry {
 
 interface CustomToolsManagerProps {
   /** Whether the inputs are disabled */
-  disabled?: boolean;
+  isDisabled?: boolean;
   /** Callback when custom tools change */
   onChange: (tools: Array<CreateToolData>) => void;
   /** Current custom tools */
@@ -33,7 +33,7 @@ interface CustomToolsManagerProps {
  * Manages custom (MCP / user-defined) tools for agents.
  * Allows adding and removing tools that are not built-in Claude Code tools.
  */
-export const CustomToolsManager = ({ disabled = false, onChange, value }: CustomToolsManagerProps) => {
+export const CustomToolsManager = ({ isDisabled = false, onChange, value }: CustomToolsManagerProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newToolName, setNewToolName] = useState('');
   const [newToolPattern, setNewToolPattern] = useState('*');
@@ -117,7 +117,7 @@ export const CustomToolsManager = ({ disabled = false, onChange, value }: Custom
               <IconButton
                 aria-label={'Delete tool'}
                 className={'size-7'}
-                disabled={disabled}
+                disabled={isDisabled}
                 onClick={() => handleDeleteTool(entry.toolName)}
                 title={'Delete'}
               >
@@ -138,7 +138,7 @@ export const CustomToolsManager = ({ disabled = false, onChange, value }: Custom
               <Input
                 autoFocus
                 className={'flex-1'}
-                disabled={disabled}
+                disabled={isDisabled}
                 onChange={(e) => {
                   setNewToolName(e.target.value);
                   setValidationError(null);
@@ -148,7 +148,7 @@ export const CustomToolsManager = ({ disabled = false, onChange, value }: Custom
               />
               <Input
                 className={'w-32'}
-                disabled={disabled}
+                disabled={isDisabled}
                 onChange={(e) => {
                   setNewToolPattern(e.target.value);
                   setValidationError(null);
@@ -160,10 +160,10 @@ export const CustomToolsManager = ({ disabled = false, onChange, value }: Custom
             {validationError && <p className={'text-xs text-destructive'}>{validationError}</p>}
           </div>
           <div className={'flex justify-end gap-2'}>
-            <Button disabled={disabled} onClick={handleCancel} size={'sm'} variant={'ghost'}>
+            <Button disabled={isDisabled} onClick={handleCancel} size={'sm'} variant={'ghost'}>
               {'Cancel'}
             </Button>
-            <Button disabled={disabled || !newToolName.trim()} onClick={handleAddTool} size={'sm'}>
+            <Button disabled={isDisabled || !newToolName.trim()} onClick={handleAddTool} size={'sm'}>
               {'Add Tool'}
             </Button>
           </div>
@@ -171,7 +171,7 @@ export const CustomToolsManager = ({ disabled = false, onChange, value }: Custom
       ) : (
         <Button
           className={'w-full'}
-          disabled={disabled}
+          disabled={isDisabled}
           onClick={() => setIsAdding(true)}
           size={'sm'}
           variant={'outline'}
