@@ -234,7 +234,10 @@ export const ImportAgentDialog = ({
 
                     {/* Editable Name Field */}
                     <div className={'mt-3'}>
-                      <label className={'mb-1.5 block text-sm font-medium text-foreground'} htmlFor={'agent-name-input'}>
+                      <label
+                        className={'mb-1.5 block text-sm font-medium text-foreground'}
+                        htmlFor={'agent-name-input'}
+                      >
                         {'Agent Name (kebab-case)'}
                       </label>
                       <Input

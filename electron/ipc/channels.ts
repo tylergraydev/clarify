@@ -89,6 +89,7 @@ export const IpcChannels = {
     addRepo: 'project:addRepo',
     create: 'project:create',
     delete: 'project:delete',
+    deleteHard: 'project:deleteHard',
     get: 'project:get',
     list: 'project:list',
     update: 'project:update',

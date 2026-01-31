@@ -1,16 +1,17 @@
 'use client';
 
 import type { Row } from '@tanstack/react-table';
-import type { ComponentPropsWithRef } from 'react';
+import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 import { format } from 'date-fns';
-import { Archive, ArchiveRestore, ExternalLink } from 'lucide-react';
+import { Archive, ArchiveRestore, ExternalLink, Trash2 } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
 import type { Project } from '@/db/schema/projects.schema';
 
 import { ConfirmArchiveDialog } from '@/components/projects/confirm-archive-dialog';
-import { Badge } from '@/components/ui/badge';
+import { ConfirmDeleteProjectDialog } from '@/components/projects/confirm-delete-project-dialog';
+import { Switch } from '@/components/ui/switch';
 import {
   createColumnHelper,
   DataTable,
@@ -27,14 +28,20 @@ import { cn } from '@/lib/utils';
 interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
   /** Whether an archive mutation is in progress */
   isArchiving?: boolean;
+  /** Whether a delete mutation is in progress */
+  isDeleting?: boolean;
   /** Callback when the user confirms archiving a project */
   onArchive?: (projectId: number) => void;
+  /** Callback when the user confirms permanently deleting a project */
+  onDelete?: (projectId: number) => void;
   /** Callback when the user confirms unarchiving a project */
   onUnarchive?: (projectId: number) => void;
   /** Callback when the user clicks view details on a project */
   onViewDetails?: (projectId: number) => void;
   /** Array of projects to display */
   projects: Array<Project>;
+  /** Custom toolbar content (e.g., filters) */
+  toolbarContent?: ReactNode;
 }
 
 // ============================================================================
@@ -62,7 +69,9 @@ const columnHelper = createColumnHelper<Project>();
 
 interface ActionsCellProps {
   isArchiving: boolean;
+  isDeleting: boolean;
   onArchive?: (projectId: number) => void;
+  onDelete?: (projectId: number) => void;
   onUnarchive?: (projectId: number) => void;
   onViewDetails?: (projectId: number) => void;
   row: Row<Project>;
@@ -74,16 +83,21 @@ interface ActionsCellProps {
  */
 const ActionsCell = memo(function ActionsCell({
   isArchiving,
+  isDeleting,
   onArchive,
+  onDelete,
   onUnarchive,
   onViewDetails,
   row,
 }: ActionsCellProps) {
   const project = row.original;
   const isArchived = project.archivedAt !== null;
+  const isActionDisabled = isArchiving || isDeleting;
 
   // Dialog state for archive/unarchive confirmation
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  // Dialog state for delete confirmation
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleArchiveConfirm = useCallback(() => {
     if (isArchived) {
@@ -94,11 +108,16 @@ const ActionsCell = memo(function ActionsCell({
     setIsArchiveDialogOpen(false);
   }, [isArchived, onArchive, onUnarchive, project.id]);
 
+  const handleDeleteConfirm = useCallback(() => {
+    onDelete?.(project.id);
+    setIsDeleteDialogOpen(false);
+  }, [onDelete, project.id]);
+
   const actions: Array<DataTableRowAction<Project>> = [];
 
   // View action
   actions.push({
-    disabled: isArchiving,
+    disabled: isActionDisabled,
     icon: <ExternalLink aria-hidden={'true'} className={'size-4'} />,
     label: 'View',
     onAction: (r) => onViewDetails?.(r.original.id),
@@ -107,7 +126,7 @@ const ActionsCell = memo(function ActionsCell({
 
   // Archive/Unarchive action - opens dialog
   actions.push({
-    disabled: isArchiving,
+    disabled: isActionDisabled,
     icon: isArchived ? (
       <ArchiveRestore aria-hidden={'true'} className={'size-4'} />
     ) : (
@@ -116,6 +135,19 @@ const ActionsCell = memo(function ActionsCell({
     label: isArchived ? 'Unarchive' : 'Archive',
     onAction: () => setIsArchiveDialogOpen(true),
     type: 'button',
+  });
+
+  // Separator before destructive actions
+  actions.push({ type: 'separator' });
+
+  // Delete action - opens dialog
+  actions.push({
+    disabled: isActionDisabled,
+    icon: <Trash2 aria-hidden={'true'} className={'size-4 text-destructive'} />,
+    label: 'Delete',
+    onAction: () => setIsDeleteDialogOpen(true),
+    type: 'button',
+    variant: 'destructive',
   });
 
   return (
@@ -127,6 +159,66 @@ const ActionsCell = memo(function ActionsCell({
         isOpen={isArchiveDialogOpen}
         onConfirm={handleArchiveConfirm}
         onOpenChange={setIsArchiveDialogOpen}
+        projectName={project.name}
+      />
+      <ConfirmDeleteProjectDialog
+        isLoading={isDeleting}
+        isOpen={isDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        onOpenChange={setIsDeleteDialogOpen}
+        projectName={project.name}
+      />
+    </Fragment>
+  );
+});
+
+interface StatusCellProps {
+  isArchiving: boolean;
+  onArchive?: (projectId: number) => void;
+  onUnarchive?: (projectId: number) => void;
+  row: Row<Project>;
+}
+
+/**
+ * Memoized status cell component with interactive toggle switch.
+ * Clicking the toggle opens a confirmation dialog before archiving/unarchiving.
+ */
+const StatusCell = memo(function StatusCell({ isArchiving, onArchive, onUnarchive, row }: StatusCellProps) {
+  const project = row.original;
+  const isArchived = project.archivedAt !== null;
+
+  // Dialog state for archive/unarchive confirmation
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleToggle = useCallback(() => {
+    setIsDialogOpen(true);
+  }, []);
+
+  const handleConfirm = useCallback(() => {
+    if (isArchived) {
+      onUnarchive?.(project.id);
+    } else {
+      onArchive?.(project.id);
+    }
+    setIsDialogOpen(false);
+  }, [isArchived, onArchive, onUnarchive, project.id]);
+
+  return (
+    <Fragment>
+      <div
+        className={'flex items-center gap-2'}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <Switch checked={!isArchived} disabled={isArchiving} onCheckedChange={handleToggle} size={'sm'} />
+        <span className={'text-sm text-muted-foreground'}>{isArchived ? 'Archived' : 'Active'}</span>
+      </div>
+      <ConfirmArchiveDialog
+        isArchived={isArchived}
+        isLoading={isArchiving}
+        isOpen={isDialogOpen}
+        onConfirm={handleConfirm}
+        onOpenChange={setIsDialogOpen}
         projectName={project.name}
       />
     </Fragment>
@@ -151,11 +243,14 @@ const ActionsCell = memo(function ActionsCell({
 export const ProjectTable = ({
   className,
   isArchiving = false,
+  isDeleting = false,
   onArchive,
+  onDelete,
   onUnarchive,
   onViewDetails,
   projects,
   ref,
+  toolbarContent,
   ...props
 }: ProjectTableProps) => {
   const handleRowClick = useCallback(
@@ -179,7 +274,9 @@ export const ProjectTable = ({
         cell: ({ row }) => (
           <ActionsCell
             isArchiving={isArchiving}
+            isDeleting={isDeleting}
             onArchive={onArchive}
+            onDelete={onDelete}
             onUnarchive={onUnarchive}
             onViewDetails={onViewDetails}
             row={row}
@@ -242,16 +339,15 @@ export const ProjectTable = ({
         size: 110,
       }),
 
-      // Status column
+      // Status column with interactive toggle
       columnHelper.display({
-        cell: ({ row }) => {
-          const isArchived = row.original.archivedAt !== null;
-          return <Badge variant={isArchived ? 'stale' : 'completed'}>{isArchived ? 'Archived' : 'Active'}</Badge>;
-        },
+        cell: ({ row }) => (
+          <StatusCell isArchiving={isArchiving} onArchive={onArchive} onUnarchive={onUnarchive} row={row} />
+        ),
         enableSorting: false,
         header: 'Status',
         id: 'status',
-        size: 100,
+        size: 120,
       }),
 
       // Updated At column - filler column to take remaining space
@@ -266,7 +362,7 @@ export const ProjectTable = ({
         size: 110,
       }),
     ],
-    [isArchiving, onArchive, onUnarchive, onViewDetails]
+    [isArchiving, isDeleting, onArchive, onDelete, onUnarchive, onViewDetails]
   );
 
   return (
@@ -296,6 +392,7 @@ export const ProjectTable = ({
       ref={ref}
       rowStyleCallback={rowStyleCallback}
       searchPlaceholder={'Search projects...'}
+      toolbarContent={toolbarContent}
       {...props}
     />
   );

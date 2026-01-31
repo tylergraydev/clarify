@@ -107,6 +107,16 @@ export function registerProjectHandlers(
     }
   );
 
+  // Permanently delete a project and all associated data
+  ipcMain.handle(IpcChannels.project.deleteHard, async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
+    try {
+      await projectsRepository.delete(id);
+    } catch (error) {
+      console.error('[IPC Error] project:deleteHard:', error);
+      throw error;
+    }
+  });
+
   // Add a repository to a project
   ipcMain.handle(
     IpcChannels.project.addRepo,

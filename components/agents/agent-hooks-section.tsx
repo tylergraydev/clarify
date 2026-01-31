@@ -230,7 +230,12 @@ export const AgentHooksSection = ({ hooks, isDisabled = false, onHooksChange }: 
                         <Button disabled={isDisabled} onClick={handleCancelAdd} size={'sm'} variant={'ghost'}>
                           {'Cancel'}
                         </Button>
-                        <Button disabled={isDisabled || !newBody.trim()} onClick={handleAddEntry} size={'sm'} type={'button'}>
+                        <Button
+                          disabled={isDisabled || !newBody.trim()}
+                          onClick={handleAddEntry}
+                          size={'sm'}
+                          type={'button'}
+                        >
                           {'Add Hook'}
                         </Button>
                       </div>
@@ -273,7 +278,13 @@ interface HookEntryCardProps {
 /**
  * Card component for displaying a single hook entry.
  */
-const HookEntryCard = ({ entry, index, isDisabled = false, onDelete, shouldShowMatcher = true }: HookEntryCardProps) => {
+const HookEntryCard = ({
+  entry,
+  index,
+  isDisabled = false,
+  onDelete,
+  shouldShowMatcher = true,
+}: HookEntryCardProps) => {
   const handleDeleteClick = useCallback(() => {
     onDelete(index);
   }, [index, onDelete]);

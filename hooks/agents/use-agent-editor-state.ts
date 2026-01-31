@@ -108,14 +108,5 @@ export const useAgentEditorState = ({
       isSubmitting,
       isViewMode,
     };
-  }, [
-    agent,
-    hasInitialData,
-    isCreatePending,
-    isMovePending,
-    isResetPending,
-    isUpdatePending,
-    mode,
-    projectId,
-  ]);
+  }, [agent, hasInitialData, isCreatePending, isMovePending, isResetPending, isUpdatePending, mode, projectId]);
 };

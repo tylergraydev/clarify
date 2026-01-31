@@ -256,8 +256,9 @@ export interface ElectronAPI {
     ): Promise<import('../db/schema').Repository>;
     create(data: import('../db/schema').NewProject): Promise<import('../db/schema').Project>;
     delete(id: number): Promise<boolean>;
+    deleteHard(id: number): Promise<void>;
     get(id: number): Promise<import('../db/schema').Project | undefined>;
-    list(): Promise<Array<import('../db/schema').Project>>;
+    list(options?: { includeArchived?: boolean }): Promise<Array<import('../db/schema').Project>>;
     update(
       id: number,
       data: Partial<import('../db/schema').NewProject>

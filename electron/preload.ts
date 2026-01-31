@@ -112,6 +112,7 @@ const IpcChannels = {
     addRepo: 'project:addRepo',
     create: 'project:create',
     delete: 'project:delete',
+    deleteHard: 'project:deleteHard',
     get: 'project:get',
     list: 'project:list',
     update: 'project:update',
@@ -399,8 +400,9 @@ export interface ElectronAPI {
     addRepo(projectId: number, repoData: NewRepository): Promise<Repository>;
     create(data: NewProject): Promise<Project>;
     delete(id: number): Promise<boolean>;
+    deleteHard(id: number): Promise<void>;
     get(id: number): Promise<Project | undefined>;
-    list(): Promise<Array<Project>>;
+    list(options?: { includeArchived?: boolean }): Promise<Array<Project>>;
     update(id: number, data: Partial<NewProject>): Promise<Project | undefined>;
   };
   repository: {
@@ -615,8 +617,9 @@ const electronAPI: ElectronAPI = {
     addRepo: (projectId, repoData) => ipcRenderer.invoke(IpcChannels.project.addRepo, projectId, repoData),
     create: (data) => ipcRenderer.invoke(IpcChannels.project.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.project.delete, id),
+    deleteHard: (id) => ipcRenderer.invoke(IpcChannels.project.deleteHard, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.project.get, id),
-    list: () => ipcRenderer.invoke(IpcChannels.project.list),
+    list: (options) => ipcRenderer.invoke(IpcChannels.project.list, options),
     update: (id, data) => ipcRenderer.invoke(IpcChannels.project.update, id, data),
   },
   repository: {

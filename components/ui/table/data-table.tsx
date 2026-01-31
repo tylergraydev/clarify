@@ -14,6 +14,7 @@ import type {
 import type { ComponentPropsWithRef, CSSProperties, ReactNode } from 'react';
 
 import {
+  filterFns,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -672,6 +673,7 @@ export const DataTable = <TData, TValue>({
     getPaginationRowModel: isPaginationEnabled ? getPaginationRowModel() : undefined,
     getRowId,
     getSortedRowModel: isSortingEnabled ? getSortedRowModel() : undefined,
+    globalFilterFn: filterFns.includesString,
     manualPagination: !isPaginationEnabled,
     onColumnFiltersChange,
     onColumnOrderChange: handleColumnOrderChange,

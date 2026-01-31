@@ -4,35 +4,56 @@ import { FolderOpen, Plus } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { withParamValidation } from 'next-typesafe-url/app/hoc';
 import { useRouter } from 'next/navigation';
-import { parseAsBoolean, useQueryState } from 'nuqs';
+import { parseAsStringLiteral, useQueryState } from 'nuqs';
 import { useMemo } from 'react';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
 import { ProjectTable } from '@/components/projects/project-table';
+import { type ArchiveFilterValue, ProjectTableToolbar } from '@/components/projects/project-table-toolbar';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Switch } from '@/components/ui/switch';
 import { DataTableSkeleton } from '@/components/ui/table';
-import { useArchiveProject, useProjects, useUnarchiveProject } from '@/hooks/queries/use-projects';
+import {
+  useArchiveProject,
+  useDeleteProjectPermanently,
+  useProjects,
+  useUnarchiveProject,
+} from '@/hooks/queries/use-projects';
 
+import { ProjectsPageHeader } from './_components/projects-page-header';
 import { Route } from './route-type';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const ARCHIVE_FILTER_VALUES = ['all', 'active', 'archived'] as const;
+const DEFAULT_ARCHIVE_FILTER: ArchiveFilterValue = 'active';
+
+// ============================================================================
+// Page Component
+// ============================================================================
 
 /**
  * Projects page - Main entry point for project management.
  *
  * Features:
  * - Table view displaying all projects
- * - Show/hide archived projects filter
+ * - Filters popover with archive status filter
+ * - Project count badge in header
  * - Create new project dialog
- * - Archive/unarchive project actions
+ * - Archive/unarchive project actions via Status column toggle
  * - Empty state when no projects exist
  */
 function ProjectsPageContent() {
   const router = useRouter();
 
   // URL state management with nuqs
-  const [showArchived, setShowArchived] = useQueryState('showArchived', parseAsBoolean.withDefault(false));
+  const [archiveFilter, setArchiveFilter] = useQueryState(
+    'status',
+    parseAsStringLiteral(ARCHIVE_FILTER_VALUES).withDefault(DEFAULT_ARCHIVE_FILTER)
+  );
 
   // Data fetching
   const { data: projects, isLoading } = useProjects();
@@ -40,19 +61,31 @@ function ProjectsPageContent() {
   // Mutations
   const archiveProjectMutation = useArchiveProject();
   const unarchiveProjectMutation = useUnarchiveProject();
+  const deleteProjectMutation = useDeleteProjectPermanently();
 
   const isArchiving = archiveProjectMutation.isPending || unarchiveProjectMutation.isPending;
+  const isDeleting = deleteProjectMutation.isPending;
 
-  // Filter projects based on showArchived state
+  // Filter projects based on archiveFilter state
   const filteredProjects = useMemo(() => {
     if (!projects) return [];
-    if (showArchived) return projects;
+    if (archiveFilter === 'all') return projects;
+    if (archiveFilter === 'archived') return projects.filter((project) => project.archivedAt !== null);
     return projects.filter((project) => project.archivedAt === null);
-  }, [projects, showArchived]);
+  }, [projects, archiveFilter]);
+
+  // Calculate counts for header badge
+  const totalCount = projects?.length ?? 0;
+  const filteredCount = filteredProjects.length;
+  const isFiltered = archiveFilter !== 'all';
 
   // Handlers
-  const handleShowArchivedChange = (checked: boolean) => {
-    void setShowArchived(checked);
+  const handleArchiveFilterChange = (value: ArchiveFilterValue) => {
+    void setArchiveFilter(value);
+  };
+
+  const handleResetFilters = () => {
+    void setArchiveFilter(DEFAULT_ARCHIVE_FILTER);
   };
 
   const handleArchive = (projectId: number) => {
@@ -63,6 +96,10 @@ function ProjectsPageContent() {
     unarchiveProjectMutation.mutate(projectId);
   };
 
+  const handleDelete = (projectId: number) => {
+    deleteProjectMutation.mutate(projectId);
+  };
+
   const handleViewDetails = (projectId: number) => {
     router.push($path({ route: '/projects/[id]', routeParams: { id: projectId } }));
   };
@@ -71,40 +108,9 @@ function ProjectsPageContent() {
   const hasNoProjects = !isLoading && projects && projects.length === 0;
 
   return (
-    <div className={'space-y-6'}>
-      {/* Page heading */}
-      <div className={'flex items-start justify-between gap-4'}>
-        <div className={'space-y-1'}>
-          <h1 className={'text-2xl font-semibold tracking-tight'}>Projects</h1>
-          <p className={'text-muted-foreground'}>Manage your projects and repositories.</p>
-        </div>
-        <CreateProjectDialog
-          trigger={
-            <Button>
-              <Plus aria-hidden={'true'} className={'size-4'} />
-              {'Create Project'}
-            </Button>
-          }
-        />
-      </div>
-
-      {/* Filters */}
-      {!hasNoProjects && (
-        <div className={'flex flex-wrap items-center justify-end gap-4'}>
-          {/* Show archived toggle */}
-          <div className={'flex items-center gap-2'}>
-            <label className={'text-sm text-muted-foreground'} htmlFor={'show-archived'}>
-              {'Show archived'}
-            </label>
-            <Switch
-              checked={showArchived}
-              id={'show-archived'}
-              onCheckedChange={handleShowArchivedChange}
-              size={'sm'}
-            />
-          </div>
-        </div>
-      )}
+    <div className={'space-y-6'} id={'project-content'}>
+      {/* Page heading with count badge */}
+      <ProjectsPageHeader filteredCount={filteredCount} isFiltered={isFiltered} totalCount={totalCount} />
 
       {/* Projects content */}
       <QueryErrorBoundary>
@@ -131,21 +137,30 @@ function ProjectsPageContent() {
           // Empty state when filters hide all projects
           <EmptyState
             action={
-              <Button onClick={() => handleShowArchivedChange(true)} variant={'outline'}>
-                {'Show archived projects'}
+              <Button onClick={() => handleArchiveFilterChange('all')} variant={'outline'}>
+                {'Show all projects'}
               </Button>
             }
-            description={'All your projects are archived. Toggle the filter to see them.'}
+            description={'No projects match your current filter. Try adjusting the status filter.'}
             icon={<FolderOpen aria-hidden={'true'} className={'size-6'} />}
-            title={'No active projects'}
+            title={'No matching projects'}
           />
         ) : (
           <ProjectTable
             isArchiving={isArchiving}
+            isDeleting={isDeleting}
             onArchive={handleArchive}
+            onDelete={handleDelete}
             onUnarchive={handleUnarchive}
             onViewDetails={handleViewDetails}
             projects={filteredProjects}
+            toolbarContent={
+              <ProjectTableToolbar
+                archiveFilter={archiveFilter}
+                onArchiveFilterChange={handleArchiveFilterChange}
+                onResetFilters={handleResetFilters}
+              />
+            }
           />
         )}
       </QueryErrorBoundary>

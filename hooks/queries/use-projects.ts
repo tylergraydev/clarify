@@ -4,8 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { NewProject, NewRepository } from '@/types/electron';
 
+import { agentKeys } from '@/lib/queries/agents';
 import { projectKeys } from '@/lib/queries/projects';
 import { repositoryKeys } from '@/lib/queries/repositories';
+import { workflowKeys } from '@/lib/queries/workflows';
 
 import { useElectron } from '../use-electron';
 
@@ -87,7 +89,7 @@ export function useCreateProject() {
 }
 
 /**
- * Delete a project
+ * Delete a project (soft delete / archive)
  */
 export function useDeleteProject() {
   const queryClient = useQueryClient();
@@ -100,6 +102,27 @@ export function useDeleteProject() {
       void queryClient.invalidateQueries({ queryKey: projectKeys._def });
       // Also invalidate repository queries as repositories may have been deleted
       void queryClient.invalidateQueries({ queryKey: repositoryKeys._def });
+    },
+  });
+}
+
+/**
+ * Permanently delete a project and all associated data.
+ * This is a hard delete that cascades to repositories, workflows, agents, etc.
+ */
+export function useDeleteProjectPermanently() {
+  const queryClient = useQueryClient();
+  const { api } = useElectron();
+
+  return useMutation({
+    mutationFn: (id: number) => api!.project.deleteHard(id),
+    onSuccess: () => {
+      // Invalidate all project queries
+      void queryClient.invalidateQueries({ queryKey: projectKeys._def });
+      // Invalidate related queries that may have been cascade deleted
+      void queryClient.invalidateQueries({ queryKey: repositoryKeys._def });
+      void queryClient.invalidateQueries({ queryKey: workflowKeys._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys._def });
     },
   });
 }
@@ -126,7 +149,7 @@ export function useProjects() {
   return useQuery({
     ...projectKeys.list(),
     enabled: isElectron,
-    queryFn: () => api!.project.list(),
+    queryFn: () => api!.project.list({ includeArchived: true }),
   });
 }
 
