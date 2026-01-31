@@ -2,10 +2,11 @@
 
 import type { ReactNode } from 'react';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { Project } from '@/types/electron';
 
+import { ConfirmDiscardDialog } from '@/components/agents/confirm-discard-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
@@ -21,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { useUpdateProject } from '@/hooks/queries/use-projects';
 import { useAppForm } from '@/lib/forms/form-hook';
-import { type CreateProjectFormValues, createProjectSchema } from '@/lib/validations/project';
+import { type EditProjectFormValues, editProjectSchema } from '@/lib/validations/project';
 
 interface EditProjectDialogProps {
   /** Callback when project is successfully updated */
@@ -34,12 +35,13 @@ interface EditProjectDialogProps {
 
 export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
   const updateProjectMutation = useUpdateProject();
 
   const isSubmitting = updateProjectMutation.isPending;
 
-  const defaultValues: CreateProjectFormValues = {
+  const defaultValues: EditProjectFormValues = {
     description: project.description ?? '',
     name: project.name,
   };
@@ -63,30 +65,44 @@ export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDi
       }
     },
     validators: {
-      onSubmit: createProjectSchema,
+      onSubmit: editProjectSchema,
     },
   });
 
   // Reset form when project changes
   useEffect(() => {
-    const resetValues: CreateProjectFormValues = {
+    const resetValues: EditProjectFormValues = {
       description: project.description ?? '',
       name: project.name,
     };
     form.reset(resetValues);
   }, [project, form]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsOpen(false);
     form.reset();
-  };
+  }, [form]);
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
-      form.reset();
-    }
-  };
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && form.state.isDirty) {
+        // Show discard confirmation if form has unsaved changes
+        setIsDiscardDialogOpen(true);
+        return;
+      }
+      setIsOpen(open);
+      if (!open) {
+        form.reset();
+      }
+    },
+    [form]
+  );
+
+  const handleConfirmDiscard = useCallback(() => {
+    setIsDiscardDialogOpen(false);
+    setIsOpen(false);
+    form.reset();
+  }, [form]);
 
   return (
     <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
@@ -140,9 +156,6 @@ export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDi
               </form.AppField>
             </div>
 
-            {/* Form Error */}
-            <form.FormError />
-
             {/* Action Buttons */}
             <DialogFooter sticky={false}>
               <DialogClose>
@@ -151,12 +164,20 @@ export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDi
                 </Button>
               </DialogClose>
               <form.AppForm>
+                <form.FormError />
                 <form.SubmitButton>{isSubmitting ? 'Saving...' : 'Save Changes'}</form.SubmitButton>
               </form.AppForm>
             </DialogFooter>
           </form>
         </DialogPopup>
       </DialogPortal>
+
+      {/* Confirm Discard Dialog */}
+      <ConfirmDiscardDialog
+        isOpen={isDiscardDialogOpen}
+        onConfirm={handleConfirmDiscard}
+        onOpenChange={setIsDiscardDialogOpen}
+      />
     </DialogRoot>
   );
 };

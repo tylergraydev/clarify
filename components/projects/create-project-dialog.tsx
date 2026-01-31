@@ -1,7 +1,8 @@
 'use client';
 
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useCallback, useState } from 'react';
 
+import { ConfirmDiscardDialog } from '@/components/agents/confirm-discard-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
@@ -28,6 +29,7 @@ interface CreateProjectDialogProps {
 
 export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
   const createProjectMutation = useCreateProject();
 
@@ -59,17 +61,31 @@ export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogP
     },
   });
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsOpen(false);
     form.reset();
-  };
+  }, [form]);
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
-      form.reset();
-    }
-  };
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && form.state.isDirty) {
+        // Show discard confirmation if form has unsaved changes
+        setIsDiscardDialogOpen(true);
+        return;
+      }
+      setIsOpen(open);
+      if (!open) {
+        form.reset();
+      }
+    },
+    [form]
+  );
+
+  const handleConfirmDiscard = useCallback(() => {
+    setIsDiscardDialogOpen(false);
+    setIsOpen(false);
+    form.reset();
+  }, [form]);
 
   return (
     <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
@@ -138,6 +154,13 @@ export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogP
           </form>
         </DialogPopup>
       </DialogPortal>
+
+      {/* Confirm Discard Dialog */}
+      <ConfirmDiscardDialog
+        isOpen={isDiscardDialogOpen}
+        onConfirm={handleConfirmDiscard}
+        onOpenChange={setIsDiscardDialogOpen}
+      />
     </DialogRoot>
   );
 };

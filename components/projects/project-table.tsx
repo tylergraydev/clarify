@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { Archive, ArchiveRestore, ExternalLink, Trash2 } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
-import type { Project } from '@/db/schema/projects.schema';
+import type { Project } from '@/types/electron';
 
 import { ConfirmArchiveDialog } from '@/components/projects/confirm-archive-dialog';
 import { ConfirmDeleteProjectDialog } from '@/components/projects/confirm-delete-project-dialog';
@@ -26,10 +26,10 @@ import { cn } from '@/lib/utils';
 // ============================================================================
 
 interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
-  /** Whether an archive mutation is in progress */
-  isArchiving?: boolean;
-  /** Whether a delete mutation is in progress */
-  isDeleting?: boolean;
+  /** Set of project IDs currently being archived/unarchived */
+  archivingIds?: Set<number>;
+  /** Set of project IDs currently being deleted */
+  deletingIds?: Set<number>;
   /** Callback when the user confirms archiving a project. Returns a promise that resolves when the mutation completes. */
   onArchive?: (projectId: number) => Promise<void>;
   /** Callback when the user confirms permanently deleting a project. Returns a promise that resolves when the mutation completes. */
@@ -68,8 +68,8 @@ const columnHelper = createColumnHelper<Project>();
 // ============================================================================
 
 interface ActionsCellProps {
-  isArchiving: boolean;
-  isDeleting: boolean;
+  archivingIds: Set<number>;
+  deletingIds: Set<number>;
   onArchive?: (projectId: number) => Promise<void>;
   onDelete?: (projectId: number) => Promise<void>;
   onUnarchive?: (projectId: number) => Promise<void>;
@@ -82,8 +82,8 @@ interface ActionsCellProps {
  * on every table render. Uses dialog for archive/unarchive confirmation.
  */
 const ActionsCell = memo(function ActionsCell({
-  isArchiving,
-  isDeleting,
+  archivingIds,
+  deletingIds,
   onArchive,
   onDelete,
   onUnarchive,
@@ -92,7 +92,9 @@ const ActionsCell = memo(function ActionsCell({
 }: ActionsCellProps) {
   const project = row.original;
   const isArchived = project.archivedAt !== null;
-  const isActionDisabled = isArchiving || isDeleting;
+  const isThisRowArchiving = archivingIds.has(project.id);
+  const isThisRowDeleting = deletingIds.has(project.id);
+  const isActionDisabled = isThisRowArchiving || isThisRowDeleting;
 
   // Dialog state for archive/unarchive confirmation
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
@@ -165,14 +167,14 @@ const ActionsCell = memo(function ActionsCell({
       <DataTableRowActions actions={actions} row={row} size={'sm'} />
       <ConfirmArchiveDialog
         isArchived={isArchived}
-        isLoading={isArchiving}
+        isLoading={isThisRowArchiving}
         isOpen={isArchiveDialogOpen}
         onConfirm={handleArchiveConfirm}
         onOpenChange={setIsArchiveDialogOpen}
         projectName={project.name}
       />
       <ConfirmDeleteProjectDialog
-        isLoading={isDeleting}
+        isLoading={isThisRowDeleting}
         isOpen={isDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
         onOpenChange={setIsDeleteDialogOpen}
@@ -183,7 +185,7 @@ const ActionsCell = memo(function ActionsCell({
 });
 
 interface StatusCellProps {
-  isArchiving: boolean;
+  archivingIds: Set<number>;
   onArchive?: (projectId: number) => Promise<void>;
   onUnarchive?: (projectId: number) => Promise<void>;
   row: Row<Project>;
@@ -193,9 +195,10 @@ interface StatusCellProps {
  * Memoized status cell component with interactive toggle switch.
  * Clicking the toggle opens a confirmation dialog before archiving/unarchiving.
  */
-const StatusCell = memo(function StatusCell({ isArchiving, onArchive, onUnarchive, row }: StatusCellProps) {
+const StatusCell = memo(function StatusCell({ archivingIds, onArchive, onUnarchive, row }: StatusCellProps) {
   const project = row.original;
   const isArchived = project.archivedAt !== null;
+  const isThisRowArchiving = archivingIds.has(project.id);
 
   // Dialog state for archive/unarchive confirmation
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -225,12 +228,12 @@ const StatusCell = memo(function StatusCell({ isArchiving, onArchive, onUnarchiv
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        <Switch checked={!isArchived} disabled={isArchiving} onCheckedChange={handleToggle} size={'sm'} />
+        <Switch checked={!isArchived} disabled={isThisRowArchiving} onCheckedChange={handleToggle} size={'sm'} />
         <span className={'text-sm text-muted-foreground'}>{isArchived ? 'Archived' : 'Active'}</span>
       </div>
       <ConfirmArchiveDialog
         isArchived={isArchived}
-        isLoading={isArchiving}
+        isLoading={isThisRowArchiving}
         isOpen={isDialogOpen}
         onConfirm={handleConfirm}
         onOpenChange={setIsDialogOpen}
@@ -256,9 +259,9 @@ const StatusCell = memo(function StatusCell({ isArchiving, onArchive, onUnarchiv
  * - Column persistence via tableId
  */
 export const ProjectTable = ({
+  archivingIds = new Set(),
   className,
-  isArchiving = false,
-  isDeleting = false,
+  deletingIds = new Set(),
   onArchive,
   onDelete,
   onUnarchive,
@@ -288,8 +291,8 @@ export const ProjectTable = ({
       columnHelper.display({
         cell: ({ row }) => (
           <ActionsCell
-            isArchiving={isArchiving}
-            isDeleting={isDeleting}
+            archivingIds={archivingIds}
+            deletingIds={deletingIds}
             onArchive={onArchive}
             onDelete={onDelete}
             onUnarchive={onUnarchive}
@@ -357,7 +360,7 @@ export const ProjectTable = ({
       // Status column with interactive toggle
       columnHelper.display({
         cell: ({ row }) => (
-          <StatusCell isArchiving={isArchiving} onArchive={onArchive} onUnarchive={onUnarchive} row={row} />
+          <StatusCell archivingIds={archivingIds} onArchive={onArchive} onUnarchive={onUnarchive} row={row} />
         ),
         enableSorting: false,
         header: 'Status',
@@ -377,7 +380,7 @@ export const ProjectTable = ({
         size: 110,
       }),
     ],
-    [isArchiving, isDeleting, onArchive, onDelete, onUnarchive, onViewDetails]
+    [archivingIds, deletingIds, onArchive, onDelete, onUnarchive, onViewDetails]
   );
 
   return (

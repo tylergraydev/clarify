@@ -94,7 +94,20 @@ export function registerProjectHandlers(
     }
   );
 
-  // Archive (soft delete) a project
+  // Archive a project (set archivedAt timestamp)
+  ipcMain.handle(
+    IpcChannels.project.archive,
+    async (_event: IpcMainInvokeEvent, id: number): Promise<Project | undefined> => {
+      try {
+        return projectsRepository.archive(id);
+      } catch (error) {
+        console.error('[IPC Error] project:archive:', error);
+        throw error;
+      }
+    }
+  );
+
+  // Soft delete a project (calls archive for backwards compatibility)
   ipcMain.handle(
     IpcChannels.project.delete,
     async (_event: IpcMainInvokeEvent, id: number): Promise<boolean> => {
@@ -103,6 +116,19 @@ export function registerProjectHandlers(
         return !!result;
       } catch (error) {
         console.error('[IPC Error] project:delete:', error);
+        throw error;
+      }
+    }
+  );
+
+  // Unarchive a project (clear archivedAt timestamp)
+  ipcMain.handle(
+    IpcChannels.project.unarchive,
+    async (_event: IpcMainInvokeEvent, id: number): Promise<Project | undefined> => {
+      try {
+        return projectsRepository.unarchive(id);
+      } catch (error) {
+        console.error('[IPC Error] project:unarchive:', error);
         throw error;
       }
     }

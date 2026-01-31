@@ -254,11 +254,13 @@ export interface ElectronAPI {
       projectId: number,
       repoData: import('../db/schema').NewRepository
     ): Promise<import('../db/schema').Repository>;
+    archive(id: number): Promise<import('../db/schema').Project | undefined>;
     create(data: import('../db/schema').NewProject): Promise<import('../db/schema').Project>;
     delete(id: number): Promise<boolean>;
     deleteHard(id: number): Promise<void>;
     get(id: number): Promise<import('../db/schema').Project | undefined>;
     list(options?: { includeArchived?: boolean }): Promise<Array<import('../db/schema').Project>>;
+    unarchive(id: number): Promise<import('../db/schema').Project | undefined>;
     update(
       id: number,
       data: Partial<import('../db/schema').NewProject>

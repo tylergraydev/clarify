@@ -87,11 +87,13 @@ export const IpcChannels = {
   },
   project: {
     addRepo: 'project:addRepo',
+    archive: 'project:archive',
     create: 'project:create',
     delete: 'project:delete',
     deleteHard: 'project:deleteHard',
     get: 'project:get',
     list: 'project:list',
+    unarchive: 'project:unarchive',
     update: 'project:update',
   },
   repository: {

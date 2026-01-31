@@ -5,7 +5,7 @@ import { $path } from 'next-typesafe-url';
 import { withParamValidation } from 'next-typesafe-url/app/hoc';
 import { useRouter } from 'next/navigation';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
@@ -63,8 +63,9 @@ function ProjectsPageContent() {
   const unarchiveProjectMutation = useUnarchiveProject();
   const deleteProjectMutation = useDeleteProjectPermanently();
 
-  const isArchiving = archiveProjectMutation.isPending || unarchiveProjectMutation.isPending;
-  const isDeleting = deleteProjectMutation.isPending;
+  // Per-row loading state tracking
+  const [archivingIds, setArchivingIds] = useState<Set<number>>(new Set());
+  const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
 
   // Filter projects based on archiveFilter state
   const filteredProjects = useMemo(() => {
@@ -89,15 +90,42 @@ function ProjectsPageContent() {
   };
 
   const handleArchive = async (projectId: number) => {
-    await archiveProjectMutation.mutateAsync(projectId);
+    setArchivingIds((prev) => new Set(prev).add(projectId));
+    try {
+      await archiveProjectMutation.mutateAsync(projectId);
+    } finally {
+      setArchivingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(projectId);
+        return next;
+      });
+    }
   };
 
   const handleUnarchive = async (projectId: number) => {
-    await unarchiveProjectMutation.mutateAsync(projectId);
+    setArchivingIds((prev) => new Set(prev).add(projectId));
+    try {
+      await unarchiveProjectMutation.mutateAsync(projectId);
+    } finally {
+      setArchivingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(projectId);
+        return next;
+      });
+    }
   };
 
   const handleDelete = async (projectId: number) => {
-    await deleteProjectMutation.mutateAsync(projectId);
+    setDeletingIds((prev) => new Set(prev).add(projectId));
+    try {
+      await deleteProjectMutation.mutateAsync(projectId);
+    } finally {
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(projectId);
+        return next;
+      });
+    }
   };
 
   const handleViewDetails = (projectId: number) => {
@@ -147,8 +175,8 @@ function ProjectsPageContent() {
           />
         ) : (
           <ProjectTable
-            isArchiving={isArchiving}
-            isDeleting={isDeleting}
+            archivingIds={archivingIds}
+            deletingIds={deletingIds}
             onArchive={handleArchive}
             onDelete={handleDelete}
             onUnarchive={handleUnarchive}
