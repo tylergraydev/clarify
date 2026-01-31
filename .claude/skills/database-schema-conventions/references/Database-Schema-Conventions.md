@@ -270,52 +270,76 @@ export const featureRequests = sqliteTable(
 
 ### Repository Interface
 
+**ALL repository methods MUST be async** and return `Promise<T>`:
+
 ```typescript
 import type { DrizzleDatabase } from "../index";
 import type { NewUser, User } from "../schema";
 
 export interface UsersRepository {
-  create(data: NewUser): User;
-  delete(id: number): boolean;
-  getAll(): Array<User>;
-  getById(id: number): User | undefined;
-  update(id: number, data: Partial<NewUser>): User | undefined;
+  create(data: NewUser): Promise<User>;
+  delete(id: number): Promise<boolean>;
+  findAll(): Promise<Array<User>>;
+  findById(id: number): Promise<User | undefined>;
+  update(id: number, data: Partial<NewUser>): Promise<User | undefined>;
 }
+```
+
+### Return Type Convention
+
+**Use `T | undefined` ordering** (success case first):
+
+```typescript
+// ✅ Correct
+Promise<User | undefined>
+Promise<Array<User>>
+
+// ❌ Incorrect
+Promise<undefined | User>
 ```
 
 ### Repository Factory Function
 
+**ALL repositories MUST validate input with Zod**:
+
 ```typescript
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import type { DrizzleDatabase } from "../index";
 import type { NewUser, User } from "../schema";
 
 import { users } from "../schema";
+import { createUserSchema, updateUserSchema } from "@/lib/validations/user";
 
 export function createUsersRepository(db: DrizzleDatabase): UsersRepository {
   return {
-    create(data: NewUser): User {
-      return db.insert(users).values(data).returning().get();
+    async create(data: NewUser): Promise<User> {
+      // REQUIRED: Validate before insert
+      const validated = createUserSchema.parse(data);
+      return db.insert(users).values(validated).returning().get();
     },
 
-    delete(id: number): boolean {
+    async delete(id: number): Promise<boolean> {
       const result = db.delete(users).where(eq(users.id, id)).run();
       return result.changes > 0;
     },
 
-    getAll(): Array<User> {
+    async findAll(): Promise<Array<User>> {
       return db.select().from(users).all();
     },
 
-    getById(id: number): User | undefined {
+    async findById(id: number): Promise<User | undefined> {
       return db.select().from(users).where(eq(users.id, id)).get();
     },
 
-    update(id: number, data: Partial<NewUser>): User | undefined {
+    async update(id: number, data: Partial<NewUser>): Promise<User | undefined> {
+      // REQUIRED: Validate partial data
+      const validated = updateUserSchema.partial().parse(data);
+      const now = new Date().toISOString();
+
       return db
         .update(users)
-        .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` })
+        .set({ ...validated, updatedAt: now })
         .where(eq(users.id, id))
         .returning()
         .get();
@@ -326,13 +350,13 @@ export function createUsersRepository(db: DrizzleDatabase): UsersRepository {
 
 ### Repository Method Signatures
 
-| Method    | Signature                                                     | Description                          |
-| --------- | ------------------------------------------------------------- | ------------------------------------ |
-| `create`  | `(data: NewEntity): Entity`                                   | Insert and return the created record |
-| `getById` | `(id: number): Entity \| undefined`                           | Find by primary key                  |
-| `getAll`  | `(): Array<Entity>`                                           | Return all records                   |
-| `update`  | `(id: number, data: Partial<NewEntity>): Entity \| undefined` | Update and return                    |
-| `delete`  | `(id: number): boolean`                                       | Delete and return success status     |
+| Method     | Signature                                                               | Description                          |
+| ---------- | ----------------------------------------------------------------------- | ------------------------------------ |
+| `create`   | `(data: NewEntity): Promise<Entity>`                                    | Insert and return the created record |
+| `findById` | `(id: number): Promise<Entity \| undefined>`                            | Find by primary key                  |
+| `findAll`  | `(options?): Promise<Array<Entity>>`                                    | Return all records with optional filters |
+| `update`   | `(id: number, data: Partial<NewEntity>): Promise<Entity \| undefined>`  | Update and return                    |
+| `delete`   | `(id: number): Promise<boolean>`                                        | Delete and return success status     |
 
 ### Additional Repository Methods
 
@@ -360,22 +384,35 @@ export interface UsersRepository {
 
 ### Auto-Update on Modification
 
-Always update `updatedAt` in repository update methods:
+**Use JavaScript `toISOString()`** for all timestamp updates in repositories:
 
 ```typescript
-update(id: number, data: Partial<NewUser>): User | undefined {
+async update(id: number, data: Partial<NewUser>): Promise<User | undefined> {
+  const now = new Date().toISOString();
+
   return db
     .update(users)
-    .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` })
+    .set({ ...data, updatedAt: now })
     .where(eq(users.id, id))
     .returning()
     .get();
 }
 ```
 
+```typescript
+// ✅ Correct: JavaScript timestamp
+const now = new Date().toISOString();
+db.update(users).set({ updatedAt: now }).where(...);
+
+// ❌ Incorrect: SQL timestamp in updates
+db.update(users).set({ updatedAt: sql`(CURRENT_TIMESTAMP)` }).where(...);
+```
+
+**Note**: SQL `CURRENT_TIMESTAMP` is used for schema defaults (createdAt), but JavaScript `toISOString()` is used for explicit updates to ensure consistency and testability.
+
 ### Timestamp Format
 
-SQLite stores timestamps as TEXT in ISO 8601 format via `CURRENT_TIMESTAMP`.
+SQLite stores timestamps as TEXT in ISO 8601 format (e.g., `2024-01-15T10:30:00.000Z`).
 
 ---
 
@@ -459,9 +496,11 @@ const wasDeleted = result.changes > 0;
 4. **Table Naming**: Plural, lowercase with underscores
 5. **Index Naming**: `{tablename}_{columnname}_idx`
 6. **Type Exports**: `NewEntity` for insert, `Entity` for select
-7. **Repository Pattern**: Interface + factory function with standard CRUD
-8. **Auto-Update Timestamps**: Always set `updatedAt` in update operations
-9. **Barrel Exports**: Use `index.ts` files for clean imports
-10. **Foreign Keys**: Enable constraints and define cascade behavior
+7. **Async Methods**: ALL repository methods MUST be async (return `Promise<T>`)
+8. **Zod Validation**: ALL repositories MUST validate input with Zod schemas
+9. **Timestamps**: Use JavaScript `toISOString()` for updates, SQL for defaults
+10. **Return Types**: Use `T | undefined` ordering (success case first)
+11. **Barrel Exports**: Use `index.ts` files for clean imports
+12. **Foreign Keys**: Enable constraints and define cascade behavior
 
 ---

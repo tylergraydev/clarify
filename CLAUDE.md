@@ -201,6 +201,7 @@ Custom commands in `.claude/commands/` provide high-level workflows. Use slash c
 | `/implement-plan` | Execute implementation plans with structured tracking using subagent architecture                 |
 | `/create-schema`  | Create or modify database schemas using natural language descriptions                             |
 | `/fix-file`       | Fix a file to follow project patterns using specialist agents with automatic review               |
+| `/audit-route`    | Audit a route/feature area for violations across all layers, optionally fix with review cycles    |
 | `/next-feature`   | Identify the next logical feature area based on design document and codebase analysis             |
 
 ## 10. Specialist Subagents

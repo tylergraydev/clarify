@@ -34,7 +34,7 @@ export const Button = ({
 }: ButtonProps) => {
   return (
     <BaseButton
-      className={cn(buttonVariants({ className, size, variant }))}
+      className={cn(buttonVariants({ size, variant }), className)}
       ref={ref}
       {...props}
     />
@@ -127,11 +127,43 @@ export const buttonVariants = cva(
 
 1. **Export variants separately**: `export const componentVariants = cva(...)`
 2. **Always include defaultVariants**: Provide sensible defaults for all variant keys
-3. **Alphabetize variant keys**: `size` before `variant` (alphabetically)
-4. **Alphabetize variant options**: `default`, `ghost`, `outline` (alphabetically within each key)
-5. **Use template literals**: For multi-line base classes with proper formatting
-6. **Include focus states**: `focus-visible:ring-2 focus-visible:ring-accent`
-7. **Include disabled states**: `data-disabled:pointer-events-none data-disabled:opacity-50`
+3. **Use standard size scale**: Only `sm`, `default`, `lg` for size variants
+4. **Alphabetize variant keys**: `size` before `variant` (alphabetically)
+5. **Alphabetize variant options**: `default`, `ghost`, `outline` (alphabetically within each key)
+6. **Use template literals**: For multi-line base classes with proper formatting
+7. **Include focus states**: `focus-visible:ring-2 focus-visible:ring-accent`
+8. **Include disabled states**: `data-disabled:pointer-events-none data-disabled:opacity-50`
+
+### Standard Size Scale
+
+ALL components MUST use the standard size scale:
+
+| Size      | Description            |
+| --------- | ---------------------- |
+| `sm`      | Small - compact UI     |
+| `default` | Default - normal size  |
+| `lg`      | Large - prominent elements |
+
+```tsx
+// ✅ Correct: Standard sizes only
+variants: {
+  size: {
+    default: 'h-9',
+    lg: 'h-10',
+    sm: 'h-8',
+  },
+}
+
+// ❌ Incorrect: Non-standard sizes
+variants: {
+  size: {
+    xs: 'h-6',      // Not allowed
+    default: 'h-9',
+    xl: 'h-12',     // Not allowed
+    '2xl': 'h-14',  // Not allowed
+  },
+}
+```
 
 ### When to Use CVA
 
@@ -198,7 +230,7 @@ export const Button = ({
 }: ButtonProps) => {
   return (
     <BaseButton
-      className={cn(buttonVariants({ className, size, variant }))}
+      className={cn(buttonVariants({ size, variant }), className)}
       ref={ref}
       {...props}
     />
@@ -269,13 +301,21 @@ export const Button = ({ ... }: ButtonProps) => { /* ... */ };
 
 ### Using cn() Utility
 
-Always use `cn()` from `@/lib/utils` for class merging:
+Always use `cn()` from `@/lib/utils` for class merging.
+
+**className MUST come LAST** in cn() calls to allow user overrides:
 
 ```tsx
-// ✅ Correct
+// ✅ Correct: className last for user override priority
 <BaseButton className={cn(buttonVariants({ size, variant }), className)} />
 
-// ❌ Incorrect
+// ❌ Incorrect: className first (internal styles override user)
+<BaseButton className={cn(className, buttonVariants({ size, variant }))} />
+
+// ❌ Incorrect: className passed to CVA
+<BaseButton className={cn(buttonVariants({ className, size, variant }))} />
+
+// ❌ Incorrect: String concatenation
 <BaseButton className={`${buttonVariants({ size, variant })} ${className}`} />
 ```
 
@@ -401,11 +441,12 @@ Base UI handles most ARIA automatically. For custom implementations:
 2. **Export variants separately**: `export const componentVariants = cva(...)`
 3. **Use ComponentPropsWithRef**: For all props type definitions
 4. **Combine with VariantProps**: When component has CVA variants
-5. **Always use cn()**: For class merging, never string concatenation
-6. **Use CSS variables**: From `globals.css`, not hardcoded colors
-7. **Include focus states**: `focus-visible:ring-2 focus-visible:ring-accent`
-8. **Include disabled states**: `data-disabled:pointer-events-none data-disabled:opacity-50`
-9. **Follow import order**: Type imports → Base UI → CVA → Utilities
-10. **Alphabetize variants**: Both keys and options within each key
+5. **className LAST in cn()**: `cn(variants({ size }), className)` for user override priority
+6. **Standard size scale**: Only use `sm`, `default`, `lg` for size variants
+7. **Use CSS variables**: From `globals.css`, not hardcoded colors
+8. **Include focus states**: `focus-visible:ring-2 focus-visible:ring-accent`
+9. **Include disabled states**: `data-disabled:pointer-events-none data-disabled:opacity-50`
+10. **Follow import order**: Type imports → Base UI → CVA → Utilities
+11. **Alphabetize variants**: Both keys and options within each key
 
 ---
