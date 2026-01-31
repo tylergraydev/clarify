@@ -2,7 +2,7 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { Copy, Eye, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import type { Agent } from '@/db/schema';
@@ -20,32 +20,25 @@ import { cn } from '@/lib/utils';
 
 interface AgentListItemProps extends Omit<ComponentPropsWithRef<'li'>, 'onClick' | 'onReset'> {
   agent: Agent;
-  isCreatingOverride?: boolean;
   isDeleting?: boolean;
   isDuplicating?: boolean;
   isResetting?: boolean;
   isToggling?: boolean;
-  onCreateOverride?: (agent: Agent) => void;
   onDelete?: (agentId: number) => void;
   onDuplicate?: (agent: Agent) => void;
   onReset?: (agentId: number) => void;
   onToggleActive?: (agentId: number, isActive: boolean) => void;
-  selectedProjectId?: null | number;
 }
 interface AgentListProps extends Omit<ComponentPropsWithRef<'ul'>, 'onReset'> {
   agents: Array<Agent>;
-  isCreatingOverride?: boolean;
   isDeleting?: boolean;
   isDuplicating?: boolean;
   isResetting?: boolean;
   isToggling?: boolean;
-  onCreateOverride?: (agent: Agent) => void;
   onDelete?: (agentId: number) => void;
   onDuplicate?: (agent: Agent) => void;
   onReset?: (agentId: number) => void;
   onToggleActive?: (agentId: number, isActive: boolean) => void;
-  /** The currently selected project ID, used to determine if override action is available */
-  selectedProjectId?: null | number;
 }
 
 type AgentType = Agent['type'];
@@ -79,23 +72,20 @@ const formatTypeLabel = (type: AgentType): string => {
 /**
  * Individual agent list item rendered as a horizontal row.
  * Includes color indicator, display name, type badge, status toggle,
- * and action buttons for edit, duplicate, override, reset, and delete.
+ * and action buttons for edit, duplicate, reset, and delete.
  */
 const AgentListItem = ({
   agent,
   className,
-  isCreatingOverride = false,
   isDeleting = false,
   isDuplicating = false,
   isResetting = false,
   isToggling = false,
-  onCreateOverride,
   onDelete,
   onDuplicate,
   onReset,
   onToggleActive,
   ref,
-  selectedProjectId,
   ...props
 }: AgentListItemProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -103,15 +93,7 @@ const AgentListItem = ({
   const isActive = agent.deactivatedAt === null;
   const isCustomAgent = agent.builtInAt === null;
   const isCustomized = agent.parentAgentId !== null;
-  const isGlobalAgent = agent.projectId === null;
   const isProjectScoped = agent.projectId !== null;
-
-  // Show override action only for global agents when a project is selected
-  const isOverrideAvailable = isGlobalAgent && selectedProjectId !== null && selectedProjectId !== undefined;
-
-  const handleCreateOverrideClick = () => {
-    onCreateOverride?.(agent);
-  };
 
   const handleDeleteClick = () => {
     onDelete?.(agent.id);
@@ -133,7 +115,7 @@ const AgentListItem = ({
     onToggleActive?.(agent.id, checked);
   };
 
-  const isActionDisabled = isCreatingOverride || isDeleting || isDuplicating || isResetting || isToggling;
+  const isActionDisabled = isDeleting || isDuplicating || isResetting || isToggling;
 
   return (
     <li
@@ -216,16 +198,6 @@ const AgentListItem = ({
         >
           <Copy aria-hidden={'true'} className={'size-4'} />
         </IconButton>
-        {isOverrideAvailable && (
-          <IconButton
-            aria-label={'Create project override for this agent'}
-            disabled={isActionDisabled}
-            onClick={handleCreateOverrideClick}
-            type={'button'}
-          >
-            <FolderPlus aria-hidden={'true'} className={'size-4'} />
-          </IconButton>
-        )}
         {isCustomized && (
           <IconButton
             aria-label={'Reset agent to default'}
@@ -267,24 +239,21 @@ const AgentListItem = ({
  * - Agent color indicator and display name
  * - Type badge and origin badges (Project, Custom, Customized)
  * - Status toggle for activation/deactivation
- * - Action buttons for edit, duplicate, override, reset, and delete
+ * - Action buttons for edit, duplicate, reset, and delete
  * - Integrated edit dialog using controlled state pattern
  */
 export const AgentList = ({
   agents,
   className,
-  isCreatingOverride = false,
   isDeleting = false,
   isDuplicating = false,
   isResetting = false,
   isToggling = false,
-  onCreateOverride,
   onDelete,
   onDuplicate,
   onReset,
   onToggleActive,
   ref,
-  selectedProjectId,
   ...props
 }: AgentListProps) => {
   return (
@@ -298,18 +267,15 @@ export const AgentList = ({
       {agents.map((agent) => (
         <AgentListItem
           agent={agent}
-          isCreatingOverride={isCreatingOverride}
           isDeleting={isDeleting}
           isDuplicating={isDuplicating}
           isResetting={isResetting}
           isToggling={isToggling}
           key={agent.id}
-          onCreateOverride={onCreateOverride}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
           onReset={onReset}
           onToggleActive={onToggleActive}
-          selectedProjectId={selectedProjectId}
         />
       ))}
     </ul>

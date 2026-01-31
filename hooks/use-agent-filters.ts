@@ -17,7 +17,9 @@ export type FilterValue = null | string;
  * Return type for the useAgentFilters hook.
  */
 export interface UseAgentFiltersReturn {
-  /** Whether any filter (type, project, or status) is currently active */
+  /** Current color filter value */
+  colorFilter: FilterValue;
+  /** Whether any filter (type, project, status, or color) is currently active */
   hasActiveFilters: boolean;
   /** Whether to show built-in agents */
   isShowingBuiltIn: boolean;
@@ -29,6 +31,8 @@ export interface UseAgentFiltersReturn {
   projectFilter: FilterValue;
   /** Current search filter value */
   searchFilter: string;
+  /** Callback to update the color filter */
+  setColorFilter: (value: FilterValue) => void;
   /** Callback to update whether to show built-in agents */
   setIsShowingBuiltIn: (value: boolean) => void;
   /** Callback to update whether to show deactivated agents */
@@ -85,27 +89,31 @@ export const useAgentFilters = (): UseAgentFiltersReturn => {
   const [typeFilter, setTypeFilter] = useState<FilterValue>(null);
   const [projectFilter, setProjectFilter] = useState<FilterValue>(null);
   const [statusFilter, setStatusFilter] = useState<FilterValue>(null);
+  const [colorFilter, setColorFilter] = useState<FilterValue>(null);
 
   // Persisted state from Zustand store
   const { setShowBuiltIn, setShowDeactivated, showBuiltIn, showDeactivated } = useAgentLayoutStore();
 
   // Derived state - check if any filter is active
-  const hasActiveFilters = Boolean(typeFilter || projectFilter || statusFilter);
+  const hasActiveFilters = Boolean(typeFilter || projectFilter || statusFilter || colorFilter);
 
   // Reset all filters callback
   const handleResetFilters = useCallback(() => {
     setTypeFilter(null);
     setProjectFilter(null);
     setStatusFilter(null);
+    setColorFilter(null);
   }, []);
 
   return {
+    colorFilter,
     hasActiveFilters,
     isShowingBuiltIn: showBuiltIn,
     isShowingDeactivated: showDeactivated,
     onResetFilters: handleResetFilters,
     projectFilter,
     searchFilter,
+    setColorFilter,
     setIsShowingBuiltIn: setShowBuiltIn,
     setIsShowingDeactivated: setShowDeactivated,
     setProjectFilter,

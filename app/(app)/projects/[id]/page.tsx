@@ -15,7 +15,6 @@ import {
 import { useRouteParams } from 'next-typesafe-url/app';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { useEffect } from 'react';
 
 import { EditProjectDialog } from '@/components/projects/edit-project-dialog';
 import { RepositoriesTabContent } from '@/components/projects/repositories-tab-content';
@@ -28,7 +27,6 @@ import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTrigger } from '@/com
 import { useArchiveProject, useProject, useUnarchiveProject } from '@/hooks/queries/use-projects';
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useWorkflowsByProject } from '@/hooks/queries/use-workflows';
-import { useShellStore } from '@/lib/stores/shell-store';
 
 import { Route } from './route-type';
 
@@ -115,14 +113,10 @@ const ProjectNotFound = () => {
  * - Tabbed interface for Overview, Repositories, Workflows, and Settings
  * - Archive/Unarchive functionality
  * - Project metadata display (dates, status)
- * - Updates shell store with selected project ID
  */
 export default function ProjectDetailPage() {
   // Type-safe route params validation
   const routeParams = useRouteParams(Route.routeParams);
-
-  // Shell store to track selected project
-  const setSelectedProject = useShellStore((state) => state.setSelectedProject);
 
   // Get validated project ID (safe to access after loading/error checks)
   const projectId = routeParams.data?.id;
@@ -137,18 +131,6 @@ export default function ProjectDetailPage() {
   // Mutations
   const archiveProjectMutation = useArchiveProject();
   const unarchiveProjectMutation = useUnarchiveProject();
-
-  // Update shell store when project loads
-  useEffect(() => {
-    if (project) {
-      setSelectedProject(project.id);
-    }
-
-    // Clear selection when leaving the page
-    return () => {
-      setSelectedProject(null);
-    };
-  }, [project, setSelectedProject]);
 
   // Handle route params loading state
   if (routeParams.isLoading) {

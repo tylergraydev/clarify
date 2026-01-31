@@ -9,8 +9,6 @@ import { useIsMobile } from '@/hooks/use-media-query';
 import { useShellStore } from '@/lib/stores/shell-store';
 import { cn } from '@/lib/utils';
 
-import { ProjectSelector } from './project-selector';
-
 /**
  * Electron drag region styles for window controls
  * Using inline styles to avoid ESLint unknown class errors
@@ -25,12 +23,9 @@ const noDragStyle: CSSProperties = {
   WebkitAppRegion: 'no-drag',
 };
 
-interface AppHeaderProps extends ComponentPropsWithRef<'header'> {
-  onProjectChange?: (projectId: string) => void;
-  selectedProjectId?: string;
-}
+type AppHeaderProps = ComponentPropsWithRef<'header'>;
 
-export const AppHeader = ({ className, onProjectChange, ref, selectedProjectId, ...props }: AppHeaderProps) => {
+export const AppHeader = ({ className, ref, ...props }: AppHeaderProps) => {
   const isMobile = useIsMobile();
   const { isSidebarCollapsed, setMobileDrawerOpen, toggleSidebar } = useShellStore();
 
@@ -63,11 +58,6 @@ export const AppHeader = ({ className, onProjectChange, ref, selectedProjectId, 
         {/* App Logo/Title */}
         <div className={'flex items-center gap-2'} style={noDragStyle}>
           <span className={'text-sm font-semibold text-foreground'}>{'Clarify Orchestrator'}</span>
-        </div>
-
-        {/* Project Selector */}
-        <div className={'ml-2 w-48'} style={noDragStyle}>
-          <ProjectSelector onProjectChange={onProjectChange} size={'compact'} value={selectedProjectId} />
         </div>
 
         {/* Spacer for centering */}

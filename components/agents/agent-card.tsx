@@ -2,7 +2,7 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { Copy, Eye, FolderPlus, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { Copy, Eye, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { Fragment } from 'react';
 
 import type { Agent } from '@/db/schema';
@@ -35,51 +35,36 @@ const formatTypeLabel = (type: AgentType): string => {
 
 interface AgentCardProps extends Omit<ComponentPropsWithRef<'div'>, 'onClick' | 'onReset'> {
   agent: Agent;
-  isCreatingOverride?: boolean;
   isDeleting?: boolean;
   isDuplicating?: boolean;
   isResetting?: boolean;
   isToggling?: boolean;
-  onCreateOverride?: (agent: Agent) => void;
   onDelete?: (agentId: number) => void;
   onDuplicate?: (agent: Agent) => void;
   onEdit?: (agentId: number) => void;
   onReset?: (agentId: number) => void;
   onToggleActive?: (agentId: number, isActive: boolean) => void;
-  /** The currently selected project ID, used to determine if override action is available */
-  selectedProjectId?: null | number;
 }
 
 export const AgentCard = ({
   agent,
   className,
-  isCreatingOverride = false,
   isDeleting = false,
   isDuplicating = false,
   isResetting = false,
   isToggling = false,
-  onCreateOverride,
   onDelete,
   onDuplicate,
   onEdit,
   onReset,
   onToggleActive,
   ref,
-  selectedProjectId,
   ...props
 }: AgentCardProps) => {
   const isActive = agent.deactivatedAt === null;
   const isCustomAgent = agent.builtInAt === null;
   const isCustomized = agent.parentAgentId !== null;
-  const isGlobalAgent = agent.projectId === null;
   const isProjectScoped = agent.projectId !== null;
-
-  // Show override action only for global agents when a project is selected
-  const isOverrideAvailable = isGlobalAgent && selectedProjectId !== null && selectedProjectId !== undefined;
-
-  const handleCreateOverrideClick = () => {
-    onCreateOverride?.(agent);
-  };
 
   const handleDeleteClick = () => {
     onDelete?.(agent.id);
@@ -101,7 +86,7 @@ export const AgentCard = ({
     onToggleActive?.(agent.id, checked);
   };
 
-  const isActionDisabled = isCreatingOverride || isDeleting || isDuplicating || isResetting || isToggling;
+  const isActionDisabled = isDeleting || isDuplicating || isResetting || isToggling;
 
   return (
     <Card className={cn('flex flex-col transition-opacity', !isActive && 'opacity-60', className)} ref={ref} {...props}>
@@ -190,18 +175,6 @@ export const AgentCard = ({
           <Copy aria-hidden={'true'} className={'size-4'} />
           {'Duplicate'}
         </Button>
-        {isOverrideAvailable && (
-          <Button
-            aria-label={'Create project override for this agent'}
-            disabled={isActionDisabled}
-            onClick={handleCreateOverrideClick}
-            size={'sm'}
-            variant={'ghost'}
-          >
-            <FolderPlus aria-hidden={'true'} className={'size-4'} />
-            {'Override'}
-          </Button>
-        )}
         {isCustomized && (
           <Button
             aria-label={'Reset agent to default'}

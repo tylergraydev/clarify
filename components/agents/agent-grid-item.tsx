@@ -13,17 +13,14 @@ import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
 
 export interface AgentGridItemProps {
   agent: Agent;
-  isCreatingOverride?: boolean;
   isDeleting?: boolean;
   isDuplicating?: boolean;
   isResetting?: boolean;
   isToggling?: boolean;
-  onCreateOverride?: (agent: Agent) => void;
   onDelete?: (agentId: number) => void;
   onDuplicate?: (agent: Agent) => void;
   onReset?: (agentId: number) => void;
   onToggleActive?: (agentId: number, isActive: boolean) => void;
-  selectedProjectId?: null | number;
 }
 
 // ============================================================================
@@ -39,17 +36,14 @@ export interface AgentGridItemProps {
  */
 export const AgentGridItem = ({
   agent,
-  isCreatingOverride,
   isDeleting,
   isDuplicating,
   isResetting,
   isToggling,
-  onCreateOverride,
   onDelete,
   onDuplicate,
   onReset,
   onToggleActive,
-  selectedProjectId,
 }: AgentGridItemProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -62,18 +56,15 @@ export const AgentGridItem = ({
       {/* Agent Card */}
       <AgentCard
         agent={agent}
-        isCreatingOverride={isCreatingOverride}
         isDeleting={isDeleting}
         isDuplicating={isDuplicating}
         isResetting={isResetting}
         isToggling={isToggling}
-        onCreateOverride={onCreateOverride}
         onDelete={onDelete}
         onDuplicate={onDuplicate}
         onEdit={handleEditClick}
         onReset={onReset}
         onToggleActive={onToggleActive}
-        selectedProjectId={selectedProjectId}
       />
 
       {/* Edit Dialog */}

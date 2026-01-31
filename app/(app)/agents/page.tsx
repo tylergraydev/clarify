@@ -40,11 +40,13 @@ const AgentsPage = () => {
 
   // Filter state management
   const {
+    colorFilter,
     isShowingBuiltIn,
     isShowingDeactivated,
     onResetFilters,
     projectFilter,
     searchFilter,
+    setColorFilter,
     setIsShowingBuiltIn,
     setIsShowingDeactivated,
     setProjectFilter,
@@ -80,6 +82,7 @@ const AgentsPage = () => {
   // Client-side filtering
   const { filteredAgents, filteredCount, isFiltered, totalCount } = useFilteredAgents({
     agents: allAgents,
+    colorFilter,
     isShowingBuiltIn,
     projectFilter,
     searchFilter,
@@ -178,8 +181,10 @@ const AgentsPage = () => {
             rowSelection={rowSelection}
             toolbarContent={
               <AgentTableToolbar
+                colorFilter={colorFilter}
                 isShowingBuiltIn={isShowingBuiltIn}
                 isShowingDeactivated={isShowingDeactivated}
+                onColorFilterChange={setColorFilter}
                 onExportSelected={onExportSelected}
                 onImport={onImportClick}
                 onIsShowingBuiltInChange={setIsShowingBuiltIn}

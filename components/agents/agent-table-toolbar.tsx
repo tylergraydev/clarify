@@ -30,7 +30,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { agentTypes } from '@/db/schema/agents.schema';
+import { agentColors, agentTypes } from '@/db/schema/agents.schema';
+import { agentColorClassMap, agentColorLabelMap } from '@/lib/colors/agent-colors';
 import { DEFAULT_AGENT_SHOW_BUILTIN, DEFAULT_AGENT_SHOW_DEACTIVATED } from '@/lib/layout/constants';
 import { cn, optionsToItems } from '@/lib/utils';
 
@@ -39,10 +40,14 @@ import { cn, optionsToItems } from '@/lib/utils';
 // ============================================================================
 
 interface AgentTableToolbarProps extends ComponentPropsWithRef<'div'> {
+  /** Current color filter value */
+  colorFilter: null | string;
   /** Whether to show built-in agents */
   isShowingBuiltIn: boolean;
   /** Whether to show deactivated agents */
   isShowingDeactivated: boolean;
+  /** Callback when color filter changes */
+  onColorFilterChange: (value: null | string) => void;
   /** Callback when export selected button is clicked */
   onExportSelected?: () => void;
   /** Callback when import button is clicked */
@@ -99,6 +104,7 @@ const getActiveFilterCount = (
   typeFilter: null | string,
   projectFilter: null | string,
   statusFilter: null | string,
+  colorFilter: null | string,
   isShowingBuiltIn: boolean,
   isShowingDeactivated: boolean
 ): number => {
@@ -106,6 +112,7 @@ const getActiveFilterCount = (
   if (typeFilter !== null) count++;
   if (projectFilter !== null) count++;
   if (statusFilter !== null) count++;
+  if (colorFilter !== null) count++;
   // Count toggles if they differ from defaults
   if (isShowingBuiltIn !== DEFAULT_AGENT_SHOW_BUILTIN) count++;
   if (isShowingDeactivated !== DEFAULT_AGENT_SHOW_DEACTIVATED) count++;
@@ -178,8 +185,10 @@ const FilterCountBadge = ({ count }: FilterCountBadgeProps) => {
  */
 export const AgentTableToolbar = memo(function AgentTableToolbar({
   className,
+  colorFilter,
   isShowingBuiltIn,
   isShowingDeactivated,
+  onColorFilterChange,
   onExportSelected,
   onImport,
   onIsShowingBuiltInChange,
@@ -201,6 +210,7 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
     typeFilter,
     projectFilter,
     statusFilter,
+    colorFilter,
     isShowingBuiltIn,
     isShowingDeactivated
   );
@@ -218,6 +228,10 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
 
   const handleStatusChange = (value: null | string) => {
     onStatusFilterChange(value === '' ? null : value);
+  };
+
+  const handleColorChange = (value: null | string) => {
+    onColorFilterChange(value === '' ? null : value);
   };
 
   const handleIsShowingBuiltInToggle = (isChecked: boolean) => {
@@ -241,6 +255,7 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
     onTypeFilterChange(null);
     onProjectFilterChange(null);
     onStatusFilterChange(null);
+    onColorFilterChange(null);
     onIsShowingBuiltInChange(DEFAULT_AGENT_SHOW_BUILTIN);
     onIsShowingDeactivatedChange(DEFAULT_AGENT_SHOW_DEACTIVATED);
     onResetFilters?.();
@@ -265,6 +280,14 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
   );
 
   const statusItems = useMemo(() => optionsToItems(STATUS_OPTIONS), []);
+
+  const colorItems = useMemo(
+    () => ({
+      '': 'All colors',
+      ...Object.fromEntries(agentColors.map((c) => [c, agentColorLabelMap[c]])),
+    }),
+    []
+  );
 
   return (
     <div className={cn('flex items-center gap-3', className)} ref={ref} {...props}>
@@ -364,6 +387,40 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
                             {STATUS_OPTIONS.map((option) => (
                               <SelectItem key={option.value} label={option.label} size={'sm'} value={option.value}>
                                 {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectList>
+                        </SelectPopup>
+                      </SelectPositioner>
+                    </SelectPortal>
+                  </SelectRoot>
+                </div>
+
+                {/* Color Filter */}
+                <div className={'space-y-1.5'}>
+                  <label className={'text-xs font-medium text-muted-foreground'} id={'filter-color-label'}>
+                    {'Color'}
+                  </label>
+                  <SelectRoot items={colorItems} onValueChange={handleColorChange} value={colorFilter ?? ''}>
+                    <SelectTrigger aria-labelledby={'filter-color-label'} className={'w-full'} size={'sm'}>
+                      <SelectValue placeholder={'All colors'} />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectPositioner>
+                        <SelectPopup size={'sm'}>
+                          <SelectList>
+                            <SelectItem label={'All colors'} size={'sm'} value={''}>
+                              {'All colors'}
+                            </SelectItem>
+                            {agentColors.map((color) => (
+                              <SelectItem key={color} label={agentColorLabelMap[color]} size={'sm'} value={color}>
+                                <span className={'flex items-center gap-2'}>
+                                  <span
+                                    aria-hidden={'true'}
+                                    className={cn('size-3 shrink-0 rounded-full', agentColorClassMap[color])}
+                                  />
+                                  {agentColorLabelMap[color]}
+                                </span>
                               </SelectItem>
                             ))}
                           </SelectList>

@@ -15,6 +15,8 @@ import type { FilterValue } from '@/hooks/use-agent-filters';
 export interface UseFilteredAgentsOptions {
   /** Array of agents to filter */
   agents: Array<AgentWithRelations> | undefined;
+  /** Filter by agent color */
+  colorFilter: FilterValue;
   /** Whether to include built-in agents */
   isShowingBuiltIn: boolean;
   /** Filter by project ID or 'global' for global agents */
@@ -69,6 +71,7 @@ export interface UseFilteredAgentsReturn {
  */
 export const useFilteredAgents = ({
   agents,
+  colorFilter,
   isShowingBuiltIn,
   projectFilter,
   searchFilter,
@@ -115,14 +118,19 @@ export const useFilteredAgents = ({
         return false;
       }
 
+      // Filter by color
+      if (colorFilter && agent.color !== colorFilter) {
+        return false;
+      }
+
       return true;
     });
-  }, [agents, isShowingBuiltIn, projectFilter, searchFilter, statusFilter, typeFilter]);
+  }, [agents, colorFilter, isShowingBuiltIn, projectFilter, searchFilter, statusFilter, typeFilter]);
 
   // Derived state
   const totalCount = agents?.length ?? 0;
   const filteredCount = filteredAgents.length;
-  const hasActiveFilters = Boolean(typeFilter || projectFilter || statusFilter);
+  const hasActiveFilters = Boolean(typeFilter || projectFilter || statusFilter || colorFilter);
   const isFiltered = hasActiveFilters && filteredCount !== totalCount;
 
   return {
