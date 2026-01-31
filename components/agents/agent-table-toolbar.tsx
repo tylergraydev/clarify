@@ -3,7 +3,7 @@
 import type { ComponentPropsWithRef } from 'react';
 
 import { Download, Filter, RotateCcw, Upload } from 'lucide-react';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
 import type { Project } from '@/db/schema';
 
@@ -32,7 +32,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { agentTypes } from '@/db/schema/agents.schema';
 import { DEFAULT_AGENT_SHOW_BUILTIN, DEFAULT_AGENT_SHOW_DEACTIVATED } from '@/lib/layout/constants';
-import { cn } from '@/lib/utils';
+import { cn, optionsToItems } from '@/lib/utils';
 
 // ============================================================================
 // Types
@@ -246,6 +246,26 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
     onResetFilters?.();
   };
 
+  // Build items maps for SelectRoot to display labels instead of raw values
+  const typeItems = useMemo(
+    () => ({
+      '': 'All types',
+      ...Object.fromEntries(agentTypes.map((t) => [t, formatTypeLabel(t)])),
+    }),
+    []
+  );
+
+  const projectItems = useMemo(
+    () => ({
+      '': 'All projects',
+      global: 'Global only',
+      ...Object.fromEntries(projects.map((p) => [String(p.id), p.name])),
+    }),
+    [projects]
+  );
+
+  const statusItems = useMemo(() => optionsToItems(STATUS_OPTIONS), []);
+
   return (
     <div className={cn('flex items-center gap-3', className)} ref={ref} {...props}>
       {/* Filters Popover */}
@@ -274,7 +294,7 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
                   <label className={'text-xs font-medium text-muted-foreground'} id={'filter-type-label'}>
                     {'Type'}
                   </label>
-                  <SelectRoot onValueChange={handleTypeChange} value={typeFilter ?? ''}>
+                  <SelectRoot items={typeItems} onValueChange={handleTypeChange} value={typeFilter ?? ''}>
                     <SelectTrigger aria-labelledby={'filter-type-label'} className={'w-full'} size={'sm'}>
                       <SelectValue placeholder={'All types'} />
                     </SelectTrigger>
@@ -302,7 +322,7 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
                   <label className={'text-xs font-medium text-muted-foreground'} id={'filter-project-label'}>
                     {'Project'}
                   </label>
-                  <SelectRoot onValueChange={handleProjectChange} value={projectFilter ?? ''}>
+                  <SelectRoot items={projectItems} onValueChange={handleProjectChange} value={projectFilter ?? ''}>
                     <SelectTrigger aria-labelledby={'filter-project-label'} className={'w-full'} size={'sm'}>
                       <SelectValue placeholder={'All projects'} />
                     </SelectTrigger>
@@ -333,7 +353,7 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
                   <label className={'text-xs font-medium text-muted-foreground'} id={'filter-status-label'}>
                     {'Status'}
                   </label>
-                  <SelectRoot onValueChange={handleStatusChange} value={statusFilter ?? ''}>
+                  <SelectRoot items={statusItems} onValueChange={handleStatusChange} value={statusFilter ?? ''}>
                     <SelectTrigger aria-labelledby={'filter-status-label'} className={'w-full'} size={'sm'}>
                       <SelectValue placeholder={'All statuses'} />
                     </SelectTrigger>

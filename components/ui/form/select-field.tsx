@@ -3,6 +3,7 @@
 import type { VariantProps } from 'class-variance-authority';
 
 import { Field } from '@base-ui/react/field';
+import { useMemo } from 'react';
 
 import {
   SelectItem,
@@ -16,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useFieldContext } from '@/lib/forms/form-hook';
+import { optionsToItems } from '@/lib/utils';
 
 import { descriptionVariants, errorVariants, labelVariants } from './field-wrapper';
 import { TanStackFieldRoot } from './tanstack-field-root';
@@ -54,6 +56,9 @@ export const SelectField = ({
   const error = field.state.meta.errors[0]?.message;
   const hasError = Boolean(error);
 
+  // Build items map for SelectRoot to display labels instead of raw values
+  const items = useMemo(() => optionsToItems(options), [options]);
+
   return (
     <TanStackFieldRoot
       className={className}
@@ -77,6 +82,7 @@ export const SelectField = ({
       {/* Select */}
       <SelectRoot
         disabled={isDisabled}
+        items={items}
         modal={false}
         onOpenChange={(isOpen) => {
           if (!isOpen) {

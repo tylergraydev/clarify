@@ -4,6 +4,7 @@ import type { ComponentPropsWithRef } from 'react';
 
 import { cva, type VariantProps } from 'class-variance-authority';
 import { ChevronsUpDown, FolderKanban } from 'lucide-react';
+import { useMemo } from 'react';
 
 import {
   SelectItem,
@@ -81,6 +82,16 @@ export const ProjectSelector = ({
   const selectedProject = projects?.find((p) => String(p.id) === controlledValue);
   const hasProjects = projects && projects.length > 0;
 
+  // Build items map for SelectRoot to display labels instead of raw values
+  const items = useMemo(
+    () =>
+      projects?.reduce<Record<string, string>>((acc, p) => {
+        acc[String(p.id)] = p.name;
+        return acc;
+      }, {}) ?? {},
+    [projects]
+  );
+
   // Loading state
   if (isProjectsLoading) {
     const loadingContent = (
@@ -150,7 +161,7 @@ export const ProjectSelector = ({
     return (
       <Tooltip content={selectedProject?.name ?? 'Select project'} side={'right'}>
         <div ref={ref} {...props}>
-          <SelectRoot onValueChange={handleValueChange} value={controlledValue}>
+          <SelectRoot items={items} onValueChange={handleValueChange} value={controlledValue}>
             <SelectTrigger
               className={cn(projectSelectorTriggerVariants({ size }), 'w-8 justify-center px-0', className)}
             >
@@ -178,7 +189,7 @@ export const ProjectSelector = ({
   // Default expanded state
   return (
     <div ref={ref} {...props}>
-      <SelectRoot onValueChange={handleValueChange} value={controlledValue}>
+      <SelectRoot items={items} onValueChange={handleValueChange} value={controlledValue}>
         <SelectTrigger className={cn(projectSelectorTriggerVariants({ size }), className)}>
           {/* Icon */}
           <FolderKanban aria-hidden={'true'} className={'size-4 shrink-0'} />

@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { optionsToItems } from '@/lib/utils';
 
 // ============================================================================
 // Types
@@ -106,6 +107,9 @@ export const SelectProjectDialog = ({
     return result;
   }, [isGlobalAgent, isMoveMode, projects, sourceAgent?.projectId]);
 
+  // Build items map for SelectRoot to display labels instead of raw values
+  const items = useMemo(() => optionsToItems(options), [options]);
+
   // Handlers
   const handleConfirmClick = () => {
     if (!selectedValue) return;
@@ -141,7 +145,7 @@ export const SelectProjectDialog = ({
 
           {/* Content */}
           <div className={'mt-4 space-y-4'}>
-            <SelectRoot disabled={isLoading} onValueChange={handleValueChange} value={selectedValue}>
+            <SelectRoot disabled={isLoading} items={items} onValueChange={handleValueChange} value={selectedValue}>
               <SelectTrigger aria-label={'Select destination'}>
                 <SelectValue placeholder={'Select a destination...'} />
               </SelectTrigger>

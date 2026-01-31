@@ -42,6 +42,22 @@ export function getBadgeVariantForType(type: string): 'default' | 'planning' | '
 }
 
 /**
+ * Converts an array of options with value/label pairs into a Record for Base UI Select items prop.
+ * This enables SelectValue to display the label instead of the raw value.
+ *
+ * @param options - Array of options with value and label properties
+ * @returns Record mapping values to labels
+ */
+export function optionsToItems<T extends { label: string; value: string }>(
+  options: ReadonlyArray<T>
+): Record<string, string> {
+  return options.reduce<Record<string, string>>((acc, opt) => {
+    acc[opt.value] = opt.label;
+    return acc;
+  }, {});
+}
+
+/**
  * Truncates text with ellipsis if it exceeds the max length.
  *
  * @param text - The text to truncate

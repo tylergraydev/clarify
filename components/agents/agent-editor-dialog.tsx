@@ -53,6 +53,7 @@ import { useControllableState } from '@/hooks/use-controllable-state';
 import { getAgentColorHex } from '@/lib/colors/agent-colors';
 import { CLAUDE_BUILTIN_TOOLS, getDefaultToolsForAgentType, isBuiltinTool } from '@/lib/constants/claude-tools';
 import { useAppForm } from '@/lib/forms/form-hook';
+import { optionsToItems } from '@/lib/utils';
 import { createAgentFormSchema, updateAgentSchema } from '@/lib/validations/agent';
 
 import { type AgentHooksData, AgentHooksSection } from './agent-hooks-section';
@@ -341,6 +342,9 @@ export const AgentEditorDialog = ({
 
     return options;
   }, [projectsQuery.data]);
+
+  // Build items map for SelectRoot to display labels instead of raw values
+  const projectItems = useMemo(() => optionsToItems(projectOptions), [projectOptions]);
 
   // Memoize derived boolean flags to prevent recalculation on every render
   const derivedFlags = useMemo(() => {
@@ -974,6 +978,7 @@ export const AgentEditorDialog = ({
                   <label className={labelVariants()}>{'Project Assignment'}</label>
                   <SelectRoot
                     disabled={isProjectSelectorDisabled}
+                    items={projectItems}
                     onValueChange={
                       isEditMode
                         ? (newValue: null | string) => {
