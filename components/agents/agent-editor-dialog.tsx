@@ -460,6 +460,7 @@ export const AgentEditorDialog = ({
         if (selectedProjectId !== originalProjectId) {
           await moveAgentMutation.mutateAsync({
             agentId: agent.id,
+            showToast: false,
             targetProjectId: selectedProjectId,
           });
         }

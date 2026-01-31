@@ -530,17 +530,27 @@ export function useMoveAgent() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ agentId, targetProjectId }: { agentId: number; targetProjectId: null | number }) =>
-      agents.move(agentId, targetProjectId),
+    mutationFn: async ({
+      agentId,
+      showToast = true,
+      targetProjectId,
+    }: {
+      agentId: number;
+      showToast?: boolean;
+      targetProjectId: null | number;
+    }) => {
+      const result = await agents.move(agentId, targetProjectId);
+      return { result, showToast };
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to move agent',
         title: 'Move Failed',
       });
     },
-    onSuccess: (agent) => {
+    onSuccess: ({ result, showToast }) => {
       // Update detail cache with new project assignment
-      queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
+      queryClient.setQueryData(agentKeys.detail(result.id).queryKey, result);
 
       // Invalidate all relevant queries since the agent was moved
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
@@ -551,10 +561,12 @@ export function useMoveAgent() {
       void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
 
-      toast.success({
-        description: 'Agent moved successfully',
-        title: 'Agent Moved',
-      });
+      if (showToast !== false) {
+        toast.success({
+          description: 'Agent moved successfully',
+          title: 'Agent Moved',
+        });
+      }
     },
   });
 }
