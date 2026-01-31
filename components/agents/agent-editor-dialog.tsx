@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/select';
 import { agentColors, agentTypes } from '@/db/schema/agents.schema';
 import { useCreateAgentHook } from '@/hooks/queries/use-agent-hooks';
-import { useCreateAgentSkill, useSetAgentSkillRequired } from '@/hooks/queries/use-agent-skills';
+import { useAgentSkills, useCreateAgentSkill, useSetAgentSkillRequired } from '@/hooks/queries/use-agent-skills';
 import {
   useAgentTools,
   useAllowAgentTool,
@@ -104,7 +104,7 @@ const AGENT_TYPE_OPTIONS = agentTypes.map((type) => ({
 }));
 
 const MODEL_OPTIONS = [
-  { label: 'Inherit', value: '' },
+  { label: 'Inherit', value: 'inherit' },
   { label: 'Sonnet', value: 'sonnet' },
   { label: 'Opus', value: 'opus' },
   { label: 'Haiku', value: 'haiku' },
@@ -145,9 +145,17 @@ const ToolsCollapsibleSection = memo(function ToolsCollapsibleSection({
   onToolSelectionsChange,
   toolSelections,
 }: ToolsCollapsibleSectionProps) {
+  const enabledToolsCount = toolSelections.filter((s) => s.enabled).length + customTools.length;
+
   return (
-    <Collapsible className={'rounded-md border border-border'} defaultOpen={!isEditMode}>
-      <CollapsibleTrigger className={'w-full justify-start px-3 py-2'}>{'Allowed Tools'}</CollapsibleTrigger>
+    <Collapsible className={'rounded-md border border-border'}>
+      <CollapsibleTrigger className={'w-full justify-start px-3 py-2'}>
+        <span>{'Allowed Tools'}</span>
+        <span className={'ml-auto text-xs text-muted-foreground'}>
+          {enabledToolsCount}
+          {' configured'}
+        </span>
+      </CollapsibleTrigger>
       <CollapsibleContent>
         <div className={'border-t border-border p-3'}>
           <AgentToolsSection
@@ -186,9 +194,21 @@ const SkillsCollapsibleSection = memo(function SkillsCollapsibleSection({
 }: SkillsCollapsibleSectionProps) {
   const isEditAgentWithValidId = isEditAgent && agentId !== undefined;
 
+  // Query skills for edit mode to get count
+  const { data: skills } = useAgentSkills(isEditAgentWithValidId ? agentId : 0);
+
+  // Calculate count based on mode
+  const skillsCount = isEditAgentWithValidId ? (skills?.length ?? 0) : pendingSkills.length;
+
   return (
     <Collapsible className={'rounded-md border border-border'}>
-      <CollapsibleTrigger className={'w-full justify-start px-3 py-2'}>{'Referenced Skills'}</CollapsibleTrigger>
+      <CollapsibleTrigger className={'w-full justify-start px-3 py-2'}>
+        <span>{'Referenced Skills'}</span>
+        <span className={'ml-auto text-xs text-muted-foreground'}>
+          {skillsCount}
+          {' configured'}
+        </span>
+      </CollapsibleTrigger>
       <CollapsibleContent>
         <div className={'border-t border-border p-3'}>
           {isEditAgentWithValidId ? (
@@ -213,6 +233,7 @@ interface HooksCollapsibleSectionProps {
 
 /**
  * Memoized hooks collapsible section to prevent re-renders when parent state changes
+ * Note: AgentHooksSection already contains its own Collapsible, so we just wrap with border styling
  */
 const HooksCollapsibleSection = memo(function HooksCollapsibleSection({
   hooks,
@@ -220,14 +241,9 @@ const HooksCollapsibleSection = memo(function HooksCollapsibleSection({
   onHooksChange,
 }: HooksCollapsibleSectionProps) {
   return (
-    <Collapsible className={'rounded-md border border-border'}>
-      <CollapsibleTrigger className={'w-full justify-start px-3 py-2'}>{'Hooks'}</CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className={'border-t border-border p-3'}>
-          <AgentHooksSection hooks={hooks} isDisabled={isDisabled} onHooksChange={onHooksChange} />
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+    <div className={'rounded-md border border-border'}>
+      <AgentHooksSection hooks={hooks} isDisabled={isDisabled} onHooksChange={onHooksChange} />
+    </div>
   );
 });
 
@@ -399,8 +415,8 @@ export const AgentEditorDialog = ({
         color: (agent.color ?? '') as UpdateAgentFormValues['color'],
         description: agent.description ?? '',
         displayName: agent.displayName,
-        model: (agent.model ?? '') as UpdateAgentFormValues['model'],
-        permissionMode: (agent.permissionMode ?? '') as UpdateAgentFormValues['permissionMode'],
+        model: (agent.model ?? 'inherit') as UpdateAgentFormValues['model'],
+        permissionMode: (agent.permissionMode ?? 'default') as UpdateAgentFormValues['permissionMode'],
         systemPrompt: agent.systemPrompt,
       };
     }
@@ -409,9 +425,9 @@ export const AgentEditorDialog = ({
         color: initialData.color ?? 'blue',
         description: initialData.description ?? '',
         displayName: initialData.displayName,
-        model: '' as CreateAgentFormData['model'],
+        model: 'inherit' as CreateAgentFormData['model'],
         name: initialData.name,
-        permissionMode: '' as CreateAgentFormData['permissionMode'],
+        permissionMode: 'default' as CreateAgentFormData['permissionMode'],
         systemPrompt: initialData.systemPrompt,
         type: initialData.type,
       } as CreateAgentFormData;
@@ -420,9 +436,9 @@ export const AgentEditorDialog = ({
       color: 'blue',
       description: '',
       displayName: '',
-      model: '' as CreateAgentFormData['model'],
+      model: 'inherit' as CreateAgentFormData['model'],
       name: '',
-      permissionMode: '' as CreateAgentFormData['permissionMode'],
+      permissionMode: 'default' as CreateAgentFormData['permissionMode'],
       systemPrompt: '',
       type: 'specialist' as AgentType,
     } as CreateAgentFormData;
@@ -469,7 +485,7 @@ export const AgentEditorDialog = ({
         // Update existing agent
         const updateValue = value as UpdateAgentFormValues;
         const colorValue = updateValue.color === '' ? null : updateValue.color;
-        const modelValue = updateValue.model === '' ? null : updateValue.model;
+        const modelValue = updateValue.model === 'inherit' || updateValue.model === '' ? null : updateValue.model;
         const permissionModeValue = updateValue.permissionMode === '' ? null : updateValue.permissionMode;
         await updateAgentMutation.mutateAsync({
           data: {
@@ -497,7 +513,7 @@ export const AgentEditorDialog = ({
         // Use selectedProjectId state which tracks the dropdown value
         // This allows users to override the initial projectId prop via the dropdown
         const effectiveProjectId = selectedProjectId;
-        const modelValue = createValue.model === '' ? null : createValue.model;
+        const modelValue = createValue.model === 'inherit' || createValue.model === '' ? null : createValue.model;
         const permissionModeValue = createValue.permissionMode === '' ? null : createValue.permissionMode;
         const createdAgent = await createAgentMutation.mutateAsync({
           color: createValue.color,
@@ -687,7 +703,16 @@ export const AgentEditorDialog = ({
         resetFormState();
       }
     },
-    [setIsOpen, resetFormState, getDefaultValues, getInitialProjectId, form, isEditMode, initialData, initializeToolDefaults]
+    [
+      setIsOpen,
+      resetFormState,
+      getDefaultValues,
+      getInitialProjectId,
+      form,
+      isEditMode,
+      initialData,
+      initializeToolDefaults,
+    ]
   );
 
   const handleConfirmDiscard = useCallback(() => {
@@ -1017,10 +1042,10 @@ export const AgentEditorDialog = ({
                 <form.AppField name={'model'}>
                   {(field) => (
                     <field.SelectField
-                      description={'Model to use for this agent. Leave empty to inherit from parent.'}
+                      description={'Model to use for this agent. Select Inherit to use parent model.'}
+                      isRequired
                       label={'Model'}
                       options={MODEL_OPTIONS}
-                      placeholder={'Select model'}
                     />
                   )}
                 </form.AppField>
@@ -1030,9 +1055,9 @@ export const AgentEditorDialog = ({
                   {(field) => (
                     <field.SelectField
                       description={'How Claude handles permission requests'}
+                      isRequired
                       label={'Permission Mode'}
                       options={PERMISSION_MODE_OPTIONS}
-                      placeholder={'Select permission mode'}
                     />
                   )}
                 </form.AppField>

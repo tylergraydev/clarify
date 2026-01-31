@@ -30,7 +30,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
       <ToastPortal>
         <ToastViewport
           className={`
-            fixed right-4 bottom-4 z-50 flex flex-col gap-2 outline-none
+            fixed right-4 bottom-4 z-100 flex flex-col gap-2 outline-none
           `}
         >
           <ToastList />
