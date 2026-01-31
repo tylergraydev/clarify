@@ -1,7 +1,5 @@
 'use client';
 
-import type { ReactNode } from 'react';
-
 import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
@@ -13,10 +11,9 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 
-interface ConfirmArchiveDialogProps {
+interface ConfirmArchiveDialogBaseProps {
   /** Whether the project is currently archived (determines action direction) */
   isArchived: boolean;
   /** Whether the mutation is in progress */
@@ -25,16 +22,24 @@ interface ConfirmArchiveDialogProps {
   onConfirm: () => void;
   /** The project name to display in the dialog */
   projectName: string;
-  /** The trigger element that opens the dialog */
-  trigger: ReactNode;
+}
+
+interface ConfirmArchiveDialogProps extends ConfirmArchiveDialogBaseProps {
+  /** Controlled open state */
+  isOpen: boolean;
+  /** Callback when open state changes */
+  onOpenChange: (open: boolean) => void;
+  /** Trigger - not used in controlled mode */
+  trigger?: never;
 }
 
 export const ConfirmArchiveDialog = ({
   isArchived,
   isLoading = false,
+  isOpen,
   onConfirm,
+  onOpenChange,
   projectName,
-  trigger,
 }: ConfirmArchiveDialogProps) => {
   const title = isArchived ? 'Unarchive Project' : 'Archive Project';
   const description = isArchived
@@ -46,15 +51,13 @@ export const ConfirmArchiveDialog = ({
     onConfirm();
   };
 
+  // Controlled mode (no trigger)
   return (
-    <DialogRoot>
-      {/* Trigger */}
-      <DialogTrigger>{trigger}</DialogTrigger>
-
-      {/* Portal */}
+    <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
+      {/* Portal - stopPropagation on backdrop and popup prevents clicks from bubbling to table row */}
       <DialogPortal>
-        <DialogBackdrop />
-        <DialogPopup>
+        <DialogBackdrop onClick={(e) => e.stopPropagation()} />
+        <DialogPopup onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
@@ -65,7 +68,7 @@ export const ConfirmArchiveDialog = ({
           <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={'outline'}>
-                {'Cancel'}
+                Cancel
               </Button>
             </DialogClose>
             <Button disabled={isLoading} onClick={handleConfirmClick} variant={'destructive'}>

@@ -1,16 +1,28 @@
 'use client';
 
+import type { Row } from '@tanstack/react-table';
 import type { ComponentPropsWithRef } from 'react';
 
 import { format } from 'date-fns';
 import { Archive, ArchiveRestore, ExternalLink } from 'lucide-react';
+import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
 import type { Project } from '@/db/schema/projects.schema';
 
 import { ConfirmArchiveDialog } from '@/components/projects/confirm-archive-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import {
+  createColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+  DataTableRowActions,
+  type DataTableRowStyleCallback,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
   /** Whether an archive mutation is in progress */
@@ -25,6 +37,117 @@ interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
   projects: Array<Project>;
 }
 
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+const formatDate = (dateString: null | string | undefined): string => {
+  if (!dateString) return '-';
+  try {
+    return format(new Date(dateString), 'MMM d, yyyy');
+  } catch {
+    return '-';
+  }
+};
+
+// ============================================================================
+// Column Helper
+// ============================================================================
+
+const columnHelper = createColumnHelper<Project>();
+
+// ============================================================================
+// Memoized Cell Components
+// ============================================================================
+
+interface ActionsCellProps {
+  isArchiving: boolean;
+  onArchive?: (projectId: number) => void;
+  onUnarchive?: (projectId: number) => void;
+  onViewDetails?: (projectId: number) => void;
+  row: Row<Project>;
+}
+
+/**
+ * Memoized actions cell component to prevent recreating action handlers
+ * on every table render. Uses dialog for archive/unarchive confirmation.
+ */
+const ActionsCell = memo(function ActionsCell({
+  isArchiving,
+  onArchive,
+  onUnarchive,
+  onViewDetails,
+  row,
+}: ActionsCellProps) {
+  const project = row.original;
+  const isArchived = project.archivedAt !== null;
+
+  // Dialog state for archive/unarchive confirmation
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+
+  const handleArchiveConfirm = useCallback(() => {
+    if (isArchived) {
+      onUnarchive?.(project.id);
+    } else {
+      onArchive?.(project.id);
+    }
+    setIsArchiveDialogOpen(false);
+  }, [isArchived, onArchive, onUnarchive, project.id]);
+
+  const actions: Array<DataTableRowAction<Project>> = [];
+
+  // View action
+  actions.push({
+    disabled: isArchiving,
+    icon: <ExternalLink aria-hidden={'true'} className={'size-4'} />,
+    label: 'View',
+    onAction: (r) => onViewDetails?.(r.original.id),
+    type: 'button',
+  });
+
+  // Archive/Unarchive action - opens dialog
+  actions.push({
+    disabled: isArchiving,
+    icon: isArchived ? (
+      <ArchiveRestore aria-hidden={'true'} className={'size-4'} />
+    ) : (
+      <Archive aria-hidden={'true'} className={'size-4'} />
+    ),
+    label: isArchived ? 'Unarchive' : 'Archive',
+    onAction: () => setIsArchiveDialogOpen(true),
+    type: 'button',
+  });
+
+  return (
+    <Fragment>
+      <DataTableRowActions actions={actions} row={row} size={'sm'} />
+      <ConfirmArchiveDialog
+        isArchived={isArchived}
+        isLoading={isArchiving}
+        isOpen={isArchiveDialogOpen}
+        onConfirm={handleArchiveConfirm}
+        onOpenChange={setIsArchiveDialogOpen}
+        projectName={project.name}
+      />
+    </Fragment>
+  );
+});
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
+/**
+ * Table view component for displaying projects using the DataTable component.
+ *
+ * Features:
+ * - Table layout with sortable columns: Name, Description, Created, Status, Updated
+ * - Row click handler for navigation to project details
+ * - Action dropdown with View and Archive/Unarchive options
+ * - Confirmation dialog for archive/unarchive actions
+ * - Reduced opacity styling for archived projects
+ * - Column persistence via tableId
+ */
 export const ProjectTable = ({
   className,
   isArchiving = false,
@@ -35,136 +158,145 @@ export const ProjectTable = ({
   ref,
   ...props
 }: ProjectTableProps) => {
-  const handleArchiveConfirm = (projectId: number) => {
-    onArchive?.(projectId);
-  };
+  const handleRowClick = useCallback(
+    (row: Row<Project>) => {
+      onViewDetails?.(row.original.id);
+    },
+    [onViewDetails]
+  );
 
-  const handleUnarchiveConfirm = (projectId: number) => {
-    onUnarchive?.(projectId);
-  };
+  // Row style callback for archived projects
+  const rowStyleCallback: DataTableRowStyleCallback<Project> = useCallback((row) => {
+    const isArchived = row.original.archivedAt !== null;
+    return isArchived ? 'opacity-60' : undefined;
+  }, []);
 
-  const handleViewDetailsClick = (projectId: number) => {
-    onViewDetails?.(projectId);
-  };
+  // Define columns using the column helper
+  const columns = useMemo(
+    () => [
+      // Actions column (first for easy access)
+      columnHelper.display({
+        cell: ({ row }) => (
+          <ActionsCell
+            isArchiving={isArchiving}
+            onArchive={onArchive}
+            onUnarchive={onUnarchive}
+            onViewDetails={onViewDetails}
+            row={row}
+          />
+        ),
+        enableHiding: false,
+        enableResizing: false,
+        enableSorting: false,
+        header: '',
+        id: 'actions',
+        meta: {
+          cellClassName: 'text-left',
+          headerClassName: 'text-left',
+        },
+        size: 30,
+      }),
 
-  const handleRowClick = (projectId: number) => {
-    onViewDetails?.(projectId);
-  };
+      // Name column
+      columnHelper.accessor('name', {
+        cell: ({ row }) => {
+          const project = row.original;
+          return (
+            <button
+              className={cn(
+                'cursor-pointer text-left font-medium text-foreground hover:text-accent',
+                'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
+                'focus-visible:outline-none'
+              )}
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails?.(project.id);
+              }}
+              type={'button'}
+            >
+              {project.name}
+            </button>
+          );
+        },
+        enableHiding: false,
+        header: 'Name',
+        size: 200,
+      }),
+
+      // Description column
+      columnHelper.accessor('description', {
+        cell: ({ row }) => {
+          const description = row.original.description;
+          return <span className={'text-muted-foreground'}>{description || '-'}</span>;
+        },
+        header: 'Description',
+        size: 280,
+      }),
+
+      // Created At column
+      columnHelper.accessor('createdAt', {
+        cell: ({ row }) => {
+          return <span className={'text-sm text-muted-foreground'}>{formatDate(row.original.createdAt)}</span>;
+        },
+        header: 'Created',
+        size: 110,
+      }),
+
+      // Status column
+      columnHelper.display({
+        cell: ({ row }) => {
+          const isArchived = row.original.archivedAt !== null;
+          return <Badge variant={isArchived ? 'stale' : 'completed'}>{isArchived ? 'Archived' : 'Active'}</Badge>;
+        },
+        enableSorting: false,
+        header: 'Status',
+        id: 'status',
+        size: 100,
+      }),
+
+      // Updated At column - filler column to take remaining space
+      columnHelper.accessor('updatedAt', {
+        cell: ({ row }) => {
+          return <span className={'text-sm text-muted-foreground'}>{formatDate(row.original.updatedAt)}</span>;
+        },
+        header: 'Updated',
+        meta: {
+          isFillerColumn: true,
+        },
+        size: 110,
+      }),
+    ],
+    [isArchiving, onArchive, onUnarchive, onViewDetails]
+  );
 
   return (
-    <div className={cn('overflow-x-auto rounded-lg border border-border', className)} ref={ref} {...props}>
-      <table className={'w-full border-collapse text-sm'}>
-        {/* Table Header */}
-        <thead className={'border-b border-border bg-muted/50'}>
-          <tr>
-            <th className={'px-4 py-3 text-left font-medium text-muted-foreground'} scope={'col'}>
-              {'Name'}
-            </th>
-            <th className={'px-4 py-3 text-left font-medium text-muted-foreground'} scope={'col'}>
-              {'Description'}
-            </th>
-            <th className={'px-4 py-3 text-left font-medium text-muted-foreground'} scope={'col'}>
-              {'Created'}
-            </th>
-            <th className={'px-4 py-3 text-left font-medium text-muted-foreground'} scope={'col'}>
-              {'Status'}
-            </th>
-            <th className={'px-4 py-3 text-right font-medium text-muted-foreground'} scope={'col'}>
-              {'Actions'}
-            </th>
-          </tr>
-        </thead>
-
-        {/* Table Body */}
-        <tbody className={'divide-y divide-border'}>
-          {projects.map((project) => {
-            const isArchived = project.archivedAt !== null;
-            const formattedDate = format(new Date(project.createdAt), 'MMM d, yyyy');
-
-            return (
-              <tr
-                className={cn('cursor-pointer transition-colors hover:bg-muted/30', isArchived && 'opacity-60')}
-                key={project.id}
-                onClick={() => handleRowClick(project.id)}
-              >
-                {/* Name Cell */}
-                <td className={'px-4 py-3'}>
-                  <button
-                    className={cn(
-                      'text-left font-medium text-foreground hover:text-accent',
-                      'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
-                      'focus-visible:outline-none'
-                    )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewDetailsClick(project.id);
-                    }}
-                    type={'button'}
-                  >
-                    {project.name}
-                  </button>
-                </td>
-
-                {/* Description Cell */}
-                <td className={'max-w-xs truncate px-4 py-3 text-muted-foreground'}>{project.description || '-'}</td>
-
-                {/* Created Cell */}
-                <td className={'px-4 py-3 whitespace-nowrap text-muted-foreground'}>{formattedDate}</td>
-
-                {/* Status Cell */}
-                <td className={'px-4 py-3'}>
-                  <Badge variant={isArchived ? 'stale' : 'completed'}>{isArchived ? 'Archived' : 'Active'}</Badge>
-                </td>
-
-                {/* Actions Cell */}
-                <td className={'px-4 py-3'}>
-                  <div className={'flex items-center justify-end gap-2'} onClick={(e) => e.stopPropagation()}>
-                    {/* View Details */}
-                    <Button
-                      aria-label={`View details for ${project.name}`}
-                      onClick={() => handleViewDetailsClick(project.id)}
-                      size={'sm'}
-                      variant={'ghost'}
-                    >
-                      <ExternalLink aria-hidden={'true'} className={'size-4'} />
-                      {'View'}
-                    </Button>
-
-                    {/* Archive/Unarchive */}
-                    {isArchived ? (
-                      <ConfirmArchiveDialog
-                        isArchived={true}
-                        isLoading={isArchiving}
-                        onConfirm={() => handleUnarchiveConfirm(project.id)}
-                        projectName={project.name}
-                        trigger={
-                          <Button aria-label={`Unarchive ${project.name}`} size={'sm'} variant={'ghost'}>
-                            <ArchiveRestore aria-hidden={'true'} className={'size-4'} />
-                            {'Unarchive'}
-                          </Button>
-                        }
-                      />
-                    ) : (
-                      <ConfirmArchiveDialog
-                        isArchived={false}
-                        isLoading={isArchiving}
-                        onConfirm={() => handleArchiveConfirm(project.id)}
-                        projectName={project.name}
-                        trigger={
-                          <Button aria-label={`Archive ${project.name}`} size={'sm'} variant={'ghost'}>
-                            <Archive aria-hidden={'true'} className={'size-4'} />
-                            {'Archive'}
-                          </Button>
-                        }
-                      />
-                    )}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      className={className}
+      columns={columns}
+      data={projects}
+      density={'default'}
+      emptyState={{
+        noData: {
+          description: 'Create a project to get started.',
+          title: 'No projects found',
+        },
+        noResults: {
+          description: 'Try adjusting your search or filters.',
+          title: 'No matching projects',
+        },
+      }}
+      getRowId={(project) => String(project.id)}
+      isPaginationEnabled={false}
+      isToolbarVisible={true}
+      onRowClick={handleRowClick}
+      persistence={{
+        persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing'],
+        tableId: 'projects-table',
+      }}
+      ref={ref}
+      rowStyleCallback={rowStyleCallback}
+      searchPlaceholder={'Search projects...'}
+      {...props}
+    />
   );
 };

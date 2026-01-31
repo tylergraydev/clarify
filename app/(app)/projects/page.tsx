@@ -1,100 +1,28 @@
 'use client';
 
-import { FolderOpen, Grid3X3, List, Plus } from 'lucide-react';
+import { FolderOpen, Plus } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { withParamValidation } from 'next-typesafe-url/app/hoc';
 import { useRouter } from 'next/navigation';
-import { parseAsBoolean, parseAsStringLiteral, useQueryState } from 'nuqs';
+import { parseAsBoolean, useQueryState } from 'nuqs';
 import { useMemo } from 'react';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
-import { ProjectCard } from '@/components/projects/project-card';
 import { ProjectTable } from '@/components/projects/project-table';
 import { Button } from '@/components/ui/button';
-import { ButtonGroup } from '@/components/ui/button-group';
-import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Switch } from '@/components/ui/switch';
+import { DataTableSkeleton } from '@/components/ui/table';
 import { useArchiveProject, useProjects, useUnarchiveProject } from '@/hooks/queries/use-projects';
-import { cn } from '@/lib/utils';
 
 import { Route } from './route-type';
-
-const VIEW_OPTIONS = ['card', 'table'] as const;
-type ViewOption = (typeof VIEW_OPTIONS)[number];
-
-/**
- * Loading skeleton for the projects grid view
- */
-const ProjectCardSkeleton = () => {
-  return (
-    <Card className={'animate-pulse'}>
-      <CardContent className={'p-6'}>
-        <div className={'space-y-3'}>
-          <div className={'h-5 w-3/4 rounded-sm bg-muted'} />
-          <div className={'h-4 w-full rounded-sm bg-muted'} />
-          <div className={'h-4 w-1/2 rounded-sm bg-muted'} />
-        </div>
-        <div className={'mt-4 flex gap-2'}>
-          <div className={'h-8 w-16 rounded-sm bg-muted'} />
-          <div className={'h-8 w-20 rounded-sm bg-muted'} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-/**
- * Loading skeleton for the projects table view
- */
-const ProjectTableSkeleton = () => {
-  return (
-    <div className={'animate-pulse overflow-x-auto rounded-lg border border-border'}>
-      <table className={'w-full border-collapse text-sm'}>
-        <thead className={'border-b border-border bg-muted/50'}>
-          <tr>
-            {['Name', 'Description', 'Created', 'Status', 'Actions'].map((header) => (
-              <th className={'px-4 py-3 text-left font-medium text-muted-foreground'} key={header}>
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className={'divide-y divide-border'}>
-          {Array.from({ length: 3 }).map((_, index) => (
-            <tr key={index}>
-              <td className={'px-4 py-3'}>
-                <div className={'h-4 w-32 rounded-sm bg-muted'} />
-              </td>
-              <td className={'px-4 py-3'}>
-                <div className={'h-4 w-48 rounded-sm bg-muted'} />
-              </td>
-              <td className={'px-4 py-3'}>
-                <div className={'h-4 w-24 rounded-sm bg-muted'} />
-              </td>
-              <td className={'px-4 py-3'}>
-                <div className={'h-5 w-16 rounded-sm bg-muted'} />
-              </td>
-              <td className={'px-4 py-3'}>
-                <div className={'flex justify-end gap-2'}>
-                  <div className={'h-8 w-16 rounded-sm bg-muted'} />
-                  <div className={'h-8 w-20 rounded-sm bg-muted'} />
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
 
 /**
  * Projects page - Main entry point for project management.
  *
  * Features:
- * - Card/table view toggle with URL state persistence
+ * - Table view displaying all projects
  * - Show/hide archived projects filter
  * - Create new project dialog
  * - Archive/unarchive project actions
@@ -104,7 +32,6 @@ function ProjectsPageContent() {
   const router = useRouter();
 
   // URL state management with nuqs
-  const [view, setView] = useQueryState('view', parseAsStringLiteral(VIEW_OPTIONS).withDefault('card'));
   const [showArchived, setShowArchived] = useQueryState('showArchived', parseAsBoolean.withDefault(false));
 
   // Data fetching
@@ -124,10 +51,6 @@ function ProjectsPageContent() {
   }, [projects, showArchived]);
 
   // Handlers
-  const handleViewChange = (newView: ViewOption) => {
-    void setView(newView);
-  };
-
   const handleShowArchivedChange = (checked: boolean) => {
     void setShowArchived(checked);
   };
@@ -165,35 +88,9 @@ function ProjectsPageContent() {
         />
       </div>
 
-      {/* Filters and view controls */}
+      {/* Filters */}
       {!hasNoProjects && (
-        <div className={'flex flex-wrap items-center justify-between gap-4'}>
-          {/* View toggle */}
-          <ButtonGroup>
-            <Button
-              aria-label={'Card view'}
-              aria-pressed={view === 'card'}
-              className={cn(view === 'card' && 'bg-muted')}
-              onClick={() => handleViewChange('card')}
-              size={'sm'}
-              variant={'outline'}
-            >
-              <Grid3X3 aria-hidden={'true'} className={'size-4'} />
-              {'Cards'}
-            </Button>
-            <Button
-              aria-label={'Table view'}
-              aria-pressed={view === 'table'}
-              className={cn(view === 'table' && 'bg-muted')}
-              onClick={() => handleViewChange('table')}
-              size={'sm'}
-              variant={'outline'}
-            >
-              <List aria-hidden={'true'} className={'size-4'} />
-              {'Table'}
-            </Button>
-          </ButtonGroup>
-
+        <div className={'flex flex-wrap items-center justify-end gap-4'}>
           {/* Show archived toggle */}
           <div className={'flex items-center gap-2'}>
             <label className={'text-sm text-muted-foreground'} htmlFor={'show-archived'}>
@@ -212,16 +109,7 @@ function ProjectsPageContent() {
       {/* Projects content */}
       <QueryErrorBoundary>
         {isLoading ? (
-          // Loading skeletons
-          view === 'card' ? (
-            <div className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}>
-              {Array.from({ length: 6 }).map((_, index) => (
-                <ProjectCardSkeleton key={index} />
-              ))}
-            </div>
-          ) : (
-            <ProjectTableSkeleton />
-          )
+          <DataTableSkeleton columnCount={6} rowCount={3} />
         ) : hasNoProjects ? (
           // Empty state when no projects exist
           <EmptyState
@@ -251,21 +139,7 @@ function ProjectsPageContent() {
             icon={<FolderOpen aria-hidden={'true'} className={'size-6'} />}
             title={'No active projects'}
           />
-        ) : view === 'card' ? (
-          // Card view
-          <div className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}>
-            {filteredProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                onArchive={handleArchive}
-                onUnarchive={handleUnarchive}
-                onViewDetails={handleViewDetails}
-                project={project}
-              />
-            ))}
-          </div>
         ) : (
-          // Table view
           <ProjectTable
             isArchiving={isArchiving}
             onArchive={handleArchive}
