@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { agentHookEventTypes } from '../../db/schema/agent-hooks.schema';
 import { agentColors, agentModels, agentPermissionModes, agentTypes } from '../../db/schema/agents.schema';
 
 // Agent tool input schema for validating tool configuration
@@ -115,3 +116,35 @@ export const updateAgentRepositorySchema = z.object({
 });
 
 export type UpdateAgentRepositoryInput = z.infer<typeof updateAgentRepositorySchema>;
+
+// Agent hook schemas for repository validation
+export const createAgentHookSchema = z.object({
+  agentId: z.number().int().positive('Invalid agent ID'),
+  body: z.string().min(1, 'Hook body is required'),
+  eventType: z.enum(agentHookEventTypes, {
+    error: 'Please select a valid event type (PreToolUse, PostToolUse, or Stop)',
+  }),
+  matcher: z.string().nullable().optional(),
+  orderIndex: z.number().int().nonnegative('Order index must be non-negative').optional(),
+});
+
+export type CreateAgentHookInput = z.infer<typeof createAgentHookSchema>;
+
+export const updateAgentHookSchema = z.object({
+  body: z.string().min(1, 'Hook body is required').optional(),
+  eventType: z
+    .enum(agentHookEventTypes, {
+      error: 'Please select a valid event type (PreToolUse, PostToolUse, or Stop)',
+    })
+    .optional(),
+  matcher: z.string().nullable().optional(),
+  orderIndex: z.number().int().nonnegative('Order index must be non-negative').optional(),
+});
+
+export type UpdateAgentHookInput = z.infer<typeof updateAgentHookSchema>;
+
+export const updateAgentHookOrderSchema = z.object({
+  orderIndex: z.number().int().nonnegative('Order index must be non-negative'),
+});
+
+export type UpdateAgentHookOrderInput = z.infer<typeof updateAgentHookOrderSchema>;

@@ -1,5 +1,7 @@
 import { inferQueryKeyStore, mergeQueryKeys } from '@lukemorales/query-key-factory';
 
+import { agentSkillKeys } from './agent-skills';
+import { agentToolKeys } from './agent-tools';
 import { agentKeys } from './agents';
 import { auditLogKeys } from './audit-logs';
 import { discoveredFileKeys } from './discovered-files';
@@ -12,6 +14,8 @@ import { workflowKeys } from './workflows';
 
 export const queries = mergeQueryKeys(
   agentKeys,
+  agentSkillKeys,
+  agentToolKeys,
   auditLogKeys,
   discoveredFileKeys,
   projectKeys,
@@ -24,6 +28,8 @@ export const queries = mergeQueryKeys(
 
 export type QueryKeys = inferQueryKeyStore<typeof queries>;
 
+export { agentSkillKeys } from './agent-skills';
+export { agentToolKeys } from './agent-tools';
 // Re-export individual keys for direct access
 export { agentKeys } from './agents';
 export { auditLogKeys } from './audit-logs';

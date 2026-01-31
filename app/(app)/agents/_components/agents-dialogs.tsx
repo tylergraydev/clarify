@@ -1,7 +1,5 @@
 'use client';
 
-import type { ComponentPropsWithRef } from 'react';
-
 import { Fragment } from 'react';
 
 import type { AgentWithRelations } from '@/components/agents/agent-table';
@@ -17,7 +15,7 @@ import { SelectProjectDialog } from '@/components/agents/select-project-dialog';
 // Types
 // ============================================================================
 
-interface AgentsDialogsProps extends Omit<ComponentPropsWithRef<'div'>, 'onSelect'> {
+interface AgentsDialogsProps {
   /** Delete dialog state */
   deleteDialog: {
     agent: AgentWithRelations | null;

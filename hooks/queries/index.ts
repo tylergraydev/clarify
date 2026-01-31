@@ -6,6 +6,29 @@
  */
 
 // ============================================================================
+// Agent Skill Hooks
+// ============================================================================
+export {
+  useAgentSkills,
+  useCreateAgentSkill,
+  useDeleteAgentSkill,
+  useSetAgentSkillRequired,
+  useUpdateAgentSkill,
+} from './use-agent-skills';
+
+// ============================================================================
+// Agent Tool Hooks
+// ============================================================================
+export {
+  useAgentTools,
+  useAllowAgentTool,
+  useCreateAgentTool,
+  useDeleteAgentTool,
+  useDisallowAgentTool,
+  useUpdateAgentTool,
+} from './use-agent-tools';
+
+// ============================================================================
 // Agent Hooks
 // ============================================================================
 export {
@@ -15,8 +38,20 @@ export {
   useAgents,
   useAgentsByProject,
   useAgentsByType,
+  useAllAgents,
   useBuiltInAgents,
+  useCopyAgentToProject,
+  useCreateAgent,
+  useCreateAgentOverride,
   useDeactivateAgent,
+  useDeleteAgent,
+  useDuplicateAgent,
+  useExportAgent,
+  useExportAgentsBatch,
+  useGlobalAgents,
+  useImportAgent,
+  useMoveAgent,
+  useProjectAgents,
   useResetAgent,
   useUpdateAgent,
 } from './use-agents';
@@ -122,6 +157,8 @@ export {
 // Re-export query keys from lib/queries for convenient access
 export {
   agentKeys,
+  agentSkillKeys,
+  agentToolKeys,
   auditLogKeys,
   discoveredFileKeys,
   projectKeys,

@@ -22,7 +22,10 @@ export function useAgentTools(agentId: number) {
   return useQuery({
     ...agentToolKeys.byAgent(agentId),
     enabled: isElectron && agentId > 0,
-    queryFn: () => api!.agentTool.list(agentId),
+    queryFn: async () => {
+      if (!api) throw new Error('API not available');
+      return api.agentTool.list(agentId);
+    },
   });
 }
 
@@ -39,7 +42,10 @@ export function useAllowAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.agentTool.allow(id),
+    mutationFn: async (id: number) => {
+      if (!api) throw new Error('API not available');
+      return api.agentTool.allow(id);
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to allow tool',
@@ -66,7 +72,10 @@ export function useCreateAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (data: NewAgentTool) => api!.agentTool.create(data),
+    mutationFn: async (data: NewAgentTool) => {
+      if (!api) throw new Error('API not available');
+      return api.agentTool.create(data);
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to create tool',
@@ -93,7 +102,11 @@ export function useDeleteAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ agentId, id }: { agentId: number; id: number }) => api!.agentTool.delete(id).then(() => agentId),
+    mutationFn: async ({ agentId, id }: { agentId: number; id: number }) => {
+      if (!api) throw new Error('API not available');
+      await api.agentTool.delete(id);
+      return agentId;
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to delete tool',
@@ -118,7 +131,10 @@ export function useDisallowAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.agentTool.disallow(id),
+    mutationFn: async (id: number) => {
+      if (!api) throw new Error('API not available');
+      return api.agentTool.disallow(id);
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to disallow tool',
@@ -145,7 +161,10 @@ export function useUpdateAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Partial<NewAgentTool>; id: number }) => api!.agentTool.update(id, data),
+    mutationFn: async ({ data, id }: { data: Partial<NewAgentTool>; id: number }) => {
+      if (!api) throw new Error('API not available');
+      return api.agentTool.update(id, data);
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to update tool',

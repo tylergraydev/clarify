@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { AgentTable } from '@/components/agents/agent-table';
 import { AgentTableToolbar } from '@/components/agents/agent-table-toolbar';
+import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { useAllAgents } from '@/hooks/queries/use-agents';
 import { useProjects } from '@/hooks/queries/use-projects';
 import { useAgentActions } from '@/hooks/use-agent-actions';
@@ -16,6 +17,7 @@ import { useFilteredAgents } from '@/hooks/use-filtered-agents';
 
 import { AgentsDialogs } from './_components/agents-dialogs';
 import { AgentsPageHeader } from './_components/agents-page-header';
+import { AgentsPageSkeleton } from './_components/agents-page-skeleton';
 
 // ============================================================================
 // Component
@@ -65,12 +67,15 @@ export default function AgentsPage() {
   } = useAgentDialogs();
 
   // Data fetching
-  const { data: allAgents } = useAllAgents({
+  const { data: allAgents, isLoading: isLoadingAgents } = useAllAgents({
     includeDeactivated: showDeactivated,
     includeSkills: true,
     includeTools: true,
   });
-  const { data: projects } = useProjects();
+  const { data: projects, isLoading: isLoadingProjects } = useProjects();
+
+  // Combined loading state
+  const isLoading = isLoadingAgents || isLoadingProjects;
 
   // Client-side filtering
   const { filteredAgents, filteredCount, isFiltered, totalCount } = useFilteredAgents({
@@ -143,73 +148,80 @@ export default function AgentsPage() {
     [dialogState.project.agent, dialogState.project.mode, onProjectDialogSelect]
   );
 
-  return (
-    <main aria-label={'Agent management'} className={'space-y-6'}>
-      {/* Page Header */}
-      <AgentsPageHeader filteredCount={filteredCount} isFiltered={isFiltered} totalCount={totalCount} />
+  // Loading state
+  if (isLoading) {
+    return <AgentsPageSkeleton />;
+  }
 
-      {/* Agent Table with Toolbar */}
-      <section aria-label={'Agents list'} aria-live={'polite'} id={'agent-content'}>
-        <AgentTable
-          agents={filteredAgents}
+  return (
+    <QueryErrorBoundary>
+      <main aria-label={'Agent management'} className={'space-y-6'}>
+        {/* Page Header */}
+        <AgentsPageHeader filteredCount={filteredCount} isFiltered={isFiltered} totalCount={totalCount} />
+
+        {/* Agent Table with Toolbar */}
+        <section aria-label={'Agents list'} aria-live={'polite'} id={'agent-content'}>
+          <AgentTable
+            agents={filteredAgents}
+            isCopyingToProject={loadingState.isCopyingToProject}
+            isDeleting={loadingState.isDeleting}
+            isDuplicating={loadingState.isDuplicating}
+            isExporting={isExporting}
+            isMovingToProject={loadingState.isMovingToProject}
+            isResetting={loadingState.isResetting}
+            isRowSelectionEnabled={true}
+            isToggling={loadingState.isToggling}
+            onCopyToProject={onCopyToProject}
+            onDelete={onDeleteClick}
+            onDuplicate={onDuplicate}
+            onExport={onExportSingle}
+            onGlobalFilterChange={setSearchFilter}
+            onMoveToProject={onMoveToProject}
+            onReset={onReset}
+            onRowSelectionChange={handleRowSelectionChange}
+            onToggleActive={onToggleActive}
+            projects={projects ?? []}
+            rowSelection={rowSelection}
+            toolbarContent={
+              <AgentTableToolbar
+                onExportSelected={onExportSelected}
+                onImport={onImportClick}
+                onProjectFilterChange={setProjectFilter}
+                onResetFilters={onResetFilters}
+                onShowBuiltInChange={setShowBuiltIn}
+                onShowDeactivatedChange={setShowDeactivated}
+                onStatusFilterChange={setStatusFilter}
+                onTypeFilterChange={setTypeFilter}
+                projectFilter={projectFilter}
+                projects={projects ?? []}
+                selectedCount={selectedCount}
+                showBuiltIn={showBuiltIn}
+                showDeactivated={showDeactivated}
+                statusFilter={statusFilter}
+                typeFilter={typeFilter}
+              />
+            }
+          />
+        </section>
+
+        {/* Dialogs */}
+        <AgentsDialogs
+          deleteDialog={dialogState.delete}
+          importDialog={dialogState.import}
           isCopyingToProject={loadingState.isCopyingToProject}
           isDeleting={loadingState.isDeleting}
-          isDuplicating={loadingState.isDuplicating}
-          isExporting={isExporting}
+          isImporting={isImporting}
           isMovingToProject={loadingState.isMovingToProject}
-          isResetting={loadingState.isResetting}
-          isRowSelectionEnabled={true}
-          isToggling={loadingState.isToggling}
-          onCopyToProject={onCopyToProject}
-          onDelete={onDeleteClick}
-          onDuplicate={onDuplicate}
-          onExport={onExportSingle}
-          onGlobalFilterChange={setSearchFilter}
-          onMoveToProject={onMoveToProject}
-          onReset={onReset}
-          onRowSelectionChange={handleRowSelectionChange}
-          onToggleActive={onToggleActive}
+          onDeleteConfirm={handleDeleteConfirm}
+          onDeleteDialogOpenChange={onDeleteDialogOpenChange}
+          onImportConfirm={onImportConfirm}
+          onImportDialogOpenChange={onImportDialogOpenChange}
+          onProjectDialogOpenChange={onProjectDialogOpenChange}
+          onProjectDialogSelect={handleProjectDialogSelect}
+          projectDialog={dialogState.project}
           projects={projects ?? []}
-          rowSelection={rowSelection}
-          toolbarContent={
-            <AgentTableToolbar
-              onExportSelected={onExportSelected}
-              onImport={onImportClick}
-              onProjectFilterChange={setProjectFilter}
-              onResetFilters={onResetFilters}
-              onShowBuiltInChange={setShowBuiltIn}
-              onShowDeactivatedChange={setShowDeactivated}
-              onStatusFilterChange={setStatusFilter}
-              onTypeFilterChange={setTypeFilter}
-              projectFilter={projectFilter}
-              projects={projects ?? []}
-              selectedCount={selectedCount}
-              showBuiltIn={showBuiltIn}
-              showDeactivated={showDeactivated}
-              statusFilter={statusFilter}
-              typeFilter={typeFilter}
-            />
-          }
         />
-      </section>
-
-      {/* Dialogs */}
-      <AgentsDialogs
-        deleteDialog={dialogState.delete}
-        importDialog={dialogState.import}
-        isCopyingToProject={loadingState.isCopyingToProject}
-        isDeleting={loadingState.isDeleting}
-        isImporting={isImporting}
-        isMovingToProject={loadingState.isMovingToProject}
-        onDeleteConfirm={handleDeleteConfirm}
-        onDeleteDialogOpenChange={onDeleteDialogOpenChange}
-        onImportConfirm={onImportConfirm}
-        onImportDialogOpenChange={onImportDialogOpenChange}
-        onProjectDialogOpenChange={onProjectDialogOpenChange}
-        onProjectDialogSelect={handleProjectDialogSelect}
-        projectDialog={dialogState.project}
-        projects={projects ?? []}
-      />
-    </main>
+      </main>
+    </QueryErrorBoundary>
   );
 }

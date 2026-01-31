@@ -22,7 +22,10 @@ export function useAgentSkills(agentId: number) {
   return useQuery({
     ...agentSkillKeys.byAgent(agentId),
     enabled: isElectron && agentId > 0,
-    queryFn: () => api!.agentSkill.list(agentId),
+    queryFn: async () => {
+      if (!api) throw new Error('API not available');
+      return api.agentSkill.list(agentId);
+    },
   });
 }
 
@@ -39,7 +42,10 @@ export function useCreateAgentSkill() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (data: NewAgentSkill) => api!.agentSkill.create(data),
+    mutationFn: async (data: NewAgentSkill) => {
+      if (!api) throw new Error('API not available');
+      return api.agentSkill.create(data);
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to create skill',
@@ -66,7 +72,11 @@ export function useDeleteAgentSkill() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ agentId, id }: { agentId: number; id: number }) => api!.agentSkill.delete(id).then(() => agentId),
+    mutationFn: async ({ agentId, id }: { agentId: number; id: number }) => {
+      if (!api) throw new Error('API not available');
+      await api.agentSkill.delete(id);
+      return agentId;
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to delete skill',
@@ -91,7 +101,10 @@ export function useSetAgentSkillRequired() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ id, required }: { id: number; required: boolean }) => api!.agentSkill.setRequired(id, required),
+    mutationFn: async ({ id, required }: { id: number; required: boolean }) => {
+      if (!api) throw new Error('API not available');
+      return api.agentSkill.setRequired(id, required);
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to update skill status',
@@ -118,7 +131,10 @@ export function useUpdateAgentSkill() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Partial<NewAgentSkill>; id: number }) => api!.agentSkill.update(id, data),
+    mutationFn: async ({ data, id }: { data: Partial<NewAgentSkill>; id: number }) => {
+      if (!api) throw new Error('API not available');
+      return api.agentSkill.update(id, data);
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to update skill',

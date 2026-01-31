@@ -1,7 +1,12 @@
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 
 import type { DrizzleDatabase } from '../index';
 
+import {
+  createAgentHookSchema,
+  updateAgentHookOrderSchema,
+  updateAgentHookSchema,
+} from '../../lib/validations/agent';
 import { type AgentHook, agentHooks, type NewAgentHook } from '../schema';
 
 export interface AgentHooksRepository {
@@ -18,7 +23,9 @@ export interface AgentHooksRepository {
 export function createAgentHooksRepository(db: DrizzleDatabase): AgentHooksRepository {
   return {
     async create(data: NewAgentHook): Promise<AgentHook> {
-      const result = await db.insert(agentHooks).values(data).returning();
+      // Validate input data through Zod schema
+      const validatedData = createAgentHookSchema.parse(data);
+      const result = await db.insert(agentHooks).values(validatedData).returning();
       if (!result[0]) {
         throw new Error('Failed to create agent hook');
       }
@@ -41,9 +48,8 @@ export function createAgentHooksRepository(db: DrizzleDatabase): AgentHooksRepos
       return db
         .select()
         .from(agentHooks)
-        .where(eq(agentHooks.agentId, agentId))
-        .orderBy(asc(agentHooks.orderIndex))
-        .then((hooks) => hooks.filter((h) => h.eventType === eventType));
+        .where(and(eq(agentHooks.agentId, agentId), eq(agentHooks.eventType, eventType)))
+        .orderBy(asc(agentHooks.orderIndex));
     },
 
     async findById(id: number): Promise<AgentHook | undefined> {
@@ -52,20 +58,24 @@ export function createAgentHooksRepository(db: DrizzleDatabase): AgentHooksRepos
     },
 
     async update(id: number, data: Partial<Omit<NewAgentHook, 'createdAt' | 'id'>>): Promise<AgentHook | undefined> {
+      // Validate input data through Zod schema
+      const validatedData = updateAgentHookSchema.parse(data);
       const now = new Date().toISOString();
       const result = await db
         .update(agentHooks)
-        .set({ ...data, updatedAt: now })
+        .set({ ...validatedData, updatedAt: now })
         .where(eq(agentHooks.id, id))
         .returning();
       return result[0];
     },
 
     async updateOrder(id: number, orderIndex: number): Promise<AgentHook | undefined> {
+      // Validate input data through Zod schema
+      const validatedData = updateAgentHookOrderSchema.parse({ orderIndex });
       const now = new Date().toISOString();
       const result = await db
         .update(agentHooks)
-        .set({ orderIndex, updatedAt: now })
+        .set({ orderIndex: validatedData.orderIndex, updatedAt: now })
         .where(eq(agentHooks.id, id))
         .returning();
       return result[0];
