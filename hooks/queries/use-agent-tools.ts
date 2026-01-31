@@ -6,7 +6,7 @@ import type { NewAgentTool } from '@/types/electron';
 
 import { agentToolKeys } from '@/lib/queries/agent-tools';
 
-import { useElectron } from '../use-electron';
+import { useElectronDb } from '../use-electron';
 import { useToast } from '../use-toast';
 
 // ============================================================================
@@ -17,15 +17,12 @@ import { useToast } from '../use-toast';
  * Fetch all tools for an agent
  */
 export function useAgentTools(agentId: number) {
-  const { api, isElectron } = useElectron();
+  const { agentTools, isElectron } = useElectronDb();
 
   return useQuery({
     ...agentToolKeys.byAgent(agentId),
     enabled: isElectron && agentId > 0,
-    queryFn: async () => {
-      if (!api) throw new Error('API not available');
-      return api.agentTool.list(agentId);
-    },
+    queryFn: () => agentTools.list(agentId),
   });
 }
 
@@ -38,27 +35,22 @@ export function useAgentTools(agentId: number) {
  */
 export function useAllowAgentTool() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agentTools } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      if (!api) throw new Error('API not available');
-      return api.agentTool.allow(id);
-    },
+    mutationFn: (id: number) => agentTools.allow(id),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to allow tool',
         title: 'Allow Tool Failed',
       });
     },
-    onSuccess: (tool) => {
-      if (tool) {
-        // Invalidate the agent's tools list
-        void queryClient.invalidateQueries({
-          queryKey: agentToolKeys.byAgent(tool.agentId).queryKey,
-        });
-      }
+    onSuccess: () => {
+      // Invalidate all byAgent queries
+      void queryClient.invalidateQueries({
+        queryKey: agentToolKeys.byAgent._def,
+      });
     },
   });
 }
@@ -68,27 +60,22 @@ export function useAllowAgentTool() {
  */
 export function useCreateAgentTool() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agentTools } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (data: NewAgentTool) => {
-      if (!api) throw new Error('API not available');
-      return api.agentTool.create(data);
-    },
+    mutationFn: (data: NewAgentTool) => agentTools.create(data),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to create tool',
         title: 'Create Tool Failed',
       });
     },
-    onSuccess: (tool) => {
-      if (tool) {
-        // Invalidate the agent's tools list
-        void queryClient.invalidateQueries({
-          queryKey: agentToolKeys.byAgent(tool.agentId).queryKey,
-        });
-      }
+    onSuccess: () => {
+      // Invalidate all byAgent queries
+      void queryClient.invalidateQueries({
+        queryKey: agentToolKeys.byAgent._def,
+      });
     },
   });
 }
@@ -98,13 +85,12 @@ export function useCreateAgentTool() {
  */
 export function useDeleteAgentTool() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agentTools } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ agentId, id }: { agentId: number; id: number }) => {
-      if (!api) throw new Error('API not available');
-      await api.agentTool.delete(id);
+      await agentTools.delete(id);
       return agentId;
     },
     onError: (error) => {
@@ -113,10 +99,10 @@ export function useDeleteAgentTool() {
         title: 'Delete Tool Failed',
       });
     },
-    onSuccess: (agentId) => {
-      // Invalidate the agent's tools list
+    onSuccess: () => {
+      // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
-        queryKey: agentToolKeys.byAgent(agentId).queryKey,
+        queryKey: agentToolKeys.byAgent._def,
       });
     },
   });
@@ -127,27 +113,22 @@ export function useDeleteAgentTool() {
  */
 export function useDisallowAgentTool() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agentTools } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      if (!api) throw new Error('API not available');
-      return api.agentTool.disallow(id);
-    },
+    mutationFn: (id: number) => agentTools.disallow(id),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to disallow tool',
         title: 'Disallow Tool Failed',
       });
     },
-    onSuccess: (tool) => {
-      if (tool) {
-        // Invalidate the agent's tools list
-        void queryClient.invalidateQueries({
-          queryKey: agentToolKeys.byAgent(tool.agentId).queryKey,
-        });
-      }
+    onSuccess: () => {
+      // Invalidate all byAgent queries
+      void queryClient.invalidateQueries({
+        queryKey: agentToolKeys.byAgent._def,
+      });
     },
   });
 }
@@ -157,27 +138,23 @@ export function useDisallowAgentTool() {
  */
 export function useUpdateAgentTool() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agentTools } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ data, id }: { data: Partial<NewAgentTool>; id: number }) => {
-      if (!api) throw new Error('API not available');
-      return api.agentTool.update(id, data);
-    },
+    mutationFn: ({ data, id }: { data: Partial<NewAgentTool>; id: number }) =>
+      agentTools.update(id, data),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to update tool',
         title: 'Update Tool Failed',
       });
     },
-    onSuccess: (tool) => {
-      if (tool) {
-        // Invalidate the agent's tools list
-        void queryClient.invalidateQueries({
-          queryKey: agentToolKeys.byAgent(tool.agentId).queryKey,
-        });
-      }
+    onSuccess: () => {
+      // Invalidate all byAgent queries
+      void queryClient.invalidateQueries({
+        queryKey: agentToolKeys.byAgent._def,
+      });
     },
   });
 }

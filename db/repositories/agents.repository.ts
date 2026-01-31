@@ -17,7 +17,7 @@ export interface AgentsRepository {
   activate(id: number): Promise<Agent | undefined>;
   create(data: NewAgent): Promise<Agent>;
   deactivate(id: number): Promise<Agent | undefined>;
-  delete(id: number): Promise<void>;
+  delete(id: number): Promise<boolean>;
   findActive(projectId?: number): Promise<Array<Agent>>;
   findAll(options?: AgentListFilters): Promise<Array<Agent>>;
   findBuiltIn(): Promise<Array<Agent>>;
@@ -62,8 +62,9 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       return result[0];
     },
 
-    async delete(id: number): Promise<void> {
-      await db.delete(agents).where(eq(agents.id, id));
+    async delete(id: number): Promise<boolean> {
+      const result = db.delete(agents).where(eq(agents.id, id)).run();
+      return result.changes > 0;
     },
 
     async findActive(projectId?: number): Promise<Array<Agent>> {

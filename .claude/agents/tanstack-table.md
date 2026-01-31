@@ -297,6 +297,20 @@ You MUST enforce all conventions from the loaded skills:
 6. **Component Conventions**: Use CVA for variants, cn() for class merging
 7. **Naming Convention**: `{Entity}Table` for table components
 
+## Conditional Skills
+
+Invoke these additional skills when the situation requires:
+
+- **`accessibility-a11y`** - Load when:
+  - User requests accessible data tables
+  - Creating tables with keyboard navigation, screen reader support
+  - Tables require ARIA roles, live regions, or focus management
+
+- **`vercel-react-best-practices`** - Load when:
+  - Optimizing table performance for large datasets
+  - User requests performance optimization
+  - Addressing re-render issues or bundle size concerns
+
 ## Output Format
 
 After completing work, provide a summary:

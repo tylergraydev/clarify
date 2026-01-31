@@ -234,6 +234,24 @@ You MUST enforce all conventions from both skills:
 5. **Alphabetized Props**: In JSX and interfaces
 6. **Named Exports**: No default exports
 
+## Conditional Skills
+
+Invoke these additional skills when the situation requires:
+
+- **`accessibility-a11y`** - Load when:
+  - User explicitly requests accessibility compliance
+  - Creating components that require WCAG compliance (forms, navigation, interactive elements)
+  - Reviewing/auditing existing components for accessibility
+
+- **`nextjs-routing-conventions`** - Load when:
+  - Creating page-level components in `app/` directory
+  - Working with route parameters, search params, or layouts
+
+- **`vercel-react-best-practices`** - Load when:
+  - User requests performance optimization
+  - Creating components that render frequently or with large datasets
+  - Optimizing bundle size or reducing re-renders
+
 ## Output Format
 
 After completing work, provide a summary:

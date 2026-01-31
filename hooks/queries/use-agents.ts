@@ -2,11 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { AgentExportBatchItem, AgentImportInput, AgentListFilters, NewAgent } from '@/types/electron';
+import type { AgentListFilters } from '@/types/electron';
 
 import { agentKeys } from '@/lib/queries/agents';
 
-import { useElectron } from '../use-electron';
+import { useElectronDb } from '../use-electron';
 import { useToast } from '../use-toast';
 
 // ============================================================================
@@ -18,14 +18,11 @@ import { useToast } from '../use-toast';
  */
 export function useActivateAgent() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.activate(id);
-    },
+    mutationFn: (id: number) => agents.activate(id),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to activate agent',
@@ -47,18 +44,16 @@ export function useActivateAgent() {
  * Fetch active agents, optionally filtered by project
  */
 export function useActiveAgents(projectId?: number) {
-  const { api, isElectron } = useElectron();
+  const { agents, isElectron } = useElectronDb();
 
   return useQuery({
     ...agentKeys.active(projectId),
     enabled: isElectron,
-    queryFn: async () => {
-      if (!api) throw new Error('API not available');
-      return api.agent.list({
+    queryFn: () =>
+      agents.list({
         includeDeactivated: false,
         projectId,
-      });
-    },
+      }),
   });
 }
 
@@ -66,15 +61,12 @@ export function useActiveAgents(projectId?: number) {
  * Fetch a single agent by ID
  */
 export function useAgent(id: number) {
-  const { api, isElectron } = useElectron();
+  const { agents, isElectron } = useElectronDb();
 
   return useQuery({
     ...agentKeys.detail(id),
     enabled: isElectron && id > 0,
-    queryFn: async () => {
-      if (!api) throw new Error('API not available');
-      return api.agent.get(id);
-    },
+    queryFn: () => agents.get(id),
   });
 }
 
@@ -82,15 +74,12 @@ export function useAgent(id: number) {
  * Fetch all agents with optional filters
  */
 export function useAgents(filters?: AgentListFilters) {
-  const { api, isElectron } = useElectron();
+  const { agents, isElectron } = useElectronDb();
 
   return useQuery({
     ...agentKeys.list(filters),
     enabled: isElectron,
-    queryFn: async () => {
-      if (!api) throw new Error('API not available');
-      return api.agent.list(filters);
-    },
+    queryFn: () => agents.list(filters),
   });
 }
 
@@ -98,15 +87,12 @@ export function useAgents(filters?: AgentListFilters) {
  * Fetch agents filtered by project ID
  */
 export function useAgentsByProject(projectId: number) {
-  const { api, isElectron } = useElectron();
+  const { agents, isElectron } = useElectronDb();
 
   return useQuery({
     ...agentKeys.byProject(projectId),
     enabled: isElectron && projectId > 0,
-    queryFn: async () => {
-      if (!api) throw new Error('API not available');
-      return api.agent.list({ projectId });
-    },
+    queryFn: () => agents.list({ projectId }),
   });
 }
 
@@ -114,15 +100,12 @@ export function useAgentsByProject(projectId: number) {
  * Fetch agents filtered by type
  */
 export function useAgentsByType(type: 'planning' | 'review' | 'specialist') {
-  const { api, isElectron } = useElectron();
+  const { agents, isElectron } = useElectronDb();
 
   return useQuery({
     ...agentKeys.byType(type),
     enabled: isElectron && Boolean(type),
-    queryFn: async () => {
-      if (!api) throw new Error('API not available');
-      return api.agent.list({ type });
-    },
+    queryFn: () => agents.list({ type }),
   });
 }
 
@@ -135,19 +118,17 @@ export function useAllAgents(filters?: {
   includeSkills?: boolean;
   includeTools?: boolean;
 }) {
-  const { api, isElectron } = useElectron();
+  const { agents, isElectron } = useElectronDb();
 
   return useQuery({
     ...agentKeys.all(filters),
     enabled: isElectron,
-    queryFn: async () => {
-      if (!api) throw new Error('API not available');
-      return api.agent.list({
+    queryFn: () =>
+      agents.list({
         includeDeactivated: filters?.includeDeactivated,
         includeSkills: filters?.includeSkills,
         includeTools: filters?.includeTools,
-      });
-    },
+      }),
   });
 }
 
@@ -155,16 +136,15 @@ export function useAllAgents(filters?: {
  * Fetch built-in agents
  */
 export function useBuiltInAgents() {
-  const { api, isElectron } = useElectron();
+  const { agents, isElectron } = useElectronDb();
 
   return useQuery({
     ...agentKeys.builtIn,
     enabled: isElectron,
     queryFn: async () => {
-      if (!api) throw new Error('API not available');
-      const agents = await api.agent.list();
+      const allAgents = await agents.list();
       // Agent is built-in if builtInAt is not null
-      return agents.filter((agent) => agent.builtInAt !== null);
+      return allAgents.filter((agent) => agent.builtInAt !== null);
     },
   });
 }
@@ -174,14 +154,12 @@ export function useBuiltInAgents() {
  */
 export function useCopyAgentToProject() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ agentId, targetProjectId }: { agentId: number; targetProjectId: number }) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.copyToProject(agentId, targetProjectId);
-    },
+    mutationFn: ({ agentId, targetProjectId }: { agentId: number; targetProjectId: number }) =>
+      agents.copyToProject(agentId, targetProjectId),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to copy agent',
@@ -220,19 +198,20 @@ export function useCopyAgentToProject() {
   });
 }
 
+// ============================================================================
+// Mutation Hooks
+// ============================================================================
+
 /**
  * Create a new agent
  */
 export function useCreateAgent() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (data: NewAgent) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.create(data);
-    },
+    mutationFn: (data: Parameters<typeof agents.create>[0]) => agents.create(data),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to create agent',
@@ -259,23 +238,17 @@ export function useCreateAgent() {
   });
 }
 
-// ============================================================================
-// Mutation Hooks
-// ============================================================================
-
 /**
  * Create a project-specific override of a global agent
  */
 export function useCreateAgentOverride() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ agentId, projectId }: { agentId: number; projectId: number }) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.createOverride(agentId, projectId);
-    },
+    mutationFn: ({ agentId, projectId }: { agentId: number; projectId: number }) =>
+      agents.createOverride(agentId, projectId),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to create agent override',
@@ -318,14 +291,11 @@ export function useCreateAgentOverride() {
  */
 export function useDeactivateAgent() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.deactivate(id);
-    },
+    mutationFn: (id: number) => agents.deactivate(id),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to deactivate agent',
@@ -351,14 +321,11 @@ export function useDeactivateAgent() {
  */
 export function useDeleteAgent() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ id }: { id: number; projectId?: number }) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.delete(id);
-    },
+    mutationFn: ({ id }: { id: number; projectId?: number }) => agents.delete(id),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to delete agent',
@@ -395,14 +362,11 @@ export function useDeleteAgent() {
  */
 export function useDuplicateAgent() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.duplicate(id);
-    },
+    mutationFn: (id: number) => agents.duplicate(id),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to duplicate agent',
@@ -433,14 +397,11 @@ export function useDuplicateAgent() {
  * Export a single agent to markdown format
  */
 export function useExportAgent() {
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.export(id);
-    },
+    mutationFn: (id: number) => agents.export(id),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to export agent',
@@ -454,14 +415,11 @@ export function useExportAgent() {
  * Export multiple agents to markdown format in batch
  */
 export function useExportAgentsBatch() {
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (ids: Array<number>): Promise<Array<AgentExportBatchItem>> => {
-      if (!api) throw new Error('API not available');
-      return api.agent.exportBatch(ids);
-    },
+    mutationFn: (ids: Array<number>) => agents.exportBatch(ids),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to export agents',
@@ -475,19 +433,17 @@ export function useExportAgentsBatch() {
  * Fetch global agents (agents with no projectId)
  */
 export function useGlobalAgents(filters?: { includeDeactivated?: boolean; type?: string }) {
-  const { api, isElectron } = useElectron();
+  const { agents, isElectron } = useElectronDb();
 
   return useQuery({
     ...agentKeys.global(filters),
     enabled: isElectron,
-    queryFn: async () => {
-      if (!api) throw new Error('API not available');
-      return api.agent.list({
+    queryFn: () =>
+      agents.list({
         includeDeactivated: filters?.includeDeactivated,
         scope: 'global',
         type: filters?.type as AgentListFilters['type'],
-      });
-    },
+      }),
   });
 }
 
@@ -496,14 +452,11 @@ export function useGlobalAgents(filters?: { includeDeactivated?: boolean; type?:
  */
 export function useImportAgent() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (data: AgentImportInput) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.import(data);
-    },
+    mutationFn: (data: Parameters<typeof agents.import>[0]) => agents.import(data),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to import agent',
@@ -554,14 +507,12 @@ export function useImportAgent() {
  */
 export function useMoveAgent() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ agentId, targetProjectId }: { agentId: number; targetProjectId: null | number }) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.move(agentId, targetProjectId);
-    },
+    mutationFn: ({ agentId, targetProjectId }: { agentId: number; targetProjectId: null | number }) =>
+      agents.move(agentId, targetProjectId),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to move agent',
@@ -605,20 +556,18 @@ export function useMoveAgent() {
  * Fetch project-scoped agents for a specific project
  */
 export function useProjectAgents(projectId: number, filters?: { includeDeactivated?: boolean; type?: string }) {
-  const { api, isElectron } = useElectron();
+  const { agents, isElectron } = useElectronDb();
 
   return useQuery({
     ...agentKeys.projectScoped(projectId, filters),
     enabled: isElectron && projectId > 0,
-    queryFn: async () => {
-      if (!api) throw new Error('API not available');
-      return api.agent.list({
+    queryFn: () =>
+      agents.list({
         includeDeactivated: filters?.includeDeactivated,
         projectId,
         scope: 'project',
         type: filters?.type as AgentListFilters['type'],
-      });
-    },
+      }),
   });
 }
 
@@ -632,14 +581,11 @@ export function useProjectAgents(projectId: number, filters?: { includeDeactivat
  */
 export function useResetAgent() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ id }: { id: number; projectId?: number }) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.reset(id);
-    },
+    mutationFn: ({ id }: { id: number; projectId?: number }) => agents.reset(id),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to reset agent',
@@ -683,14 +629,11 @@ export function useResetAgent() {
  */
 export function useUpdateAgent() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { agents } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ data, id }: { data: Partial<NewAgent>; id: number }) => {
-      if (!api) throw new Error('API not available');
-      return api.agent.update(id, data);
-    },
+    mutationFn: ({ data, id }: { data: Parameters<typeof agents.update>[1]; id: number }) => agents.update(id, data),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to update agent',

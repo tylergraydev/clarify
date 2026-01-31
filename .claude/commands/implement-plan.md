@@ -1,5 +1,5 @@
 ---
-allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Task(subagent_type:vercel-react-best-practices), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,pnpm:*,cd:*), TodoWrite(*), AskUserQuestion(*)
+allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Task(subagent_type:page-route), Task(subagent_type:zustand-store), Task(subagent_type:vercel-react-best-practices), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,pnpm:*,cd:*), TodoWrite(*), AskUserQuestion(*)
 argument-hint: "path/to/implementation-plan.md [--step-by-step|--dry-run|--resume-from=N|--worktree]"
 description: Execute implementation plan with structured tracking and validation using subagent architecture
 ---
@@ -98,8 +98,10 @@ You do NOT implement code. Subagents implement code.
 | `tanstack-form`                 | Form implementations         | Forms in dialogs, pages, features + validation schemas     |
 | `tanstack-form-base-components` | Base form components         | Field components in `components/ui/form/`                  |
 | `frontend-component`            | UI & feature components      | UI primitives in `components/ui/`, feature components      |
+| `page-route`                    | Pages & routes               | Pages, layouts, loading/error in `app/(app)/`              |
+| `zustand-store`                 | Client state management      | Zustand stores in `lib/stores/`                            |
 | `vercel-react-best-practices`   | Performance optimization     | Performance audits, bundle optimization, waterfall fixes   |
-| `general-purpose`               | Everything else              | Pages, utilities, non-component code                       |
+| `general-purpose`               | Everything else              | Utilities, non-component code, misc files                  |
 
 ## Step-Type Detection Rules
 
@@ -112,8 +114,10 @@ You do NOT implement code. Subagents implement code.
 6. IF files contain "components/ui/form/" (base field components) → tanstack-form-base-components
 7. IF step involves creating/modifying forms OR files contain "lib/validations/" → tanstack-form
 8. IF step involves performance optimization, bundle size, waterfall fixes, or re-render optimization → vercel-react-best-practices
-9. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
-10. ELSE → general-purpose
+9. IF files contain "lib/stores/" OR step involves Zustand store creation → zustand-store
+10. IF files contain "app/(app)/" AND (end with "page.tsx" OR "layout.tsx" OR "loading.tsx" OR "error.tsx" OR "route-type.ts") → page-route
+11. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
+12. ELSE → general-purpose
 ```
 
 ---
@@ -145,12 +149,14 @@ You do NOT implement code. Subagents implement code.
    ```
    Step 1: database-schema (db/schema/users.schema.ts)
    Step 2: tanstack-query (hooks/queries/use-users.ts)
-   Step 3: tanstack-table (components/features/users/users-table.tsx)
-   Step 4: tanstack-form-base-components (components/ui/form/combobox-field.tsx)
-   Step 5: tanstack-form (components/users/create-user-form.tsx, lib/validations/user.ts)
-   Step 6: frontend-component (components/ui/avatar.tsx)
-   Step 7: frontend-component (components/features/users/user-card.tsx)
-   Step 8: general-purpose (app/(app)/users/page.tsx)
+   Step 3: zustand-store (lib/stores/user-preferences-store.ts)
+   Step 4: tanstack-table (components/features/users/users-table.tsx)
+   Step 5: tanstack-form-base-components (components/ui/form/combobox-field.tsx)
+   Step 6: tanstack-form (components/users/create-user-form.tsx, lib/validations/user.ts)
+   Step 7: frontend-component (components/ui/avatar.tsx)
+   Step 8: frontend-component (components/features/users/user-card.tsx)
+   Step 9: page-route (app/(app)/users/page.tsx, app/(app)/users/[id]/page.tsx)
+   Step 10: general-purpose (lib/utils/format-user.ts)
    ...
    ```
 3. Create TodoWrite with all steps labeled with their specialist:

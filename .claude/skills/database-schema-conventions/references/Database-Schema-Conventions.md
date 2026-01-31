@@ -168,13 +168,15 @@ Pattern: `{tablename}_{columnname}_idx`
 
 - **Insert type**: `New{EntityName}` (singular, PascalCase)
 - **Select type**: `{EntityName}` (singular, PascalCase)
+- **Export order**: Follow ESLint perfectionist alphabetical ordering (e.g., `Agent` before `NewAgent`)
 
 ```typescript
-export type NewUser = typeof users.$inferInsert;
+// Types exported in alphabetical order per ESLint perfectionist
 export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
 
-export type NewFeatureRequest = typeof featureRequests.$inferInsert;
 export type FeatureRequest = typeof featureRequests.$inferSelect;
+export type NewFeatureRequest = typeof featureRequests.$inferInsert;
 ```
 
 ---
@@ -495,7 +497,7 @@ const wasDeleted = result.changes > 0;
 3. **Column Naming**: `snake_case` in SQL, `camelCase` in TypeScript
 4. **Table Naming**: Plural, lowercase with underscores
 5. **Index Naming**: `{tablename}_{columnname}_idx`
-6. **Type Exports**: `NewEntity` for insert, `Entity` for select
+6. **Type Exports**: `NewEntity` for insert, `Entity` for select (alphabetical order per ESLint)
 7. **Async Methods**: ALL repository methods MUST be async (return `Promise<T>`)
 8. **Zod Validation**: ALL repositories MUST validate input with Zod schemas
 9. **Timestamps**: Use JavaScript `toISOString()` for updates, SQL for defaults

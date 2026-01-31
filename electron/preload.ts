@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 import type {
   Agent,
+  AgentHook,
   AgentSkill,
   AgentTool,
   AuditLog,
@@ -199,18 +200,44 @@ export interface AgentExportResult {
 }
 
 /**
+ * Hook entry structure matching Claude Code specification.
+ */
+export interface AgentImportHookEntry {
+  body: string;
+  matcher?: string;
+}
+
+/**
+ * Hooks structure matching Claude Code specification.
+ */
+export interface AgentImportHooks {
+  PostToolUse?: Array<AgentImportHookEntry>;
+  PreToolUse?: Array<AgentImportHookEntry>;
+  Stop?: Array<AgentImportHookEntry>;
+}
+
+/**
  * Input data for agent import - parsed markdown data.
+ * Matches the official Claude Code subagent specification.
  */
 export interface AgentImportInput {
   frontmatter: {
+    // Clarify-specific fields (optional)
     color?: string;
+    // Required by Claude Code spec
     description?: string;
-    displayName: string;
+    // Optional Claude Code fields
+    disallowedTools?: Array<string>;
+    displayName?: string;
+    hooks?: AgentImportHooks;
+    model?: string;
     name: string;
-    skills?: Array<{ isRequired: boolean; skillName: string }>;
-    tools?: Array<{ pattern?: string; toolName: string }>;
-    type: string;
-    version: number;
+    permissionMode?: string;
+    // Simple string arrays (Claude Code format)
+    skills?: Array<string>;
+    tools?: Array<string>;
+    type?: string;
+    version?: number;
   };
   systemPrompt: string;
 }
@@ -265,10 +292,11 @@ export interface AgentOperationResult {
 }
 
 /**
- * Extended Agent type that includes optional tools and skills arrays
+ * Extended Agent type that includes optional tools, skills, and hooks arrays
  * for list responses when includeTools/includeSkills filters are used.
  */
 export interface AgentWithRelations extends Agent {
+  hooks?: Array<AgentHook>;
   skills?: Array<AgentSkill>;
   tools?: Array<AgentTool>;
 }

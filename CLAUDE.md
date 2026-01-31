@@ -217,6 +217,8 @@ Specialist subagents in `.claude/agents/` handle domain-specific implementation 
 | `tanstack-form`                 | Form implementations         | Forms in dialogs, pages, features + validation schemas     |
 | `tanstack-form-base-components` | Base form components         | Field components in `components/ui/form/`                  |
 | `frontend-component`            | UI & feature components      | UI primitives in `components/ui/`, feature components      |
+| `page-route`                    | Pages & routes               | Files in `app/(app)/` (pages, layouts, loading, error)     |
+| `zustand-store`                 | Client state management      | Files in `lib/stores/`, Zustand store creation             |
 | `vercel-react-best-practices`   | Performance optimization     | Bundle size, waterfalls, re-renders, server performance    |
 | `clarification-agent`           | Requirement gathering        | Gathering clarifying questions for ambiguous requests      |
 | `file-discovery-agent`          | File discovery               | Identifying all files relevant to a feature                |

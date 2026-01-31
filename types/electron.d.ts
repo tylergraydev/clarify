@@ -139,10 +139,11 @@ export interface AgentOperationResult {
 }
 
 /**
- * Extended Agent type that includes optional tools and skills arrays
+ * Extended Agent type that includes optional tools, skills, and hooks arrays
  * for list responses when includeTools/includeSkills filters are used.
  */
 export type AgentWithRelations = import('../db/schema').Agent & {
+  hooks?: Array<import('../db/schema').AgentHook>;
   skills?: Array<import('../db/schema').AgentSkill>;
   tools?: Array<import('../db/schema').AgentTool>;
 };

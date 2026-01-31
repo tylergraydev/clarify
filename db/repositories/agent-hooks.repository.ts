@@ -11,8 +11,8 @@ import { type AgentHook, agentHooks, type NewAgentHook } from '../schema';
 
 export interface AgentHooksRepository {
   create(data: NewAgentHook): Promise<AgentHook>;
-  delete(id: number): Promise<void>;
-  deleteByAgentId(agentId: number): Promise<void>;
+  delete(id: number): Promise<boolean>;
+  deleteByAgentId(agentId: number): Promise<boolean>;
   findByAgentId(agentId: number): Promise<Array<AgentHook>>;
   findByEventType(agentId: number, eventType: string): Promise<Array<AgentHook>>;
   findById(id: number): Promise<AgentHook | undefined>;
@@ -32,12 +32,14 @@ export function createAgentHooksRepository(db: DrizzleDatabase): AgentHooksRepos
       return result[0];
     },
 
-    async delete(id: number): Promise<void> {
-      await db.delete(agentHooks).where(eq(agentHooks.id, id));
+    async delete(id: number): Promise<boolean> {
+      const result = db.delete(agentHooks).where(eq(agentHooks.id, id)).run();
+      return result.changes > 0;
     },
 
-    async deleteByAgentId(agentId: number): Promise<void> {
-      await db.delete(agentHooks).where(eq(agentHooks.agentId, agentId));
+    async deleteByAgentId(agentId: number): Promise<boolean> {
+      const result = db.delete(agentHooks).where(eq(agentHooks.agentId, agentId)).run();
+      return result.changes > 0;
     },
 
     async findByAgentId(agentId: number): Promise<Array<AgentHook>> {

@@ -290,3 +290,12 @@ After completing work, provide a summary:
 - **Use existing components** - never create custom field implementations, use pre-built components
 - **Document changes** - provide clear summaries of what was created/modified
 - **Check field availability** - if a field type doesn't exist, escalate to tanstack-form-base-components agent
+
+## Conditional Skills
+
+Invoke these additional skills when the situation requires:
+
+- **`accessibility-a11y`** - Load when:
+  - User explicitly requests accessibility compliance
+  - Creating complex forms requiring WCAG compliance
+  - Forms used in public-facing pages that need a11y auditing

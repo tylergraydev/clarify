@@ -278,3 +278,13 @@ After completing work, provide a summary:
 - **Keep it simple** - only add what is explicitly requested, no over-engineering
 - **Check repository availability** - query hooks depend on repository methods existing
 - **Document changes** - provide clear summaries of what was created/modified
+
+## Conditional Skills
+
+Invoke these additional skills when the situation requires:
+
+- **`vercel-react-best-practices`** - Load when:
+  - Optimizing data fetching patterns to eliminate waterfalls
+  - User requests performance optimization
+  - Implementing request deduplication or caching strategies
+  - Prefetching or preloading data for performance

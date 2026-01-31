@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
+import type { ComponentPropsWithRef } from 'react';
 
 import type { AgentWithRelations } from '@/components/agents/agent-table';
 import type { Project } from '@/db/schema';
@@ -10,12 +10,13 @@ import type { AgentImportValidationResult } from '@/lib/validations/agent-import
 import { ConfirmDeleteAgentDialog } from '@/components/agents/confirm-delete-agent-dialog';
 import { ImportAgentDialog } from '@/components/agents/import-agent-dialog';
 import { SelectProjectDialog } from '@/components/agents/select-project-dialog';
+import { cn } from '@/lib/utils';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface AgentsDialogsProps {
+interface AgentsDialogsProps extends ComponentPropsWithRef<'div'> {
   /** Delete dialog state */
   deleteDialog: {
     agent: AgentWithRelations | null;
@@ -90,6 +91,7 @@ interface AgentsDialogsProps {
  * ```
  */
 export const AgentsDialogs = ({
+  className,
   deleteDialog,
   importDialog,
   isCopyingToProject,
@@ -104,9 +106,11 @@ export const AgentsDialogs = ({
   onProjectDialogSelect,
   projectDialog,
   projects,
+  ref,
+  ...props
 }: AgentsDialogsProps) => {
   return (
-    <Fragment>
+    <div className={cn(className)} ref={ref} {...props}>
       {/* Delete Confirmation Dialog */}
       <ConfirmDeleteAgentDialog
         agentName={deleteDialog.agent?.displayName ?? ''}
@@ -136,6 +140,6 @@ export const AgentsDialogs = ({
         parsedData={importDialog.parsedData}
         validationResult={importDialog.validationResult}
       />
-    </Fragment>
+    </div>
   );
 };

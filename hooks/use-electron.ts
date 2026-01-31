@@ -170,17 +170,53 @@ export function useElectronDb() {
         const electronApi = throwIfNoApi('agent.activate');
         return electronApi.agent.activate(id);
       },
+      copyToProject: async (agentId: number, targetProjectId: number) => {
+        const electronApi = throwIfNoApi('agent.copyToProject');
+        return electronApi.agent.copyToProject(agentId, targetProjectId);
+      },
+      create: async (data: Parameters<NonNullable<ElectronAPI>['agent']['create']>[0]) => {
+        const electronApi = throwIfNoApi('agent.create');
+        return electronApi.agent.create(data);
+      },
+      createOverride: async (agentId: number, projectId: number) => {
+        const electronApi = throwIfNoApi('agent.createOverride');
+        return electronApi.agent.createOverride(agentId, projectId);
+      },
       deactivate: async (id: number) => {
         const electronApi = throwIfNoApi('agent.deactivate');
         return electronApi.agent.deactivate(id);
+      },
+      delete: async (id: number) => {
+        const electronApi = throwIfNoApi('agent.delete');
+        return electronApi.agent.delete(id);
+      },
+      duplicate: async (id: number) => {
+        const electronApi = throwIfNoApi('agent.duplicate');
+        return electronApi.agent.duplicate(id);
+      },
+      export: async (id: number) => {
+        const electronApi = throwIfNoApi('agent.export');
+        return electronApi.agent.export(id);
+      },
+      exportBatch: async (ids: Array<number>) => {
+        const electronApi = throwIfNoApi('agent.exportBatch');
+        return electronApi.agent.exportBatch(ids);
       },
       get: async (id: number) => {
         if (!api) return undefined;
         return api.agent.get(id);
       },
-      list: async () => {
+      import: async (parsedMarkdown: Parameters<NonNullable<ElectronAPI>['agent']['import']>[0]) => {
+        const electronApi = throwIfNoApi('agent.import');
+        return electronApi.agent.import(parsedMarkdown);
+      },
+      list: async (filters?: Parameters<NonNullable<ElectronAPI>['agent']['list']>[0]) => {
         if (!api) return [];
-        return api.agent.list();
+        return api.agent.list(filters);
+      },
+      move: async (agentId: number, targetProjectId: null | number) => {
+        const electronApi = throwIfNoApi('agent.move');
+        return electronApi.agent.move(agentId, targetProjectId);
       },
       reset: async (id: number) => {
         const electronApi = throwIfNoApi('agent.reset');
@@ -189,6 +225,62 @@ export function useElectronDb() {
       update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['agent']['update']>[1]) => {
         const electronApi = throwIfNoApi('agent.update');
         return electronApi.agent.update(id, data);
+      },
+    }),
+    [api, throwIfNoApi]
+  );
+
+  const agentSkills = useMemo(
+    () => ({
+      create: async (data: Parameters<NonNullable<ElectronAPI>['agentSkill']['create']>[0]) => {
+        const electronApi = throwIfNoApi('agentSkill.create');
+        return electronApi.agentSkill.create(data);
+      },
+      delete: async (id: number) => {
+        const electronApi = throwIfNoApi('agentSkill.delete');
+        return electronApi.agentSkill.delete(id);
+      },
+      list: async (agentId: number) => {
+        if (!api) return [];
+        return api.agentSkill.list(agentId);
+      },
+      setRequired: async (id: number, required: boolean) => {
+        const electronApi = throwIfNoApi('agentSkill.setRequired');
+        return electronApi.agentSkill.setRequired(id, required);
+      },
+      update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['agentSkill']['update']>[1]) => {
+        const electronApi = throwIfNoApi('agentSkill.update');
+        return electronApi.agentSkill.update(id, data);
+      },
+    }),
+    [api, throwIfNoApi]
+  );
+
+  const agentTools = useMemo(
+    () => ({
+      allow: async (id: number) => {
+        const electronApi = throwIfNoApi('agentTool.allow');
+        return electronApi.agentTool.allow(id);
+      },
+      create: async (data: Parameters<NonNullable<ElectronAPI>['agentTool']['create']>[0]) => {
+        const electronApi = throwIfNoApi('agentTool.create');
+        return electronApi.agentTool.create(data);
+      },
+      delete: async (id: number) => {
+        const electronApi = throwIfNoApi('agentTool.delete');
+        return electronApi.agentTool.delete(id);
+      },
+      disallow: async (id: number) => {
+        const electronApi = throwIfNoApi('agentTool.disallow');
+        return electronApi.agentTool.disallow(id);
+      },
+      list: async (agentId: number) => {
+        if (!api) return [];
+        return api.agentTool.list(agentId);
+      },
+      update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['agentTool']['update']>[1]) => {
+        const electronApi = throwIfNoApi('agentTool.update');
+        return electronApi.agentTool.update(id, data);
       },
     }),
     [api, throwIfNoApi]
@@ -354,6 +446,8 @@ export function useElectronDb() {
 
   return {
     agents,
+    agentSkills,
+    agentTools,
     audit,
     discovery,
     isElectron,
