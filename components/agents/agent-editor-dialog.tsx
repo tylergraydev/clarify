@@ -55,11 +55,11 @@ import { CLAUDE_BUILTIN_TOOLS, getDefaultToolsForAgentType, isBuiltinTool } from
 import { useAppForm } from '@/lib/forms/form-hook';
 import { createAgentFormSchema, updateAgentSchema } from '@/lib/validations/agent';
 
-import { AgentColorPicker } from './agent-color-picker';
 import { type AgentHooksData, AgentHooksSection } from './agent-hooks-section';
 import { AgentSkillsManager } from './agent-skills-manager';
 import { AgentSkillsSection } from './agent-skills-section';
 import { AgentToolsSection } from './agent-tools-section';
+import { ConfirmDiscardDialog } from './confirm-discard-dialog';
 import { ConfirmResetAgentDialog } from './confirm-reset-agent-dialog';
 
 type AgentColor = (typeof agentColors)[number];
@@ -264,8 +264,8 @@ export const AgentEditorDialog = ({
     onChange: controlledOnOpenChange,
     value: controlledIsOpen,
   });
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState<'' | AgentColor>('');
   const [selectedProjectId, setSelectedProjectId] = useState<null | number>(null);
 
   // Tool state for both create and edit modes
@@ -396,6 +396,7 @@ export const AgentEditorDialog = ({
   const getDefaultValues = useCallback((): CreateAgentFormData | UpdateAgentFormValues => {
     if (isEditMode && agent) {
       return {
+        color: (agent.color ?? '') as UpdateAgentFormValues['color'],
         description: agent.description ?? '',
         displayName: agent.displayName,
         model: (agent.model ?? '') as UpdateAgentFormValues['model'],
@@ -467,11 +468,12 @@ export const AgentEditorDialog = ({
       if (isEditMode && agent) {
         // Update existing agent
         const updateValue = value as UpdateAgentFormValues;
+        const colorValue = updateValue.color === '' ? null : updateValue.color;
         const modelValue = updateValue.model === '' ? null : updateValue.model;
         const permissionModeValue = updateValue.permissionMode === '' ? null : updateValue.permissionMode;
         await updateAgentMutation.mutateAsync({
           data: {
-            color: selectedColor === '' ? null : selectedColor,
+            color: colorValue,
             description: updateValue.description,
             displayName: updateValue.displayName,
             model: modelValue,
@@ -559,10 +561,6 @@ export const AgentEditorDialog = ({
     },
   });
 
-  const updateSelectedColor = useEffectEvent((agentColor: '' | AgentColor) => {
-    setSelectedColor(agentColor);
-  });
-
   const setToolDefaults = useEffectEvent((type: AgentToolType) => {
     initializeToolDefaults(type);
   });
@@ -579,19 +577,13 @@ export const AgentEditorDialog = ({
     setSelectedProjectId(newProjectId);
   });
 
-  // Reset form, color, and project when agent or initialData changes
+  // Reset form and project when agent or initialData changes
   useEffect(() => {
     form.reset(getDefaultValues());
     if (isEditMode && agent) {
-      updateSelectedColor((agent.color as AgentColor) ?? '');
       updateSelectedProjectId(agent.projectId ?? null);
-    } else if (initialData) {
-      updateSelectedColor(initialData.color ?? '');
-      // For create mode (including duplicate), initialize with projectId prop or null
-      updateSelectedProjectId(projectId ?? null);
     } else {
-      updateSelectedColor('');
-      // For create mode, initialize with projectId prop or null
+      // For create mode (including duplicate), initialize with projectId prop or null
       updateSelectedProjectId(projectId ?? null);
     }
   }, [agent, initialData, form, getDefaultValues, isEditMode, projectId]);
@@ -647,16 +639,6 @@ export const AgentEditorDialog = ({
     updateCustomTools(customToolsList);
   }, [isOpen, isEditMode, existingTools]);
 
-  const getInitialColor = useCallback((): '' | AgentColor => {
-    if (isEditMode && agent) {
-      return (agent.color as AgentColor) ?? '';
-    }
-    if (initialData) {
-      return initialData.color ?? '';
-    }
-    return '';
-  }, [isEditMode, agent, initialData]);
-
   const getInitialProjectId = useCallback((): null | number => {
     if (isEditMode && agent) {
       return agent.projectId ?? null;
@@ -667,7 +649,6 @@ export const AgentEditorDialog = ({
 
   const resetFormState = useCallback(() => {
     form.reset(getDefaultValues());
-    setSelectedColor(getInitialColor());
     setSelectedProjectId(getInitialProjectId());
     // Reset tools, skills, and hooks state
     if (!isEditMode) {
@@ -676,7 +657,7 @@ export const AgentEditorDialog = ({
       setPendingSkills([]);
       setPendingHooks({});
     }
-  }, [form, getDefaultValues, getInitialColor, getInitialProjectId, isEditMode, initialData, initializeToolDefaults]);
+  }, [form, getDefaultValues, getInitialProjectId, isEditMode, initialData, initializeToolDefaults]);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
@@ -685,11 +666,15 @@ export const AgentEditorDialog = ({
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
+      if (!open && form.state.isDirty) {
+        // Show discard confirmation if form has unsaved changes
+        setIsDiscardDialogOpen(true);
+        return;
+      }
       setIsOpen(open);
       if (open) {
         // Reset form to ensure it has latest values
         form.reset(getDefaultValues());
-        setSelectedColor(getInitialColor());
         setSelectedProjectId(getInitialProjectId());
         // Reset tools, skills, and hooks for create mode
         if (!isEditMode) {
@@ -702,18 +687,14 @@ export const AgentEditorDialog = ({
         resetFormState();
       }
     },
-    [
-      setIsOpen,
-      resetFormState,
-      getDefaultValues,
-      getInitialColor,
-      getInitialProjectId,
-      form,
-      isEditMode,
-      initialData,
-      initializeToolDefaults,
-    ]
+    [setIsOpen, resetFormState, getDefaultValues, getInitialProjectId, form, isEditMode, initialData, initializeToolDefaults]
   );
+
+  const handleConfirmDiscard = useCallback(() => {
+    setIsDiscardDialogOpen(false);
+    setIsOpen(false);
+    resetFormState();
+  }, [resetFormState, setIsOpen]);
 
   const handleResetClick = useCallback(() => {
     setIsResetDialogOpen(true);
@@ -903,22 +884,26 @@ export const AgentEditorDialog = ({
             <DialogBody className={'px-2'}>
               {/* Agent Info Display (Edit Mode Only) */}
               {isEditMode && agent && (
-                <div className={'rounded-md border border-border bg-muted/50 p-3'}>
-                  <div className={'flex items-center gap-3'}>
-                    {selectedColor && (
-                      <div
-                        className={'size-4 rounded-full'}
-                        style={{
-                          backgroundColor: getAgentColorHex(selectedColor),
-                        }}
-                      />
-                    )}
-                    <div className={'text-sm'}>
-                      <span className={'text-muted-foreground'}>{'Internal name: '}</span>
-                      <span className={'font-mono text-foreground'}>{agent.name}</span>
+                <form.Subscribe selector={(state) => state.values.color}>
+                  {(colorValue) => (
+                    <div className={'rounded-md border border-border bg-muted/50 p-3'}>
+                      <div className={'flex items-center gap-3'}>
+                        {colorValue && (
+                          <div
+                            className={'size-4 rounded-full'}
+                            style={{
+                              backgroundColor: getAgentColorHex(colorValue),
+                            }}
+                          />
+                        )}
+                        <div className={'text-sm'}>
+                          <span className={'text-muted-foreground'}>{'Internal name: '}</span>
+                          <span className={'font-mono text-foreground'}>{agent.name}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  )}
+                </form.Subscribe>
               )}
 
               <fieldset className={'mt-4 flex flex-col gap-4'} disabled={isSubmitting || isResetting || isViewMode}>
@@ -1052,21 +1037,16 @@ export const AgentEditorDialog = ({
                   )}
                 </form.AppField>
 
-                {/* Color Picker - Form field for create mode, standalone for edit mode */}
-                {!isEditMode ? (
-                  <form.AppField name={'color'}>
-                    {(field) => (
-                      <field.ColorPickerField isDisabled={isSubmitting || isResetting} isRequired label={'Color Tag'} />
-                    )}
-                  </form.AppField>
-                ) : (
-                  <AgentColorPicker
-                    isDisabled={isSubmitting || isResetting}
-                    label={'Color Tag'}
-                    onChange={setSelectedColor}
-                    value={selectedColor}
-                  />
-                )}
+                {/* Color Picker */}
+                <form.AppField name={'color'}>
+                  {(field) => (
+                    <field.ColorPickerField
+                      isDisabled={isSubmitting || isResetting || isViewMode}
+                      isRequired={!isEditMode}
+                      label={'Color Tag'}
+                    />
+                  )}
+                </form.AppField>
 
                 {/* System Prompt */}
                 <form.AppField name={'systemPrompt'}>
@@ -1158,6 +1138,13 @@ export const AgentEditorDialog = ({
           onOpenChange={setIsResetDialogOpen}
         />
       )}
+
+      {/* Discard Changes Confirmation Dialog */}
+      <ConfirmDiscardDialog
+        isOpen={isDiscardDialogOpen}
+        onConfirm={handleConfirmDiscard}
+        onOpenChange={setIsDiscardDialogOpen}
+      />
     </DialogRoot>
   );
 };

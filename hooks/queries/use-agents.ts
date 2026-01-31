@@ -214,7 +214,10 @@ export function useCreateAgent() {
         title: 'Create Failed',
       });
     },
-    onSuccess: () => {
+    onSuccess: (agent) => {
+      // Populate detail cache for immediate navigation
+      queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
+
       // Invalidate all relevant queries to show the new agent
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
