@@ -71,7 +71,7 @@ export const ConfirmArchiveDialog = ({
                 Cancel
               </Button>
             </DialogClose>
-            <Button disabled={isLoading} onClick={handleConfirmClick} variant={'destructive'}>
+            <Button disabled={isLoading} onClick={handleConfirmClick} variant={'default'}>
               {isLoading ? 'Processing...' : confirmButtonText}
             </Button>
           </DialogFooter>

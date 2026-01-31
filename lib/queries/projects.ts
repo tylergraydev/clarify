@@ -6,15 +6,9 @@ import { createQueryKeys } from '@lukemorales/query-key-factory';
  * Key structure:
  * - `projects.list()` - Active projects only (default view)
  * - `projects.list({ includeArchived: true })` - All projects including archived
- * - `projects.archived()` - Only archived projects
  * - `projects.detail(id)` - Single project by ID
  */
 export const projectKeys = createQueryKeys('projects', {
-  /**
-   * Query key for archived projects only.
-   * Used for dedicated archived projects views.
-   */
-  archived: null,
   /**
    * Query key for a single project by ID.
    */

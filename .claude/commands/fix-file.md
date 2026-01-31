@@ -1,10 +1,10 @@
 ---
-allowed-tools: Task(subagent_type:database-schema), Task(subagent_type:ipc-handler), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:frontend-component), Task(subagent_type:vercel-react-best-practices), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
-argument-hint: "path/to/file.ts [--reference=path/to/reference.ts] [--dry-run]"
+allowed-tools: Task(subagent_type:*), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
+argument-hint: 'path/to/file.ts [--reference=path/to/reference.ts] [--dry-run]'
 description: Fix a file to follow project patterns using specialist agents with automatic review and iteration
 ---
 
-You are a file fix orchestrator. You coordinate specialist agents to fix files to
+You are a file fix orchestrator for Clarify. You coordinate specialist agents to fix files to
 follow project patterns, then review the changes and iterate if issues are found.
 
 @CLAUDE.MD
@@ -18,41 +18,42 @@ follow project patterns, then review the changes and iterate if issues are found
 **Arguments**:
 
 - `path/to/file.ts` (required): Path to the file to fix
-  - Example: `db/schema/projects.schema.ts`
-  - Example: `electron/ipc/projects.handlers.ts`
-  - Example: `components/features/projects/project-form.tsx`
+  - Example: `db/schema/workflows.schema.ts`
+  - Example: `db/repositories/workflows.repository.ts`
+  - Example: `components/workflows/workflow-card.tsx`
+  - Example: `hooks/queries/use-workflows.ts`
+  - Example: `lib/validations/workflow.ts`
+  - Example: `electron/ipc/workflow.ipc.ts`
 - `--reference=path/to/reference.ts`: Optional path to a well-implemented reference file to use as a pattern example
 - `--dry-run`: Analyze the file and show what would be fixed without making changes
 
 **Examples**:
 
 ```
-/fix-file db/schema/feature-requests.schema.ts
-/fix-file electron/ipc/projects.handlers.ts --reference=electron/ipc/repositories.handlers.ts
-/fix-file hooks/queries/use-projects.ts --dry-run
-/fix-file components/features/projects/project-card.tsx
+/fix-file db/schema/workflows.schema.ts
+/fix-file db/repositories/workflows.repository.ts --reference=db/repositories/templates.repository.ts
+/fix-file components/workflows/workflow-card.tsx --dry-run
+/fix-file hooks/queries/use-workflows.ts
 ```
 
 ## Specialist Selection Matrix
 
 Map the file path to the appropriate specialist agent:
 
-| File Pattern                            | Specialist Agent                | Skills Loaded                                              |
-| --------------------------------------- | ------------------------------- | ---------------------------------------------------------- |
-| `*.schema.ts` in `db/schema/`           | `database-schema`               | database-schema-conventions                                |
-| `*.repository.ts` in `db/repositories/` | `database-schema`               | database-schema-conventions                                |
-| `*.handlers.ts` in `electron/ipc/`      | `ipc-handler`                   | ipc-handler-conventions                                    |
-| `electron/preload.ts`                   | `ipc-handler`                   | ipc-handler-conventions                                    |
-| `use-*.ts` in `hooks/queries/`          | `tanstack-query`                | tanstack-query-conventions                                 |
-| `*.ts` in `lib/queries/`                | `tanstack-query`                | tanstack-query-conventions                                 |
-| `*-table.tsx` or tables with useReactTable | `tanstack-table`             | tanstack-table, component-conventions                      |
-| `*-form.tsx` or forms in features       | `tanstack-form`                 | tanstack-form-conventions, react-coding-conventions        |
-| `*.ts` in `lib/validations/`            | `tanstack-form`                 | tanstack-form-conventions                                  |
-| Components in `components/ui/form/`     | `tanstack-form-base-components` | tanstack-form-base-components                              |
-| Components in `components/ui/`          | `frontend-component`            | component-conventions, react-coding-conventions            |
-| Components in `components/features/`    | `frontend-component`            | component-conventions, react-coding-conventions            |
-| Components in `components/layout/`      | `frontend-component`            | component-conventions, react-coding-conventions            |
-| Performance optimization requests       | `vercel-react-best-practices`   | vercel-react-best-practices, react-coding-conventions      |
+| File Pattern                               | Specialist Agent                  | Skills Loaded                                       |
+| ------------------------------------------ | --------------------------------- | --------------------------------------------------- |
+| `*.schema.ts` in `db/schema/`              | `database-schema`                 | database-schema-conventions                         |
+| `*.repository.ts` in `db/repositories/`    | `database-schema`                 | database-schema-conventions                         |
+| `use-*.ts` in `hooks/queries/`             | `tanstack-query`                  | tanstack-query-conventions                          |
+| `*.ts` in `lib/queries/`                   | `tanstack-query`                  | tanstack-query-conventions                          |
+| `*.ts` in `lib/validations/`               | `tanstack-form`                   | tanstack-form-conventions                           |
+| `*-field.tsx` in `components/ui/form/`     | `tanstack-form-base-components`   | tanstack-form-base-components, react-coding-conventions |
+| `*.tsx` in `components/ui/`                | `frontend-component`              | component-conventions, react-coding-conventions     |
+| `*.tsx` in `components/*/`                 | `frontend-component`              | component-conventions, react-coding-conventions     |
+| `page.tsx`, `layout.tsx` in `app/`         | `page-route`                      | nextjs-routing-conventions, react-coding-conventions |
+| `*.ipc.ts` in `electron/ipc/`              | `ipc-handler`                     | ipc-handler-conventions                             |
+| `*-store.ts` in `lib/stores/`              | `zustand-store`                   | zustand-state-management                            |
+| `*-table.tsx` or table components          | `tanstack-table`                  | tanstack-table, component-conventions               |
 
 ## Orchestration Workflow
 
@@ -72,8 +73,8 @@ Error: File path required.
 Usage: /fix-file path/to/file.ts
 
 Examples:
-  /fix-file db/schema/projects.schema.ts
-  /fix-file electron/ipc/projects.handlers.ts --reference=electron/ipc/repositories.handlers.ts
+  /fix-file db/schema/workflows.schema.ts
+  /fix-file db/repositories/workflows.repository.ts --reference=db/repositories/templates.repository.ts
 ```
 
 **3. Validate File Exists**:
@@ -94,11 +95,11 @@ Using the Specialist Selection Matrix above:
 If no `--reference` flag:
 
 - Find 1-2 well-implemented reference files in the same domain
-- For schemas: Look for existing `*.schema.ts` files in `db/schema/`
-- For repositories: Look for existing `*.repository.ts` files in `db/repositories/`
-- For IPC handlers: Look for existing `*.handlers.ts` files in `electron/ipc/`
-- For queries: Look for existing `use-*.ts` files in `hooks/queries/`
-- For components: Find similar components in `components/ui/` or `components/features/`
+- For schemas: Look for `templates.schema.ts`, `agents.schema.ts`
+- For repositories: Look for `templates.repository.ts`, `agents.repository.ts`
+- For components: Find similar components in the same feature area
+- For queries: Look for `use-templates.ts`, `use-agents.ts`
+- For IPC: Look for `template.ipc.ts`, `agent.ipc.ts`
 
 **6. Initialize Todo List**:
 
@@ -152,88 +153,59 @@ Study these well-implemented files to understand the correct patterns:
 
 {Include domain-specific checklist based on specialist type}
 
-### For Database Schemas (database-schema):
-- Table name: plural, lowercase, underscores
-- Column names: snake_case in SQL, camelCase in TypeScript
-- Standard columns: id, createdAt, updatedAt present
-- Columns in alphabetical order
-- Type exports: NewEntity and Entity types exported
-- Index naming: `{tablename}_{columnname}_idx`
-- Foreign key constraints defined with cascade behavior
-- Proper imports from drizzle-orm and drizzle-orm/sqlite-core
+### For Schemas (database-schema):
+- Proper import organization (drizzle-orm, relations, other schemas)
+- Table naming conventions (camelCase for variable, snake_case in DB)
+- Column type usage (text, integer, etc.)
+- Proper relations definition
+- Index definitions for common queries
+- Export of both table and relations
 
 ### For Repositories (database-schema):
-- Interface definition present
-- Factory function exported: `createXxxRepository(db)`
-- Standard CRUD methods: create, getById, getAll, update, delete
-- Auto-update updatedAt in update operations
-- Proper type imports from schema file
-- Barrel export in index.ts
+- Repository class pattern with constructor
+- Async suffix on all methods
+- Proper parameter typing
+- Return type annotations
+- Error handling patterns
+- Transaction usage for multi-step operations
 
-### For IPC Handlers (ipc-handler):
-- Channel naming: `{domain}:{action}` or `{domain}:{subdomain}:{action}`
-- Handler file: One file per domain, `{domain}.handlers.ts`
-- Registration function: `registerXxxHandlers(dependencies)` export
-- Event typing: `_event: IpcMainInvokeEvent` (underscore if unused)
-- Uses `ipcMain.handle()` exclusively (not send/on)
-- Channels defined in `electron/ipc/channels.ts`
-- Preload API matches channel structure
-- Types in sync with `types/electron.d.ts`
-
-### For TanStack Query (tanstack-query):
-- Query key factory: Uses `createQueryKeys` from `@lukemorales/query-key-factory`
-- Spread keys: `...entityKeys.query()` pattern
-- Electron check: `enabled: isElectron` present in all queries
-- Uses `useElectronDb` hook for repository access
-- Invalidation: Uses `_def` for base key invalidation
-- Void prefix: `void queryClient.invalidateQueries()`
-- Naming: `use{Entity}` for detail, `use{Entities}` for list
-- Mutations use `Parameters<typeof fn>` for type inference
-
-### For TanStack Table (tanstack-table):
-- Data memoization: `data` wrapped in `useMemo` with stable deps
-- Column memoization: `columns` wrapped in `useMemo`
-- Server-side flags: `manualPagination`, `manualSorting`, `manualFiltering` for server-side
-- Query integration: All table state included in query keys
-- Pagination state: `pageCount` provided for server-side pagination
-- Virtualization guard: `enabled` option used when virtualizing in tabs/modals
-- React 19 compatibility: `"use no memo"` directive if using React Compiler
-- Column definitions: `accessorKey` for simple, `accessorFn` for computed
-- Action columns: `id` property and `enableSorting: false`
-
-### For TanStack Form (tanstack-form):
-- Hook usage: Uses `useAppForm` from `@/lib/forms`
-- Validation schema: Defined in `lib/validations/` with Zod
-- Field components: Uses pre-built TextField, TextareaField, SelectField, etc.
-- Label required: All field components have `label` prop
-- AppField pattern: `form.AppField` with render function
-- SubmitButton wrapper: Wrapped in `form.AppForm`
-- Default values: Match schema shape
-- Native form element with preventDefault/stopPropagation
-- Type export: Both schema and inferred type exported
+### For Query Hooks (tanstack-query):
+- Query key factory usage from `lib/queries/`
+- Proper queryOptions pattern
+- IPC call integration via window.api
+- Type inference from IPC channels
+- Cache invalidation in mutations
+- Optimistic update patterns where appropriate
 
 ### For Components (frontend-component):
-- Base UI usage: Wraps @base-ui/react primitives when available
-- CVA variants: Uses class-variance-authority when multiple variants needed
-- Props typing: Uses ComponentPropsWithRef combined with VariantProps
-- cn() utility: Always uses for class merging
-- Focus states: Includes `focus-visible:ring-2 focus-visible:ring-accent`
-- Disabled states: Uses `data-disabled:` styles
-- Named exports: No default exports
-- Import order: Type imports first, then external, then internal
-- `'use client'` directive at top for client components
+- Base UI primitive usage
+- CVA pattern for variants
+- Hook organization order (state, queries, mutations, handlers, derived)
+- Event handler naming (handle prefix)
+- Boolean state naming (is prefix)
+- Accessibility attributes
+- Tailwind usage (no inline styles unless justified)
 
-### For Performance Optimization (vercel-react-best-practices):
-- Async waterfalls: Sequential awaits converted to Promise.all()
-- Barrel imports: Direct imports instead of barrel file imports
-- Dynamic imports: Heavy/conditional components use next/dynamic
-- Server caching: React.cache() for per-request deduplication
-- Data memoization: useMemo for expensive values with stable deps
-- Component memoization: memo() for expensive pure components
-- State subscriptions: Derived values instead of raw state
-- Refs for callbacks: useRef for values only accessed in callbacks
-- Passive listeners: passive: true for scroll event listeners
-- Conditional rendering: Ternary instead of && for conditionals
+### For Pages (page-route):
+- Route type definition for dynamic routes
+- Proper Next.js App Router conventions
+- Loading/error boundary setup
+- Metadata exports
+- Server/client component separation
+
+### For IPC Handlers (ipc-handler):
+- Channel naming conventions
+- Handler registration pattern
+- Type-safe IPC bridge
+- Preload script exposure
+- React hook wrapper
+
+### For Stores (zustand-store):
+- Store naming conventions (*-store.ts)
+- Selector functions
+- Persist middleware usage
+- DevTools integration
+- TypeScript type definitions
 
 ## Report Format
 
@@ -243,7 +215,7 @@ Provide your analysis in this exact format:
 ## Current State Analysis
 
 ### File: `{file_path}`
-- Type: {schema|repository|ipc-handler|query-hook|form|component}
+- Type: {schema|repository|query-hook|component|page|ipc-handler|store|validation}
 - Specialist: {specialist-type}
 - Lines: {count}
 
@@ -322,82 +294,61 @@ Study these files for proper patterns:
    - Structure and organization
    - Naming conventions
    - Error handling patterns
-   - Type definitions
+   - Type safety
+   - Return value patterns
+   - Documentation
    - Import organization
-   - Documentation where expected
 
 ## Key Patterns to Enforce
 
 {Include domain-specific patterns based on specialist type}
 
-### For Database Schemas:
-- Table name: plural, lowercase with underscores
-- Column names: snake_case in SQL
-- Always include id (integer primary key), createdAt, updatedAt columns
-- Columns in alphabetical order
-- Export NewEntity (insert) and Entity (select) types
-- Index naming: `{tablename}_{columnname}_idx`
+### For Schemas:
+- Import organization (drizzle-orm first, then relations, then other schemas)
+- Table variable naming (camelCase)
+- Column definitions with proper types
+- Relations with proper references
+- Indexes for query optimization
 
 ### For Repositories:
-- Interface with method signatures
-- Factory function: `createXxxRepository(db: DrizzleDatabase)`
-- Standard CRUD: create, getById, getAll, update, delete
-- Auto-set updatedAt in update operations
-- Proper type imports from schema
+- Repository class with db parameter
+- Async suffix on all public methods
+- Typed parameters and return values
+- Transaction wrapping for multi-step operations
+- Consistent error handling
 
-### For IPC Handlers:
-- Channel constants in channels.ts
-- Handler file per domain
-- `registerXxxHandlers(dependencies)` export
-- `ipcMain.handle()` for all operations
-- `_event: IpcMainInvokeEvent` typing
-- Keep preload.ts and types/electron.d.ts in sync
-
-### For TanStack Query:
-- Query key factory with `createQueryKeys`
-- Spread keys in useQuery: `...entityKeys.query()`
-- Always include `enabled: isElectron`
-- Use `useElectronDb` for repository access
-- Invalidation with `_def` property
-- `void` prefix for invalidation promises
-
-### For TanStack Table:
-- Memoize `data` and `columns` with `useMemo`
-- Set `manualPagination`, `manualSorting`, `manualFiltering` for server-side
-- Include all table state in query keys
-- Provide `pageCount` for server-side pagination
-- Use `enabled` option in virtualizer when in tabs/modals
-- Add `"use no memo"` for React 19 Compiler compatibility
-- Use `accessorKey` for simple, `accessorFn` for computed columns
-- Add `id` and `enableSorting: false` for action columns
-
-### For TanStack Form:
-- Use `useAppForm` from `@/lib/forms`
-- Define validation schemas in `lib/validations/`
-- Use pre-built field components (TextField, TextareaField, etc.)
-- All fields require `label` prop
-- Wrap SubmitButton in `form.AppForm`
-- Native form with preventDefault
+### For Query Hooks:
+- Query key factory from lib/queries/
+- queryOptions helper usage
+- IPC integration via window.api
+- Proper cache invalidation
+- Type inference from IPC
 
 ### For Components:
-- Wrap Base UI primitives when available
-- Use CVA for variants
-- Use `ComponentPropsWithRef` for props
-- Always accept and merge className with cn()
-- Include focus-visible and data-disabled styles
-- Named exports only
+- Base UI primitive usage
+- CVA for variant management
+- Proper hook organization
+- Event handlers with handle prefix
+- Boolean states with is prefix
+- Accessibility attributes
 
-### For Performance Optimization:
-- Convert sequential awaits to Promise.all() for parallel operations
-- Replace barrel imports with direct imports from source files
-- Use next/dynamic for heavy or conditionally-loaded components
-- Add React.cache() for server-side deduplication
-- Wrap expensive values in useMemo with stable dependencies
-- Use memo() for pure components with expensive renders
-- Subscribe to derived values instead of raw state
-- Use useRef for values only accessed in callbacks
-- Add passive: true to scroll event listeners
-- Use ternary instead of && for conditional rendering
+### For Pages:
+- Route type definitions
+- App Router conventions
+- Loading/error states
+- Proper metadata
+
+### For IPC Handlers:
+- Channel naming (entity.action format)
+- Handler registration in main process
+- Preload script exposure
+- React hook wrapper
+
+### For Stores:
+- Zustand create pattern
+- Selector functions
+- Persist middleware
+- DevTools integration
 
 ## Report Format
 
@@ -500,77 +451,53 @@ Check each item and report status:
 
 {Include domain-specific checklist based on file type}
 
-### For Database Schemas:
-- [ ] Table name is plural, lowercase with underscores
-- [ ] Column names are snake_case
-- [ ] Standard columns (id, createdAt, updatedAt) present
-- [ ] Columns in alphabetical order
-- [ ] NewEntity and Entity types exported
-- [ ] Indexes named correctly
-- [ ] Foreign keys have cascade behavior
+### For Schemas:
+- [ ] Proper import organization
+- [ ] Correct table naming
+- [ ] Appropriate column types
+- [ ] Relations properly defined
+- [ ] Indexes for common queries
+- [ ] Exports complete
 
 ### For Repositories:
-- [ ] Interface definition present
-- [ ] Factory function exported
-- [ ] CRUD methods implemented
-- [ ] updatedAt auto-updated
-- [ ] Types properly imported
+- [ ] Repository class pattern followed
+- [ ] Async suffix on methods
+- [ ] Proper typing throughout
+- [ ] Error handling consistent
+- [ ] Transactions where needed
 
-### For IPC Handlers:
-- [ ] Channels defined in channels.ts
-- [ ] Handler uses ipcMain.handle
-- [ ] Event typed as IpcMainInvokeEvent
-- [ ] Registration function exported
-- [ ] Preload API in sync
-- [ ] Type definitions in sync
-
-### For TanStack Query:
+### For Query Hooks:
 - [ ] Query key factory used
-- [ ] Keys spread in useQuery
-- [ ] enabled: isElectron present
-- [ ] useElectronDb hook used
-- [ ] Invalidation uses _def
-- [ ] void prefix on invalidation
-
-### For TanStack Table:
-- [ ] Data wrapped in useMemo
-- [ ] Columns wrapped in useMemo
-- [ ] Server-side flags set correctly (manual*)
-- [ ] Table state in query keys
-- [ ] pageCount provided for server-side
-- [ ] Virtualization guard if needed
-- [ ] React 19 compatibility handled
-- [ ] Column defs use accessorKey/accessorFn correctly
-- [ ] Action columns have id and enableSorting: false
-
-### For TanStack Form:
-- [ ] useAppForm hook used
-- [ ] Validation schema in lib/validations/
-- [ ] Pre-built field components used
-- [ ] All fields have label
-- [ ] SubmitButton in form.AppForm
-- [ ] Default values match schema
+- [ ] queryOptions pattern correct
+- [ ] IPC integration proper
+- [ ] Cache invalidation correct
+- [ ] Types inferred correctly
 
 ### For Components:
-- [ ] Base UI primitives wrapped
-- [ ] CVA used for variants
-- [ ] ComponentPropsWithRef typing
-- [ ] cn() for class merging
-- [ ] Focus states included
-- [ ] Disabled states included
-- [ ] Named exports only
+- [ ] Base UI primitives used
+- [ ] CVA patterns correct
+- [ ] Hook organization proper
+- [ ] Event handlers named correctly
+- [ ] Accessibility complete
+- [ ] No inline styles
 
-### For Performance Optimization:
-- [ ] No sequential awaits for independent operations
-- [ ] No barrel file imports
-- [ ] Heavy components use dynamic imports
-- [ ] Server-side fetches use React.cache()
-- [ ] Expensive values wrapped in useMemo
-- [ ] Expensive components wrapped in memo()
-- [ ] Derived values instead of raw state subscriptions
-- [ ] Callback-only values use useRef
-- [ ] Scroll listeners are passive
-- [ ] Conditional rendering uses ternary
+### For Pages:
+- [ ] Route types defined
+- [ ] App Router conventions followed
+- [ ] Loading/error states present
+- [ ] Metadata exported
+
+### For IPC Handlers:
+- [ ] Channel naming correct
+- [ ] Handler registration proper
+- [ ] Preload exposure correct
+- [ ] React hook complete
+
+### For Stores:
+- [ ] Zustand pattern correct
+- [ ] Selectors defined
+- [ ] Persistence configured
+- [ ] Types complete
 
 ## Report Format
 

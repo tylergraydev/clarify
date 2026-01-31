@@ -71,7 +71,7 @@ export function useArchiveProject(options?: { showToast?: boolean }) {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.project.update(id, { archivedAt: new Date().toISOString() }),
+    mutationFn: (id: number) => api!.project.archive(id),
     onError: (error) => {
       if (showToast) {
         toast.error({
@@ -227,13 +227,13 @@ export function useProject(id: number) {
 }
 
 /**
- * Fetch all projects
+ * Fetch all projects (including archived)
  */
 export function useProjects() {
   const { api, isElectron } = useElectron();
 
   return useQuery({
-    ...projectKeys.list(),
+    ...projectKeys.list({ includeArchived: true }),
     enabled: isElectron,
     queryFn: () => api!.project.list({ includeArchived: true }),
   });
@@ -253,7 +253,7 @@ export function useUnarchiveProject(options?: { showToast?: boolean }) {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.project.update(id, { archivedAt: null }),
+    mutationFn: (id: number) => api!.project.unarchive(id),
     onError: (error) => {
       if (showToast) {
         toast.error({
