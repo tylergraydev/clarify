@@ -109,7 +109,9 @@ export const AgentSkillsManager = ({ agentId, isDisabled = false }: AgentSkillsM
               <div className={'min-w-0 flex-1'}>
                 <div className={'flex items-center gap-2'}>
                   <span className={'font-mono text-sm font-medium'}>{skill.skillName}</span>
-                  {isRequired(skill) && <span className={'text-xs font-medium text-required-indicator'}>{'Required'}</span>}
+                  {isRequired(skill) && (
+                    <span className={'text-xs font-medium text-required-indicator'}>{'Required'}</span>
+                  )}
                 </div>
               </div>
               <div className={'flex items-center gap-1'}>

@@ -15,6 +15,7 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 ## Tech Stack
 
 ### Core Framework
+
 - **next** 16.1.6 - React framework with static export for Electron renderer
 - **react** 19.2.4 - UI library with latest concurrent features
 - **electron** ^35.1.0 - Desktop application wrapper for cross-platform deployment
@@ -22,12 +23,14 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 - **electron-store** ^10.0.1 - Persistent key-value storage for Electron apps
 
 ### Database & Backend
+
 - **better-sqlite3** ^12.6.0 - SQLite database for local data persistence
 - **drizzle-orm** ^0.45.1 - TypeScript ORM for schema definition and queries
 - **drizzle-kit** ^0.31.8 - Migration generation and database management
 - **drizzle-zod** ^0.8.3 - Automatic Zod schema generation from Drizzle schemas
 
 ### UI Components & Styling
+
 - **@base-ui/react** ^1.1.0 - Unstyled, accessible component primitives
 - **tailwindcss** ^4 - Utility-first CSS framework
 - **class-variance-authority** ^0.7.1 - Component variant management (CVA pattern)
@@ -37,17 +40,20 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 - **tw-animate-css** ^1.4.0 - Tailwind animation utilities
 
 ### State Management & Data Fetching
+
 - **@tanstack/react-query** ^5.90.18 - Server state management and caching
 - **@tanstack/react-query-devtools** ^5.91.2 - Query debugging tools
 - **@lukemorales/query-key-factory** ^1.3.4 - Type-safe query key management
 - **zustand** ^5.0.10 - Lightweight client-side state management
 
 ### Forms & Tables
+
 - **@tanstack/react-form** ^1.27.7 - Form state management with validation
 - **@tanstack/react-table** ^8.21.3 - Headless table with sorting, filtering, pagination
 - **@tanstack/react-virtual** ^3.13.18 - Virtualization for large lists
 
 ### Validation & Utilities
+
 - **zod** ^4.3.5 - Schema validation and type inference
 - **zod-validation-error** ^5.0.0 - Human-readable Zod error formatting
 - **date-fns** ^4.1.0 - Date utility library
@@ -55,17 +61,21 @@ Clarify is a standalone Electron desktop application that provides a visual inte
 - **nuqs** ^2.8.6 - URL query state management
 
 ### Routing & Navigation
+
 - **next-typesafe-url** ^6.1.0 - Type-safe URL parameter handling
 
 ### Code Display
+
 - **shiki** ^3.21.0 - Syntax highlighting
 - **streamdown** ^2.0.1 - Markdown streaming support
 
 ### UI Utilities
+
 - **react-error-boundary** ^6.1.0 - Error boundary components
 - **use-stick-to-bottom** ^1.1.1 - Auto-scroll behavior
 
 ### Development Tools
+
 - **typescript** ^5 - Type-safe JavaScript
 - **eslint** ^9 - Code linting
 - **eslint-config-next** 16.1.2 - Next.js ESLint rules
@@ -185,77 +195,77 @@ clarify/
 
 ## Development Commands
 
-| Command | Description |
-| ------- | ----------- |
-| `pnpm dev` | Start Next.js development server |
-| `pnpm build` | Build Next.js for production |
-| `pnpm start` | Start production server |
-| `pnpm electron:dev` | Run Electron in development mode (starts Next.js and Electron concurrently) |
-| `pnpm electron:compile` | Compile TypeScript in electron/ directory |
-| `pnpm electron:build` | Build Next.js with Electron target and compile TypeScript |
-| `pnpm electron:dist` | Build and package Electron app for distribution |
-| `pnpm db:generate` | Generate Drizzle migrations from schema changes |
-| `pnpm db:migrate` | Apply pending migrations to database |
-| `pnpm lint` | Run ESLint with auto-fix |
-| `pnpm typecheck` | Run TypeScript type checking |
-| `pnpm format` | Format code with Prettier |
-| `pnpm next-typesafe-url` | Generate type-safe URL types |
+| Command                  | Description                                                                 |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `pnpm dev`               | Start Next.js development server                                            |
+| `pnpm build`             | Build Next.js for production                                                |
+| `pnpm start`             | Start production server                                                     |
+| `pnpm electron:dev`      | Run Electron in development mode (starts Next.js and Electron concurrently) |
+| `pnpm electron:compile`  | Compile TypeScript in electron/ directory                                   |
+| `pnpm electron:build`    | Build Next.js with Electron target and compile TypeScript                   |
+| `pnpm electron:dist`     | Build and package Electron app for distribution                             |
+| `pnpm db:generate`       | Generate Drizzle migrations from schema changes                             |
+| `pnpm db:migrate`        | Apply pending migrations to database                                        |
+| `pnpm lint`              | Run ESLint with auto-fix                                                    |
+| `pnpm typecheck`         | Run TypeScript type checking                                                |
+| `pnpm format`            | Format code with Prettier                                                   |
+| `pnpm next-typesafe-url` | Generate type-safe URL types                                                |
 
 ## Project Documentation Conventions
 
-| Document Type | Location |
-| ------------- | -------- |
+| Document Type         | Location                                                              |
+| --------------------- | --------------------------------------------------------------------- |
 | Design Specifications | `docs/clarify-design-document.md`, `docs/database-design-document.md` |
-| Implementation Logs | `docs/[date]/implementation/[feature]/` |
-| Orchestration Logs | `docs/[date]/orchestration/[feature]/` |
-| Implementation Plans | `docs/[date]/plans/[feature]-implementation-plan.md` |
-| Skill Conventions | `.claude/skills/[skill-name]/references/` |
+| Implementation Logs   | `docs/[date]/implementation/[feature]/`                               |
+| Orchestration Logs    | `docs/[date]/orchestration/[feature]/`                                |
+| Implementation Plans  | `docs/[date]/plans/[feature]-implementation-plan.md`                  |
+| Skill Conventions     | `.claude/skills/[skill-name]/references/`                             |
 
 ## Custom Commands
 
-| Command | Description |
-| ------- | ----------- |
-| `/plan-feature` | Generate detailed implementation plans through 3-4 step orchestration (clarification, refinement, discovery, planning) |
-| `/implement-plan` | Execute implementation plan with structured tracking using subagent architecture |
-| `/fix-file` | Fix a file to follow project patterns using specialist agents with automatic review |
-| `/next-feature` | Identify the next logical feature area based on design document and codebase analysis |
-| `/audit-feature` | Audit a feature for best practice violations across all layers |
-| `/audit-route` | Audit a route/feature area for violations across all layers |
-| `/audit-logic` | Audit a feature's business logic (data flow, cache invalidation, form completeness, actions) |
+| Command           | Description                                                                                                            |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `/plan-feature`   | Generate detailed implementation plans through 3-4 step orchestration (clarification, refinement, discovery, planning) |
+| `/implement-plan` | Execute implementation plan with structured tracking using subagent architecture                                       |
+| `/fix-file`       | Fix a file to follow project patterns using specialist agents with automatic review                                    |
+| `/next-feature`   | Identify the next logical feature area based on design document and codebase analysis                                  |
+| `/audit-feature`  | Audit a feature for best practice violations across all layers                                                         |
+| `/audit-route`    | Audit a route/feature area for violations across all layers                                                            |
+| `/audit-logic`    | Audit a feature's business logic (data flow, cache invalidation, form completeness, actions)                           |
 
 ## Specialist Subagents
 
-| Agent | Domain | When to Use |
-| ----- | ------ | ----------- |
-| `database-schema` | Drizzle ORM schemas | Creating/modifying database tables, repositories, and migrations |
-| `tanstack-query` | Data fetching | Creating query hooks, mutations, cache invalidation |
-| `tanstack-form` | Form implementation | Building forms with validation and field components |
-| `tanstack-form-base-components` | Form primitives | Creating new base field components in `components/ui/form/` |
-| `tanstack-table` | Data tables | Building tables with pagination, sorting, filtering, virtualization |
-| `frontend-component` | React components | Creating UI components using Base UI + CVA patterns |
-| `ipc-handler` | Electron IPC | Creating IPC channels, handlers, preload scripts, and React hooks |
-| `page-route` | Next.js routing | Creating pages, layouts, loading states, error boundaries |
-| `zustand-store` | Client state | Creating Zustand stores with TypeScript, persist, devtools |
-| `vercel-react-best-practices` | Performance | Optimizing React/Next.js code for performance |
-| `clarification-agent` | Feature clarity | Assessing and clarifying ambiguous feature requests |
-| `file-discovery-agent` | Codebase analysis | Identifying all files relevant to a feature |
-| `implementation-planner` | Plan generation | Creating detailed implementation plans with quality gates |
+| Agent                           | Domain              | When to Use                                                         |
+| ------------------------------- | ------------------- | ------------------------------------------------------------------- |
+| `database-schema`               | Drizzle ORM schemas | Creating/modifying database tables, repositories, and migrations    |
+| `tanstack-query`                | Data fetching       | Creating query hooks, mutations, cache invalidation                 |
+| `tanstack-form`                 | Form implementation | Building forms with validation and field components                 |
+| `tanstack-form-base-components` | Form primitives     | Creating new base field components in `components/ui/form/`         |
+| `tanstack-table`                | Data tables         | Building tables with pagination, sorting, filtering, virtualization |
+| `frontend-component`            | React components    | Creating UI components using Base UI + CVA patterns                 |
+| `ipc-handler`                   | Electron IPC        | Creating IPC channels, handlers, preload scripts, and React hooks   |
+| `page-route`                    | Next.js routing     | Creating pages, layouts, loading states, error boundaries           |
+| `zustand-store`                 | Client state        | Creating Zustand stores with TypeScript, persist, devtools          |
+| `vercel-react-best-practices`   | Performance         | Optimizing React/Next.js code for performance                       |
+| `clarification-agent`           | Feature clarity     | Assessing and clarifying ambiguous feature requests                 |
+| `file-discovery-agent`          | Codebase analysis   | Identifying all files relevant to a feature                         |
+| `implementation-planner`        | Plan generation     | Creating detailed implementation plans with quality gates           |
 
 ## Skills Reference
 
-| Skill | Purpose |
-| ----- | ------- |
-| `database-schema-conventions` | Drizzle schema patterns, repository conventions |
-| `tanstack-query-conventions` | Query key factories, mutation patterns, cache invalidation |
-| `tanstack-form-conventions` | Form structure, field components, validation patterns |
-| `tanstack-form-base-components` | Base field component creation conventions |
-| `tanstack-table` | Table implementation with server-side patterns |
-| `component-conventions` | Base UI + CVA component patterns |
-| `ipc-handler-conventions` | Electron IPC channel and handler patterns |
-| `nextjs-routing-conventions` | App Router page and layout patterns |
-| `react-coding-conventions` | React component and TypeScript patterns |
-| `zustand-state-management` | Zustand store patterns with middleware |
-| `vercel-react-best-practices` | React/Next.js performance optimization |
-| `next-best-practices` | Next.js file conventions and patterns |
-| `accessibility-a11y` | WCAG accessibility guidelines |
-| `claude-code-frontmatter` | Skill and subagent YAML frontmatter reference |
+| Skill                           | Purpose                                                    |
+| ------------------------------- | ---------------------------------------------------------- |
+| `database-schema-conventions`   | Drizzle schema patterns, repository conventions            |
+| `tanstack-query-conventions`    | Query key factories, mutation patterns, cache invalidation |
+| `tanstack-form-conventions`     | Form structure, field components, validation patterns      |
+| `tanstack-form-base-components` | Base field component creation conventions                  |
+| `tanstack-table`                | Table implementation with server-side patterns             |
+| `component-conventions`         | Base UI + CVA component patterns                           |
+| `ipc-handler-conventions`       | Electron IPC channel and handler patterns                  |
+| `nextjs-routing-conventions`    | App Router page and layout patterns                        |
+| `react-coding-conventions`      | React component and TypeScript patterns                    |
+| `zustand-state-management`      | Zustand store patterns with middleware                     |
+| `vercel-react-best-practices`   | React/Next.js performance optimization                     |
+| `next-best-practices`           | Next.js file conventions and patterns                      |
+| `accessibility-a11y`            | WCAG accessibility guidelines                              |
+| `claude-code-frontmatter`       | Skill and subagent YAML frontmatter reference              |

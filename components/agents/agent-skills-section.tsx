@@ -90,7 +90,9 @@ export const AgentSkillsSection = ({ isDisabled = false, onSkillsChange, skills 
               <div className={'min-w-0 flex-1'}>
                 <div className={'flex items-center gap-2'}>
                   <span className={'font-mono text-sm font-medium'}>{skill.skillName}</span>
-                  {skill.isRequired && <span className={'text-xs font-medium text-required-indicator'}>{'Required'}</span>}
+                  {skill.isRequired && (
+                    <span className={'text-xs font-medium text-required-indicator'}>{'Required'}</span>
+                  )}
                 </div>
               </div>
               <div className={'flex items-center gap-1'}>
