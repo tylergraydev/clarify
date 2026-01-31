@@ -145,11 +145,17 @@ export const useAgentImportExport = ({
   const handleImportConfirm = useCallback(
     (data: ParsedAgentMarkdown) => {
       importAgentMutation.mutate(data, {
-        onSettled: () => {
-          onCloseImportDialog();
-          // Clear row selection
-          setRowSelection({});
+        onSuccess: (result) => {
+          // Only close dialog and clear selection on actual success
+          if (result.success) {
+            onCloseImportDialog();
+            setRowSelection({});
+          }
+          // If result.success is false, dialog stays open for retry
+          // (toast notifications are handled in the mutation hook)
         },
+        // On mutation error, dialog stays open for retry
+        // (toast notifications are handled in the mutation hook)
       });
     },
     [importAgentMutation, onCloseImportDialog, setRowSelection]

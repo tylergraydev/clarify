@@ -418,6 +418,22 @@ export function serializeAgentToMarkdown(data: AgentWithRelations): string {
     frontmatter.hooks = hooksObj;
   }
 
+  // Add Clarify-specific fields (safely ignored by Claude Code parsers)
+  // Add displayName if it differs from name
+  if (agent.displayName && agent.displayName !== agent.name) {
+    frontmatter.displayName = agent.displayName;
+  }
+
+  // Add type
+  if (agent.type) {
+    frontmatter.type = agent.type;
+  }
+
+  // Add color
+  if (agent.color) {
+    frontmatter.color = agent.color;
+  }
+
   // Serialize frontmatter to YAML
   const yamlContent = YAML.stringify(frontmatter, {
     indent: 2,

@@ -95,7 +95,7 @@ export const ImportAgentDialog = ({
           </DialogHeader>
 
           {/* Scrollable Content */}
-          <DialogBody>
+          <DialogBody className={'pr-4'}>
             {/* Validation Errors */}
             {hasErrors && validationResult && (
               <Alert className={'mb-4'} variant={'destructive'}>
@@ -326,9 +326,7 @@ export const ImportAgentDialog = ({
           {/* Footer Actions */}
           <DialogFooter>
             <DialogClose>
-              <Button disabled={isLoading} variant={'outline'}>
-                {'Cancel'}
-              </Button>
+              <Button variant={'outline'}>{'Cancel'}</Button>
             </DialogClose>
             <Button
               aria-describedby={'import-agent-description'}

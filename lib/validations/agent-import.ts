@@ -54,7 +54,7 @@ export const agentImportSchema = z.object({
   name: z
     .string()
     .min(1, 'Agent name is required')
-    .max(255, 'Agent name is too long')
+    .max(100, 'Agent name is too long')
     .regex(
       KEBAB_CASE_PATTERN,
       'Agent name must be in kebab-case (start with a lowercase letter, contain only lowercase letters, numbers, and hyphens)'
