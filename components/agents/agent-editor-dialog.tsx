@@ -40,7 +40,12 @@ import {
 import { agentColors, agentTypes } from '@/db/schema/agents.schema';
 import { useAgentEditorState } from '@/hooks/agents/use-agent-editor-state';
 import { useCreateAgentHook } from '@/hooks/queries/use-agent-hooks';
-import { useAgentSkills, useCreateAgentSkill, useSetAgentSkillRequired } from '@/hooks/queries/use-agent-skills';
+import {
+  useAgentSkills,
+  useCreateAgentSkill,
+  useDeleteAgentSkill,
+  useSetAgentSkillRequired,
+} from '@/hooks/queries/use-agent-skills';
 import {
   useAgentTools,
   useAllowAgentTool,
@@ -58,7 +63,6 @@ import { optionsToItems } from '@/lib/utils';
 import { createAgentFormSchema, updateAgentSchema } from '@/lib/validations/agent';
 
 import { type AgentHooksData, AgentHooksSection } from './agent-hooks-section';
-import { AgentSkillsManager } from './agent-skills-manager';
 import { AgentSkillsSection } from './agent-skills-section';
 import { AgentToolsSection } from './agent-tools-section';
 import { ConfirmDiscardDialog } from './confirm-discard-dialog';
@@ -126,10 +130,7 @@ const PERMISSION_MODE_OPTIONS = [
 interface ToolsCollapsibleSectionProps {
   customTools: Array<CreateToolData>;
   isDisabled: boolean;
-  isEditMode: boolean;
   onCustomToolsChange: (tools: Array<CreateToolData>) => void;
-  onEditModeCustomToolsChange: (tools: Array<CreateToolData>) => Promise<void>;
-  onEditModeToolSelectionsChange: (selections: Array<ToolSelection>) => Promise<void>;
   onToolSelectionsChange: (selections: Array<ToolSelection>) => void;
   toolSelections: Array<ToolSelection>;
 }
@@ -140,10 +141,7 @@ interface ToolsCollapsibleSectionProps {
 const ToolsCollapsibleSection = memo(function ToolsCollapsibleSection({
   customTools,
   isDisabled,
-  isEditMode,
   onCustomToolsChange,
-  onEditModeCustomToolsChange,
-  onEditModeToolSelectionsChange,
   onToolSelectionsChange,
   toolSelections,
 }: ToolsCollapsibleSectionProps) {
@@ -163,8 +161,8 @@ const ToolsCollapsibleSection = memo(function ToolsCollapsibleSection({
           <AgentToolsSection
             customTools={customTools}
             isDisabled={isDisabled}
-            onCustomToolsChange={isEditMode ? onEditModeCustomToolsChange : onCustomToolsChange}
-            onToolSelectionsChange={isEditMode ? onEditModeToolSelectionsChange : onToolSelectionsChange}
+            onCustomToolsChange={onCustomToolsChange}
+            onToolSelectionsChange={onToolSelectionsChange}
             toolSelections={toolSelections}
           />
         </div>
@@ -177,9 +175,7 @@ const ToolsCollapsibleSection = memo(function ToolsCollapsibleSection({
  * Props for the memoized skills collapsible section
  */
 interface SkillsCollapsibleSectionProps {
-  agentId: number | undefined;
   isDisabled: boolean;
-  isEditAgent: boolean;
   onSkillsChange: (skills: Array<PendingSkillData>) => void;
   pendingSkills: Array<PendingSkillData>;
 }
@@ -188,36 +184,22 @@ interface SkillsCollapsibleSectionProps {
  * Memoized skills collapsible section to prevent re-renders when parent state changes
  */
 const SkillsCollapsibleSection = memo(function SkillsCollapsibleSection({
-  agentId,
   isDisabled,
-  isEditAgent,
   onSkillsChange,
   pendingSkills,
 }: SkillsCollapsibleSectionProps) {
-  const isEditAgentWithValidId = isEditAgent && agentId !== undefined;
-
-  // Query skills for edit mode to get count
-  const { data: skills } = useAgentSkills(isEditAgentWithValidId ? agentId : 0);
-
-  // Calculate count based on mode
-  const skillsCount = isEditAgentWithValidId ? (skills?.length ?? 0) : pendingSkills.length;
-
   return (
     <Collapsible className={'rounded-md border border-border'}>
       <CollapsibleTrigger className={'w-full justify-start px-3 py-2'}>
         <span>{'Referenced Skills'}</span>
         <span className={'ml-auto text-xs text-muted-foreground'}>
-          {skillsCount}
+          {pendingSkills.length}
           {' configured'}
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className={'border-t border-border p-3'}>
-          {isEditAgentWithValidId ? (
-            <AgentSkillsManager agentId={agentId} isDisabled={isDisabled} />
-          ) : (
-            <AgentSkillsSection isDisabled={isDisabled} onSkillsChange={onSkillsChange} skills={pendingSkills} />
-          )}
+          <AgentSkillsSection isDisabled={isDisabled} onSkillsChange={onSkillsChange} skills={pendingSkills} />
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -320,6 +302,13 @@ export const AgentEditorDialog = ({
   const existingToolsQuery = useAgentTools(agent?.id ?? 0);
   const existingTools = existingToolsQuery.data;
 
+  // Fetch existing skills for edit mode
+  const existingSkillsQuery = useAgentSkills(agent?.id ?? 0);
+  const existingSkills = existingSkillsQuery.data;
+
+  // Skill mutations for edit mode sync
+  const deleteSkillMutation = useDeleteAgentSkill();
+
   // Fetch all projects for the project assignment dropdown
   const projectsQuery = useProjects();
 
@@ -363,7 +352,6 @@ export const AgentEditorDialog = ({
     isBuiltIn,
     isCollapsibleDisabled,
     isDuplicateMode,
-    isEditAgent,
     isEditMode,
     isProjectScoped,
     isProjectSelectorDisabled,
@@ -475,6 +463,98 @@ export const AgentEditorDialog = ({
             targetProjectId: selectedProjectId,
           });
         }
+
+        // Sync tools for edit mode
+        if (existingTools) {
+          // Process built-in tool selections
+          for (const selection of toolSelections) {
+            const existingTool = existingTools.find((t) => t.toolName === selection.toolName);
+
+            if (existingTool) {
+              // Tool exists - toggle allow/disallow based on enabled state
+              const isCurrentlyAllowed = existingTool.disallowedAt === null;
+              if (selection.enabled && !isCurrentlyAllowed) {
+                await allowToolMutation.mutateAsync(existingTool.id);
+              } else if (!selection.enabled && isCurrentlyAllowed) {
+                await disallowToolMutation.mutateAsync(existingTool.id);
+              }
+            } else if (selection.enabled) {
+              // Tool doesn't exist and is enabled - create it
+              await createToolMutation.mutateAsync({
+                agentId: agent.id,
+                toolName: selection.toolName,
+                toolPattern: selection.pattern,
+              });
+            }
+          }
+
+          // Process custom tools - find tools to add
+          for (const tool of customTools) {
+            const exists = existingTools.some((t) => t.toolName === tool.toolName);
+            if (!exists) {
+              await createToolMutation.mutateAsync({
+                agentId: agent.id,
+                toolName: tool.toolName,
+                toolPattern: tool.pattern,
+              });
+            }
+          }
+
+          // Process custom tools - find tools to remove
+          for (const existingTool of existingTools) {
+            if (isBuiltinTool(existingTool.toolName)) continue;
+
+            const stillExists = customTools.some((t) => t.toolName === existingTool.toolName);
+            if (!stillExists) {
+              await deleteToolMutation.mutateAsync({
+                agentId: agent.id,
+                id: existingTool.id,
+              });
+            }
+          }
+        }
+
+        // Sync skills for edit mode
+        if (existingSkills) {
+          // Find skills to add
+          for (const skill of pendingSkills) {
+            const existingSkill = existingSkills.find((s) => s.skillName === skill.skillName);
+            if (!existingSkill) {
+              // Create new skill
+              const createdSkill = await createSkillMutation.mutateAsync({
+                agentId: agent.id,
+                skillName: skill.skillName,
+              });
+              // Set required status if needed
+              if (skill.isRequired && createdSkill) {
+                await setSkillRequiredMutation.mutateAsync({
+                  id: createdSkill.id,
+                  required: true,
+                });
+              }
+            } else {
+              // Update required status if changed
+              const wasRequired = existingSkill.requiredAt !== null;
+              if (skill.isRequired !== wasRequired) {
+                await setSkillRequiredMutation.mutateAsync({
+                  id: existingSkill.id,
+                  required: skill.isRequired,
+                });
+              }
+            }
+          }
+
+          // Find skills to delete
+          for (const existingSkill of existingSkills) {
+            const stillExists = pendingSkills.some((s) => s.skillName === existingSkill.skillName);
+            if (!stillExists) {
+              await deleteSkillMutation.mutateAsync({
+                agentId: agent.id,
+                id: existingSkill.id,
+              });
+            }
+          }
+        }
       } else {
         // Create new agent with tools
         const createValue = value as CreateAgentFormData;
@@ -561,6 +641,10 @@ export const AgentEditorDialog = ({
     setSelectedProjectId(newProjectId);
   });
 
+  const updatePendingSkills = useEffectEvent((skills: Array<PendingSkillData>) => {
+    setPendingSkills(skills);
+  });
+
   // Reset form and project when agent or initialData changes
   useEffect(() => {
     form.reset(getDefaultValues());
@@ -622,6 +706,18 @@ export const AgentEditorDialog = ({
     updateToolSelections(builtinSelections);
     updateCustomTools(customToolsList);
   }, [isOpen, isEditMode, existingTools]);
+
+  // Initialize skills from existing database records (edit mode)
+  useEffect(() => {
+    if (!isOpen || !isEditMode || !existingSkills) return;
+
+    const pendingSkillsData: Array<PendingSkillData> = existingSkills.map((skill) => ({
+      isRequired: skill.requiredAt !== null,
+      skillName: skill.skillName,
+    }));
+
+    updatePendingSkills(pendingSkillsData);
+  }, [isOpen, isEditMode, existingSkills]);
 
   const getInitialProjectId = useCallback((): null | number => {
     if (isEditMode && agent) {
@@ -722,73 +818,6 @@ export const AgentEditorDialog = ({
     const newProjectId = newValue === GLOBAL_PROJECT_VALUE ? null : Number(newValue);
     setSelectedProjectId(newProjectId);
   }, []);
-
-  // Handle tool changes in edit mode - sync to database
-  const handleEditModeToolSelectionsChange = useCallback(
-    async (newSelections: Array<ToolSelection>) => {
-      if (!agent || !existingTools) return;
-
-      // For each selection change, update the database
-      for (const selection of newSelections) {
-        const existingTool = existingTools.find((t) => t.toolName === selection.toolName);
-
-        if (existingTool) {
-          // Tool exists - toggle allow/disallow based on enabled state
-          const isCurrentlyAllowed = existingTool.disallowedAt === null;
-          if (selection.enabled && !isCurrentlyAllowed) {
-            await allowToolMutation.mutateAsync(existingTool.id);
-          } else if (!selection.enabled && isCurrentlyAllowed) {
-            await disallowToolMutation.mutateAsync(existingTool.id);
-          }
-        } else if (selection.enabled) {
-          // Tool doesn't exist and is enabled - create it
-          await createToolMutation.mutateAsync({
-            agentId: agent.id,
-            toolName: selection.toolName,
-            toolPattern: selection.pattern,
-          });
-        }
-      }
-
-      setToolSelections(newSelections);
-    },
-    [agent, existingTools, allowToolMutation, disallowToolMutation, createToolMutation]
-  );
-
-  // Handle custom tool changes in edit mode
-  const handleEditModeCustomToolsChange = useCallback(
-    async (newCustomTools: Array<CreateToolData>) => {
-      if (!agent || !existingTools) return;
-
-      // Find tools to add (in newCustomTools but not in existingTools)
-      for (const tool of newCustomTools) {
-        const exists = existingTools.some((t) => t.toolName === tool.toolName);
-        if (!exists) {
-          await createToolMutation.mutateAsync({
-            agentId: agent.id,
-            toolName: tool.toolName,
-            toolPattern: tool.pattern,
-          });
-        }
-      }
-
-      // Find tools to remove (in existingTools but not in newCustomTools, and not built-in)
-      for (const existingTool of existingTools) {
-        if (isBuiltinTool(existingTool.toolName)) continue;
-
-        const stillExists = newCustomTools.some((t) => t.toolName === existingTool.toolName);
-        if (!stillExists) {
-          await deleteToolMutation.mutateAsync({
-            agentId: agent.id,
-            id: existingTool.id,
-          });
-        }
-      }
-
-      setCustomTools(newCustomTools);
-    },
-    [agent, existingTools, createToolMutation, deleteToolMutation]
-  );
 
   // Memoize dialog labels to prevent string recreation on every render
   const dialogLabels = useMemo(() => {
@@ -1062,19 +1091,14 @@ export const AgentEditorDialog = ({
                 <ToolsCollapsibleSection
                   customTools={customTools}
                   isDisabled={isCollapsibleDisabled}
-                  isEditMode={isEditMode}
                   onCustomToolsChange={setCustomTools}
-                  onEditModeCustomToolsChange={handleEditModeCustomToolsChange}
-                  onEditModeToolSelectionsChange={handleEditModeToolSelectionsChange}
                   onToolSelectionsChange={setToolSelections}
                   toolSelections={toolSelections}
                 />
 
                 {/* Skills Section - Memoized to prevent re-renders */}
                 <SkillsCollapsibleSection
-                  agentId={agent?.id}
                   isDisabled={isCollapsibleDisabled}
-                  isEditAgent={isEditAgent}
                   onSkillsChange={setPendingSkills}
                   pendingSkills={pendingSkills}
                 />
