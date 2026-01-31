@@ -33,6 +33,12 @@ export const IpcChannels = {
     reset: 'agent:reset',
     update: 'agent:update',
   },
+  agentHook: {
+    create: 'agentHook:create',
+    delete: 'agentHook:delete',
+    list: 'agentHook:list',
+    update: 'agentHook:update',
+  },
   agentSkill: {
     create: 'agentSkill:create',
     delete: 'agentSkill:delete',

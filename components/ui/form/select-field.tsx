@@ -24,6 +24,7 @@ type SelectFieldProps = ClassName &
   VariantProps<typeof selectTriggerVariants> & {
     description?: string;
     isDisabled?: boolean;
+    isRequired?: boolean;
     label: string;
     /** Optional callback when value changes (in addition to form state update) */
     onChange?: (value: string) => void;
@@ -41,6 +42,7 @@ export const SelectField = ({
   className,
   description,
   isDisabled,
+  isRequired,
   label,
   onChange,
   options,
@@ -65,6 +67,11 @@ export const SelectField = ({
       {/* Label */}
       <Field.Label className={labelVariants({ size })} nativeLabel={false} render={<span />}>
         {label}
+        {isRequired && (
+          <span aria-hidden={'true'} className={'ml-0.5 text-destructive'}>
+            *
+          </span>
+        )}
       </Field.Label>
 
       {/* Select */}

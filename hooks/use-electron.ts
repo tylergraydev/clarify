@@ -230,6 +230,28 @@ export function useElectronDb() {
     [api, throwIfNoApi]
   );
 
+  const agentHooks = useMemo(
+    () => ({
+      create: async (data: Parameters<NonNullable<ElectronAPI>['agentHook']['create']>[0]) => {
+        const electronApi = throwIfNoApi('agentHook.create');
+        return electronApi.agentHook.create(data);
+      },
+      delete: async (id: number) => {
+        const electronApi = throwIfNoApi('agentHook.delete');
+        return electronApi.agentHook.delete(id);
+      },
+      list: async (agentId: number) => {
+        if (!api) return [];
+        return api.agentHook.list(agentId);
+      },
+      update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['agentHook']['update']>[1]) => {
+        const electronApi = throwIfNoApi('agentHook.update');
+        return electronApi.agentHook.update(id, data);
+      },
+    }),
+    [api, throwIfNoApi]
+  );
+
   const agentSkills = useMemo(
     () => ({
       create: async (data: Parameters<NonNullable<ElectronAPI>['agentSkill']['create']>[0]) => {
@@ -445,6 +467,7 @@ export function useElectronDb() {
   );
 
   return {
+    agentHooks,
     agents,
     agentSkills,
     agentTools,

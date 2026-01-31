@@ -8,6 +8,7 @@ import type {
   AuditLog,
   DiscoveredFile,
   NewAgent,
+  NewAgentHook,
   NewAgentSkill,
   NewAgentTool,
   NewAuditLog,
@@ -54,6 +55,12 @@ const IpcChannels = {
     move: 'agent:move',
     reset: 'agent:reset',
     update: 'agent:update',
+  },
+  agentHook: {
+    create: 'agentHook:create',
+    delete: 'agentHook:delete',
+    list: 'agentHook:list',
+    update: 'agentHook:update',
   },
   agentSkill: {
     create: 'agentSkill:create',
@@ -319,6 +326,12 @@ export interface ElectronAPI {
     reset(id: number): Promise<Agent | undefined>;
     update(id: number, data: Partial<NewAgent>): Promise<Agent>;
   };
+  agentHook: {
+    create(data: NewAgentHook): Promise<AgentHook>;
+    delete(id: number): Promise<boolean>;
+    list(agentId: number): Promise<Array<AgentHook>>;
+    update(id: number, data: Partial<NewAgentHook>): Promise<AgentHook | undefined>;
+  };
   agentSkill: {
     create(data: NewAgentSkill): Promise<AgentSkill>;
     delete(id: number): Promise<boolean>;
@@ -545,6 +558,12 @@ const electronAPI: ElectronAPI = {
     move: (agentId, targetProjectId) => ipcRenderer.invoke(IpcChannels.agent.move, agentId, targetProjectId),
     reset: (id) => ipcRenderer.invoke(IpcChannels.agent.reset, id),
     update: (id, data) => ipcRenderer.invoke(IpcChannels.agent.update, id, data),
+  },
+  agentHook: {
+    create: (data) => ipcRenderer.invoke(IpcChannels.agentHook.create, data),
+    delete: (id) => ipcRenderer.invoke(IpcChannels.agentHook.delete, id),
+    list: (agentId) => ipcRenderer.invoke(IpcChannels.agentHook.list, agentId),
+    update: (id, data) => ipcRenderer.invoke(IpcChannels.agentHook.update, id, data),
   },
   agentSkill: {
     create: (data) => ipcRenderer.invoke(IpcChannels.agentSkill.create, data),

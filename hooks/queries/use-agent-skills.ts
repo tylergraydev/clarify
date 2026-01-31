@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { agentSkillKeys } from '@/lib/queries/agent-skills';
+import { agentKeys } from '@/lib/queries/agents';
 
 import { useElectronDb } from '../use-electron';
 import { useToast } from '../use-toast';
@@ -49,6 +50,10 @@ export function useCreateAgentSkill() {
       void queryClient.invalidateQueries({
         queryKey: agentSkillKeys.byAgent._def,
       });
+      // Invalidate agent queries that may include embedded skills
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
+      });
 
       toast.success({
         description: 'Agent skill created successfully',
@@ -82,6 +87,10 @@ export function useDeleteAgentSkill() {
       void queryClient.invalidateQueries({
         queryKey: agentSkillKeys.byAgent(agentId).queryKey,
       });
+      // Invalidate agent queries that may include embedded skills
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
+      });
 
       toast.success({
         description: 'Agent skill deleted successfully',
@@ -113,6 +122,10 @@ export function useSetAgentSkillRequired() {
       void queryClient.invalidateQueries({
         queryKey: agentSkillKeys.byAgent._def,
       });
+      // Invalidate agent queries that may include embedded skills
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
+      });
 
       toast.success({
         description: 'Skill requirement updated successfully',
@@ -143,6 +156,10 @@ export function useUpdateAgentSkill() {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentSkillKeys.byAgent._def,
+      });
+      // Invalidate agent queries that may include embedded skills
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
       });
 
       toast.success({

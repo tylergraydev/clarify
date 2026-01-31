@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { agentToolKeys } from '@/lib/queries/agent-tools';
+import { agentKeys } from '@/lib/queries/agents';
 
 import { useElectronDb } from '../use-electron';
 import { useToast } from '../use-toast';
@@ -49,6 +50,10 @@ export function useAllowAgentTool() {
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
       });
+      // Invalidate agent queries that may include embedded tools
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
+      });
 
       toast.success({
         description: 'Tool has been allowed',
@@ -78,6 +83,10 @@ export function useCreateAgentTool() {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
+      });
+      // Invalidate agent queries that may include embedded tools
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
       });
 
       toast.success({
@@ -112,6 +121,10 @@ export function useDeleteAgentTool() {
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent(agentId).queryKey,
       });
+      // Invalidate agent queries that may include embedded tools
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
+      });
 
       toast.success({
         description: 'Agent tool deleted successfully',
@@ -141,6 +154,10 @@ export function useDisallowAgentTool() {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
+      });
+      // Invalidate agent queries that may include embedded tools
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
       });
 
       toast.success({
@@ -172,6 +189,10 @@ export function useUpdateAgentTool() {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
+      });
+      // Invalidate agent queries that may include embedded tools
+      void queryClient.invalidateQueries({
+        queryKey: agentKeys.all._def,
       });
 
       toast.success({

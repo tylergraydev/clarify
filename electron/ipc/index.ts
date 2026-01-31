@@ -30,6 +30,7 @@ import {
   createWorkflowStepsRepository,
   createWorktreesRepository,
 } from '../../db/repositories';
+import { registerAgentHookHandlers } from './agent-hook.handlers';
 import { registerAgentSkillHandlers } from './agent-skill.handlers';
 import { registerAgentToolHandlers } from './agent-tool.handlers';
 // Handler registration imports (to be implemented in Steps 3-10)
@@ -120,9 +121,10 @@ export function registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => Br
     projectsRepository
   );
 
-  // Register tool and skill handlers
+  // Register tool, skill, and hook handlers
   registerAgentToolHandlers(agentToolsRepository);
   registerAgentSkillHandlers(agentSkillsRepository);
+  registerAgentHookHandlers(agentHooksRepository);
 
   // Templates - prompt templates for workflows
   const templatesRepository = createTemplatesRepository(db);

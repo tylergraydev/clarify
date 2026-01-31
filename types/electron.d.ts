@@ -7,6 +7,7 @@ export type {
   AuditLog,
   DiscoveredFile,
   NewAgent,
+  NewAgentHook,
   NewAgentSkill,
   NewAgentTool,
   NewAuditLog,
@@ -166,6 +167,15 @@ export interface ElectronAPI {
     move(agentId: number, targetProjectId: null | number): Promise<import('../db/schema').Agent>;
     reset(id: number): Promise<import('../db/schema').Agent | undefined>;
     update(id: number, data: Partial<import('../db/schema').NewAgent>): Promise<import('../db/schema').Agent>;
+  };
+  agentHook: {
+    create(data: import('../db/schema').NewAgentHook): Promise<import('../db/schema').AgentHook>;
+    delete(id: number): Promise<boolean>;
+    list(agentId: number): Promise<Array<import('../db/schema').AgentHook>>;
+    update(
+      id: number,
+      data: Partial<import('../db/schema').NewAgentHook>
+    ): Promise<import('../db/schema').AgentHook | undefined>;
   };
   agentSkill: {
     create(data: import('../db/schema').NewAgentSkill): Promise<import('../db/schema').AgentSkill>;

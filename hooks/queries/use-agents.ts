@@ -29,8 +29,12 @@ export function useActivateAgent() {
       if (agent) {
         // Update detail cache directly
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Only invalidate active queries since activation status changed
+        // Invalidate all relevant queries since activation status changed
+        void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
 
         toast.success({
           description: 'Agent has been activated successfully',
@@ -171,10 +175,14 @@ export function useCopyAgentToProject() {
       // Set detail cache for the new agent
       queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
 
-      // Invalidate only the target project's queries since a new agent was added there
+      // Invalidate all relevant queries since a new agent was added
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
       void queryClient.invalidateQueries({
         queryKey: agentKeys.byProject(variables.targetProjectId).queryKey,
       });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
       void queryClient.invalidateQueries({
         queryKey: agentKeys.projectScoped._def,
       });
@@ -204,8 +212,14 @@ export function useCreateAgent() {
       });
     },
     onSuccess: () => {
-      // Invalidate list queries to show the new agent
+      // Invalidate all relevant queries to show the new agent
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
 
       toast.success({
         description: 'Agent created successfully',
@@ -236,10 +250,14 @@ export function useCreateAgentOverride() {
       // Set detail cache for the new override
       queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
 
-      // Invalidate the specific project's queries since an override was created there
+      // Invalidate all relevant queries since an override was created
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
       void queryClient.invalidateQueries({
         queryKey: agentKeys.byProject(variables.projectId).queryKey,
       });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
       void queryClient.invalidateQueries({
         queryKey: agentKeys.projectScoped._def,
       });
@@ -272,8 +290,12 @@ export function useDeactivateAgent() {
       if (agent) {
         // Update detail cache directly
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
-        // Only invalidate active queries since deactivation status changed
+        // Invalidate all relevant queries since deactivation status changed
+        void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
 
         toast.success({
           description: 'Agent has been deactivated successfully',
@@ -309,8 +331,14 @@ export function useDeleteAgent() {
         queryKey: agentKeys.detail(variables.id).queryKey,
       });
 
-      // Invalidate list queries to remove the deleted agent from lists
+      // Invalidate all relevant queries to remove the deleted agent from lists
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
 
       toast.success({
         description: 'Agent deleted successfully',
@@ -337,8 +365,14 @@ export function useDuplicateAgent() {
       });
     },
     onSuccess: () => {
-      // Invalidate list queries to show the duplicated agent
+      // Invalidate all relevant queries to show the duplicated agent
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
 
       toast.success({
         description: 'Agent duplicated successfully',
@@ -436,8 +470,14 @@ export function useImportAgent() {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
       }
 
-      // Invalidate list queries to show the imported agent
+      // Invalidate all relevant queries to show the imported agent
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
 
       // Show warnings if any
       if (result.warnings && result.warnings.length > 0) {
@@ -478,14 +518,14 @@ export function useMoveAgent() {
       // Update detail cache with new project assignment
       queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
 
-      // For move operations, invalidate source and target project caches
-      // Use byProject._def to invalidate all byProject queries (covers source and target)
+      // Invalidate all relevant queries since the agent was moved
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
-      void queryClient.invalidateQueries({
-        queryKey: agentKeys.projectScoped._def,
-      });
-      // Also invalidate global in case moving to/from global scope
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
 
       toast.success({
         description: 'Agent moved successfully',
@@ -546,18 +586,14 @@ export function useResetAgent() {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
       }
 
-      // For project overrides, invalidate project-specific caches
-      if (variables.projectId) {
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.byProject(variables.projectId).queryKey,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: agentKeys.projectScoped._def,
-        });
-      }
-
-      // Invalidate global queries since parent may have been reactivated
+      // Invalidate all relevant queries since the agent was reset
+      void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
 
       toast.success({
         description: 'Agent reset to default successfully',
@@ -587,8 +623,12 @@ export function useUpdateAgent() {
       // Update detail cache directly - this is the primary optimization
       queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
 
-      // Invalidate list queries to reflect updated data in list views
+      // Invalidate all relevant queries to reflect updated data in list views
       void queryClient.invalidateQueries({ queryKey: agentKeys.list._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.all._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
 
       toast.success({
         description: 'Agent updated successfully',

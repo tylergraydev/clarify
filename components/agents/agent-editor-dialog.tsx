@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { agentColors, agentTypes } from '@/db/schema/agents.schema';
+import { useCreateAgentHook } from '@/hooks/queries/use-agent-hooks';
 import { useCreateAgentSkill, useSetAgentSkillRequired } from '@/hooks/queries/use-agent-skills';
 import {
   useAgentTools,
@@ -291,6 +292,9 @@ export const AgentEditorDialog = ({
   const createSkillMutation = useCreateAgentSkill();
   const setSkillRequiredMutation = useSetAgentSkillRequired();
 
+  // Hook mutations for create mode
+  const createHookMutation = useCreateAgentHook();
+
   // Move agent mutation for edit mode
   const moveAgentMutation = useMoveAgent();
 
@@ -527,6 +531,23 @@ export const AgentEditorDialog = ({
               id: createdSkill.id,
               required: true,
             });
+          }
+        }
+
+        // Create hooks for the new agent
+        const hookEventTypes = ['PreToolUse', 'PostToolUse', 'Stop'] as const;
+        for (const eventType of hookEventTypes) {
+          const entries = pendingHooks[eventType];
+          if (entries && entries.length > 0) {
+            for (const [index, entry] of entries.entries()) {
+              await createHookMutation.mutateAsync({
+                agentId: createdAgent.id,
+                body: entry.body,
+                eventType,
+                matcher: entry.matcher,
+                orderIndex: index,
+              });
+            }
           }
         }
       }
@@ -927,6 +948,7 @@ export const AgentEditorDialog = ({
                         description={
                           'Planning agents handle workflow planning, specialist agents perform specific tasks, review agents validate outputs'
                         }
+                        isRequired
                         label={'Agent Type'}
                         onChange={handleAgentTypeChange}
                         options={AGENT_TYPE_OPTIONS}

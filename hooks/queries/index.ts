@@ -6,6 +6,11 @@
  */
 
 // ============================================================================
+// Agent Hook Hooks
+// ============================================================================
+export { useAgentHooks, useCreateAgentHook, useDeleteAgentHook, useUpdateAgentHook } from './use-agent-hooks';
+
+// ============================================================================
 // Agent Skill Hooks
 // ============================================================================
 export {
@@ -156,6 +161,7 @@ export {
 // ============================================================================
 // Re-export query keys from lib/queries for convenient access
 export {
+  agentHookKeys,
   agentKeys,
   agentSkillKeys,
   agentToolKeys,
