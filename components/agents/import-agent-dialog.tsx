@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, Info, X } from 'lucide-react';
+import { type ChangeEvent, useMemo, useState } from 'react';
 
 import type { ParsedAgentMarkdown } from '@/lib/utils/agent-markdown';
 import type { AgentImportValidationResult, AgentImportWarning } from '@/lib/validations/agent-import';
@@ -20,8 +21,11 @@ import {
   DialogRoot,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { useAllAgents } from '@/hooks/queries/use-agents';
 import { getAgentColorHex } from '@/lib/colors/agent-colors';
 import { capitalizeFirstLetter, cn, getBadgeVariantForType, truncateText } from '@/lib/utils';
+import { KEBAB_CASE_PATTERN } from '@/lib/validations/agent-import';
 
 interface ImportAgentDialogProps {
   /** Whether import is in progress */
@@ -59,14 +63,83 @@ export const ImportAgentDialog = ({
   parsedData,
   validationResult,
 }: ImportAgentDialogProps) => {
+  // Track state for name editing with controlled reset pattern
+  // syncKey combines isOpen state with source data to detect all reset scenarios:
+  // - Dialog opens with new data (different name)
+  // - Dialog closes and reopens with same data (isOpen changes false->true)
+  // - Dialog opens with null parsedData (name is empty string)
+  const [syncKey, setSyncKey] = useState<string>('');
+  const [modifiedName, setModifiedName] = useState<string>('');
+
+  const { data: allAgents } = useAllAgents();
+
+  const existingAgentNames = useMemo(() => {
+    if (!allAgents) return new Set<string>();
+    return new Set(allAgents.map((agent) => agent.name));
+  }, [allAgents]);
+
+  const originalName = parsedData?.frontmatter.name ?? '';
+  const currentSourceName = parsedData?.frontmatter.name ?? '';
+
+  // Create a composite key that changes when:
+  // 1. Dialog opens (isOpen becomes true)
+  // 2. Source data name changes while dialog is open
+  // When dialog is closed, use empty key to reset tracking
+  const currentSyncKey = isOpen ? `open:${currentSourceName}` : '';
+
+  // Sync modifiedName when the sync key changes
+  // This handles all edge cases:
+  // - Dialog opens fresh: syncKey changes from '' to 'open:name'
+  // - New file loaded while open: syncKey changes from 'open:oldName' to 'open:newName'
+  // - Dialog closes: syncKey changes to '', then next open triggers fresh sync
+  if (currentSyncKey !== syncKey) {
+    setSyncKey(currentSyncKey);
+    // Only set modifiedName when dialog is opening with data
+    // When closing (currentSyncKey is ''), we just reset the syncKey
+    if (isOpen) {
+      setModifiedName(currentSourceName);
+    }
+  }
+
+  // Compute validation error from current state (no useEffect needed)
+  const nameError = useMemo((): null | string => {
+    if (!modifiedName) {
+      return 'Agent name is required';
+    }
+
+    if (!KEBAB_CASE_PATTERN.test(modifiedName)) {
+      return 'Agent name must be in kebab-case (start with a lowercase letter, contain only lowercase letters, numbers, and hyphens)';
+    }
+
+    // Check for duplicate names, but allow the original name
+    const isDuplicate = existingAgentNames.has(modifiedName) && modifiedName !== originalName;
+    if (isDuplicate) {
+      return 'An agent with this name already exists';
+    }
+
+    return null;
+  }, [modifiedName, existingAgentNames, originalName]);
+
   const hasErrors = validationResult ? !validationResult.success || validationResult.errors.length > 0 : false;
   const hasWarnings = validationResult ? validationResult.warnings.length > 0 : false;
-  const isImportDisabled = isLoading || hasErrors || !parsedData;
+  const isImportDisabled = isLoading || hasErrors || !parsedData || nameError !== null;
 
   const handleImportClick = () => {
-    if (parsedData && !hasErrors) {
-      onImport(parsedData);
+    if (parsedData && !hasErrors && !nameError) {
+      // Create a modified copy with the updated name
+      const dataToImport: ParsedAgentMarkdown = {
+        ...parsedData,
+        frontmatter: {
+          ...parsedData.frontmatter,
+          name: modifiedName,
+        },
+      };
+      onImport(dataToImport);
     }
+  };
+
+  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setModifiedName(event.target.value);
   };
 
   const frontmatter = parsedData?.frontmatter;
@@ -143,7 +216,7 @@ export const ImportAgentDialog = ({
                     {'Agent Identity'}
                   </h3>
                   <div className={'rounded-md border border-border bg-muted/50 p-4'}>
-                    {/* Name and Color */}
+                    {/* Display Name and Color */}
                     <div className={'flex items-center gap-3'}>
                       {frontmatter.color && (
                         <div
@@ -156,8 +229,29 @@ export const ImportAgentDialog = ({
                       )}
                       <div className={'min-w-0 flex-1'}>
                         <p className={'text-base font-semibold text-foreground'}>{frontmatter.displayName}</p>
-                        <p className={'font-mono text-sm text-muted-foreground'}>{frontmatter.name}</p>
                       </div>
+                    </div>
+
+                    {/* Editable Name Field */}
+                    <div className={'mt-3'}>
+                      <label className={'mb-1.5 block text-sm font-medium text-foreground'} htmlFor={'agent-name-input'}>
+                        {'Agent Name (kebab-case)'}
+                      </label>
+                      <Input
+                        aria-describedby={nameError ? 'agent-name-error' : undefined}
+                        aria-invalid={nameError !== null}
+                        className={'font-mono'}
+                        id={'agent-name-input'}
+                        isInvalid={nameError !== null}
+                        onChange={handleNameChange}
+                        placeholder={'my-agent-name'}
+                        value={modifiedName}
+                      />
+                      {nameError && (
+                        <p className={'mt-1.5 text-sm text-destructive'} id={'agent-name-error'} role={'alert'}>
+                          {nameError}
+                        </p>
+                      )}
                     </div>
 
                     {/* Type Badge */}

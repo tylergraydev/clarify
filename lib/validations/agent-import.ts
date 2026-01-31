@@ -6,7 +6,7 @@ import { agentColors, agentModels, agentPermissionModes, agentTypes } from '../.
  * Regex pattern for validating kebab-case agent names.
  * Must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens.
  */
-const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9-]*$/;
+export const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 /**
  * Zod schema for validating hook entries in agent imports.
