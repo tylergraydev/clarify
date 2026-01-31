@@ -69,7 +69,7 @@ export const dataTableContainerVariants = cva(
 
 export const dataTableVariants = cva(
   `
-    w-full border-collapse
+    table-fixed border-collapse
   `,
   {
     defaultVariants: {
@@ -757,7 +757,14 @@ export const DataTable = <TData, TValue>({
       {/* Table Container */}
       {!isShowSkeleton && (
         <div className={'overflow-auto rounded-md border border-border'} ref={tableContainerRef}>
-          <table className={cn(dataTableVariants({ density }))} style={tableStyle}>
+          <table
+            className={cn(dataTableVariants({ density }))}
+            style={{
+              ...tableStyle,
+              minWidth: 'var(--table-width)',
+              width: 'var(--table-width)',
+            }}
+          >
             {/* Table Header */}
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
