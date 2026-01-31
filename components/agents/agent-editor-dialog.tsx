@@ -405,7 +405,7 @@ export const AgentEditorDialog = ({
     }
     if (initialData) {
       return {
-        color: initialData.color ?? undefined,
+        color: initialData.color ?? 'blue',
         description: initialData.description ?? '',
         displayName: initialData.displayName,
         model: '' as CreateAgentFormData['model'],
@@ -413,10 +413,10 @@ export const AgentEditorDialog = ({
         permissionMode: '' as CreateAgentFormData['permissionMode'],
         systemPrompt: initialData.systemPrompt,
         type: initialData.type,
-      };
+      } as CreateAgentFormData;
     }
     return {
-      color: undefined,
+      color: 'blue',
       description: '',
       displayName: '',
       model: '' as CreateAgentFormData['model'],
@@ -424,7 +424,7 @@ export const AgentEditorDialog = ({
       permissionMode: '' as CreateAgentFormData['permissionMode'],
       systemPrompt: '',
       type: 'specialist' as AgentType,
-    };
+    } as CreateAgentFormData;
   }, [isEditMode, agent, initialData]);
 
   // Initialize tool defaults for create mode
