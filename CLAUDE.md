@@ -202,6 +202,7 @@ Custom commands in `.claude/commands/` provide high-level workflows. Use slash c
 | `/create-schema`  | Create or modify database schemas using natural language descriptions                             |
 | `/fix-file`       | Fix a file to follow project patterns using specialist agents with automatic review               |
 | `/audit-route`    | Audit a route/feature area for violations across all layers, optionally fix with review cycles    |
+| `/audit-feature`  | Audit a specific feature (e.g., "Create Agent Dialog") for violations, optionally fix             |
 | `/next-feature`   | Identify the next logical feature area based on design document and codebase analysis             |
 
 ## 10. Specialist Subagents

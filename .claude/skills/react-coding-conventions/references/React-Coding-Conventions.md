@@ -22,6 +22,26 @@ const message = "Hello world";
 
 **Rule**: Single quotes for strings and imports. JSX attributes must use curly braces with single quotes.
 
+### Fragment Syntax
+
+```tsx
+// ✅ Correct - Use explicit Fragment
+import { Fragment } from 'react';
+
+<Fragment>
+  <Child />
+  <Child />
+</Fragment>
+
+// ❌ Incorrect - Avoid shorthand syntax
+<>
+  <Child />
+  <Child />
+</>
+```
+
+**Rule**: Always use explicit `<Fragment></Fragment>` from React, never the shorthand `<></>` syntax.
+
 ---
 
 ## File Organization
@@ -475,5 +495,6 @@ className={cn(
 7. **Accessibility First**: Include proper ARIA and semantic markup
 8. **Performance Considerations**: Use memoization appropriately
 9. **Error Handling**: Provide descriptive error messages
+10. **Explicit Fragments**: Use `<Fragment></Fragment>`, never `<></>`
 
 ---

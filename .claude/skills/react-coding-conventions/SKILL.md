@@ -54,6 +54,7 @@ When writing React code, ensure strict adherence to all conventions:
 - JSX attributes must use curly braces with single quotes: `className={'btn-primary'}`
 - Kebab-case for file names: `user-profile.tsx`
 - Named exports only (no default exports)
+- Use explicit `<Fragment></Fragment>`, never `<></>`
 
 **Component Structure**:
 
