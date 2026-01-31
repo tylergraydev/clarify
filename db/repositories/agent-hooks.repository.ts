@@ -25,11 +25,11 @@ export function createAgentHooksRepository(db: DrizzleDatabase): AgentHooksRepos
     async create(data: NewAgentHook): Promise<AgentHook> {
       // Validate input data through Zod schema
       const validatedData = createAgentHookSchema.parse(data);
-      const result = await db.insert(agentHooks).values(validatedData).returning();
-      if (!result[0]) {
+      const result = db.insert(agentHooks).values(validatedData).returning().get();
+      if (!result) {
         throw new Error('Failed to create agent hook');
       }
-      return result[0];
+      return result;
     },
 
     async delete(id: number): Promise<boolean> {
@@ -55,32 +55,31 @@ export function createAgentHooksRepository(db: DrizzleDatabase): AgentHooksRepos
     },
 
     async findById(id: number): Promise<AgentHook | undefined> {
-      const result = await db.select().from(agentHooks).where(eq(agentHooks.id, id));
-      return result[0];
+      return db.select().from(agentHooks).where(eq(agentHooks.id, id)).get();
     },
 
     async update(id: number, data: Partial<Omit<NewAgentHook, 'createdAt' | 'id'>>): Promise<AgentHook | undefined> {
       // Validate input data through Zod schema
       const validatedData = updateAgentHookSchema.parse(data);
       const now = new Date().toISOString();
-      const result = await db
+      return db
         .update(agentHooks)
         .set({ ...validatedData, updatedAt: now })
         .where(eq(agentHooks.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
 
     async updateOrder(id: number, orderIndex: number): Promise<AgentHook | undefined> {
       // Validate input data through Zod schema
       const validatedData = updateAgentHookOrderSchema.parse({ orderIndex });
       const now = new Date().toISOString();
-      const result = await db
+      return db
         .update(agentHooks)
         .set({ orderIndex: validatedData.orderIndex, updatedAt: now })
         .where(eq(agentHooks.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
   };
 }

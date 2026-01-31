@@ -2,6 +2,7 @@
 
 import type { RowSelectionState } from '@tanstack/react-table';
 
+import { withParamValidation } from 'next-typesafe-url/app/hoc';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AgentTable } from '@/components/agents/agent-table';
@@ -18,6 +19,7 @@ import { useFilteredAgents } from '@/hooks/use-filtered-agents';
 import { AgentsDialogs } from './_components/agents-dialogs';
 import { AgentsPageHeader } from './_components/agents-page-header';
 import { AgentsPageSkeleton } from './_components/agents-page-skeleton';
+import { Route } from './route-type';
 
 // ============================================================================
 // Component
@@ -34,7 +36,7 @@ import { AgentsPageSkeleton } from './_components/agents-page-skeleton';
  * - Move and copy agents between projects
  * - Import and export agents as markdown files
  */
-export default function AgentsPage() {
+function AgentsPageContent() {
   // Row selection state for batch operations
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
@@ -225,3 +227,5 @@ export default function AgentsPage() {
     </QueryErrorBoundary>
   );
 }
+
+export default withParamValidation(AgentsPageContent, Route);

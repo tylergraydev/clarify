@@ -51,6 +51,11 @@ export function useAllowAgentTool() {
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
       });
+
+      toast.success({
+        description: 'Tool has been allowed',
+        title: 'Tool Allowed',
+      });
     },
   });
 }
@@ -76,6 +81,11 @@ export function useCreateAgentTool() {
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
       });
+
+      toast.success({
+        description: 'Agent tool created successfully',
+        title: 'Tool Created',
+      });
     },
   });
 }
@@ -99,10 +109,15 @@ export function useDeleteAgentTool() {
         title: 'Delete Tool Failed',
       });
     },
-    onSuccess: () => {
-      // Invalidate all byAgent queries
+    onSuccess: (agentId) => {
+      // Use targeted invalidation for the specific agent
       void queryClient.invalidateQueries({
-        queryKey: agentToolKeys.byAgent._def,
+        queryKey: agentToolKeys.byAgent(agentId).queryKey,
+      });
+
+      toast.success({
+        description: 'Agent tool deleted successfully',
+        title: 'Tool Deleted',
       });
     },
   });
@@ -129,6 +144,11 @@ export function useDisallowAgentTool() {
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
       });
+
+      toast.success({
+        description: 'Tool has been disallowed',
+        title: 'Tool Disallowed',
+      });
     },
   });
 }
@@ -154,6 +174,11 @@ export function useUpdateAgentTool() {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
+      });
+
+      toast.success({
+        description: 'Agent tool updated successfully',
+        title: 'Tool Updated',
       });
     },
   });

@@ -21,12 +21,12 @@ export function createAgentToolsRepository(db: DrizzleDatabase): AgentToolsRepos
   return {
     async allow(id: number): Promise<AgentTool | undefined> {
       const now = new Date().toISOString();
-      const result = await db
+      return db
         .update(agentTools)
         .set({ disallowedAt: null, updatedAt: now })
         .where(eq(agentTools.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
 
     async create(data: NewAgentTool): Promise<AgentTool> {
@@ -36,11 +36,11 @@ export function createAgentToolsRepository(db: DrizzleDatabase): AgentToolsRepos
         pattern: data.toolPattern,
       });
 
-      const result = await db.insert(agentTools).values(data).returning();
-      if (!result[0]) {
+      const result = db.insert(agentTools).values(data).returning().get();
+      if (!result) {
         throw new Error('Failed to create agent tool');
       }
-      return result[0];
+      return result;
     },
 
     async delete(id: number): Promise<void> {
@@ -53,12 +53,12 @@ export function createAgentToolsRepository(db: DrizzleDatabase): AgentToolsRepos
 
     async disallow(id: number): Promise<AgentTool | undefined> {
       const now = new Date().toISOString();
-      const result = await db
+      return db
         .update(agentTools)
         .set({ disallowedAt: now, updatedAt: now })
         .where(eq(agentTools.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
 
     async findAllowed(agentId: number): Promise<Array<AgentTool>> {
@@ -74,8 +74,7 @@ export function createAgentToolsRepository(db: DrizzleDatabase): AgentToolsRepos
     },
 
     async findById(id: number): Promise<AgentTool | undefined> {
-      const result = await db.select().from(agentTools).where(eq(agentTools.id, id));
-      return result[0];
+      return db.select().from(agentTools).where(eq(agentTools.id, id)).get();
     },
 
     async update(id: number, data: Partial<Omit<NewAgentTool, 'createdAt' | 'id'>>): Promise<AgentTool | undefined> {
@@ -88,12 +87,12 @@ export function createAgentToolsRepository(db: DrizzleDatabase): AgentToolsRepos
       }
 
       const now = new Date().toISOString();
-      const result = await db
+      return db
         .update(agentTools)
         .set({ ...data, updatedAt: now })
         .where(eq(agentTools.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
   };
 }

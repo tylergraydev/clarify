@@ -51,6 +51,11 @@ export function useCreateAgentSkill() {
       void queryClient.invalidateQueries({
         queryKey: agentSkillKeys.byAgent._def,
       });
+
+      toast.success({
+        description: 'Agent skill created successfully',
+        title: 'Skill Created',
+      });
     },
   });
 }
@@ -74,10 +79,15 @@ export function useDeleteAgentSkill() {
         title: 'Delete Skill Failed',
       });
     },
-    onSuccess: () => {
-      // Invalidate all byAgent queries
+    onSuccess: (agentId) => {
+      // Use targeted invalidation for the specific agent
       void queryClient.invalidateQueries({
-        queryKey: agentSkillKeys.byAgent._def,
+        queryKey: agentSkillKeys.byAgent(agentId).queryKey,
+      });
+
+      toast.success({
+        description: 'Agent skill deleted successfully',
+        title: 'Skill Deleted',
       });
     },
   });
@@ -105,6 +115,11 @@ export function useSetAgentSkillRequired() {
       void queryClient.invalidateQueries({
         queryKey: agentSkillKeys.byAgent._def,
       });
+
+      toast.success({
+        description: 'Skill requirement updated successfully',
+        title: 'Skill Updated',
+      });
     },
   });
 }
@@ -130,6 +145,11 @@ export function useUpdateAgentSkill() {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentSkillKeys.byAgent._def,
+      });
+
+      toast.success({
+        description: 'Agent skill updated successfully',
+        title: 'Skill Updated',
       });
     },
   });

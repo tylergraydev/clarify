@@ -34,32 +34,32 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
   return {
     async activate(id: number): Promise<Agent | undefined> {
       const now = new Date().toISOString();
-      const result = await db
+      return db
         .update(agents)
         .set({ deactivatedAt: null, updatedAt: now })
         .where(eq(agents.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
 
     async create(data: NewAgent): Promise<Agent> {
       // Validate input data through Zod schema
       const validatedData = createAgentSchema.parse(data);
-      const result = await db.insert(agents).values(validatedData).returning();
-      if (!result[0]) {
+      const result = db.insert(agents).values(validatedData).returning().get();
+      if (!result) {
         throw new Error('Failed to create agent');
       }
-      return result[0];
+      return result;
     },
 
     async deactivate(id: number): Promise<Agent | undefined> {
       const now = new Date().toISOString();
-      const result = await db
+      return db
         .update(agents)
         .set({ deactivatedAt: now, updatedAt: now })
         .where(eq(agents.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
 
     async delete(id: number): Promise<boolean> {
@@ -120,13 +120,11 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
     },
 
     async findById(id: number): Promise<Agent | undefined> {
-      const result = await db.select().from(agents).where(eq(agents.id, id));
-      return result[0];
+      return db.select().from(agents).where(eq(agents.id, id)).get();
     },
 
     async findByName(name: string): Promise<Agent | undefined> {
-      const result = await db.select().from(agents).where(eq(agents.name, name));
-      return result[0];
+      return db.select().from(agents).where(eq(agents.name, name)).get();
     },
 
     async findByProjectId(projectId: number): Promise<Array<Agent>> {
@@ -177,7 +175,7 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       // Validate input data through Zod schema
       const validatedData = updateAgentRepositorySchema.parse(data);
       const now = new Date().toISOString();
-      const result = await db
+      return db
         .update(agents)
         .set({
           ...validatedData,
@@ -185,8 +183,8 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
           version: sql`${agents.version} + 1`,
         })
         .where(eq(agents.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
   };
 }
