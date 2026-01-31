@@ -102,11 +102,10 @@ export const DataTableResizeHandle = <TData,>({
 }: DataTableResizeHandleProps<TData>) => {
   const isResizing = header.column.getIsResizing();
   const { deltaOffset } = table.getState().columnSizingInfo;
-  const columnResizeMode = table.options.columnResizeMode ?? 'onChange';
 
   // Calculate transform for resize indicator during active resize
   const getTransformStyle = (): string => {
-    if (!isResizing || columnResizeMode === 'onChange') return '';
+    if (!isResizing) return '';
     return `translateX(${deltaOffset ?? 0}px)`;
   };
 

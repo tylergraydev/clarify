@@ -22,7 +22,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Fragment, memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, memo, useCallback, useMemo, useRef } from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -539,7 +539,6 @@ export const DataTable = <TData, TValue>({
 }: DataTableProps<TData, TValue>) => {
   // Ref to track if we're in controlled mode
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState<number | null>(null);
 
   // Determine if persistence is enabled
   const isPersistenceEnabled = persistence?.enabled !== false && !!persistence?.tableId;
@@ -710,32 +709,6 @@ export const DataTable = <TData, TValue>({
     [onRowClick]
   );
 
-  useLayoutEffect(() => {
-    const container = tableContainerRef.current;
-    if (!container) return;
-
-    const updateWidth = () => {
-      setContainerWidth(container.clientWidth);
-    };
-
-    updateWidth();
-
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', updateWidth);
-      return () => window.removeEventListener('resize', updateWidth);
-    }
-
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      setContainerWidth(Math.floor(entry.contentRect.width));
-    });
-
-    observer.observe(container);
-
-    return () => observer.disconnect();
-  }, []);
-
   // Get table style with CSS variables for column widths
   // Using CSS variables enables performant 60fps column resizing without re-rendering cells
   // See: https://tanstack.com/table/latest/docs/guide/column-sizing#advanced-column-resizing-performance
@@ -747,31 +720,15 @@ export const DataTable = <TData, TValue>({
 
   const tableStyle = useMemo(() => {
     const headers = table.getFlatHeaders();
-    const leafColumns = table.getVisibleLeafColumns();
-    const lastLeafColumnId = leafColumns[leafColumns.length - 1]?.id;
-    const totalSize = table.getTotalSize();
-    const availableWidth = containerWidth ?? 0;
-    const extraWidth = availableWidth > 0 ? Math.max(availableWidth - totalSize, 0) : 0;
-    const tableWidth = availableWidth > 0 ? Math.max(availableWidth, totalSize) : totalSize;
-
     const colSizes: Record<string, number | string> = {
-      '--table-width': `${tableWidth}px`,
+      '--table-width': `${table.getTotalSize()}px`,
     };
-
     for (const header of headers) {
-      let size = header.getSize();
-      if (extraWidth > 0 && lastLeafColumnId) {
-        const leafHeaders = header.column.getLeafColumns();
-        if (leafHeaders.some((column) => column.id === lastLeafColumnId)) {
-          size += extraWidth;
-        }
-      }
-      colSizes[`--col-${header.column.id}-size`] = size;
+      colSizes[`--col-${header.column.id}-size`] = header.getSize();
     }
-
     return colSizes as CSSProperties;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columnSizingInfo, columnSizing, containerWidth, table]);
+  }, [columnSizingInfo, columnSizing, table]);
 
   return (
     <div className={cn(dataTableContainerVariants({ density }), className)} ref={ref} {...props}>
