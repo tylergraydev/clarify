@@ -3,6 +3,7 @@
 import type { ComponentPropsWithRef } from 'react';
 
 import { Download, Filter, RotateCcw, Upload } from 'lucide-react';
+import { memo } from 'react';
 
 import type { Project } from '@/db/schema';
 
@@ -175,7 +176,7 @@ const FilterCountBadge = ({ count }: FilterCountBadgeProps) => {
  * />
  * ```
  */
-export const AgentTableToolbar = ({
+export const AgentTableToolbar = memo(function AgentTableToolbar({
   className,
   onExportSelected,
   onImport,
@@ -194,7 +195,7 @@ export const AgentTableToolbar = ({
   statusFilter,
   typeFilter,
   ...props
-}: AgentTableToolbarProps) => {
+}: AgentTableToolbarProps) {
   // Computed state
   const activeFilterCount = getActiveFilterCount(typeFilter, projectFilter, statusFilter, showBuiltIn, showDeactivated);
   const hasActiveFilters = activeFilterCount > 0;
@@ -434,4 +435,4 @@ export const AgentTableToolbar = ({
       )}
     </div>
   );
-};
+});
