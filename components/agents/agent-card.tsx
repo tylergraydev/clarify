@@ -88,17 +88,31 @@ export const AgentCard = ({
 
   const isActionDisabled = isDeleting || isDuplicating || isResetting || isToggling;
 
+  const titleId = `agent-title-${agent.id}`;
+
   return (
-    <Card className={cn('flex flex-col transition-opacity', !isActive && 'opacity-60', className)} ref={ref} {...props}>
+    <Card
+      aria-label={`${agent.displayName} agent${!isActive ? ' (deactivated)' : ''}`}
+      className={cn('flex flex-col transition-opacity', !isActive && 'opacity-60', className)}
+      ref={ref}
+      role={'article'}
+      {...props}
+    >
       {/* Header */}
-      <CardHeader className={'overflow-hidden'}>
+      <CardHeader>
         <div className={'flex items-start justify-between gap-2 overflow-hidden'}>
           <div className={'flex min-w-0 flex-1 items-center gap-2'}>
             {/* Color Indicator */}
             <div aria-hidden={'true'} className={cn('size-3 shrink-0 rounded-full', getAgentColorClass(agent.color))} />
-            <CardTitle className={'truncate'}>{agent.displayName}</CardTitle>
+            <CardTitle className={'line-clamp-1'} id={titleId}>
+              {agent.displayName}
+            </CardTitle>
           </div>
-          <Badge className={'shrink-0'} variant={getTypeVariant(agent.type)}>
+          <Badge
+            aria-label={`Type: ${formatTypeLabel(agent.type)}`}
+            className={'shrink-0'}
+            variant={getTypeVariant(agent.type)}
+          >
             {formatTypeLabel(agent.type)}
           </Badge>
         </div>
@@ -108,8 +122,13 @@ export const AgentCard = ({
       {/* Content */}
       <CardContent className={'flex flex-1 flex-col gap-3'}>
         {/* Status Indicator */}
-        <div className={'flex items-center justify-between'}>
-          <span className={'text-sm text-muted-foreground'}>{isActive ? 'Active' : 'Deactivated'}</span>
+        <div aria-label={'Agent status'} className={'flex items-center justify-between'} role={'group'}>
+          <span
+            aria-label={`Status: ${isActive ? 'Active' : 'Deactivated'}`}
+            className={'text-sm text-muted-foreground'}
+          >
+            {isActive ? 'Active' : 'Deactivated'}
+          </span>
           <Switch
             aria-label={isActive ? 'Deactivate agent' : 'Activate agent'}
             checked={isActive}
@@ -120,24 +139,24 @@ export const AgentCard = ({
         </div>
 
         {/* Agent Origin Indicator */}
-        <div className={'flex items-center gap-1'}>
+        <div aria-label={'Agent origin'} className={'flex items-center gap-1'} role={'group'}>
           {isProjectScoped && (
-            <Badge size={'sm'} variant={'project'}>
+            <Badge aria-label={'Origin: Project-scoped'} size={'sm'} variant={'project'}>
               {'Project'}
             </Badge>
           )}
           {!isCustomAgent && (
-            <Badge size={'sm'} variant={'category-builtin'}>
+            <Badge aria-label={'Origin: Built-in'} size={'sm'} variant={'category-builtin'}>
               {'Built-in'}
             </Badge>
           )}
           {isCustomAgent && (
-            <Badge size={'sm'} variant={'custom'}>
+            <Badge aria-label={'Origin: Custom'} size={'sm'} variant={'custom'}>
               {'Custom'}
             </Badge>
           )}
           {isCustomized && (
-            <Badge size={'sm'} variant={'default'}>
+            <Badge aria-label={'Origin: Customized'} size={'sm'} variant={'default'}>
               {'Customized'}
             </Badge>
           )}
@@ -145,9 +164,10 @@ export const AgentCard = ({
       </CardContent>
 
       {/* Actions */}
-      <CardFooter className={'gap-2'}>
+      <CardFooter aria-label={'Agent actions'} className={'gap-2'} role={'group'}>
         <Button
-          aria-label={isCustomAgent ? 'Edit agent' : 'View agent'}
+          aria-describedby={titleId}
+          aria-label={isCustomAgent ? `Edit ${agent.displayName} agent` : `View ${agent.displayName} agent`}
           disabled={isActionDisabled}
           onClick={handleEditClick}
           size={'sm'}
@@ -166,7 +186,8 @@ export const AgentCard = ({
           )}
         </Button>
         <Button
-          aria-label={'Duplicate agent'}
+          aria-describedby={titleId}
+          aria-label={`Duplicate ${agent.displayName} agent`}
           disabled={isActionDisabled}
           onClick={handleDuplicateClick}
           size={'sm'}
@@ -177,7 +198,8 @@ export const AgentCard = ({
         </Button>
         {isCustomized && (
           <Button
-            aria-label={'Reset agent to default'}
+            aria-describedby={titleId}
+            aria-label={`Reset ${agent.displayName} agent to default`}
             disabled={isActionDisabled}
             onClick={handleResetClick}
             size={'sm'}
@@ -189,7 +211,8 @@ export const AgentCard = ({
         )}
         {isCustomAgent && (
           <Button
-            aria-label={'Delete agent'}
+            aria-describedby={titleId}
+            aria-label={`Delete ${agent.displayName} agent`}
             disabled={isActionDisabled}
             onClick={handleDeleteClick}
             size={'sm'}

@@ -68,8 +68,8 @@ export const ColorPickerField = ({
 
       {/* Color Picker */}
       <AgentColorPicker
-        hasError={hasError}
         isDisabled={isDisabled}
+        isError={hasError}
         onChange={(color) => field.handleChange(color)}
         value={field.state.value ?? ''}
       />

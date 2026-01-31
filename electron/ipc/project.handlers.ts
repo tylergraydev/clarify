@@ -108,18 +108,15 @@ export function registerProjectHandlers(
   );
 
   // Soft delete a project (calls archive for backwards compatibility)
-  ipcMain.handle(
-    IpcChannels.project.delete,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<boolean> => {
-      try {
-        const result = await projectsRepository.archive(id);
-        return !!result;
-      } catch (error) {
-        console.error('[IPC Error] project:delete:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.project.delete, async (_event: IpcMainInvokeEvent, id: number): Promise<boolean> => {
+    try {
+      const result = await projectsRepository.archive(id);
+      return !!result;
+    } catch (error) {
+      console.error('[IPC Error] project:delete:', error);
+      throw error;
     }
-  );
+  });
 
   // Unarchive a project (clear archivedAt timestamp)
   ipcMain.handle(

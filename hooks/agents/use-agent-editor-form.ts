@@ -7,8 +7,8 @@ import type { CreateAgentFormData, UpdateAgentFormValues } from '@/lib/validatio
 import type { Agent } from '@/types/electron';
 
 import { agentColors } from '@/db/schema/agents.schema';
-import { useAppForm } from '@/lib/forms/form-hook';
-import { createAgentFormSchema, updateAgentSchema } from '@/lib/validations/agent';
+import { useAppForm } from '@/lib/forms';
+import { createAgentFormSchema, GLOBAL_PROJECT_VALUE, updateAgentSchema } from '@/lib/validations/agent';
 
 /**
  * Initial data for creating an agent, typically used when duplicating.
@@ -38,6 +38,8 @@ interface UseAgentEditorFormOptions {
   onSubmit: (value: CreateAgentFormData | UpdateAgentFormValues) => Promise<void>;
   /** Callback when form submission completes successfully */
   onSubmitSuccess: () => void;
+  /** Project ID for create mode (to scope agent to a project) */
+  projectId?: number;
 }
 
 /**
@@ -53,9 +55,15 @@ export const useAgentEditorForm = ({
   isEditMode,
   onSubmit,
   onSubmitSuccess,
+  projectId,
 }: UseAgentEditorFormOptions) => {
   // Determine validation schema based on mode
   const validationSchema = isEditMode ? updateAgentSchema : createAgentFormSchema;
+
+  // Helper to convert projectId to form value
+  const projectIdToFormValue = useCallback((id: null | number | undefined): string => {
+    return id === null || id === undefined ? GLOBAL_PROJECT_VALUE : String(id);
+  }, []);
 
   // Determine default values based on mode and initialData
   const getDefaultValues = useCallback((): CreateAgentFormData | UpdateAgentFormValues => {
@@ -66,6 +74,7 @@ export const useAgentEditorForm = ({
         displayName: agent.displayName,
         model: (agent.model ?? 'inherit') as UpdateAgentFormValues['model'],
         permissionMode: (agent.permissionMode ?? 'default') as UpdateAgentFormValues['permissionMode'],
+        projectId: projectIdToFormValue(agent.projectId),
         systemPrompt: agent.systemPrompt,
       };
     }
@@ -77,6 +86,7 @@ export const useAgentEditorForm = ({
         model: 'inherit' as CreateAgentFormData['model'],
         name: initialData.name,
         permissionMode: 'default' as CreateAgentFormData['permissionMode'],
+        projectId: projectIdToFormValue(projectId),
         systemPrompt: initialData.systemPrompt,
         type: initialData.type,
       } as CreateAgentFormData;
@@ -88,10 +98,11 @@ export const useAgentEditorForm = ({
       model: 'inherit' as CreateAgentFormData['model'],
       name: '',
       permissionMode: 'default' as CreateAgentFormData['permissionMode'],
+      projectId: projectIdToFormValue(projectId),
       systemPrompt: '',
       type: 'specialist' as AgentType,
     } as CreateAgentFormData;
-  }, [isEditMode, agent, initialData]);
+  }, [isEditMode, agent, initialData, projectId, projectIdToFormValue]);
 
   const form = useAppForm({
     defaultValues: getDefaultValues(),

@@ -86,10 +86,13 @@ export const createAgentSchema = z.object({
 
 export type CreateAgentInput = z.infer<typeof createAgentSchema>;
 
+// Constant for global project option value used in forms
+export const GLOBAL_PROJECT_VALUE = '__global__';
+
 // Create agent form schema for dialog validation
 // This is designed for form input in the create agent dialog
 // Note: color is managed via state in the dialog but validated here for form submission
-// Note: projectId is optional - when provided, creates a project-scoped agent
+// Note: projectId is a string for form input - use GLOBAL_PROJECT_VALUE for global, or numeric ID as string
 // Note: model and permissionMode use union with empty string for form input (inherit/default)
 export const createAgentFormSchema = z.object({
   color: z.enum(agentColors, { message: 'Please select a color' }),
@@ -106,7 +109,7 @@ export const createAgentFormSchema = z.object({
       'Agent name must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens'
     ),
   permissionMode: z.union([z.enum(agentPermissionModes), z.literal('')]).optional(),
-  projectId: z.number().int().positive('Invalid project ID').nullable().optional(),
+  projectId: z.string(),
   systemPrompt: z.string().trim().min(1, 'System prompt is required').max(50000, 'System prompt is too long'),
   type: z.enum(agentTypes, {
     error: 'Please select an agent type',
@@ -118,12 +121,14 @@ export type CreateAgentFormData = z.infer<typeof createAgentFormSchema>;
 // Note: color is included in the schema for validation, though it's managed via state in AgentEditorDialog
 // The form field component handles the state management while this schema validates on submit
 // Note: model and permissionMode use union with empty string for form input (inherit/default)
+// Note: projectId is a string for form input - use GLOBAL_PROJECT_VALUE for global, or numeric ID as string
 export const updateAgentSchema = z.object({
   color: z.union([z.enum(agentColors), z.literal('')]).optional(),
   description: z.string().trim().max(1000, 'Description is too long').optional(),
   displayName: z.string().trim().min(1, 'Display name is required').max(255, 'Display name is too long'),
   model: z.union([z.enum(agentModels), z.literal('')]).optional(),
   permissionMode: z.union([z.enum(agentPermissionModes), z.literal('')]).optional(),
+  projectId: z.string(),
   systemPrompt: z.string().trim().min(1, 'System prompt is required').max(50000, 'System prompt is too long'),
 });
 
