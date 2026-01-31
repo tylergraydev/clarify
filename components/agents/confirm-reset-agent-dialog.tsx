@@ -44,7 +44,7 @@ export const ConfirmResetAgentDialog = ({
   onConfirm,
   onOpenChange,
 }: ConfirmResetAgentDialogProps) => {
-  const handleConfirm = () => {
+  const handleConfirmClick = () => {
     onConfirm();
   };
 
@@ -69,9 +69,8 @@ export const ConfirmResetAgentDialog = ({
             role={'alert'}
           >
             <p className={'text-sm text-warning-text'}>
-              {
-                'This will discard all your customizations including display name, description, system prompt, and color. This action cannot be undone.'
-              }
+              This will discard all your customizations including display name, description, system prompt, and color.
+              This action cannot be undone.
             </p>
           </div>
 
@@ -79,14 +78,14 @@ export const ConfirmResetAgentDialog = ({
           <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={'outline'}>
-                {'Cancel'}
+                Cancel
               </Button>
             </DialogClose>
             <Button
               aria-describedby={'confirm-reset-description'}
               aria-label={`Reset ${agentName} agent to default`}
               disabled={isLoading}
-              onClick={handleConfirm}
+              onClick={handleConfirmClick}
               variant={'destructive'}
             >
               {isLoading ? 'Resetting...' : 'Reset to Default'}

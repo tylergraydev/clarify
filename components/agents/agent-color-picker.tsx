@@ -33,12 +33,13 @@ export const AgentColorPicker = ({
     onChange?.(newValue as AgentColor);
   };
 
-  const borderClassName = isError ? 'border-destructive' : 'border-transparent';
+  const isSelected = (color: AgentColor) => value === color;
+  const hasLabel = Boolean(label);
 
   return (
     <div className={cn('flex flex-col gap-2', className)} ref={ref} {...props}>
       {/* Label */}
-      {label && (
+      {hasLabel && (
         <span className={'text-sm font-medium text-foreground'} id={'agent-color-picker-label'}>
           {label}
           {isRequired && (
@@ -51,8 +52,8 @@ export const AgentColorPicker = ({
 
       {/* Color Options */}
       <RadioGroup
-        aria-labelledby={label ? 'agent-color-picker-label' : undefined}
-        className={cn('rounded-md border p-2', borderClassName)}
+        aria-labelledby={hasLabel ? 'agent-color-picker-label' : undefined}
+        className={cn('rounded-md border p-2', isError ? 'border-destructive' : 'border-transparent')}
         disabled={isDisabled}
         onValueChange={handleColorChange}
         orientation={'horizontal'}
@@ -68,14 +69,18 @@ export const AgentColorPicker = ({
             key={color}
           >
             <RadioGroupItem className={'sr-only'} disabled={isDisabled} value={color} />
+
+            {/* Color Indicator */}
             <div
               className={cn(
                 'size-5 rounded-full ring-2 ring-offset-2 ring-offset-background transition-all',
                 agentColorClassMap[color],
-                value === color ? 'ring-accent' : 'ring-transparent'
+                isSelected(color) ? 'ring-accent' : 'ring-transparent'
               )}
               title={agentColorLabelMap[color]}
             />
+
+            {/* Color Label */}
             <span className={'text-sm text-muted-foreground'}>{agentColorLabelMap[color]}</span>
           </label>
         ))}

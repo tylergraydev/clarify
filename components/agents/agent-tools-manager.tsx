@@ -201,6 +201,7 @@ export const AgentToolsManager = ({ agentId, isDisabled = false }: AgentToolsMan
                 setValidationError(null);
               }}
               size={'sm'}
+              type={'button'}
               variant={'ghost'}
             >
               {'Cancel'}
@@ -211,7 +212,7 @@ export const AgentToolsManager = ({ agentId, isDisabled = false }: AgentToolsMan
               size={'sm'}
               type={'button'}
             >
-              {createMutation.isPending ? 'Adding...' : 'Add Tool'}
+              {createMutation.isPending ? 'Adding...' : 'Add tool'}
             </Button>
           </div>
         </div>
@@ -224,7 +225,7 @@ export const AgentToolsManager = ({ agentId, isDisabled = false }: AgentToolsMan
           variant={'outline'}
         >
           <Plus className={'mr-2 size-4'} />
-          {'Add Tool'}
+          {'Add tool'}
         </Button>
       )}
     </div>

@@ -1,7 +1,9 @@
 'use client';
 
+import type { ChangeEvent } from 'react';
+
 import { AlertTriangle, Info, X } from 'lucide-react';
-import { type ChangeEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { ParsedAgentMarkdown } from '@/lib/utils/agent-markdown';
 import type { AgentImportValidationResult, AgentImportWarning } from '@/lib/validations/agent-import';

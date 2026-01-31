@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog';
 
 interface ConfirmDiscardDialogProps {
+  /** Whether the mutation is in progress */
+  isLoading?: boolean;
   /** Whether the dialog is open (controlled) */
   isOpen: boolean;
   /** Callback when the user confirms the action */
@@ -27,12 +29,18 @@ interface ConfirmDiscardDialogProps {
  * Displays a warning and requires explicit confirmation before discarding.
  *
  * @param props - Component props
+ * @param props.isLoading - Whether the mutation is in progress
  * @param props.isOpen - Whether the dialog is open (controlled)
  * @param props.onConfirm - Callback when the user confirms the action
  * @param props.onOpenChange - Callback when the dialog open state changes
  */
-export const ConfirmDiscardDialog = ({ isOpen, onConfirm, onOpenChange }: ConfirmDiscardDialogProps) => {
-  const handleConfirm = () => {
+export const ConfirmDiscardDialog = ({
+  isLoading = false,
+  isOpen,
+  onConfirm,
+  onOpenChange,
+}: ConfirmDiscardDialogProps) => {
+  const handleConfirmClick = () => {
     onConfirm();
   };
 
@@ -46,22 +54,25 @@ export const ConfirmDiscardDialog = ({ isOpen, onConfirm, onOpenChange }: Confir
           <DialogHeader>
             <DialogTitle id={'confirm-discard-title'}>{'Discard changes?'}</DialogTitle>
             <DialogDescription id={'confirm-discard-description'}>
-              {'You have unsaved changes that will be lost if you close this dialog.'}
+              You have unsaved changes that will be lost if you close this dialog.
             </DialogDescription>
           </DialogHeader>
 
           {/* Actions */}
           <DialogFooter sticky={false}>
             <DialogClose>
-              <Button variant={'outline'}>{'Keep editing'}</Button>
+              <Button disabled={isLoading} variant={'outline'}>
+                Keep editing
+              </Button>
             </DialogClose>
             <Button
               aria-describedby={'confirm-discard-description'}
               aria-label={'Discard unsaved changes'}
-              onClick={handleConfirm}
+              disabled={isLoading}
+              onClick={handleConfirmClick}
               variant={'destructive'}
             >
-              {'Discard'}
+              {isLoading ? 'Discarding...' : 'Discard'}
             </Button>
           </DialogFooter>
         </DialogPopup>

@@ -14,10 +14,6 @@ import { Switch } from '@/components/ui/switch';
 import { getAgentColorClass } from '@/lib/colors/agent-colors';
 import { cn } from '@/lib/utils';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 interface AgentListItemProps extends Omit<ComponentPropsWithRef<'li'>, 'onClick' | 'onReset'> {
   agent: Agent;
   isDeleting?: boolean;
@@ -29,6 +25,7 @@ interface AgentListItemProps extends Omit<ComponentPropsWithRef<'li'>, 'onClick'
   onReset?: (agentId: number) => void;
   onToggleActive?: (agentId: number, isActive: boolean) => void;
 }
+
 interface AgentListProps extends Omit<ComponentPropsWithRef<'ul'>, 'onReset'> {
   agents: Array<Agent>;
   isDeleting?: boolean;
@@ -44,10 +41,6 @@ interface AgentListProps extends Omit<ComponentPropsWithRef<'ul'>, 'onReset'> {
 type AgentType = Agent['type'];
 
 type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
 
 const getTypeVariant = (type: AgentType): BadgeVariant => {
   const typeVariantMap: Record<string, BadgeVariant> = {
@@ -65,15 +58,6 @@ const formatTypeLabel = (type: AgentType): string => {
   return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
-// ============================================================================
-// Sub-Components
-// ============================================================================
-
-/**
- * Individual agent list item rendered as a horizontal row.
- * Includes color indicator, display name, type badge, status toggle,
- * and action buttons for edit, duplicate, reset, and delete.
- */
 const AgentListItem = ({
   agent,
   className,
@@ -226,22 +210,6 @@ const AgentListItem = ({
   );
 };
 
-// ============================================================================
-// Main Component
-// ============================================================================
-
-/**
- * List view component for displaying agents in a compact vertical layout.
- * Renders agents as horizontal rows optimized for scanning many agents quickly.
- *
- * Features:
- * - Compact horizontal row layout
- * - Agent color indicator and display name
- * - Type badge and origin badges (Project, Custom, Customized)
- * - Status toggle for activation/deactivation
- * - Action buttons for edit, duplicate, reset, and delete
- * - Integrated edit dialog using controlled state pattern
- */
 export const AgentList = ({
   agents,
   className,

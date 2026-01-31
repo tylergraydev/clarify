@@ -1,5 +1,7 @@
 'use client';
 
+import type { ComponentPropsWithRef } from 'react';
+
 import { useCallback } from 'react';
 
 import type { ToolSelection } from '@/types/agent-tools';
@@ -9,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { CLAUDE_BUILTIN_TOOLS } from '@/lib/constants/claude-tools';
 import { cn } from '@/lib/utils';
 
-interface BuiltinToolsSelectorProps {
+interface BuiltinToolsSelectorProps extends Omit<ComponentPropsWithRef<'div'>, 'onChange'> {
   /** Whether the inputs are disabled */
   isDisabled?: boolean;
   /** Callback when tool selections change */
@@ -22,7 +24,14 @@ interface BuiltinToolsSelectorProps {
  * Displays built-in Claude Code tools as a checklist with toggles.
  * Each tool can be enabled/disabled with an optional pattern for argument restrictions.
  */
-export const BuiltinToolsSelector = ({ isDisabled = false, onChange, value }: BuiltinToolsSelectorProps) => {
+export const BuiltinToolsSelector = ({
+  className,
+  isDisabled = false,
+  onChange,
+  ref,
+  value,
+  ...props
+}: BuiltinToolsSelectorProps) => {
   // Get current selection state for a tool
   const getToolSelection = useCallback(
     (toolName: string): ToolSelection | undefined => {
@@ -109,8 +118,11 @@ export const BuiltinToolsSelector = ({ isDisabled = false, onChange, value }: Bu
   );
 
   return (
-    <div className={'flex flex-col gap-1'}>
+    <div className={cn('flex flex-col gap-1', className)} ref={ref} {...props}>
+      {/* Section Header */}
       <div className={'mb-2 text-sm font-medium text-foreground'}>{'Built-in Tools'}</div>
+
+      {/* Tools List */}
       <div className={'flex flex-col gap-2'}>
         {CLAUDE_BUILTIN_TOOLS.map((tool) => {
           const isEnabled = isToolEnabled(tool.name);
@@ -124,18 +136,23 @@ export const BuiltinToolsSelector = ({ isDisabled = false, onChange, value }: Bu
               )}
               key={tool.name}
             >
+              {/* Toggle Switch */}
               <Switch
                 checked={isEnabled}
                 disabled={isDisabled}
                 onCheckedChange={(checked) => handleToggle(tool.name, checked)}
                 size={'sm'}
               />
+
+              {/* Tool Info */}
               <div className={'flex min-w-0 flex-1 items-center gap-3'}>
                 <div className={'flex flex-col'}>
                   <span className={'font-mono text-sm font-medium'}>{tool.name}</span>
                   <span className={'text-xs text-muted-foreground'}>{tool.description}</span>
                 </div>
               </div>
+
+              {/* Pattern Input */}
               <div className={'flex items-center gap-2'}>
                 <span className={'text-xs text-muted-foreground'}>{'Pattern:'}</span>
                 <Input

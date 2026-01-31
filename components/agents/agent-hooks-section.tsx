@@ -119,10 +119,9 @@ export const AgentHooksSection = ({ hooks, isDisabled = false, onHooksChange }: 
     }
   }, []);
 
-  // Derived boolean variables (after handlers per convention)
   const isStopEventTab = activeTab === 'Stop';
-  const shouldShowEmptyState = currentEntries.length === 0 && !isAddingEntry;
-  const hasEntries = currentEntries.length > 0;
+  const isEntriesPresent = currentEntries.length > 0;
+  const isEmptyStateVisible = currentEntries.length === 0 && !isAddingEntry;
 
   return (
     <Collapsible defaultOpen={false}>
@@ -171,23 +170,23 @@ export const AgentHooksSection = ({ hooks, isDisabled = false, onHooksChange }: 
                   </p>
 
                   {/* Entries list */}
-                  {hasEntries && (
+                  {isEntriesPresent && (
                     <div className={'flex flex-col gap-2'}>
                       {currentEntries.map((entry, index) => (
                         <HookEntryCard
                           entry={entry}
                           index={index}
                           isDisabled={isDisabled}
+                          isMatcherVisible={!isStopEventTab}
                           key={`${eventType.value}-${index}`}
                           onDelete={handleDeleteEntry}
-                          shouldShowMatcher={!isStopEventTab}
                         />
                       ))}
                     </div>
                   )}
 
                   {/* Empty state */}
-                  {shouldShowEmptyState && (
+                  {isEmptyStateVisible && (
                     <div className={'py-4 text-center text-sm text-muted-foreground'}>
                       {'No hooks configured for this event'}
                     </div>
@@ -269,10 +268,10 @@ interface HookEntryCardProps {
   index: number;
   /** Whether the card actions are disabled */
   isDisabled?: boolean;
+  /** Whether to show the matcher field */
+  isMatcherVisible?: boolean;
   /** Callback when delete is clicked */
   onDelete: (index: number) => void;
-  /** Whether to show the matcher field */
-  shouldShowMatcher?: boolean;
 }
 
 /**
@@ -282,8 +281,8 @@ const HookEntryCard = ({
   entry,
   index,
   isDisabled = false,
+  isMatcherVisible = true,
   onDelete,
-  shouldShowMatcher = true,
 }: HookEntryCardProps) => {
   const handleDeleteClick = useCallback(() => {
     onDelete(index);
@@ -294,7 +293,7 @@ const HookEntryCard = ({
       {/* Header with matcher and delete button */}
       <div className={'flex items-start justify-between gap-2'}>
         <div className={'flex flex-col gap-1'}>
-          {shouldShowMatcher && (
+          {isMatcherVisible && (
             <div className={'flex items-center gap-2'}>
               <span className={'text-xs text-muted-foreground'}>{'Matcher:'}</span>
               <span className={'font-mono text-xs font-medium'}>{entry.matcher || '(all tools)'}</span>

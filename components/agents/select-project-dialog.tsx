@@ -29,10 +29,6 @@ import {
 } from '@/components/ui/select';
 import { optionsToItems } from '@/lib/utils';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 interface SelectProjectDialogProps {
   /** Whether the action is in progress */
   isLoading?: boolean;
@@ -50,19 +46,6 @@ interface SelectProjectDialogProps {
   sourceAgent: AgentWithRelations | null;
 }
 
-// ============================================================================
-// Component
-// ============================================================================
-
-/**
- * Dialog for selecting a target project when moving or copying an agent.
- *
- * Features:
- * - Displays list of available projects
- * - Shows "Global" option for move operations
- * - Excludes current project for move operations
- * - Loading state during mutation
- */
 export const SelectProjectDialog = ({
   isLoading = false,
   isOpen,
@@ -74,29 +57,18 @@ export const SelectProjectDialog = ({
 }: SelectProjectDialogProps) => {
   const [selectedValue, setSelectedValue] = useState<string>('');
 
-  // Computed values
   const isGlobalAgent = sourceAgent?.projectId === null;
   const isMoveMode = mode === 'move';
 
-  // Dialog content
-  const title = isMoveMode ? 'Move Agent' : 'Copy Agent to Project';
-  const description = isMoveMode
-    ? `Select a destination for "${sourceAgent?.displayName ?? 'this agent'}".`
-    : `Select a project to copy "${sourceAgent?.displayName ?? 'this agent'}" to.`;
-
-  // Build options list
   const options = useMemo(() => {
     const result: Array<{ label: string; value: string }> = [];
 
-    // Add global option only for move mode when agent is not already global
     if (isMoveMode && !isGlobalAgent) {
       result.push({ label: 'Global (all projects)', value: 'global' });
     }
 
-    // Add projects, excluding archived and current project for move mode
     for (const project of projects) {
       if (!project.archivedAt) {
-        // Skip current project for move mode
         if (isMoveMode && project.id === sourceAgent?.projectId) {
           continue;
         }
@@ -107,28 +79,29 @@ export const SelectProjectDialog = ({
     return result;
   }, [isGlobalAgent, isMoveMode, projects, sourceAgent?.projectId]);
 
-  // Build items map for SelectRoot to display labels instead of raw values
   const items = useMemo(() => optionsToItems(options), [options]);
 
-  // Handlers
   const handleConfirmClick = () => {
     if (!selectedValue) return;
     const projectId = selectedValue === 'global' ? null : Number(selectedValue);
     onSelect(projectId);
   };
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
       setSelectedValue('');
     }
-    onOpenChange(open);
+    onOpenChange(isOpen);
   };
 
   const handleValueChange = (value: null | string) => {
     setSelectedValue(value ?? '');
   };
 
-  // Derived states
+  const title = isMoveMode ? 'Move Agent' : 'Copy Agent to Project';
+  const description = isMoveMode
+    ? `Select a destination for "${sourceAgent?.displayName ?? 'this agent'}".`
+    : `Select a project to copy "${sourceAgent?.displayName ?? 'this agent'}" to.`;
   const isConfirmDisabled = isLoading || !selectedValue;
   const confirmButtonLabel = isLoading ? (isMoveMode ? 'Moving...' : 'Copying...') : isMoveMode ? 'Move' : 'Copy';
 
@@ -169,7 +142,7 @@ export const SelectProjectDialog = ({
           <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={'outline'}>
-                {'Cancel'}
+                Cancel
               </Button>
             </DialogClose>
             <Button

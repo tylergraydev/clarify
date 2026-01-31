@@ -1,17 +1,16 @@
 'use client';
 
+import type { ComponentPropsWithRef } from 'react';
+
 import { useState } from 'react';
 
 import type { Agent } from '@/types/electron';
 
 import { AgentCard } from '@/components/agents/agent-card';
 import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
+import { cn } from '@/lib/utils';
 
-// ============================================================================
-// Types
-// ============================================================================
-
-export interface AgentGridItemProps {
+interface AgentGridItemProps extends Omit<ComponentPropsWithRef<'div'>, 'onReset'> {
   agent: Agent;
   isDeleting?: boolean;
   isDuplicating?: boolean;
@@ -23,10 +22,6 @@ export interface AgentGridItemProps {
   onToggleActive?: (agentId: number, isActive: boolean) => void;
 }
 
-// ============================================================================
-// Component
-// ============================================================================
-
 /**
  * Renders an AgentCard with an AgentEditorDialog.
  * Uses controlled state to open the dialog when Edit is clicked.
@@ -36,6 +31,7 @@ export interface AgentGridItemProps {
  */
 export const AgentGridItem = ({
   agent,
+  className,
   isDeleting,
   isDuplicating,
   isResetting,
@@ -44,6 +40,8 @@ export const AgentGridItem = ({
   onDuplicate,
   onReset,
   onToggleActive,
+  ref,
+  ...props
 }: AgentGridItemProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -52,7 +50,7 @@ export const AgentGridItem = ({
   };
 
   return (
-    <div>
+    <div className={cn(className)} ref={ref} {...props}>
       {/* Agent Card */}
       <AgentCard
         agent={agent}

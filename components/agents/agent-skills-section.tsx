@@ -1,5 +1,7 @@
 'use client';
 
+import type { ComponentPropsWithRef } from 'react';
+
 import { Plus, Star, StarOff, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -11,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { agentSkillInputSchema } from '@/lib/validations/agent';
 
-interface AgentSkillsSectionProps {
+interface AgentSkillsSectionProps extends Omit<ComponentPropsWithRef<'div'>, 'children'> {
   /** Whether the inputs are disabled */
   isDisabled?: boolean;
   /** Callback when skills change */
@@ -27,10 +29,19 @@ interface AgentSkillsSectionProps {
  * This is a purely presentational component - state management
  * should be handled by the parent component.
  */
-export const AgentSkillsSection = ({ isDisabled = false, onSkillsChange, skills }: AgentSkillsSectionProps) => {
+export const AgentSkillsSection = ({
+  className,
+  isDisabled = false,
+  onSkillsChange,
+  ref,
+  skills,
+  ...props
+}: AgentSkillsSectionProps) => {
   const [newSkillName, setNewSkillName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [validationError, setValidationError] = useState<null | string>(null);
+
+  const hasSkills = skills.length > 0;
 
   const handleAddSkill = () => {
     // Clear previous validation error
@@ -78,9 +89,9 @@ export const AgentSkillsSection = ({ isDisabled = false, onSkillsChange, skills 
   };
 
   return (
-    <div className={'flex flex-col gap-3'}>
+    <div className={cn('flex flex-col gap-3', className)} ref={ref} {...props}>
       {/* Skills List */}
-      {skills.length > 0 ? (
+      {hasSkills ? (
         <div className={'flex flex-col gap-2'}>
           {skills.map((skill) => (
             <div

@@ -74,13 +74,13 @@ export const CustomToolsManager = ({ isDisabled = false, onChange, value }: Cust
     setNewToolPattern('*');
     setIsAdding(false);
     setValidationError(null);
-  }, [newToolName, newToolPattern, value, onChange]);
+  }, [newToolName, newToolPattern, onChange, value]);
 
   const handleDeleteTool = useCallback(
     (toolName: string) => {
       onChange(value.filter((t) => t.toolName !== toolName));
     },
-    [value, onChange]
+    [onChange, value]
   );
 
   const handleCancel = useCallback(() => {
@@ -105,13 +105,7 @@ export const CustomToolsManager = ({ isDisabled = false, onChange, value }: Cust
               <div className={'min-w-0 flex-1'}>
                 <div className={'flex items-center gap-2'}>
                   <span className={'font-mono text-sm font-medium'}>{entry.toolName}</span>
-                  {entry.pattern !== '*' && (
-                    <span className={'text-xs text-muted-foreground'}>
-                      {'('}
-                      {entry.pattern}
-                      {')'}
-                    </span>
-                  )}
+                  {entry.pattern !== '*' && <span className={'text-xs text-muted-foreground'}>({entry.pattern})</span>}
                 </div>
               </div>
               <IconButton
@@ -161,10 +155,10 @@ export const CustomToolsManager = ({ isDisabled = false, onChange, value }: Cust
           </div>
           <div className={'flex justify-end gap-2'}>
             <Button disabled={isDisabled} onClick={handleCancel} size={'sm'} variant={'ghost'}>
-              {'Cancel'}
+              Cancel
             </Button>
             <Button disabled={isDisabled || !newToolName.trim()} onClick={handleAddTool} size={'sm'} type={'button'}>
-              {'Add Tool'}
+              Add Tool
             </Button>
           </div>
         </div>
@@ -177,7 +171,7 @@ export const CustomToolsManager = ({ isDisabled = false, onChange, value }: Cust
           variant={'outline'}
         >
           <Plus className={'mr-2 size-4'} />
-          {'Add Custom Tool'}
+          Add Custom Tool
         </Button>
       )}
     </div>

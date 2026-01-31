@@ -185,7 +185,7 @@ export const AgentSkillsManager = ({ agentId, isDisabled = false }: AgentSkillsM
               size={'sm'}
               type={'button'}
             >
-              {createMutation.isPending ? 'Adding...' : 'Add Skill'}
+              {createMutation.isPending ? 'Adding...' : 'Add skill'}
             </Button>
           </div>
         </div>
@@ -198,7 +198,7 @@ export const AgentSkillsManager = ({ agentId, isDisabled = false }: AgentSkillsM
           variant={'outline'}
         >
           <Plus className={'mr-2 size-4'} />
-          {'Add Skill'}
+          {'Add skill'}
         </Button>
       )}
     </div>

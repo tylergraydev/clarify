@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 
 import { Fragment, memo, useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 
@@ -57,6 +57,7 @@ import { ConfirmDiscardDialog } from './confirm-discard-dialog';
 import { ConfirmResetAgentDialog } from './confirm-reset-agent-dialog';
 
 type AgentColor = (typeof agentColors)[number];
+
 interface AgentEditorDialogProps {
   /** The agent to edit (required for edit mode) */
   agent?: Agent;
@@ -75,6 +76,7 @@ interface AgentEditorDialogProps {
   /** The trigger element that opens the dialog (optional when using controlled mode) */
   trigger?: ReactNode;
 }
+
 /**
  * Initial data for creating an agent, typically used when duplicating.
  * Differs from Agent in that it doesn't include id, timestamps, or version.
@@ -244,6 +246,7 @@ export const AgentEditorDialog = ({
   projectId,
   trigger,
 }: AgentEditorDialogProps) => {
+  // State hooks
   const [isOpen, setIsOpen] = useControllableState({
     defaultValue: false,
     onChange: controlledOnOpenChange,
@@ -251,73 +254,36 @@ export const AgentEditorDialog = ({
   });
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-
-  // Tool state for both create and edit modes
   const [toolSelections, setToolSelections] = useState<Array<ToolSelection>>([]);
   const [customTools, setCustomTools] = useState<Array<CreateToolData>>([]);
-
-  // Skill state for create mode
   const [pendingSkills, setPendingSkills] = useState<Array<PendingSkillData>>([]);
-
-  // Hooks state for both create and edit modes
   const [pendingHooks, setPendingHooks] = useState<AgentHooksData>({});
 
+  // Mutation hooks
   const createAgentMutation = useCreateAgent();
   const updateAgentMutation = useUpdateAgent();
   const resetAgentMutation = useResetAgent();
-
-  // Tool mutations for edit mode
   const createToolMutation = useCreateAgentTool();
   const deleteToolMutation = useDeleteAgentTool();
   const allowToolMutation = useAllowAgentTool();
   const disallowToolMutation = useDisallowAgentTool();
-
-  // Skill mutations for create mode
   const createSkillMutation = useCreateAgentSkill();
   const setSkillRequiredMutation = useSetAgentSkillRequired();
-
-  // Hook mutations for create mode
   const createHookMutation = useCreateAgentHook();
-
-  // Move agent mutation for edit mode
   const moveAgentMutation = useMoveAgent();
-
-  // Fetch existing tools for edit mode
-  const existingToolsQuery = useAgentTools(agent?.id ?? 0);
-  const existingTools = existingToolsQuery.data;
-
-  // Fetch existing skills for edit mode
-  const existingSkillsQuery = useAgentSkills(agent?.id ?? 0);
-  const existingSkills = existingSkillsQuery.data;
-
-  // Skill mutations for edit mode sync
   const deleteSkillMutation = useDeleteAgentSkill();
 
-  // Fetch all projects for the project assignment dropdown
+  // Query hooks
+  const existingToolsQuery = useAgentTools(agent?.id ?? 0);
+  const existingSkillsQuery = useAgentSkills(agent?.id ?? 0);
   const projectsQuery = useProjects();
-
-  // Fetch project data when projectId is provided (for displaying project context)
   const projectQuery = useProject(projectId ?? 0);
 
-  // Build project options for the SelectField
-  const projectOptions = useMemo(() => {
-    const projectsData = projectsQuery.data ?? [];
-    const options = [{ label: 'Global (all projects)', value: GLOBAL_PROJECT_VALUE }];
+  // Derived data from queries
+  const existingTools = existingToolsQuery.data;
+  const existingSkills = existingSkillsQuery.data;
 
-    // Add active (non-archived) projects
-    for (const project of projectsData) {
-      if (!project.archivedAt) {
-        options.push({
-          label: project.name,
-          value: String(project.id),
-        });
-      }
-    }
-
-    return options;
-  }, [projectsQuery.data]);
-
-  // Derive boolean flags using the extracted hook
+  // Derived state hook
   const derivedFlags = useAgentEditorState({
     agent,
     hasInitialData: initialData !== undefined,
@@ -342,490 +308,25 @@ export const AgentEditorDialog = ({
     isViewMode,
   } = derivedFlags;
 
-  // Determine validation schema based on mode
+  // Memoized values
   const validationSchema = isEditMode ? updateAgentSchema : createAgentFormSchema;
 
-  // Helper to convert projectId to form value
-  const projectIdToFormValue = useCallback((id: null | number | undefined): string => {
-    return id === null || id === undefined ? GLOBAL_PROJECT_VALUE : String(id);
-  }, []);
+  const projectOptions = useMemo(() => {
+    const projectsData = projectsQuery.data ?? [];
+    const options = [{ label: 'Global (all projects)', value: GLOBAL_PROJECT_VALUE }];
 
-  // Helper to convert form value back to projectId
-  const formValueToProjectId = useCallback((value: string): null | number => {
-    return value === GLOBAL_PROJECT_VALUE ? null : Number(value);
-  }, []);
-
-  // Determine default values based on mode and initialData
-  const getDefaultValues = useCallback((): CreateAgentFormData | UpdateAgentFormValues => {
-    if (isEditMode && agent) {
-      return {
-        color: (agent.color ?? '') as UpdateAgentFormValues['color'],
-        description: agent.description ?? '',
-        displayName: agent.displayName,
-        model: (agent.model ?? 'inherit') as UpdateAgentFormValues['model'],
-        permissionMode: (agent.permissionMode ?? 'default') as UpdateAgentFormValues['permissionMode'],
-        projectId: projectIdToFormValue(agent.projectId),
-        systemPrompt: agent.systemPrompt,
-      };
-    }
-    if (initialData) {
-      return {
-        color: initialData.color ?? 'blue',
-        description: initialData.description ?? '',
-        displayName: initialData.displayName,
-        model: 'inherit' as CreateAgentFormData['model'],
-        name: initialData.name,
-        permissionMode: 'default' as CreateAgentFormData['permissionMode'],
-        projectId: projectIdToFormValue(projectId),
-        systemPrompt: initialData.systemPrompt,
-        type: initialData.type,
-      } as CreateAgentFormData;
-    }
-    return {
-      color: 'blue',
-      description: '',
-      displayName: '',
-      model: 'inherit' as CreateAgentFormData['model'],
-      name: '',
-      permissionMode: 'default' as CreateAgentFormData['permissionMode'],
-      projectId: projectIdToFormValue(projectId),
-      systemPrompt: '',
-      type: 'specialist' as AgentType,
-    } as CreateAgentFormData;
-  }, [isEditMode, agent, initialData, projectId, projectIdToFormValue]);
-
-  // Initialize tool defaults for create mode
-  const initializeToolDefaults = useCallback((type: AgentToolType) => {
-    const defaultTools = getDefaultToolsForAgentType(type);
-
-    const selections: Array<ToolSelection> = CLAUDE_BUILTIN_TOOLS.map((tool) => ({
-      enabled: defaultTools.includes(tool.name),
-      pattern: '*',
-      toolName: tool.name,
-    }));
-
-    setToolSelections(selections);
-    setCustomTools([]);
-  }, []);
-
-  // Get tools to save (for create mode submission)
-  const getToolsToSave = useCallback((): Array<CreateToolData> => {
-    const result: Array<CreateToolData> = [];
-
-    // Add enabled built-in tools
-    for (const selection of toolSelections) {
-      if (selection.enabled) {
-        result.push({
-          pattern: selection.pattern,
-          toolName: selection.toolName,
+    for (const project of projectsData) {
+      if (!project.archivedAt) {
+        options.push({
+          label: project.name,
+          value: String(project.id),
         });
       }
     }
 
-    // Add custom tools
-    result.push(...customTools);
+    return options;
+  }, [projectsQuery.data]);
 
-    return result;
-  }, [toolSelections, customTools]);
-
-  const form = useAppForm({
-    defaultValues: getDefaultValues(),
-    onSubmit: async ({ value }) => {
-      if (isEditMode && agent) {
-        // Update existing agent
-        const updateValue = value as UpdateAgentFormValues;
-        const colorValue = updateValue.color === '' ? null : updateValue.color;
-        const modelValue = updateValue.model === 'inherit' || updateValue.model === '' ? null : updateValue.model;
-        const permissionModeValue = updateValue.permissionMode === '' ? null : updateValue.permissionMode;
-        const selectedProjectId = formValueToProjectId(updateValue.projectId);
-
-        await updateAgentMutation.mutateAsync({
-          data: {
-            color: colorValue,
-            description: updateValue.description,
-            displayName: updateValue.displayName,
-            model: modelValue,
-            permissionMode: permissionModeValue,
-            systemPrompt: updateValue.systemPrompt,
-          },
-          id: agent.id,
-        });
-
-        // If project changed, move the agent
-        const originalProjectId = agent.projectId ?? null;
-        if (selectedProjectId !== originalProjectId) {
-          await moveAgentMutation.mutateAsync({
-            agentId: agent.id,
-            showToast: false,
-            targetProjectId: selectedProjectId,
-          });
-        }
-
-        // Sync tools for edit mode
-        if (existingTools) {
-          // Process built-in tool selections - collect all promises
-          const toolTogglePromises: Array<Promise<unknown>> = [];
-          const toolCreatePromises: Array<Promise<unknown>> = [];
-
-          for (const selection of toolSelections) {
-            const existingTool = existingTools.find((t) => t.toolName === selection.toolName);
-
-            if (existingTool) {
-              // Tool exists - toggle allow/disallow based on enabled state
-              const isCurrentlyAllowed = existingTool.disallowedAt === null;
-              if (selection.enabled && !isCurrentlyAllowed) {
-                toolTogglePromises.push(allowToolMutation.mutateAsync({ id: existingTool.id, showToast: false }));
-              } else if (!selection.enabled && isCurrentlyAllowed) {
-                toolTogglePromises.push(disallowToolMutation.mutateAsync({ id: existingTool.id, showToast: false }));
-              }
-            } else if (selection.enabled) {
-              // Tool doesn't exist and is enabled - create it
-              toolCreatePromises.push(
-                createToolMutation.mutateAsync({
-                  agentId: agent.id,
-                  showToast: false,
-                  toolName: selection.toolName,
-                  toolPattern: selection.pattern,
-                })
-              );
-            }
-          }
-
-          // Process custom tools - find tools to add
-          for (const tool of customTools) {
-            const exists = existingTools.some((t) => t.toolName === tool.toolName);
-            if (!exists) {
-              toolCreatePromises.push(
-                createToolMutation.mutateAsync({
-                  agentId: agent.id,
-                  showToast: false,
-                  toolName: tool.toolName,
-                  toolPattern: tool.pattern,
-                })
-              );
-            }
-          }
-
-          // Process custom tools - find tools to remove
-          const toolDeletePromises: Array<Promise<unknown>> = [];
-          for (const existingTool of existingTools) {
-            if (isBuiltinTool(existingTool.toolName)) continue;
-
-            const stillExists = customTools.some((t) => t.toolName === existingTool.toolName);
-            if (!stillExists) {
-              toolDeletePromises.push(
-                deleteToolMutation.mutateAsync({
-                  agentId: agent.id,
-                  id: existingTool.id,
-                  showToast: false,
-                })
-              );
-            }
-          }
-
-          // Execute all tool operations in parallel
-          await Promise.all([...toolTogglePromises, ...toolCreatePromises, ...toolDeletePromises]);
-        }
-
-        // Sync skills for edit mode
-        if (existingSkills) {
-          const skillCreatePromises: Array<Promise<unknown>> = [];
-          const skillUpdatePromises: Array<Promise<unknown>> = [];
-          const skillDeletePromises: Array<Promise<unknown>> = [];
-
-          // Find skills to add or update
-          for (const skill of pendingSkills) {
-            const existingSkill = existingSkills.find((s) => s.skillName === skill.skillName);
-            if (!existingSkill) {
-              // Create new skill - need to await individually to get the result for required status
-              const createAndSetRequired = async () => {
-                const createdSkill = await createSkillMutation.mutateAsync({
-                  agentId: agent.id,
-                  showToast: false,
-                  skillName: skill.skillName,
-                });
-                // Set required status if needed
-                if (skill.isRequired && createdSkill?.result) {
-                  await setSkillRequiredMutation.mutateAsync({
-                    id: createdSkill.result.id,
-                    required: true,
-                    showToast: false,
-                  });
-                }
-              };
-              skillCreatePromises.push(createAndSetRequired());
-            } else {
-              // Update required status if changed
-              const wasRequired = existingSkill.requiredAt !== null;
-              if (skill.isRequired !== wasRequired) {
-                skillUpdatePromises.push(
-                  setSkillRequiredMutation.mutateAsync({
-                    id: existingSkill.id,
-                    required: skill.isRequired,
-                    showToast: false,
-                  })
-                );
-              }
-            }
-          }
-
-          // Find skills to delete
-          for (const existingSkill of existingSkills) {
-            const stillExists = pendingSkills.some((s) => s.skillName === existingSkill.skillName);
-            if (!stillExists) {
-              skillDeletePromises.push(
-                deleteSkillMutation.mutateAsync({
-                  agentId: agent.id,
-                  id: existingSkill.id,
-                  showToast: false,
-                })
-              );
-            }
-          }
-
-          // Execute all skill operations in parallel
-          await Promise.all([...skillCreatePromises, ...skillUpdatePromises, ...skillDeletePromises]);
-        }
-      } else {
-        // Create new agent with tools
-        const createValue = value as CreateAgentFormData;
-        const effectiveProjectId = formValueToProjectId(createValue.projectId);
-        const modelValue = createValue.model === 'inherit' || createValue.model === '' ? null : createValue.model;
-        const permissionModeValue = createValue.permissionMode === '' ? null : createValue.permissionMode;
-        const createdAgent = await createAgentMutation.mutateAsync({
-          color: createValue.color,
-          description: createValue.description,
-          displayName: createValue.displayName,
-          model: modelValue,
-          name: createValue.name,
-          permissionMode: permissionModeValue,
-          projectId: effectiveProjectId,
-          systemPrompt: createValue.systemPrompt,
-          type: createValue.type,
-        });
-
-        // Create tools for the new agent (in parallel)
-        const toolsToSave = getToolsToSave();
-        await Promise.all(
-          toolsToSave.map((tool) =>
-            createToolMutation.mutateAsync({
-              agentId: createdAgent.id,
-              showToast: false,
-              toolName: tool.toolName,
-              toolPattern: tool.pattern,
-            })
-          )
-        );
-
-        // Create skills for the new agent (in parallel, but each skill may need sequential required status update)
-        await Promise.all(
-          pendingSkills.map(async (skill) => {
-            const createdSkill = await createSkillMutation.mutateAsync({
-              agentId: createdAgent.id,
-              showToast: false,
-              skillName: skill.skillName,
-            });
-            // Set required status if needed
-            if (skill.isRequired && createdSkill?.result) {
-              await setSkillRequiredMutation.mutateAsync({
-                id: createdSkill.result.id,
-                required: true,
-                showToast: false,
-              });
-            }
-          })
-        );
-
-        // Create hooks for the new agent (in parallel per event type)
-        const hookEventTypes = ['PreToolUse', 'PostToolUse', 'Stop'] as const;
-        const hookPromises: Array<Promise<unknown>> = [];
-        for (const eventType of hookEventTypes) {
-          const entries = pendingHooks[eventType];
-          if (entries && entries.length > 0) {
-            for (const [index, entry] of entries.entries()) {
-              hookPromises.push(
-                createHookMutation.mutateAsync({
-                  agentId: createdAgent.id,
-                  body: entry.body,
-                  eventType,
-                  matcher: entry.matcher,
-                  orderIndex: index,
-                  showToast: false,
-                })
-              );
-            }
-          }
-        }
-        await Promise.all(hookPromises);
-      }
-      handleClose();
-      onSuccess?.();
-    },
-    validators: {
-      onSubmit: validationSchema,
-    },
-  });
-
-  const setToolDefaults = useEffectEvent((type: AgentToolType) => {
-    initializeToolDefaults(type);
-  });
-
-  const updateToolSelections = useEffectEvent((selections: Array<ToolSelection>) => {
-    setToolSelections(selections);
-  });
-
-  const updateCustomTools = useEffectEvent((tools: Array<CreateToolData>) => {
-    setCustomTools(tools);
-  });
-
-  const updatePendingSkills = useEffectEvent((skills: Array<PendingSkillData>) => {
-    setPendingSkills(skills);
-  });
-
-  // Reset form when agent or initialData changes
-  useEffect(() => {
-    form.reset(getDefaultValues());
-  }, [agent, initialData, form, getDefaultValues]);
-
-  // Initialize tools when dialog opens
-  useEffect(() => {
-    if (!isOpen) return;
-
-    if (!isEditMode) {
-      // Create mode: initialize from defaults based on agent type
-      const type = initialData?.type ?? 'specialist';
-      setToolDefaults(type);
-    }
-  }, [isEditMode, isOpen, initialData?.type]);
-
-  // Initialize tools from existing database records (edit mode)
-  useEffect(() => {
-    if (!isOpen || !isEditMode || !existingTools) return;
-
-    const builtinSelections: Array<ToolSelection> = [];
-    const customToolsList: Array<CreateToolData> = [];
-
-    for (const tool of existingTools) {
-      if (isBuiltinTool(tool.toolName)) {
-        builtinSelections.push({
-          enabled: tool.disallowedAt === null,
-          pattern: tool.toolPattern,
-          toolName: tool.toolName,
-        });
-      } else {
-        // Only add custom tools that are allowed
-        if (tool.disallowedAt === null) {
-          customToolsList.push({
-            pattern: tool.toolPattern,
-            toolName: tool.toolName,
-          });
-        }
-      }
-    }
-
-    // Ensure all built-in tools have an entry (disabled if not in existingTools)
-    for (const tool of CLAUDE_BUILTIN_TOOLS) {
-      if (!builtinSelections.some((s) => s.toolName === tool.name)) {
-        builtinSelections.push({
-          enabled: false,
-          pattern: '*',
-          toolName: tool.name,
-        });
-      }
-    }
-
-    updateToolSelections(builtinSelections);
-    updateCustomTools(customToolsList);
-  }, [isOpen, isEditMode, existingTools]);
-
-  // Initialize skills from existing database records (edit mode)
-  useEffect(() => {
-    if (!isOpen || !isEditMode || !existingSkills) return;
-
-    const pendingSkillsData: Array<PendingSkillData> = existingSkills.map((skill) => ({
-      isRequired: skill.requiredAt !== null,
-      skillName: skill.skillName,
-    }));
-
-    updatePendingSkills(pendingSkillsData);
-  }, [isOpen, isEditMode, existingSkills]);
-
-  const resetFormState = useCallback(() => {
-    form.reset(getDefaultValues());
-    // Reset tools, skills, and hooks state
-    if (!isEditMode) {
-      const type = initialData?.type ?? 'specialist';
-      initializeToolDefaults(type);
-      setPendingSkills([]);
-      setPendingHooks({});
-    }
-  }, [form, getDefaultValues, isEditMode, initialData, initializeToolDefaults]);
-
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-    resetFormState();
-  }, [resetFormState, setIsOpen]);
-
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open && form.state.isDirty) {
-        // Show discard confirmation if form has unsaved changes
-        setIsDiscardDialogOpen(true);
-        return;
-      }
-      setIsOpen(open);
-      if (open) {
-        // Reset form to ensure it has latest values
-        form.reset(getDefaultValues());
-        // Reset tools, skills, and hooks for create mode
-        if (!isEditMode) {
-          const type = initialData?.type ?? 'specialist';
-          initializeToolDefaults(type);
-          setPendingSkills([]);
-          setPendingHooks({});
-        }
-      } else {
-        resetFormState();
-      }
-    },
-    [setIsOpen, resetFormState, getDefaultValues, form, isEditMode, initialData, initializeToolDefaults]
-  );
-
-  const handleConfirmDiscard = useCallback(() => {
-    setIsDiscardDialogOpen(false);
-    setIsOpen(false);
-    resetFormState();
-  }, [resetFormState, setIsOpen]);
-
-  const handleResetClick = useCallback(() => {
-    setIsResetDialogOpen(true);
-  }, []);
-
-  const handleConfirmReset = useCallback(async () => {
-    if (!agent) return;
-    try {
-      await resetAgentMutation.mutateAsync({
-        id: agent.id,
-        projectId: agent.projectId ?? undefined,
-      });
-      setIsResetDialogOpen(false);
-      handleClose();
-      onSuccess?.();
-    } catch {
-      // Error handled by mutation
-    }
-  }, [agent, handleClose, onSuccess, resetAgentMutation]);
-
-  // Handle agent type change in create mode - reset tool defaults
-  const handleAgentTypeChange = useCallback(
-    (newType: string) => {
-      const type = newType as AgentToolType;
-      initializeToolDefaults(type);
-    },
-    [initializeToolDefaults]
-  );
-
-  // Memoize dialog labels to prevent string recreation on every render
   const dialogLabels = useMemo(() => {
     const agentTypeLabel = agent
       ? agent.type === 'planning'
@@ -867,25 +368,482 @@ export const AgentEditorDialog = ({
     };
   }, [agent, isDuplicateMode, isEditMode, isSubmitting, isViewMode]);
 
+  // Utility functions
+  const projectIdToFormValue = useCallback((id: null | number | undefined): string => {
+    return id === null || id === undefined ? GLOBAL_PROJECT_VALUE : String(id);
+  }, []);
+
+  const formValueToProjectId = useCallback((value: string): null | number => {
+    return value === GLOBAL_PROJECT_VALUE ? null : Number(value);
+  }, []);
+
+  const getDefaultValues = useCallback((): CreateAgentFormData | UpdateAgentFormValues => {
+    if (isEditMode && agent) {
+      return {
+        color: (agent.color ?? '') as UpdateAgentFormValues['color'],
+        description: agent.description ?? '',
+        displayName: agent.displayName,
+        model: (agent.model ?? 'inherit') as UpdateAgentFormValues['model'],
+        permissionMode: (agent.permissionMode ?? 'default') as UpdateAgentFormValues['permissionMode'],
+        projectId: projectIdToFormValue(agent.projectId),
+        systemPrompt: agent.systemPrompt,
+      };
+    }
+    if (initialData) {
+      return {
+        color: initialData.color ?? 'blue',
+        description: initialData.description ?? '',
+        displayName: initialData.displayName,
+        model: 'inherit' as CreateAgentFormData['model'],
+        name: initialData.name,
+        permissionMode: 'default' as CreateAgentFormData['permissionMode'],
+        projectId: projectIdToFormValue(projectId),
+        systemPrompt: initialData.systemPrompt,
+        type: initialData.type,
+      } as CreateAgentFormData;
+    }
+    return {
+      color: 'blue',
+      description: '',
+      displayName: '',
+      model: 'inherit' as CreateAgentFormData['model'],
+      name: '',
+      permissionMode: 'default' as CreateAgentFormData['permissionMode'],
+      projectId: projectIdToFormValue(projectId),
+      systemPrompt: '',
+      type: 'specialist' as AgentType,
+    } as CreateAgentFormData;
+  }, [isEditMode, agent, initialData, projectId, projectIdToFormValue]);
+
+  const initializeToolDefaults = useCallback((type: AgentToolType) => {
+    const defaultTools = getDefaultToolsForAgentType(type);
+
+    const selections: Array<ToolSelection> = CLAUDE_BUILTIN_TOOLS.map((tool) => ({
+      enabled: defaultTools.includes(tool.name),
+      pattern: '*',
+      toolName: tool.name,
+    }));
+
+    setToolSelections(selections);
+    setCustomTools([]);
+  }, []);
+
+  const getToolsToSave = useCallback((): Array<CreateToolData> => {
+    const result: Array<CreateToolData> = [];
+
+    for (const selection of toolSelections) {
+      if (selection.enabled) {
+        result.push({
+          pattern: selection.pattern,
+          toolName: selection.toolName,
+        });
+      }
+    }
+
+    result.push(...customTools);
+
+    return result;
+  }, [toolSelections, customTools]);
+
+  // Form initialization
+  const form = useAppForm({
+    defaultValues: getDefaultValues(),
+    onSubmit: async ({ value }) => {
+      if (isEditMode && agent) {
+        const updateValue = value as UpdateAgentFormValues;
+        const colorValue = updateValue.color === '' ? null : updateValue.color;
+        const modelValue = updateValue.model === 'inherit' || updateValue.model === '' ? null : updateValue.model;
+        const permissionModeValue = updateValue.permissionMode === '' ? null : updateValue.permissionMode;
+        const selectedProjectId = formValueToProjectId(updateValue.projectId);
+
+        await updateAgentMutation.mutateAsync({
+          data: {
+            color: colorValue,
+            description: updateValue.description,
+            displayName: updateValue.displayName,
+            model: modelValue,
+            permissionMode: permissionModeValue,
+            systemPrompt: updateValue.systemPrompt,
+          },
+          id: agent.id,
+        });
+
+        const originalProjectId = agent.projectId ?? null;
+        if (selectedProjectId !== originalProjectId) {
+          await moveAgentMutation.mutateAsync({
+            agentId: agent.id,
+            showToast: false,
+            targetProjectId: selectedProjectId,
+          });
+        }
+
+        if (existingTools) {
+          const toolTogglePromises: Array<Promise<unknown>> = [];
+          const toolCreatePromises: Array<Promise<unknown>> = [];
+
+          for (const selection of toolSelections) {
+            const existingTool = existingTools.find((t) => t.toolName === selection.toolName);
+
+            if (existingTool) {
+              const isCurrentlyAllowed = existingTool.disallowedAt === null;
+              if (selection.enabled && !isCurrentlyAllowed) {
+                toolTogglePromises.push(allowToolMutation.mutateAsync({ id: existingTool.id, showToast: false }));
+              } else if (!selection.enabled && isCurrentlyAllowed) {
+                toolTogglePromises.push(disallowToolMutation.mutateAsync({ id: existingTool.id, showToast: false }));
+              }
+            } else if (selection.enabled) {
+              toolCreatePromises.push(
+                createToolMutation.mutateAsync({
+                  agentId: agent.id,
+                  showToast: false,
+                  toolName: selection.toolName,
+                  toolPattern: selection.pattern,
+                })
+              );
+            }
+          }
+
+          for (const tool of customTools) {
+            const exists = existingTools.some((t) => t.toolName === tool.toolName);
+            if (!exists) {
+              toolCreatePromises.push(
+                createToolMutation.mutateAsync({
+                  agentId: agent.id,
+                  showToast: false,
+                  toolName: tool.toolName,
+                  toolPattern: tool.pattern,
+                })
+              );
+            }
+          }
+
+          const toolDeletePromises: Array<Promise<unknown>> = [];
+          for (const existingTool of existingTools) {
+            if (isBuiltinTool(existingTool.toolName)) continue;
+
+            const stillExists = customTools.some((t) => t.toolName === existingTool.toolName);
+            if (!stillExists) {
+              toolDeletePromises.push(
+                deleteToolMutation.mutateAsync({
+                  agentId: agent.id,
+                  id: existingTool.id,
+                  showToast: false,
+                })
+              );
+            }
+          }
+
+          await Promise.all([...toolTogglePromises, ...toolCreatePromises, ...toolDeletePromises]);
+        }
+
+        if (existingSkills) {
+          const skillCreatePromises: Array<Promise<unknown>> = [];
+          const skillUpdatePromises: Array<Promise<unknown>> = [];
+          const skillDeletePromises: Array<Promise<unknown>> = [];
+
+          for (const skill of pendingSkills) {
+            const existingSkill = existingSkills.find((s) => s.skillName === skill.skillName);
+            if (!existingSkill) {
+              const createAndSetRequired = async () => {
+                const createdSkill = await createSkillMutation.mutateAsync({
+                  agentId: agent.id,
+                  showToast: false,
+                  skillName: skill.skillName,
+                });
+                if (skill.isRequired && createdSkill?.result) {
+                  await setSkillRequiredMutation.mutateAsync({
+                    id: createdSkill.result.id,
+                    required: true,
+                    showToast: false,
+                  });
+                }
+              };
+              skillCreatePromises.push(createAndSetRequired());
+            } else {
+              const wasRequired = existingSkill.requiredAt !== null;
+              if (skill.isRequired !== wasRequired) {
+                skillUpdatePromises.push(
+                  setSkillRequiredMutation.mutateAsync({
+                    id: existingSkill.id,
+                    required: skill.isRequired,
+                    showToast: false,
+                  })
+                );
+              }
+            }
+          }
+
+          for (const existingSkill of existingSkills) {
+            const stillExists = pendingSkills.some((s) => s.skillName === existingSkill.skillName);
+            if (!stillExists) {
+              skillDeletePromises.push(
+                deleteSkillMutation.mutateAsync({
+                  agentId: agent.id,
+                  id: existingSkill.id,
+                  showToast: false,
+                })
+              );
+            }
+          }
+
+          await Promise.all([...skillCreatePromises, ...skillUpdatePromises, ...skillDeletePromises]);
+        }
+      } else {
+        const createValue = value as CreateAgentFormData;
+        const effectiveProjectId = formValueToProjectId(createValue.projectId);
+        const modelValue = createValue.model === 'inherit' || createValue.model === '' ? null : createValue.model;
+        const permissionModeValue = createValue.permissionMode === '' ? null : createValue.permissionMode;
+        const createdAgent = await createAgentMutation.mutateAsync({
+          color: createValue.color,
+          description: createValue.description,
+          displayName: createValue.displayName,
+          model: modelValue,
+          name: createValue.name,
+          permissionMode: permissionModeValue,
+          projectId: effectiveProjectId,
+          systemPrompt: createValue.systemPrompt,
+          type: createValue.type,
+        });
+
+        const toolsToSave = getToolsToSave();
+        await Promise.all(
+          toolsToSave.map((tool) =>
+            createToolMutation.mutateAsync({
+              agentId: createdAgent.id,
+              showToast: false,
+              toolName: tool.toolName,
+              toolPattern: tool.pattern,
+            })
+          )
+        );
+
+        await Promise.all(
+          pendingSkills.map(async (skill) => {
+            const createdSkill = await createSkillMutation.mutateAsync({
+              agentId: createdAgent.id,
+              showToast: false,
+              skillName: skill.skillName,
+            });
+            if (skill.isRequired && createdSkill?.result) {
+              await setSkillRequiredMutation.mutateAsync({
+                id: createdSkill.result.id,
+                required: true,
+                showToast: false,
+              });
+            }
+          })
+        );
+
+        const hookEventTypes = ['PreToolUse', 'PostToolUse', 'Stop'] as const;
+        const hookPromises: Array<Promise<unknown>> = [];
+        for (const eventType of hookEventTypes) {
+          const entries = pendingHooks[eventType];
+          if (entries && entries.length > 0) {
+            for (const [index, entry] of entries.entries()) {
+              hookPromises.push(
+                createHookMutation.mutateAsync({
+                  agentId: createdAgent.id,
+                  body: entry.body,
+                  eventType,
+                  matcher: entry.matcher,
+                  orderIndex: index,
+                  showToast: false,
+                })
+              );
+            }
+          }
+        }
+        await Promise.all(hookPromises);
+      }
+      handleClose();
+      onSuccess?.();
+    },
+    validators: {
+      onSubmit: validationSchema,
+    },
+  });
+
+  // Effect event handlers (stable references for effects)
+  const setToolDefaults = useEffectEvent((type: AgentToolType) => {
+    initializeToolDefaults(type);
+  });
+
+  const updateToolSelections = useEffectEvent((selections: Array<ToolSelection>) => {
+    setToolSelections(selections);
+  });
+
+  const updateCustomTools = useEffectEvent((tools: Array<CreateToolData>) => {
+    setCustomTools(tools);
+  });
+
+  const updatePendingSkills = useEffectEvent((skills: Array<PendingSkillData>) => {
+    setPendingSkills(skills);
+  });
+
+  // Reset form state utility
+  const resetFormState = useCallback(() => {
+    form.reset(getDefaultValues());
+    if (!isEditMode) {
+      const type = initialData?.type ?? 'specialist';
+      initializeToolDefaults(type);
+      setPendingSkills([]);
+      setPendingHooks({});
+    }
+  }, [form, getDefaultValues, isEditMode, initialData, initializeToolDefaults]);
+
+  // Effects
+  useEffect(() => {
+    form.reset(getDefaultValues());
+  }, [agent, initialData, form, getDefaultValues]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (!isEditMode) {
+      const type = initialData?.type ?? 'specialist';
+      setToolDefaults(type);
+    }
+  }, [isEditMode, isOpen, initialData?.type]);
+
+  useEffect(() => {
+    if (!isOpen || !isEditMode || !existingTools) return;
+
+    const builtinSelections: Array<ToolSelection> = [];
+    const customToolsList: Array<CreateToolData> = [];
+
+    for (const tool of existingTools) {
+      if (isBuiltinTool(tool.toolName)) {
+        builtinSelections.push({
+          enabled: tool.disallowedAt === null,
+          pattern: tool.toolPattern,
+          toolName: tool.toolName,
+        });
+      } else {
+        if (tool.disallowedAt === null) {
+          customToolsList.push({
+            pattern: tool.toolPattern,
+            toolName: tool.toolName,
+          });
+        }
+      }
+    }
+
+    for (const tool of CLAUDE_BUILTIN_TOOLS) {
+      if (!builtinSelections.some((s) => s.toolName === tool.name)) {
+        builtinSelections.push({
+          enabled: false,
+          pattern: '*',
+          toolName: tool.name,
+        });
+      }
+    }
+
+    updateToolSelections(builtinSelections);
+    updateCustomTools(customToolsList);
+  }, [isOpen, isEditMode, existingTools]);
+
+  useEffect(() => {
+    if (!isOpen || !isEditMode || !existingSkills) return;
+
+    const pendingSkillsData: Array<PendingSkillData> = existingSkills.map((skill) => ({
+      isRequired: skill.requiredAt !== null,
+      skillName: skill.skillName,
+    }));
+
+    updatePendingSkills(pendingSkillsData);
+  }, [isOpen, isEditMode, existingSkills]);
+
+  // Event handlers
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    resetFormState();
+  }, [resetFormState, setIsOpen]);
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && form.state.isDirty) {
+        setIsDiscardDialogOpen(true);
+        return;
+      }
+      setIsOpen(open);
+      if (open) {
+        form.reset(getDefaultValues());
+        if (!isEditMode) {
+          const type = initialData?.type ?? 'specialist';
+          initializeToolDefaults(type);
+          setPendingSkills([]);
+          setPendingHooks({});
+        }
+      } else {
+        resetFormState();
+      }
+    },
+    [setIsOpen, resetFormState, getDefaultValues, form, isEditMode, initialData, initializeToolDefaults]
+  );
+
+  const handleConfirmDiscard = useCallback(() => {
+    setIsDiscardDialogOpen(false);
+    setIsOpen(false);
+    resetFormState();
+  }, [resetFormState, setIsOpen]);
+
+  const handleResetClick = useCallback(() => {
+    setIsResetDialogOpen(true);
+  }, []);
+
+  const handleConfirmReset = useCallback(async () => {
+    if (!agent) return;
+    try {
+      await resetAgentMutation.mutateAsync({
+        id: agent.id,
+        projectId: agent.projectId ?? undefined,
+      });
+      setIsResetDialogOpen(false);
+      handleClose();
+      onSuccess?.();
+    } catch {
+      // Error handled by mutation
+    }
+  }, [agent, handleClose, onSuccess, resetAgentMutation]);
+
+  const handleAgentTypeChange = useCallback(
+    (newType: string) => {
+      const type = newType as AgentToolType;
+      initializeToolDefaults(type);
+    },
+    [initializeToolDefaults]
+  );
+
+  const handleFormSubmit = useCallback(
+    (e: FormEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      void form.handleSubmit();
+    },
+    [form]
+  );
+
+  // Derived values for render
   const { agentTypeLabel, dialogDescription, dialogTitle, submitLabel } = dialogLabels;
 
   return (
     <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
-      {/* Trigger - only render when provided (uncontrolled mode) */}
+      {/* Dialog Trigger */}
       {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
 
-      {/* Portal */}
+      {/* Dialog Portal */}
       <DialogPortal>
         <DialogBackdrop />
         <DialogPopup aria-modal={'true'} role={'dialog'} scrollable={true} size={'xl'}>
-          {/* Header */}
+          {/* Dialog Header */}
           <DialogHeader
             badges={
               <Fragment>
-                {/* Project Scope Indicator (Create Mode Only) */}
+                {/* Project Scope Badge */}
                 {isProjectScoped && projectQuery.data && (
                   <Badge variant={'project'}>{`Project: ${projectQuery.data.name}`}</Badge>
                 )}
+                {/* Agent Type Badges */}
                 {isEditMode && isBuiltIn && <Badge variant={'default'}>{'Built-in Agent'}</Badge>}
                 {isEditMode && !isBuiltIn && <Badge variant={'custom'}>{'Custom Agent'}</Badge>}
                 {isEditMode && agentTypeLabel && <Badge variant={'default'}>{agentTypeLabel}</Badge>}
@@ -897,16 +855,12 @@ export const AgentEditorDialog = ({
             <DialogDescription id={'agent-editor-description'}>{dialogDescription}</DialogDescription>
           </DialogHeader>
 
-          {/* Form wraps DialogBody + DialogFooter for submit to work */}
+          {/* Agent Editor Form */}
           <form
             aria-describedby={'agent-editor-description'}
             aria-labelledby={'agent-editor-title'}
             className={'flex min-h-0 flex-1 flex-col'}
-            onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              void form.handleSubmit();
-            }}
+            onSubmit={handleFormSubmit}
           >
             {/* Scrollable Content */}
             <DialogBody className={'px-2'}>
@@ -934,6 +888,7 @@ export const AgentEditorDialog = ({
                 </form.Subscribe>
               )}
 
+              {/* Form Fields */}
               <fieldset className={'mt-4 flex flex-col gap-4'} disabled={isSubmitting || isResetting || isViewMode}>
                 <legend className={'sr-only'}>{'Agent details'}</legend>
 
@@ -989,7 +944,7 @@ export const AgentEditorDialog = ({
                   )}
                 </form.AppField>
 
-                {/* Display Name */}
+                {/* Display Name Field */}
                 <form.AppField name={'displayName'}>
                   {(field) => (
                     <field.TextField
@@ -1001,7 +956,7 @@ export const AgentEditorDialog = ({
                   )}
                 </form.AppField>
 
-                {/* Description */}
+                {/* Description Field */}
                 <form.AppField name={'description'}>
                   {(field) => (
                     <field.TextareaField
@@ -1013,7 +968,7 @@ export const AgentEditorDialog = ({
                   )}
                 </form.AppField>
 
-                {/* Model */}
+                {/* Model Field */}
                 <form.AppField name={'model'}>
                   {(field) => (
                     <field.SelectField
@@ -1025,7 +980,7 @@ export const AgentEditorDialog = ({
                   )}
                 </form.AppField>
 
-                {/* Permission Mode */}
+                {/* Permission Mode Field */}
                 <form.AppField name={'permissionMode'}>
                   {(field) => (
                     <field.SelectField
@@ -1037,7 +992,7 @@ export const AgentEditorDialog = ({
                   )}
                 </form.AppField>
 
-                {/* Color Picker */}
+                {/* Color Picker Field */}
                 <form.AppField name={'color'}>
                   {(field) => (
                     <field.ColorPickerField
@@ -1048,7 +1003,7 @@ export const AgentEditorDialog = ({
                   )}
                 </form.AppField>
 
-                {/* System Prompt */}
+                {/* System Prompt Field */}
                 <form.AppField name={'systemPrompt'}>
                   {(field) => (
                     <field.TextareaField
@@ -1062,9 +1017,9 @@ export const AgentEditorDialog = ({
                 </form.AppField>
               </fieldset>
 
-              {/* Collapsible sections outside fieldset so they can be expanded in view mode */}
+              {/* Collapsible Configuration Sections */}
               <div className={'mt-4 flex flex-col gap-4'}>
-                {/* Tools Section - Memoized to prevent re-renders */}
+                {/* Tools Section */}
                 <ToolsCollapsibleSection
                   customTools={customTools}
                   isDisabled={isCollapsibleDisabled}
@@ -1073,14 +1028,14 @@ export const AgentEditorDialog = ({
                   toolSelections={toolSelections}
                 />
 
-                {/* Skills Section - Memoized to prevent re-renders */}
+                {/* Skills Section */}
                 <SkillsCollapsibleSection
                   isDisabled={isCollapsibleDisabled}
                   onSkillsChange={setPendingSkills}
                   pendingSkills={pendingSkills}
                 />
 
-                {/* Hooks Section - Memoized to prevent re-renders */}
+                {/* Hooks Section */}
                 <HooksCollapsibleSection
                   hooks={pendingHooks}
                   isDisabled={isCollapsibleDisabled}
@@ -1089,9 +1044,9 @@ export const AgentEditorDialog = ({
               </div>
             </DialogBody>
 
-            {/* Sticky Footer */}
+            {/* Dialog Footer */}
             <DialogFooter alignment={'between'}>
-              {/* Reset Button - only for customized agents in edit mode, hidden in view mode */}
+              {/* Reset Button */}
               <div>
                 {isResetButtonVisible && (
                   <Button

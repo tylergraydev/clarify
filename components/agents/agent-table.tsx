@@ -357,26 +357,6 @@ export const AgentTable = ({
   const [editDialogAgent, setEditDialogAgent] = useState<AgentWithRelations | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const handleEditClick = useCallback((agent: AgentWithRelations) => {
-    setEditDialogAgent(agent);
-    setIsEditDialogOpen(true);
-  }, []);
-
-  const handleEditDialogChange = useCallback((isOpen: boolean) => {
-    setIsEditDialogOpen(isOpen);
-    if (!isOpen) {
-      setEditDialogAgent(null);
-    }
-  }, []);
-
-  const handleRowClick = useCallback(
-    (row: Row<AgentWithRelations>) => {
-      handleEditClick(row.original);
-    },
-    [handleEditClick]
-  );
-
-  // Memoize isActionDisabled to prevent unnecessary re-renders
   const isActionDisabled = useMemo(
     () =>
       isCreatingOverride ||
@@ -399,12 +379,29 @@ export const AgentTable = ({
     ]
   );
 
-  // Row style callback for built-in and inactive agents
+  const handleEditClick = useCallback((agent: AgentWithRelations) => {
+    setEditDialogAgent(agent);
+    setIsEditDialogOpen(true);
+  }, []);
+
+  const handleEditDialogChange = useCallback((isOpen: boolean) => {
+    setIsEditDialogOpen(isOpen);
+    if (!isOpen) {
+      setEditDialogAgent(null);
+    }
+  }, []);
+
+  const handleRowClick = useCallback(
+    (row: Row<AgentWithRelations>) => {
+      handleEditClick(row.original);
+    },
+    [handleEditClick]
+  );
+
   const rowStyleCallback: DataTableRowStyleCallback<AgentWithRelations> = useCallback((row) => {
     const isActive = row.original.deactivatedAt === null;
     const isBuiltIn = row.original.builtInAt !== null;
 
-    // Apply subtle background for built-in agents, reduced opacity for inactive
     if (!isActive) {
       return isBuiltIn ? 'bg-muted/30 opacity-60' : 'opacity-60';
     }

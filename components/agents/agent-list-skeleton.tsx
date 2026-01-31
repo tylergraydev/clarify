@@ -4,23 +4,10 @@ import type { ComponentPropsWithRef } from 'react';
 
 import { cn } from '@/lib/utils';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 interface AgentListSkeletonProps extends ComponentPropsWithRef<'div'> {
-  /** Number of skeleton rows to display */
   count?: number;
 }
 
-// ============================================================================
-// Sub-Components
-// ============================================================================
-
-/**
- * Individual skeleton row for the list view.
- * Mimics the structure of AgentListItem with animated placeholders.
- */
 const AgentListSkeletonItem = () => {
   return (
     <div className={cn('flex items-center gap-4 rounded-md border border-border bg-card px-4 py-3')}>
@@ -55,23 +42,10 @@ const AgentListSkeletonItem = () => {
   );
 };
 
-// ============================================================================
-// Main Component
-// ============================================================================
-
-/**
- * Loading skeleton for the agent list view.
- * Displays animated placeholder rows that mimic the AgentList structure.
- *
- * @example
- * ```tsx
- * <AgentListSkeleton count={6} />
- * ```
- */
 export const AgentListSkeleton = ({ className, count = 6, ref, ...props }: AgentListSkeletonProps) => {
   return (
     <div
-      aria-busy={'true'}
+      aria-busy={true}
       aria-label={'Loading agents list'}
       className={cn('flex flex-col gap-2', className)}
       ref={ref}
