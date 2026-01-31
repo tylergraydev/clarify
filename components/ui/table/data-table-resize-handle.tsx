@@ -1,6 +1,6 @@
 'use client';
 
-import type { Header, Table } from '@tanstack/react-table';
+import type { Header } from '@tanstack/react-table';
 import type { ComponentPropsWithRef } from 'react';
 
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -44,12 +44,6 @@ interface DataTableResizeHandleProps<TData>
    * Used to access resize handler and resizing state.
    */
   header: Header<TData, unknown>;
-
-  /**
-   * The TanStack Table instance.
-   * Used to access columnSizingInfo for the resize indicator offset.
-   */
-  table: Table<TData>;
 }
 
 // =============================================================================
@@ -97,17 +91,9 @@ export const DataTableResizeHandle = <TData,>({
   className,
   header,
   ref,
-  table,
   ...props
 }: DataTableResizeHandleProps<TData>) => {
   const isResizing = header.column.getIsResizing();
-  const { deltaOffset } = table.getState().columnSizingInfo;
-
-  // Calculate transform for resize indicator during active resize
-  const getTransformStyle = (): string => {
-    if (!isResizing) return '';
-    return `translateX(${deltaOffset ?? 0}px)`;
-  };
 
   return (
     <div
@@ -118,9 +104,6 @@ export const DataTableResizeHandle = <TData,>({
       onTouchStart={header.getResizeHandler()}
       ref={ref}
       role={'separator'}
-      style={{
-        transform: getTransformStyle(),
-      }}
       tabIndex={0}
       {...props}
     />

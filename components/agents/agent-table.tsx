@@ -595,13 +595,16 @@ export const AgentTable = ({
         size: 110,
       }),
 
-      // Updated At column
+      // Updated At column - filler column to take remaining space
       columnHelper.accessor('updatedAt', {
         cell: ({ row }) => {
           const agent = row.original;
           return <span className={'text-sm text-muted-foreground'}>{formatDate(agent.updatedAt)}</span>;
         },
         header: 'Updated',
+        meta: {
+          isFillerColumn: true,
+        },
         size: 110,
       }),
     ],

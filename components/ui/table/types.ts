@@ -296,6 +296,15 @@ declare module '@tanstack/react-table' {
 
     /** CSS class name to apply to header elements */
     headerClassName?: string;
+
+    /**
+     * When true, this column will expand to fill remaining table width.
+     * Only one column should be marked as filler. The filler column:
+     * - Cannot be resized
+     * - Has no fixed width (expands to fill available space)
+     * - Causes the table to use width: 100% instead of fixed width
+     */
+    isFillerColumn?: boolean;
   }
 }
 

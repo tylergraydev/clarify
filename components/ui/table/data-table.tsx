@@ -408,14 +408,16 @@ const DataTableBody = <TData,>({
           >
             {row.getVisibleCells().map((cell) => {
               const cellClassName = cell.column.columnDef.meta?.cellClassName;
+              const isFillerColumn = cell.column.columnDef.meta?.isFillerColumn === true;
 
               return (
                 <td
                   className={cn(dataTableCellVariants({ density }), cellClassName)}
                   key={cell.id}
-                  style={{
-                    width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
-                  }}
+                  style={
+                    // Filler columns don't get fixed width - they expand to fill remaining space
+                    isFillerColumn ? undefined : { width: `calc(var(--col-${cell.column.id}-size) * 1px)` }
+                  }
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
@@ -718,6 +720,12 @@ export const DataTable = <TData, TValue>({
   // Track whether a column is being resized for memoization
   const isResizing = !!columnSizingInfo.isResizingColumn;
 
+  // Detect if any visible column is marked as a filler column
+  const hasFillerColumn = useMemo(() => {
+    return table.getVisibleLeafColumns().some((column) => column.columnDef.meta?.isFillerColumn === true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns, table.getState().columnVisibility]);
+
   const tableStyle = useMemo(() => {
     const headers = table.getFlatHeaders();
     const colSizes: Record<string, number | string> = {
@@ -761,8 +769,10 @@ export const DataTable = <TData, TValue>({
             className={cn(dataTableVariants({ density }))}
             style={{
               ...tableStyle,
+              // When a filler column exists, use 100% width so the filler can expand
+              // minWidth ensures horizontal scroll when columns exceed container
               minWidth: 'var(--table-width)',
-              width: 'var(--table-width)',
+              width: hasFillerColumn ? '100%' : 'var(--table-width)',
             }}
           >
             {/* Table Header */}
@@ -771,15 +781,17 @@ export const DataTable = <TData, TValue>({
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     const headerClassName = header.column.columnDef.meta?.headerClassName;
+                    const isFillerColumn = header.column.columnDef.meta?.isFillerColumn === true;
 
                     return (
                       <th
                         className={cn(dataTableHeaderCellVariants({ density }), headerClassName)}
                         colSpan={header.colSpan}
                         key={header.id}
-                        style={{
-                          width: `calc(var(--col-${header.column.id}-size) * 1px)`,
-                        }}
+                        style={
+                          // Filler columns don't get fixed width - they expand to fill remaining space
+                          isFillerColumn ? undefined : { width: `calc(var(--col-${header.column.id}-size) * 1px)` }
+                        }
                       >
                         {/* Draggable Header Content */}
                         <DataTableDraggableHeader
@@ -788,8 +800,8 @@ export const DataTable = <TData, TValue>({
                           table={table}
                         />
 
-                        {/* Resize Handle */}
-                        {header.column.getCanResize() && <DataTableResizeHandle header={header} table={table} />}
+                        {/* Resize Handle - not shown for filler columns */}
+                        {header.column.getCanResize() && !isFillerColumn && <DataTableResizeHandle header={header} />}
                       </th>
                     );
                   })}
