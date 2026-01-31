@@ -150,7 +150,12 @@ export const updateAgentRepositorySchema = z.object({
   parentAgentId: z.number().int().positive('Invalid parent agent ID').nullable().optional(),
   permissionMode: z.enum(agentPermissionModes).nullable().optional(),
   projectId: z.number().int().positive('Invalid project ID').nullable().optional(),
-  systemPrompt: z.string().trim().min(1, 'System prompt is required').max(50000, 'System prompt is too long').optional(),
+  systemPrompt: z
+    .string()
+    .trim()
+    .min(1, 'System prompt is required')
+    .max(50000, 'System prompt is too long')
+    .optional(),
   type: z
     .enum(agentTypes, {
       error: 'Please select a valid agent type',

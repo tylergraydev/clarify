@@ -2,11 +2,7 @@ import { and, asc, eq } from 'drizzle-orm';
 
 import type { DrizzleDatabase } from '../index';
 
-import {
-  createAgentHookSchema,
-  updateAgentHookOrderSchema,
-  updateAgentHookSchema,
-} from '../../lib/validations/agent';
+import { createAgentHookSchema, updateAgentHookOrderSchema, updateAgentHookSchema } from '../../lib/validations/agent';
 import { type AgentHook, agentHooks, type NewAgentHook } from '../schema';
 
 export interface AgentHooksRepository {

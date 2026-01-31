@@ -592,7 +592,6 @@ export const DataTable = <TData, TValue>({
     }),
   };
 
-   
   const table = useReactTable({
     columnResizeMode: 'onChange',
     columns,

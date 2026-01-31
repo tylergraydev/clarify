@@ -117,17 +117,23 @@ interface DialogCloseButtonProps {
   'aria-label'?: string;
   /** Optional className for styling */
   className?: string;
+  /** Whether the close button is disabled */
+  disabled?: boolean;
 }
 
 /**
  * An X close button for dialogs.
  * Uses BaseDialog.Close to automatically handle dialog closing.
  */
-export const DialogCloseButton = ({ 'aria-label': ariaLabel = 'Close dialog', className }: DialogCloseButtonProps) => {
+export const DialogCloseButton = ({
+  'aria-label': ariaLabel = 'Close dialog',
+  className,
+  disabled,
+}: DialogCloseButtonProps) => {
   return (
     <BaseDialog.Close
       render={(props) => (
-        <IconButton {...props} aria-label={ariaLabel} className={cn('shrink-0', className)}>
+        <IconButton {...props} aria-label={ariaLabel} className={cn('shrink-0', className)} disabled={disabled}>
           <X aria-hidden={'true'} className={'size-4'} />
         </IconButton>
       )}

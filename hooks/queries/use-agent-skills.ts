@@ -109,8 +109,7 @@ export function useSetAgentSkillRequired() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ id, required }: { id: number; required: boolean }) =>
-      agentSkills.setRequired(id, required),
+    mutationFn: ({ id, required }: { id: number; required: boolean }) => agentSkills.setRequired(id, required),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to update skill status',

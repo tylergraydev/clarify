@@ -156,140 +156,131 @@ export function registerAgentHandlers(
   /**
    * Create a new agent with validation for required fields and duplicate names.
    */
-  ipcMain.handle(
-    IpcChannels.agent.create,
-    async (_event: IpcMainInvokeEvent, data: NewAgent): Promise<Agent> => {
-      try {
-        // Validate required fields
-        if (!data.name || !data.name.trim()) {
-          throw new Error('Agent name is required');
-        }
-        if (!data.displayName || !data.displayName.trim()) {
-          throw new Error('Agent display name is required');
-        }
-        if (!data.systemPrompt || !data.systemPrompt.trim()) {
-          throw new Error('Agent system prompt is required');
-        }
-        if (!data.type || !data.type.trim()) {
-          throw new Error('Agent type is required');
-        }
-
-        // Check for duplicate names
-        const existingAgent = await agentsRepository.findByName(data.name);
-        if (existingAgent) {
-          throw new Error(`An agent with the name "${data.name}" already exists`);
-        }
-
-        return agentsRepository.create(data);
-      } catch (error) {
-        console.error('[IPC Error] agent:create:', error);
-        throw error;
+  ipcMain.handle(IpcChannels.agent.create, async (_event: IpcMainInvokeEvent, data: NewAgent): Promise<Agent> => {
+    try {
+      // Validate required fields
+      if (!data.name || !data.name.trim()) {
+        throw new Error('Agent name is required');
       }
+      if (!data.displayName || !data.displayName.trim()) {
+        throw new Error('Agent display name is required');
+      }
+      if (!data.systemPrompt || !data.systemPrompt.trim()) {
+        throw new Error('Agent system prompt is required');
+      }
+      if (!data.type || !data.type.trim()) {
+        throw new Error('Agent type is required');
+      }
+
+      // Check for duplicate names
+      const existingAgent = await agentsRepository.findByName(data.name);
+      if (existingAgent) {
+        throw new Error(`An agent with the name "${data.name}" already exists`);
+      }
+
+      return agentsRepository.create(data);
+    } catch (error) {
+      console.error('[IPC Error] agent:create:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Delete an agent with built-in protection (built-in agents cannot be deleted).
    */
-  ipcMain.handle(
-    IpcChannels.agent.delete,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
-      try {
-        // Get the agent to check if it's built-in
-        const agent = await agentsRepository.findById(id);
-        if (!agent) {
-          throw new Error('Agent not found');
-        }
-
-        // Protect built-in agents from deletion
-        if (isBuiltInAgent(agent)) {
-          throw new Error('Cannot delete built-in agents. You can only deactivate them.');
-        }
-
-        // Delete the custom agent
-        await agentsRepository.delete(id);
-      } catch (error) {
-        console.error('[IPC Error] agent:delete:', error);
-        throw error;
+  ipcMain.handle(IpcChannels.agent.delete, async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
+    try {
+      // Get the agent to check if it's built-in
+      const agent = await agentsRepository.findById(id);
+      if (!agent) {
+        throw new Error('Agent not found');
       }
+
+      // Protect built-in agents from deletion
+      if (isBuiltInAgent(agent)) {
+        throw new Error('Cannot delete built-in agents. You can only deactivate them.');
+      }
+
+      // Delete the custom agent
+      await agentsRepository.delete(id);
+    } catch (error) {
+      console.error('[IPC Error] agent:delete:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Duplicate an agent, creating a copy with modified name and copying all tools and skills.
    */
-  ipcMain.handle(
-    IpcChannels.agent.duplicate,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Agent> => {
-      try {
-        // Fetch the source agent by ID
-        const sourceAgent = await agentsRepository.findById(id);
-        if (!sourceAgent) {
-          throw new Error('Agent not found');
-        }
-
-        // Generate a unique name by appending "-copy" and checking for conflicts
-        // Name uses kebab-case to comply with the agent name regex pattern
-        // Display name uses human-readable format with spaces
-        let copyNumber = 1;
-        let newName = `${sourceAgent.name}-copy`;
-        let newDisplayName = `${sourceAgent.displayName} (Copy)`;
-
-        // Check if a copy already exists and increment the number if needed
-        let existingAgent = await agentsRepository.findByName(newName);
-        while (existingAgent) {
-          copyNumber++;
-          newName = `${sourceAgent.name}-copy-${copyNumber}`;
-          newDisplayName = `${sourceAgent.displayName} (Copy ${copyNumber})`;
-          existingAgent = await agentsRepository.findByName(newName);
-        }
-
-        // Create the duplicate agent with copied data
-        const newAgentData: NewAgent = {
-          builtInAt: null, // Custom agent, not built-in
-          color: sourceAgent.color,
-          description: sourceAgent.description,
-          displayName: newDisplayName,
-          name: newName,
-          parentAgentId: null, // No parent for duplicated agents
-          projectId: sourceAgent.projectId,
-          systemPrompt: sourceAgent.systemPrompt,
-          type: sourceAgent.type,
-          version: 1, // Reset version to 1 for the new copy
-        };
-
-        const duplicatedAgent = await agentsRepository.create(newAgentData);
-
-        // Copy tools from source agent to duplicated agent
-        const sourceTools = await agentToolsRepository.findByAgentId(id);
-        for (const tool of sourceTools) {
-          await agentToolsRepository.create({
-            agentId: duplicatedAgent.id,
-            disallowedAt: tool.disallowedAt,
-            orderIndex: tool.orderIndex,
-            toolName: tool.toolName,
-            toolPattern: tool.toolPattern,
-          });
-        }
-
-        // Copy skills from source agent to duplicated agent
-        const sourceSkills = await agentSkillsRepository.findByAgentId(id);
-        for (const skill of sourceSkills) {
-          await agentSkillsRepository.create({
-            agentId: duplicatedAgent.id,
-            orderIndex: skill.orderIndex,
-            requiredAt: skill.requiredAt,
-            skillName: skill.skillName,
-          });
-        }
-
-        return duplicatedAgent;
-      } catch (error) {
-        console.error('[IPC Error] agent:duplicate:', error);
-        throw error;
+  ipcMain.handle(IpcChannels.agent.duplicate, async (_event: IpcMainInvokeEvent, id: number): Promise<Agent> => {
+    try {
+      // Fetch the source agent by ID
+      const sourceAgent = await agentsRepository.findById(id);
+      if (!sourceAgent) {
+        throw new Error('Agent not found');
       }
+
+      // Generate a unique name by appending "-copy" and checking for conflicts
+      // Name uses kebab-case to comply with the agent name regex pattern
+      // Display name uses human-readable format with spaces
+      let copyNumber = 1;
+      let newName = `${sourceAgent.name}-copy`;
+      let newDisplayName = `${sourceAgent.displayName} (Copy)`;
+
+      // Check if a copy already exists and increment the number if needed
+      let existingAgent = await agentsRepository.findByName(newName);
+      while (existingAgent) {
+        copyNumber++;
+        newName = `${sourceAgent.name}-copy-${copyNumber}`;
+        newDisplayName = `${sourceAgent.displayName} (Copy ${copyNumber})`;
+        existingAgent = await agentsRepository.findByName(newName);
+      }
+
+      // Create the duplicate agent with copied data
+      const newAgentData: NewAgent = {
+        builtInAt: null, // Custom agent, not built-in
+        color: sourceAgent.color,
+        description: sourceAgent.description,
+        displayName: newDisplayName,
+        name: newName,
+        parentAgentId: null, // No parent for duplicated agents
+        projectId: sourceAgent.projectId,
+        systemPrompt: sourceAgent.systemPrompt,
+        type: sourceAgent.type,
+        version: 1, // Reset version to 1 for the new copy
+      };
+
+      const duplicatedAgent = await agentsRepository.create(newAgentData);
+
+      // Copy tools from source agent to duplicated agent
+      const sourceTools = await agentToolsRepository.findByAgentId(id);
+      for (const tool of sourceTools) {
+        await agentToolsRepository.create({
+          agentId: duplicatedAgent.id,
+          disallowedAt: tool.disallowedAt,
+          orderIndex: tool.orderIndex,
+          toolName: tool.toolName,
+          toolPattern: tool.toolPattern,
+        });
+      }
+
+      // Copy skills from source agent to duplicated agent
+      const sourceSkills = await agentSkillsRepository.findByAgentId(id);
+      for (const skill of sourceSkills) {
+        await agentSkillsRepository.create({
+          agentId: duplicatedAgent.id,
+          orderIndex: skill.orderIndex,
+          requiredAt: skill.requiredAt,
+          skillName: skill.skillName,
+        });
+      }
+
+      return duplicatedAgent;
+    } catch (error) {
+      console.error('[IPC Error] agent:duplicate:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Create a project-specific override of a global agent.
@@ -521,11 +512,7 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.move,
-    async (
-      _event: IpcMainInvokeEvent,
-      agentId: number,
-      targetProjectId: null | number
-    ): Promise<Agent> => {
+    async (_event: IpcMainInvokeEvent, agentId: number, targetProjectId: null | number): Promise<Agent> => {
       try {
         // Validate agent exists
         const agent = await agentsRepository.findById(agentId);
@@ -806,58 +793,55 @@ export function registerAgentHandlers(
   /**
    * Export an agent to markdown format for sharing or backup.
    */
-  ipcMain.handle(
-    IpcChannels.agent.export,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<string> => {
-      try {
-        // Fetch the agent
-        const agent = await agentsRepository.findById(id);
-        if (!agent) {
-          throw new Error('Agent not found');
-        }
-
-        // Fetch associated tools, skills, and hooks
-        const allTools = await agentToolsRepository.findByAgentId(id);
-        const skills = await agentSkillsRepository.findByAgentId(id);
-        const hooks = await agentHooksRepository.findByAgentId(id);
-
-        // Separate allowed and disallowed tools
-        const tools = allTools.filter((t) => t.disallowedAt === null);
-        const disallowedTools = allTools.filter((t) => t.disallowedAt !== null);
-
-        // Serialize to markdown format
-        return serializeAgentToMarkdown({
-          agent: {
-            color: agent.color,
-            description: agent.description,
-            displayName: agent.displayName,
-            model: agent.model,
-            name: agent.name,
-            permissionMode: agent.permissionMode,
-            systemPrompt: agent.systemPrompt,
-            type: agent.type,
-          },
-          disallowedTools: disallowedTools.map((tool) => ({
-            toolName: tool.toolName,
-          })),
-          hooks: hooks.map((hook) => ({
-            body: hook.body,
-            eventType: hook.eventType,
-            matcher: hook.matcher,
-          })),
-          skills: skills.map((skill) => ({
-            skillName: skill.skillName,
-          })),
-          tools: tools.map((tool) => ({
-            toolName: tool.toolName,
-          })),
-        });
-      } catch (error) {
-        console.error('[IPC Error] agent:export:', error);
-        throw error;
+  ipcMain.handle(IpcChannels.agent.export, async (_event: IpcMainInvokeEvent, id: number): Promise<string> => {
+    try {
+      // Fetch the agent
+      const agent = await agentsRepository.findById(id);
+      if (!agent) {
+        throw new Error('Agent not found');
       }
+
+      // Fetch associated tools, skills, and hooks
+      const allTools = await agentToolsRepository.findByAgentId(id);
+      const skills = await agentSkillsRepository.findByAgentId(id);
+      const hooks = await agentHooksRepository.findByAgentId(id);
+
+      // Separate allowed and disallowed tools
+      const tools = allTools.filter((t) => t.disallowedAt === null);
+      const disallowedTools = allTools.filter((t) => t.disallowedAt !== null);
+
+      // Serialize to markdown format
+      return serializeAgentToMarkdown({
+        agent: {
+          color: agent.color,
+          description: agent.description,
+          displayName: agent.displayName,
+          model: agent.model,
+          name: agent.name,
+          permissionMode: agent.permissionMode,
+          systemPrompt: agent.systemPrompt,
+          type: agent.type,
+        },
+        disallowedTools: disallowedTools.map((tool) => ({
+          toolName: tool.toolName,
+        })),
+        hooks: hooks.map((hook) => ({
+          body: hook.body,
+          eventType: hook.eventType,
+          matcher: hook.matcher,
+        })),
+        skills: skills.map((skill) => ({
+          skillName: skill.skillName,
+        })),
+        tools: tools.map((tool) => ({
+          toolName: tool.toolName,
+        })),
+      });
+    } catch (error) {
+      console.error('[IPC Error] agent:export:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Export multiple agents to markdown format (batch export).

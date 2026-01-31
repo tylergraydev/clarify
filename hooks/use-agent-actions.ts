@@ -71,7 +71,11 @@ export interface UseAgentActionsReturn {
   /** Handle moving an agent to another project */
   onMoveToProject: (agent: AgentWithRelations) => void;
   /** Handle selecting a project in the project dialog */
-  onProjectDialogSelect: (agent: AgentWithRelations | null, mode: 'copy' | 'move', targetProjectId: null | number) => void;
+  onProjectDialogSelect: (
+    agent: AgentWithRelations | null,
+    mode: 'copy' | 'move',
+    targetProjectId: null | number
+  ) => void;
   /** Handle resetting an agent to defaults */
   onReset: (agentId: number) => void;
   /** Handle toggling agent active state */
@@ -212,17 +216,11 @@ export const useAgentActions = ({
       if (!agent) return;
 
       if (mode === 'move') {
-        moveAgentMutation.mutate(
-          { agentId: agent.id, targetProjectId },
-          { onSettled: onCloseProjectDialog }
-        );
+        moveAgentMutation.mutate({ agentId: agent.id, targetProjectId }, { onSettled: onCloseProjectDialog });
       } else {
         // Copy mode - targetProjectId cannot be null for copy
         if (targetProjectId !== null) {
-          copyToProjectMutation.mutate(
-            { agentId: agent.id, targetProjectId },
-            { onSettled: onCloseProjectDialog }
-          );
+          copyToProjectMutation.mutate({ agentId: agent.id, targetProjectId }, { onSettled: onCloseProjectDialog });
         }
       }
     },

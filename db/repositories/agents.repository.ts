@@ -34,12 +34,7 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
   return {
     async activate(id: number): Promise<Agent | undefined> {
       const now = new Date().toISOString();
-      return db
-        .update(agents)
-        .set({ deactivatedAt: null, updatedAt: now })
-        .where(eq(agents.id, id))
-        .returning()
-        .get();
+      return db.update(agents).set({ deactivatedAt: null, updatedAt: now }).where(eq(agents.id, id)).returning().get();
     },
 
     async create(data: NewAgent): Promise<Agent> {
@@ -54,12 +49,7 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
 
     async deactivate(id: number): Promise<Agent | undefined> {
       const now = new Date().toISOString();
-      return db
-        .update(agents)
-        .set({ deactivatedAt: now, updatedAt: now })
-        .where(eq(agents.id, id))
-        .returning()
-        .get();
+      return db.update(agents).set({ deactivatedAt: now, updatedAt: now }).where(eq(agents.id, id)).returning().get();
     },
 
     async delete(id: number): Promise<boolean> {
