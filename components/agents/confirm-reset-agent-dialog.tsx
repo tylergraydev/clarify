@@ -26,6 +26,17 @@ interface ConfirmResetAgentDialogProps {
   onOpenChange: (isOpen: boolean) => void;
 }
 
+/**
+ * Confirmation dialog for resetting a customized agent to its default configuration.
+ * Displays a warning about data loss and requires explicit confirmation.
+ *
+ * @param props - Component props
+ * @param props.agentName - The agent display name to show in the dialog
+ * @param props.isLoading - Whether the mutation is in progress
+ * @param props.isOpen - Whether the dialog is open (controlled)
+ * @param props.onConfirm - Callback when the user confirms the action
+ * @param props.onOpenChange - Callback when the dialog open state changes
+ */
 export const ConfirmResetAgentDialog = ({
   agentName,
   isLoading = false,

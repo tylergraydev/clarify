@@ -20,9 +20,9 @@ export function createAgentSkillsRepository(db: DrizzleDatabase): AgentSkillsRep
   return {
     async create(data: NewAgentSkill): Promise<AgentSkill> {
       // Validate all fields
-      createAgentSkillSchema.parse(data);
+      const validated = createAgentSkillSchema.parse(data);
 
-      const result = db.insert(agentSkills).values(data).returning().get();
+      const result = db.insert(agentSkills).values(validated).returning().get();
       if (!result) {
         throw new Error('Failed to create agent skill');
       }
@@ -70,12 +70,12 @@ export function createAgentSkillsRepository(db: DrizzleDatabase): AgentSkillsRep
 
     async update(id: number, data: Partial<Omit<NewAgentSkill, 'createdAt' | 'id'>>): Promise<AgentSkill | undefined> {
       // Validate all provided fields
-      updateAgentSkillSchema.parse(data);
+      const validated = updateAgentSkillSchema.parse(data);
 
       const now = new Date().toISOString();
       return db
         .update(agentSkills)
-        .set({ ...data, updatedAt: now })
+        .set({ ...validated, updatedAt: now })
         .where(eq(agentSkills.id, id))
         .returning()
         .get();

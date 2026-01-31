@@ -31,9 +31,9 @@ export function createAgentToolsRepository(db: DrizzleDatabase): AgentToolsRepos
 
     async create(data: NewAgentTool): Promise<AgentTool> {
       // Validate all fields
-      createAgentToolSchema.parse(data);
+      const validated = createAgentToolSchema.parse(data);
 
-      const result = db.insert(agentTools).values(data).returning().get();
+      const result = db.insert(agentTools).values(validated).returning().get();
       if (!result) {
         throw new Error('Failed to create agent tool');
       }
@@ -78,12 +78,12 @@ export function createAgentToolsRepository(db: DrizzleDatabase): AgentToolsRepos
 
     async update(id: number, data: Partial<Omit<NewAgentTool, 'createdAt' | 'id'>>): Promise<AgentTool | undefined> {
       // Validate all provided fields
-      updateAgentToolSchema.parse(data);
+      const validated = updateAgentToolSchema.parse(data);
 
       const now = new Date().toISOString();
       return db
         .update(agentTools)
-        .set({ ...data, updatedAt: now })
+        .set({ ...validated, updatedAt: now })
         .where(eq(agentTools.id, id))
         .returning()
         .get();

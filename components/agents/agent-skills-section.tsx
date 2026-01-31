@@ -156,6 +156,7 @@ export const AgentSkillsSection = ({ disabled = false, onSkillsChange, skills }:
                 setValidationError(null);
               }}
               size={'sm'}
+              type={'button'}
               variant={'ghost'}
             >
               {'Cancel'}

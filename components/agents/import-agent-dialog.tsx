@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { getAgentColorHex } from '@/lib/colors/agent-colors';
-import { cn } from '@/lib/utils';
+import { capitalizeFirstLetter, cn, getBadgeVariantForType, truncateText } from '@/lib/utils';
 
 interface ImportAgentDialogProps {
   /** Whether import is in progress */
@@ -38,6 +38,19 @@ interface ImportAgentDialogProps {
   validationResult: AgentImportValidationResult | null;
 }
 
+/**
+ * Dialog for previewing and confirming agent import from markdown files.
+ * Displays parsed agent configuration with validation errors and warnings,
+ * and allows users to review before importing.
+ *
+ * @param props - Component props
+ * @param props.isLoading - Whether import is in progress
+ * @param props.isOpen - Whether the dialog is open
+ * @param props.onImport - Callback when import is confirmed
+ * @param props.onOpenChange - Callback when dialog open state changes
+ * @param props.parsedData - The parsed agent markdown data to preview
+ * @param props.validationResult - Validation result from agent import validation
+ */
 export const ImportAgentDialog = ({
   isLoading = false,
   isOpen,
@@ -333,36 +346,3 @@ export const ImportAgentDialog = ({
     </DialogRoot>
   );
 };
-
-/**
- * Capitalize the first letter of a string.
- */
-function capitalizeFirstLetter(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-/**
- * Get badge variant based on agent type.
- */
-function getBadgeVariantForType(type: string): 'default' | 'planning' | 'review' | 'specialist' {
-  switch (type) {
-    case 'planning':
-      return 'planning';
-    case 'review':
-      return 'review';
-    case 'specialist':
-      return 'specialist';
-    default:
-      return 'default';
-  }
-}
-
-/**
- * Truncate text with ellipsis if it exceeds the max length.
- */
-function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) {
-    return text;
-  }
-  return `${text.slice(0, maxLength)}...`;
-}

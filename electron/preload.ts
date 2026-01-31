@@ -304,24 +304,24 @@ export interface AgentWithRelations extends Agent {
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<Agent | undefined>;
-    copyToProject(agentId: number, targetProjectId: number): Promise<AgentOperationResult>;
-    create(data: NewAgent): Promise<AgentOperationResult>;
-    createOverride(agentId: number, projectId: number): Promise<AgentOperationResult>;
+    copyToProject(agentId: number, targetProjectId: number): Promise<Agent>;
+    create(data: NewAgent): Promise<Agent>;
+    createOverride(agentId: number, projectId: number): Promise<Agent>;
     deactivate(id: number): Promise<Agent | undefined>;
-    delete(id: number): Promise<AgentOperationResult>;
-    duplicate(id: number): Promise<AgentOperationResult>;
-    export(id: number): Promise<AgentExportResult>;
+    delete(id: number): Promise<void>;
+    duplicate(id: number): Promise<Agent>;
+    export(id: number): Promise<string>;
     exportBatch(ids: Array<number>): Promise<Array<AgentExportBatchItem>>;
     get(id: number): Promise<Agent | undefined>;
     import(parsedMarkdown: AgentImportInput): Promise<AgentImportResult>;
     list(filters?: AgentListFilters): Promise<Array<AgentWithRelations>>;
-    move(agentId: number, targetProjectId: null | number): Promise<AgentOperationResult>;
+    move(agentId: number, targetProjectId: null | number): Promise<Agent>;
     reset(id: number): Promise<Agent | undefined>;
-    update(id: number, data: Partial<NewAgent>): Promise<AgentOperationResult>;
+    update(id: number, data: Partial<NewAgent>): Promise<Agent>;
   };
   agentSkill: {
     create(data: NewAgentSkill): Promise<AgentSkill>;
-    delete(id: number): Promise<void>;
+    delete(id: number): Promise<boolean>;
     list(agentId: number): Promise<Array<AgentSkill>>;
     setRequired(id: number, required: boolean): Promise<AgentSkill | undefined>;
     update(id: number, data: Partial<NewAgentSkill>): Promise<AgentSkill | undefined>;
@@ -329,7 +329,7 @@ export interface ElectronAPI {
   agentTool: {
     allow(id: number): Promise<AgentTool | undefined>;
     create(data: NewAgentTool): Promise<AgentTool>;
-    delete(id: number): Promise<void>;
+    delete(id: number): Promise<boolean>;
     disallow(id: number): Promise<AgentTool | undefined>;
     list(agentId: number): Promise<Array<AgentTool>>;
     update(id: number, data: Partial<NewAgentTool>): Promise<AgentTool | undefined>;

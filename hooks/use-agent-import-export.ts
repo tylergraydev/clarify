@@ -168,15 +168,7 @@ export const useAgentImportExport = ({
 
       // Get markdown content from mutation
       exportAgentMutation.mutate(agent.id, {
-        onSuccess: async (result) => {
-          if (!result.success || !result.markdown) {
-            toast.error({
-              description: result.error ?? 'Failed to export agent',
-              title: 'Export Failed',
-            });
-            return;
-          }
-
+        onSuccess: async (markdown) => {
           // Open save dialog with default filename
           const defaultFilename = `${agent.name}.md`;
           const savePath = await api.dialog.saveFile(defaultFilename, [{ extensions: ['md'], name: 'Markdown Files' }]);
@@ -186,7 +178,7 @@ export const useAgentImportExport = ({
           }
 
           // Write content to file
-          const writeResult = await api.fs.writeFile(savePath, result.markdown);
+          const writeResult = await api.fs.writeFile(savePath, markdown);
 
           if (!writeResult.success) {
             toast.error({

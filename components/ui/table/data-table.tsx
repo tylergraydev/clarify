@@ -358,7 +358,13 @@ function createSelectionColumn<TData>(): DataTableColumnDef<TData, unknown> {
       />
     ),
     id: 'select',
-    size: 40,
+    maxSize: 48,
+    meta: {
+      cellClassName: 'px-2',
+      headerClassName: 'px-2',
+    },
+    minSize: 36,
+    size: 36,
   };
 }
 
@@ -586,7 +592,7 @@ export const DataTable = <TData, TValue>({
     }),
   };
 
-  // eslint-disable-next-line react-hooks/incompatible-library
+   
   const table = useReactTable({
     columnResizeMode: 'onChange',
     columns,
@@ -638,13 +644,23 @@ export const DataTable = <TData, TValue>({
     [onRowClick]
   );
 
-  // Get table width style using CSS variables for column widths
+  // Get table style with CSS variables for column widths
+  // Using CSS variables enables performant 60fps column resizing without re-rendering cells
+  // See: https://tanstack.com/table/latest/docs/guide/column-sizing#advanced-column-resizing-performance
+  const columnSizingInfo = table.getState().columnSizingInfo;
+  const columnSizing = table.getState().columnSizing;
+
   const tableStyle = useMemo(() => {
-    const totalSize = table.getTotalSize();
-    return {
-      '--table-width': `${totalSize}px`,
-    } as CSSProperties;
-  }, [table]);
+    const headers = table.getFlatHeaders();
+    const colSizes: Record<string, number | string> = {
+      '--table-width': `${table.getTotalSize()}px`,
+    };
+    for (const header of headers) {
+      colSizes[`--col-${header.column.id}-size`] = header.getSize();
+    }
+    return colSizes as CSSProperties;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columnSizingInfo, columnSizing, table]);
 
   return (
     <div className={cn(dataTableContainerVariants({ density }), className)} ref={ref} {...props}>
@@ -687,7 +703,7 @@ export const DataTable = <TData, TValue>({
                         colSpan={header.colSpan}
                         key={header.id}
                         style={{
-                          width: header.getSize(),
+                          width: `calc(var(--col-${header.column.id}-size) * 1px)`,
                         }}
                       >
                         {/* Draggable Header Content */}
@@ -730,7 +746,7 @@ export const DataTable = <TData, TValue>({
                             className={cn(dataTableCellVariants({ density }), cellClassName)}
                             key={cell.id}
                             style={{
-                              width: cell.column.getSize(),
+                              width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
                             }}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}

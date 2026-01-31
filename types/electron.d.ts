@@ -1,6 +1,7 @@
 // Re-export database types for renderer use
 export type {
   Agent,
+  AgentHook,
   AgentSkill,
   AgentTool,
   AuditLog,
@@ -151,20 +152,20 @@ export type AgentWithRelations = import('../db/schema').Agent & {
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<import('../db/schema').Agent | undefined>;
-    copyToProject(agentId: number, targetProjectId: number): Promise<AgentOperationResult>;
-    create(data: import('../db/schema').NewAgent): Promise<AgentOperationResult>;
-    createOverride(agentId: number, projectId: number): Promise<AgentOperationResult>;
+    copyToProject(agentId: number, targetProjectId: number): Promise<import('../db/schema').Agent>;
+    create(data: import('../db/schema').NewAgent): Promise<import('../db/schema').Agent>;
+    createOverride(agentId: number, projectId: number): Promise<import('../db/schema').Agent>;
     deactivate(id: number): Promise<import('../db/schema').Agent | undefined>;
-    delete(id: number): Promise<AgentOperationResult>;
-    duplicate(id: number): Promise<AgentOperationResult>;
-    export(id: number): Promise<AgentExportResult>;
+    delete(id: number): Promise<void>;
+    duplicate(id: number): Promise<import('../db/schema').Agent>;
+    export(id: number): Promise<string>;
     exportBatch(ids: Array<number>): Promise<Array<AgentExportBatchItem>>;
     get(id: number): Promise<import('../db/schema').Agent | undefined>;
     import(parsedMarkdown: AgentImportInput): Promise<AgentImportResult>;
     list(filters?: AgentListFilters): Promise<Array<AgentWithRelations>>;
-    move(agentId: number, targetProjectId: null | number): Promise<AgentOperationResult>;
+    move(agentId: number, targetProjectId: null | number): Promise<import('../db/schema').Agent>;
     reset(id: number): Promise<import('../db/schema').Agent | undefined>;
-    update(id: number, data: Partial<import('../db/schema').NewAgent>): Promise<AgentOperationResult>;
+    update(id: number, data: Partial<import('../db/schema').NewAgent>): Promise<import('../db/schema').Agent>;
   };
   agentSkill: {
     create(data: import('../db/schema').NewAgentSkill): Promise<import('../db/schema').AgentSkill>;

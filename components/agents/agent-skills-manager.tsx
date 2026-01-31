@@ -22,6 +22,15 @@ interface AgentSkillsManagerProps {
   disabled?: boolean;
 }
 
+/**
+ * Skills manager component for edit mode with database persistence.
+ * Manages agent skills through direct database operations via mutations.
+ * Used when editing existing agents with saved skill configurations.
+ *
+ * @param props - Component props
+ * @param props.agentId - The ID of the agent to manage skills for
+ * @param props.disabled - Whether the inputs are disabled
+ */
 export const AgentSkillsManager = ({ agentId, disabled = false }: AgentSkillsManagerProps) => {
   const [newSkillName, setNewSkillName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -158,6 +167,7 @@ export const AgentSkillsManager = ({ agentId, disabled = false }: AgentSkillsMan
                 setValidationError(null);
               }}
               size={'sm'}
+              type={'button'}
               variant={'ghost'}
             >
               {'Cancel'}

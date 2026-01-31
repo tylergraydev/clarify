@@ -66,6 +66,10 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
   const isShowEmptyState = currentEntries.length === 0 && !isAddingEntry;
   const isHasEntries = currentEntries.length > 0;
 
+  const getTotalHooksCount = () => {
+    return (hooks.PreToolUse?.length ?? 0) + (hooks.PostToolUse?.length ?? 0) + (hooks.Stop?.length ?? 0);
+  };
+
   const handleAddEntry = useCallback(() => {
     const trimmedBody = newBody.trim();
     const trimmedMatcher = newMatcher.trim();
@@ -117,10 +121,6 @@ export const AgentHooksSection = ({ disabled = false, hooks, onHooksChange }: Ag
       setNewMatcher('');
     }
   }, []);
-
-  const getTotalHooksCount = () => {
-    return (hooks.PreToolUse?.length ?? 0) + (hooks.PostToolUse?.length ?? 0) + (hooks.Stop?.length ?? 0);
-  };
 
   return (
     <Collapsible defaultOpen={false}>

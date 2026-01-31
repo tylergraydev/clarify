@@ -13,9 +13,8 @@ import { cn } from '@/lib/utils';
 
 export const dataTableResizeHandleVariants = cva(
   `
-    absolute top-0 right-0 z-10 h-full w-1 cursor-col-resize touch-none
-    bg-transparent transition-colors select-none
-    hover:bg-accent
+    absolute top-0 -right-px z-10 h-full w-2 cursor-col-resize touch-none
+    transition-colors select-none
     focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0
     focus-visible:outline-none
   `,
@@ -25,8 +24,8 @@ export const dataTableResizeHandleVariants = cva(
     },
     variants: {
       isResizing: {
-        false: 'opacity-0 group-hover:opacity-100',
-        true: 'bg-accent opacity-100',
+        false: 'bg-border/40 hover:bg-accent/70',
+        true: 'bg-accent',
       },
     },
   }

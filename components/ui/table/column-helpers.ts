@@ -293,7 +293,7 @@ type DisplayColumnOptions<TData> = Omit<DataTableColumnDef<TData, unknown>, 'acc
  * ```
  */
 export function actionsColumn<TData>(options: ActionsColumnOptions<TData> = {}): DataTableColumnDef<TData, unknown> {
-  const { actions, cell, header = '', id = 'actions', size = 60 } = options;
+  const { actions, cell, header = '', id = 'actions', size = 44 } = options;
 
   return {
     cell:
@@ -313,10 +313,12 @@ export function actionsColumn<TData>(options: ActionsColumnOptions<TData> = {}):
     enableSorting: false,
     header,
     id,
+    maxSize: 60,
     meta: {
-      cellClassName: 'text-right',
-      headerClassName: 'text-right',
+      cellClassName: 'px-2 text-right',
+      headerClassName: 'px-2 text-right',
     },
+    minSize: 36,
     size,
   };
 }
@@ -594,7 +596,7 @@ export function numberColumn<TData, TValue = number>(
  * ```
  */
 export function selectColumn<TData>(options: SelectColumnOptions<TData> = {}): DataTableColumnDef<TData, unknown> {
-  const { enableSelectAll = true, header, id = 'select', size = 40 } = options;
+  const { enableSelectAll = true, header, id = 'select', size = 36 } = options;
 
   return {
     cell: ({ row }: CellContext<TData, unknown>) => {
@@ -627,6 +629,12 @@ export function selectColumn<TData>(options: SelectColumnOptions<TData> = {}): D
         };
       }),
     id,
+    maxSize: 48,
+    meta: {
+      cellClassName: 'px-2',
+      headerClassName: 'px-2',
+    },
+    minSize: 36,
     size,
   };
 }

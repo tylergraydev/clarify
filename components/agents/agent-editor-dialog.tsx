@@ -48,6 +48,7 @@ import {
 } from '@/hooks/queries/use-agent-tools';
 import { useCreateAgent, useMoveAgent, useResetAgent, useUpdateAgent } from '@/hooks/queries/use-agents';
 import { useProject, useProjects } from '@/hooks/queries/use-projects';
+import { useControllableState } from '@/hooks/use-controllable-state';
 import { getAgentColorHex } from '@/lib/colors/agent-colors';
 import { CLAUDE_BUILTIN_TOOLS, getDefaultToolsForAgentType, isBuiltinTool } from '@/lib/constants/claude-tools';
 import { useAppForm } from '@/lib/forms/form-hook';
@@ -232,6 +233,21 @@ const HooksCollapsibleSection = memo(function HooksCollapsibleSection({
 // Constant for global project option value
 const GLOBAL_PROJECT_VALUE = '__global__';
 
+/**
+ * Dialog for creating and editing agents with full configuration options.
+ * Supports both create and edit modes with controlled/uncontrolled open state.
+ * Manages agent properties, tools, skills, and hooks configuration.
+ *
+ * @param props - Component props
+ * @param props.agent - The agent to edit (required for edit mode)
+ * @param props.initialData - Initial data for pre-filling the form (used in create mode for duplicating)
+ * @param props.isOpen - Controlled open state (optional - if provided, component is controlled)
+ * @param props.mode - The mode of the editor ('create' or 'edit')
+ * @param props.onOpenChange - Callback when open state changes (optional - for controlled mode)
+ * @param props.onSuccess - Callback when agent is successfully saved
+ * @param props.projectId - Optional project ID for creating project-scoped agents (create mode only)
+ * @param props.trigger - The trigger element that opens the dialog (optional when using controlled mode)
+ */
 export const AgentEditorDialog = ({
   agent,
   initialData,
@@ -242,15 +258,11 @@ export const AgentEditorDialog = ({
   projectId,
   trigger,
 }: AgentEditorDialogProps) => {
-  const [internalIsOpen, setInternalIsOpen] = useState(false);
-
-  // Determine if component is controlled
-  const isControlled = controlledIsOpen !== undefined;
-  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
-  const setIsOpen = useMemo(
-    () => (isControlled ? (open: boolean) => controlledOnOpenChange?.(open) : setInternalIsOpen),
-    [isControlled, controlledOnOpenChange]
-  );
+  const [isOpen, setIsOpen] = useControllableState({
+    defaultValue: false,
+    onChange: controlledOnOpenChange,
+    value: controlledIsOpen,
+  });
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<'' | AgentColor>('');
   const [selectedProjectId, setSelectedProjectId] = useState<null | number>(null);
@@ -481,7 +493,7 @@ export const AgentEditorDialog = ({
         const effectiveProjectId = selectedProjectId;
         const modelValue = createValue.model === '' ? null : createValue.model;
         const permissionModeValue = createValue.permissionMode === '' ? null : createValue.permissionMode;
-        const result = await createAgentMutation.mutateAsync({
+        const createdAgent = await createAgentMutation.mutateAsync({
           color: createValue.color,
           description: createValue.description,
           displayName: createValue.displayName,
@@ -493,30 +505,28 @@ export const AgentEditorDialog = ({
           type: createValue.type,
         });
 
-        // If agent was created successfully, create tools and skills
-        if (result.success && result.agent) {
-          const toolsToSave = getToolsToSave();
-          for (const tool of toolsToSave) {
-            await createToolMutation.mutateAsync({
-              agentId: result.agent.id,
-              toolName: tool.toolName,
-              toolPattern: tool.pattern,
-            });
-          }
+        // Create tools and skills for the new agent
+        const toolsToSave = getToolsToSave();
+        for (const tool of toolsToSave) {
+          await createToolMutation.mutateAsync({
+            agentId: createdAgent.id,
+            toolName: tool.toolName,
+            toolPattern: tool.pattern,
+          });
+        }
 
-          // Create skills for the new agent
-          for (const skill of pendingSkills) {
-            const createdSkill = await createSkillMutation.mutateAsync({
-              agentId: result.agent.id,
-              skillName: skill.skillName,
+        // Create skills for the new agent
+        for (const skill of pendingSkills) {
+          const createdSkill = await createSkillMutation.mutateAsync({
+            agentId: createdAgent.id,
+            skillName: skill.skillName,
+          });
+          // Set required status if needed
+          if (skill.isRequired && createdSkill) {
+            await setSkillRequiredMutation.mutateAsync({
+              id: createdSkill.id,
+              required: true,
             });
-            // Set required status if needed
-            if (skill.isRequired && createdSkill) {
-              await setSkillRequiredMutation.mutateAsync({
-                id: createdSkill.id,
-                required: true,
-              });
-            }
           }
         }
       }
