@@ -1,5 +1,7 @@
 import { eq, isNull } from 'drizzle-orm';
 
+import { createProjectSchema, updateProjectSchema } from '@/lib/validations/project';
+
 import type { DrizzleDatabase } from '../index';
 
 import { type NewProject, type Project, projects } from '../schema';
@@ -27,7 +29,8 @@ export function createProjectsRepository(db: DrizzleDatabase): ProjectsRepositor
     },
 
     async create(data: NewProject): Promise<Project> {
-      const result = await db.insert(projects).values(data).returning();
+      const validatedData = createProjectSchema.parse(data);
+      const result = await db.insert(projects).values(validatedData).returning();
       if (!result[0]) {
         throw new Error('Failed to create project');
       }
@@ -61,10 +64,11 @@ export function createProjectsRepository(db: DrizzleDatabase): ProjectsRepositor
     },
 
     async update(id: number, data: Partial<Omit<NewProject, 'createdAt' | 'id'>>): Promise<Project | undefined> {
+      const validatedData = updateProjectSchema.parse(data);
       const now = new Date().toISOString();
       const result = await db
         .update(projects)
-        .set({ ...data, updatedAt: now })
+        .set({ ...validatedData, updatedAt: now })
         .where(eq(projects.id, id))
         .returning();
       return result[0];

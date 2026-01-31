@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { useUpdateProject } from '@/hooks/queries/use-projects';
 import { useAppForm } from '@/lib/forms/form-hook';
-import { createProjectSchema } from '@/lib/validations/project';
+import { type CreateProjectFormValues, createProjectSchema } from '@/lib/validations/project';
 
 interface EditProjectDialogProps {
   /** Callback when project is successfully updated */
@@ -39,11 +39,13 @@ export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDi
 
   const isSubmitting = updateProjectMutation.isPending;
 
+  const defaultValues: CreateProjectFormValues = {
+    description: project.description ?? '',
+    name: project.name,
+  };
+
   const form = useAppForm({
-    defaultValues: {
-      description: project.description ?? '',
-      name: project.name,
-    },
+    defaultValues,
     onSubmit: async ({ value }) => {
       try {
         await updateProjectMutation.mutateAsync({
@@ -67,10 +69,11 @@ export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDi
 
   // Reset form when project changes
   useEffect(() => {
-    form.reset({
+    const resetValues: CreateProjectFormValues = {
       description: project.description ?? '',
       name: project.name,
-    });
+    };
+    form.reset(resetValues);
   }, [project, form]);
 
   const handleClose = () => {

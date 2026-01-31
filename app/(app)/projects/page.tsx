@@ -88,16 +88,16 @@ function ProjectsPageContent() {
     void setArchiveFilter(DEFAULT_ARCHIVE_FILTER);
   };
 
-  const handleArchive = (projectId: number) => {
-    archiveProjectMutation.mutate(projectId);
+  const handleArchive = async (projectId: number) => {
+    await archiveProjectMutation.mutateAsync(projectId);
   };
 
-  const handleUnarchive = (projectId: number) => {
-    unarchiveProjectMutation.mutate(projectId);
+  const handleUnarchive = async (projectId: number) => {
+    await unarchiveProjectMutation.mutateAsync(projectId);
   };
 
-  const handleDelete = (projectId: number) => {
-    deleteProjectMutation.mutate(projectId);
+  const handleDelete = async (projectId: number) => {
+    await deleteProjectMutation.mutateAsync(projectId);
   };
 
   const handleViewDetails = (projectId: number) => {

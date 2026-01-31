@@ -30,12 +30,12 @@ interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
   isArchiving?: boolean;
   /** Whether a delete mutation is in progress */
   isDeleting?: boolean;
-  /** Callback when the user confirms archiving a project */
-  onArchive?: (projectId: number) => void;
-  /** Callback when the user confirms permanently deleting a project */
-  onDelete?: (projectId: number) => void;
-  /** Callback when the user confirms unarchiving a project */
-  onUnarchive?: (projectId: number) => void;
+  /** Callback when the user confirms archiving a project. Returns a promise that resolves when the mutation completes. */
+  onArchive?: (projectId: number) => Promise<void>;
+  /** Callback when the user confirms permanently deleting a project. Returns a promise that resolves when the mutation completes. */
+  onDelete?: (projectId: number) => Promise<void>;
+  /** Callback when the user confirms unarchiving a project. Returns a promise that resolves when the mutation completes. */
+  onUnarchive?: (projectId: number) => Promise<void>;
   /** Callback when the user clicks view details on a project */
   onViewDetails?: (projectId: number) => void;
   /** Array of projects to display */
@@ -70,9 +70,9 @@ const columnHelper = createColumnHelper<Project>();
 interface ActionsCellProps {
   isArchiving: boolean;
   isDeleting: boolean;
-  onArchive?: (projectId: number) => void;
-  onDelete?: (projectId: number) => void;
-  onUnarchive?: (projectId: number) => void;
+  onArchive?: (projectId: number) => Promise<void>;
+  onDelete?: (projectId: number) => Promise<void>;
+  onUnarchive?: (projectId: number) => Promise<void>;
   onViewDetails?: (projectId: number) => void;
   row: Row<Project>;
 }
@@ -99,18 +99,28 @@ const ActionsCell = memo(function ActionsCell({
   // Dialog state for delete confirmation
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const handleArchiveConfirm = useCallback(() => {
-    if (isArchived) {
-      onUnarchive?.(project.id);
-    } else {
-      onArchive?.(project.id);
+  const handleArchiveConfirm = useCallback(async () => {
+    try {
+      if (isArchived) {
+        await onUnarchive?.(project.id);
+      } else {
+        await onArchive?.(project.id);
+      }
+      setIsArchiveDialogOpen(false);
+    } catch {
+      // Error is handled by the mutation's onError callback (toast)
+      // Dialog remains open so user can retry or cancel
     }
-    setIsArchiveDialogOpen(false);
   }, [isArchived, onArchive, onUnarchive, project.id]);
 
-  const handleDeleteConfirm = useCallback(() => {
-    onDelete?.(project.id);
-    setIsDeleteDialogOpen(false);
+  const handleDeleteConfirm = useCallback(async () => {
+    try {
+      await onDelete?.(project.id);
+      setIsDeleteDialogOpen(false);
+    } catch {
+      // Error is handled by the mutation's onError callback (toast)
+      // Dialog remains open so user can retry or cancel
+    }
   }, [onDelete, project.id]);
 
   const actions: Array<DataTableRowAction<Project>> = [];
@@ -174,8 +184,8 @@ const ActionsCell = memo(function ActionsCell({
 
 interface StatusCellProps {
   isArchiving: boolean;
-  onArchive?: (projectId: number) => void;
-  onUnarchive?: (projectId: number) => void;
+  onArchive?: (projectId: number) => Promise<void>;
+  onUnarchive?: (projectId: number) => Promise<void>;
   row: Row<Project>;
 }
 
@@ -194,13 +204,18 @@ const StatusCell = memo(function StatusCell({ isArchiving, onArchive, onUnarchiv
     setIsDialogOpen(true);
   }, []);
 
-  const handleConfirm = useCallback(() => {
-    if (isArchived) {
-      onUnarchive?.(project.id);
-    } else {
-      onArchive?.(project.id);
+  const handleConfirm = useCallback(async () => {
+    try {
+      if (isArchived) {
+        await onUnarchive?.(project.id);
+      } else {
+        await onArchive?.(project.id);
+      }
+      setIsDialogOpen(false);
+    } catch {
+      // Error is handled by the mutation's onError callback (toast)
+      // Dialog remains open so user can retry or cancel
     }
-    setIsDialogOpen(false);
   }, [isArchived, onArchive, onUnarchive, project.id]);
 
   return (

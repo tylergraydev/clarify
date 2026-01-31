@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { useCreateProject } from '@/hooks/queries/use-projects';
 import { useAppForm } from '@/lib/forms/form-hook';
-import { createProjectSchema } from '@/lib/validations/project';
+import { type CreateProjectFormValues, createProjectSchema } from '@/lib/validations/project';
 
 interface CreateProjectDialogProps {
   /** Callback when project is successfully created */
@@ -33,11 +33,13 @@ export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogP
 
   const isSubmitting = createProjectMutation.isPending;
 
+  const defaultValues: CreateProjectFormValues = {
+    description: '',
+    name: '',
+  };
+
   const form = useAppForm({
-    defaultValues: {
-      description: '',
-      name: '',
-    },
+    defaultValues,
     onSubmit: async ({ value }) => {
       try {
         await createProjectMutation.mutateAsync({
@@ -97,7 +99,13 @@ export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogP
               {/* Name Field */}
               <form.AppField name={'name'}>
                 {(field) => (
-                  <field.TextField autoFocus isRequired label={'Project Name'} placeholder={'Enter project name'} />
+                  <field.TextField
+                    autoFocus
+                    isDisabled={isSubmitting}
+                    isRequired
+                    label={'Project Name'}
+                    placeholder={'Enter project name'}
+                  />
                 )}
               </form.AppField>
 
@@ -106,6 +114,7 @@ export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogP
                 {(field) => (
                   <field.TextareaField
                     description={'Optional description for your project'}
+                    isDisabled={isSubmitting}
                     label={'Description'}
                     placeholder={'Describe your project...'}
                     rows={3}
@@ -122,6 +131,7 @@ export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogP
                 </Button>
               </DialogClose>
               <form.AppForm>
+                <form.FormError />
                 <form.SubmitButton>{isSubmitting ? 'Creating...' : 'Create Project'}</form.SubmitButton>
               </form.AppForm>
             </DialogFooter>
