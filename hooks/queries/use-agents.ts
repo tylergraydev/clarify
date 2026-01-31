@@ -35,6 +35,9 @@ export function useActivateAgent() {
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
         void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
         void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.builtIn.queryKey });
 
         toast.success({
           description: 'Agent has been activated successfully',
@@ -296,6 +299,9 @@ export function useDeactivateAgent() {
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
         void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
         void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
+        void queryClient.invalidateQueries({ queryKey: agentKeys.builtIn.queryKey });
 
         toast.success({
           description: 'Agent has been deactivated successfully',
@@ -629,6 +635,9 @@ export function useUpdateAgent() {
       void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.byProject._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys.byType._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.global._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.projectScoped._def });
+      void queryClient.invalidateQueries({ queryKey: agentKeys.builtIn.queryKey });
 
       toast.success({
         description: 'Agent updated successfully',

@@ -115,10 +115,11 @@ export const createAgentFormSchema = z.object({
 
 export type CreateAgentFormData = z.infer<typeof createAgentFormSchema>;
 
-// Note: color is managed separately via state in AgentEditorDialog
-// since it requires special handling with the color picker component
+// Note: color is included in the schema for validation, though it's managed via state in AgentEditorDialog
+// The form field component handles the state management while this schema validates on submit
 // Note: model and permissionMode use union with empty string for form input (inherit/default)
 export const updateAgentSchema = z.object({
+  color: z.union([z.enum(agentColors), z.literal('')]).optional(),
   description: z.string().trim().max(1000, 'Description is too long').optional(),
   displayName: z.string().trim().min(1, 'Display name is required').max(255, 'Display name is too long'),
   model: z.union([z.enum(agentModels), z.literal('')]).optional(),
