@@ -38,14 +38,20 @@ export function useCreateAgentSkill() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (data: Parameters<typeof agentSkills.create>[0]) => agentSkills.create(data),
+    mutationFn: async ({
+      showToast = true,
+      ...data
+    }: Parameters<typeof agentSkills.create>[0] & { showToast?: boolean }) => {
+      const result = await agentSkills.create(data);
+      return { result, showToast };
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to create skill',
         title: 'Create Skill Failed',
       });
     },
-    onSuccess: () => {
+    onSuccess: ({ result, showToast }) => {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentSkillKeys.byAgent._def,
@@ -55,10 +61,14 @@ export function useCreateAgentSkill() {
         queryKey: agentKeys.all._def,
       });
 
-      toast.success({
-        description: 'Agent skill created successfully',
-        title: 'Skill Created',
-      });
+      if (showToast !== false) {
+        toast.success({
+          description: 'Agent skill created successfully',
+          title: 'Skill Created',
+        });
+      }
+
+      return result;
     },
   });
 }
@@ -72,9 +82,9 @@ export function useDeleteAgentSkill() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ agentId, id }: { agentId: number; id: number }) => {
+    mutationFn: async ({ agentId, id, showToast = true }: { agentId: number; id: number; showToast?: boolean }) => {
       await agentSkills.delete(id);
-      return agentId;
+      return { agentId, showToast };
     },
     onError: (error) => {
       toast.error({
@@ -82,7 +92,7 @@ export function useDeleteAgentSkill() {
         title: 'Delete Skill Failed',
       });
     },
-    onSuccess: (agentId) => {
+    onSuccess: ({ agentId, showToast }) => {
       // Use targeted invalidation for the specific agent
       void queryClient.invalidateQueries({
         queryKey: agentSkillKeys.byAgent(agentId).queryKey,
@@ -92,10 +102,12 @@ export function useDeleteAgentSkill() {
         queryKey: agentKeys.all._def,
       });
 
-      toast.success({
-        description: 'Agent skill deleted successfully',
-        title: 'Skill Deleted',
-      });
+      if (showToast !== false) {
+        toast.success({
+          description: 'Agent skill deleted successfully',
+          title: 'Skill Deleted',
+        });
+      }
     },
   });
 }
@@ -109,14 +121,17 @@ export function useSetAgentSkillRequired() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ id, required }: { id: number; required: boolean }) => agentSkills.setRequired(id, required),
+    mutationFn: async ({ id, required, showToast = true }: { id: number; required: boolean; showToast?: boolean }) => {
+      const result = await agentSkills.setRequired(id, required);
+      return { result, showToast };
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to update skill status',
         title: 'Update Skill Failed',
       });
     },
-    onSuccess: () => {
+    onSuccess: ({ showToast }) => {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentSkillKeys.byAgent._def,
@@ -126,10 +141,12 @@ export function useSetAgentSkillRequired() {
         queryKey: agentKeys.all._def,
       });
 
-      toast.success({
-        description: 'Skill requirement updated successfully',
-        title: 'Skill Updated',
-      });
+      if (showToast !== false) {
+        toast.success({
+          description: 'Skill requirement updated successfully',
+          title: 'Skill Updated',
+        });
+      }
     },
   });
 }

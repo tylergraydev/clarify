@@ -38,14 +38,17 @@ export function useAllowAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => agentTools.allow(id),
+    mutationFn: async ({ id, showToast = true }: { id: number; showToast?: boolean }) => {
+      const result = await agentTools.allow(id);
+      return { result, showToast };
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to allow tool',
         title: 'Allow Tool Failed',
       });
     },
-    onSuccess: () => {
+    onSuccess: ({ showToast }) => {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
@@ -55,10 +58,12 @@ export function useAllowAgentTool() {
         queryKey: agentKeys.all._def,
       });
 
-      toast.success({
-        description: 'Tool has been allowed',
-        title: 'Tool Allowed',
-      });
+      if (showToast !== false) {
+        toast.success({
+          description: 'Tool has been allowed',
+          title: 'Tool Allowed',
+        });
+      }
     },
   });
 }
@@ -72,14 +77,20 @@ export function useCreateAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (data: Parameters<typeof agentTools.create>[0]) => agentTools.create(data),
+    mutationFn: async ({
+      showToast = true,
+      ...data
+    }: Parameters<typeof agentTools.create>[0] & { showToast?: boolean }) => {
+      const result = await agentTools.create(data);
+      return { result, showToast };
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to create tool',
         title: 'Create Tool Failed',
       });
     },
-    onSuccess: () => {
+    onSuccess: ({ showToast }) => {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
@@ -89,10 +100,12 @@ export function useCreateAgentTool() {
         queryKey: agentKeys.all._def,
       });
 
-      toast.success({
-        description: 'Agent tool created successfully',
-        title: 'Tool Created',
-      });
+      if (showToast !== false) {
+        toast.success({
+          description: 'Agent tool created successfully',
+          title: 'Tool Created',
+        });
+      }
     },
   });
 }
@@ -106,9 +119,9 @@ export function useDeleteAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ agentId, id }: { agentId: number; id: number }) => {
+    mutationFn: async ({ agentId, id, showToast = true }: { agentId: number; id: number; showToast?: boolean }) => {
       await agentTools.delete(id);
-      return agentId;
+      return { agentId, showToast };
     },
     onError: (error) => {
       toast.error({
@@ -116,7 +129,7 @@ export function useDeleteAgentTool() {
         title: 'Delete Tool Failed',
       });
     },
-    onSuccess: (agentId) => {
+    onSuccess: ({ agentId, showToast }) => {
       // Use targeted invalidation for the specific agent
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent(agentId).queryKey,
@@ -126,10 +139,12 @@ export function useDeleteAgentTool() {
         queryKey: agentKeys.all._def,
       });
 
-      toast.success({
-        description: 'Agent tool deleted successfully',
-        title: 'Tool Deleted',
-      });
+      if (showToast !== false) {
+        toast.success({
+          description: 'Agent tool deleted successfully',
+          title: 'Tool Deleted',
+        });
+      }
     },
   });
 }
@@ -143,14 +158,17 @@ export function useDisallowAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => agentTools.disallow(id),
+    mutationFn: async ({ id, showToast = true }: { id: number; showToast?: boolean }) => {
+      const result = await agentTools.disallow(id);
+      return { result, showToast };
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to disallow tool',
         title: 'Disallow Tool Failed',
       });
     },
-    onSuccess: () => {
+    onSuccess: ({ showToast }) => {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentToolKeys.byAgent._def,
@@ -160,10 +178,12 @@ export function useDisallowAgentTool() {
         queryKey: agentKeys.all._def,
       });
 
-      toast.success({
-        description: 'Tool has been disallowed',
-        title: 'Tool Disallowed',
-      });
+      if (showToast !== false) {
+        toast.success({
+          description: 'Tool has been disallowed',
+          title: 'Tool Disallowed',
+        });
+      }
     },
   });
 }

@@ -94,9 +94,9 @@ export const AgentToolsManager = ({ agentId, isDisabled = false }: AgentToolsMan
   const handleToggleTool = async (tool: AgentTool) => {
     try {
       if (tool.disallowedAt) {
-        await allowMutation.mutateAsync(tool.id);
+        await allowMutation.mutateAsync({ id: tool.id });
       } else {
-        await disallowMutation.mutateAsync(tool.id);
+        await disallowMutation.mutateAsync({ id: tool.id });
       }
     } catch {
       // Error handled by mutation

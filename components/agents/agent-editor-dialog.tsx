@@ -474,14 +474,15 @@ export const AgentEditorDialog = ({
               // Tool exists - toggle allow/disallow based on enabled state
               const isCurrentlyAllowed = existingTool.disallowedAt === null;
               if (selection.enabled && !isCurrentlyAllowed) {
-                await allowToolMutation.mutateAsync(existingTool.id);
+                await allowToolMutation.mutateAsync({ id: existingTool.id, showToast: false });
               } else if (!selection.enabled && isCurrentlyAllowed) {
-                await disallowToolMutation.mutateAsync(existingTool.id);
+                await disallowToolMutation.mutateAsync({ id: existingTool.id, showToast: false });
               }
             } else if (selection.enabled) {
               // Tool doesn't exist and is enabled - create it
               await createToolMutation.mutateAsync({
                 agentId: agent.id,
+                showToast: false,
                 toolName: selection.toolName,
                 toolPattern: selection.pattern,
               });
@@ -494,6 +495,7 @@ export const AgentEditorDialog = ({
             if (!exists) {
               await createToolMutation.mutateAsync({
                 agentId: agent.id,
+                showToast: false,
                 toolName: tool.toolName,
                 toolPattern: tool.pattern,
               });
@@ -509,6 +511,7 @@ export const AgentEditorDialog = ({
               await deleteToolMutation.mutateAsync({
                 agentId: agent.id,
                 id: existingTool.id,
+                showToast: false,
               });
             }
           }
@@ -523,13 +526,15 @@ export const AgentEditorDialog = ({
               // Create new skill
               const createdSkill = await createSkillMutation.mutateAsync({
                 agentId: agent.id,
+                showToast: false,
                 skillName: skill.skillName,
               });
               // Set required status if needed
-              if (skill.isRequired && createdSkill) {
+              if (skill.isRequired && createdSkill?.result) {
                 await setSkillRequiredMutation.mutateAsync({
-                  id: createdSkill.id,
+                  id: createdSkill.result.id,
                   required: true,
+                  showToast: false,
                 });
               }
             } else {
@@ -539,6 +544,7 @@ export const AgentEditorDialog = ({
                 await setSkillRequiredMutation.mutateAsync({
                   id: existingSkill.id,
                   required: skill.isRequired,
+                  showToast: false,
                 });
               }
             }
@@ -551,6 +557,7 @@ export const AgentEditorDialog = ({
               await deleteSkillMutation.mutateAsync({
                 agentId: agent.id,
                 id: existingSkill.id,
+                showToast: false,
               });
             }
           }
@@ -580,6 +587,7 @@ export const AgentEditorDialog = ({
         for (const tool of toolsToSave) {
           await createToolMutation.mutateAsync({
             agentId: createdAgent.id,
+            showToast: false,
             toolName: tool.toolName,
             toolPattern: tool.pattern,
           });
@@ -589,13 +597,15 @@ export const AgentEditorDialog = ({
         for (const skill of pendingSkills) {
           const createdSkill = await createSkillMutation.mutateAsync({
             agentId: createdAgent.id,
+            showToast: false,
             skillName: skill.skillName,
           });
           // Set required status if needed
-          if (skill.isRequired && createdSkill) {
+          if (skill.isRequired && createdSkill?.result) {
             await setSkillRequiredMutation.mutateAsync({
-              id: createdSkill.id,
+              id: createdSkill.result.id,
               required: true,
+              showToast: false,
             });
           }
         }
@@ -612,6 +622,7 @@ export const AgentEditorDialog = ({
                 eventType,
                 matcher: entry.matcher,
                 orderIndex: index,
+                showToast: false,
               });
             }
           }

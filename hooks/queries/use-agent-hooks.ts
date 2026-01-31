@@ -38,14 +38,20 @@ export function useCreateAgentHook() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (data: Parameters<typeof agentHooks.create>[0]) => agentHooks.create(data),
+    mutationFn: async ({
+      showToast = true,
+      ...data
+    }: Parameters<typeof agentHooks.create>[0] & { showToast?: boolean }) => {
+      const result = await agentHooks.create(data);
+      return { result, showToast };
+    },
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to create hook',
         title: 'Create Hook Failed',
       });
     },
-    onSuccess: () => {
+    onSuccess: ({ showToast }) => {
       // Invalidate all byAgent queries
       void queryClient.invalidateQueries({
         queryKey: agentHookKeys.byAgent._def,
@@ -55,10 +61,12 @@ export function useCreateAgentHook() {
         queryKey: agentKeys.all._def,
       });
 
-      toast.success({
-        description: 'Agent hook created successfully',
-        title: 'Hook Created',
-      });
+      if (showToast !== false) {
+        toast.success({
+          description: 'Agent hook created successfully',
+          title: 'Hook Created',
+        });
+      }
     },
   });
 }
