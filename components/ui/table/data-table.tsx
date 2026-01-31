@@ -711,14 +711,8 @@ export const DataTable = <TData, TValue>({
     [onRowClick]
   );
 
-  // Get table style with CSS variables for column widths
-  // Using CSS variables enables performant 60fps column resizing without re-rendering cells
-  // See: https://tanstack.com/table/latest/docs/guide/column-sizing#advanced-column-resizing-performance
-  const columnSizingInfo = table.getState().columnSizingInfo;
-  const columnSizing = table.getState().columnSizing;
-
   // Track whether a column is being resized for memoization
-  const isResizing = !!columnSizingInfo.isResizingColumn;
+  const isResizing = !!table.getState().columnSizingInfo.isResizingColumn;
 
   // Detect if any visible column is marked as a filler column
   const hasFillerColumn = useMemo(() => {
@@ -726,17 +720,20 @@ export const DataTable = <TData, TValue>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [columns, table.getState().columnVisibility]);
 
+  // Get table style with CSS variables for column widths
+  // Using CSS variables enables performant 60fps column resizing without re-rendering cells
+  // See: https://tanstack.com/table/latest/docs/guide/column-sizing#advanced-column-resizing-performance
   const tableStyle = useMemo(() => {
     const headers = table.getFlatHeaders();
     const colSizes: Record<string, number | string> = {
       '--table-width': `${table.getTotalSize()}px`,
     };
     for (const header of headers) {
-      colSizes[`--col-${header.column.id}-size`] = header.getSize();
+      colSizes[`--col-${header.column.id}-size`] = header.column.getSize();
     }
     return colSizes as CSSProperties;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columnSizingInfo, columnSizing, table]);
+  }, [table.getState().columnSizingInfo, table.getState().columnSizing, table.getState().columnVisibility]);
 
   return (
     <div className={cn(dataTableContainerVariants({ density }), className)} ref={ref} {...props}>
