@@ -119,7 +119,7 @@ export type CreateAgentFormData = z.infer<typeof createAgentFormSchema>;
 // since it requires special handling with the color picker component
 // Note: model and permissionMode use union with empty string for form input (inherit/default)
 export const updateAgentSchema = z.object({
-  description: z.string().trim().max(1000, 'Description is too long'),
+  description: z.string().trim().max(1000, 'Description is too long').optional(),
   displayName: z.string().trim().min(1, 'Display name is required').max(255, 'Display name is too long'),
   model: z.union([z.enum(agentModels), z.literal('')]).optional(),
   permissionMode: z.union([z.enum(agentPermissionModes), z.literal('')]).optional(),

@@ -150,6 +150,8 @@ interface DialogHeaderProps {
   className?: string;
   /** Custom aria-label for close button */
   closeButtonAriaLabel?: string;
+  /** Whether the close button is disabled */
+  isCloseDisabled?: boolean;
   /** Whether to show the close button (default: true) */
   showCloseButton?: boolean;
 }
@@ -163,6 +165,7 @@ export const DialogHeader = ({
   children,
   className,
   closeButtonAriaLabel,
+  isCloseDisabled,
   showCloseButton = true,
 }: DialogHeaderProps) => {
   return (
@@ -171,7 +174,7 @@ export const DialogHeader = ({
       {(badges || showCloseButton) && (
         <div className={'flex shrink-0 items-center gap-2'}>
           {badges}
-          {showCloseButton && <DialogCloseButton aria-label={closeButtonAriaLabel} />}
+          {showCloseButton && <DialogCloseButton aria-label={closeButtonAriaLabel} disabled={isCloseDisabled} />}
         </div>
       )}
     </div>

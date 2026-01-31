@@ -882,6 +882,7 @@ export const AgentEditorDialog = ({
                 {isEditMode && agentTypeLabel && <Badge variant={'default'}>{agentTypeLabel}</Badge>}
               </Fragment>
             }
+            isCloseDisabled={isSubmitting}
           >
             <DialogTitle id={'agent-editor-title'}>{dialogTitle}</DialogTitle>
             <DialogDescription id={'agent-editor-description'}>{dialogDescription}</DialogDescription>
