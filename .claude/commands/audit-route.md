@@ -1,12 +1,12 @@
 ---
-allowed-tools: Task(subagent_type:database-schema), Task(subagent_type:ipc-handler), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:frontend-component), Task(subagent_type:vercel-react-best-practices), Task(subagent_type:Explore), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
+allowed-tools: Task(subagent_type:database-schema), Task(subagent_type:ipc-handler), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:frontend-component), Task(subagent_type:vercel-react-best-practices), Task(subagent_type:Explore), Task(subagent_type:general-purpose), AskUserQuestion(*), TodoWrite(*)
 argument-hint: "/route-path [--fix] [--domain=frontend|backend|ipc|hooks|all]"
 description: Audit a route/feature area for best practice violations across all layers (frontend through backend), optionally fix issues
 ---
 
-You are a route audit orchestrator. You coordinate multiple specialist agents to analyze
-all files related to a route, identify violations of project conventions, and optionally
-fix them with review cycles.
+You are a route audit orchestrator. You coordinate subagents to discover files, analyze
+violations, fix issues, and validate changes. You do NOT do any file reading, searching,
+or code analysis yourself - you delegate ALL work to specialized subagents.
 
 @CLAUDE.MD
 
@@ -39,51 +39,17 @@ fix them with review cycles.
 /audit-route /templates --domain=frontend --fix
 ```
 
-## File Discovery Patterns
+## Orchestrator Principles
 
-Map routes to their associated files:
+**You are the orchestrator. You delegate, not execute.**
 
-### Route: `/agents`
-```
-app/(app)/agents/
-├── page.tsx                    → frontend-component
-├── layout.tsx                  → frontend-component
-├── route-type.ts               → frontend-component (nextjs-routing-conventions)
-└── _components/*.tsx           → frontend-component
+1. **NEVER read files directly** - Use Explore agents for file discovery
+2. **NEVER analyze code directly** - Use specialist agents for analysis
+3. **NEVER run validation commands directly** - Use general-purpose agents
+4. **ALWAYS ask questions interactively** - Use AskUserQuestion for design decisions
+5. **Your role is to**: Parse input, dispatch agents, collect results, ask clarifying questions, present summaries
 
-hooks/
-├── queries/use-agents.ts       → tanstack-query
-├── use-agent-*.ts              → tanstack-query (custom hooks)
-
-lib/
-├── queries/agents.ts           → tanstack-query
-├── validations/agent.ts        → tanstack-form
-├── stores/agent-*-store.ts     → zustand
-
-db/
-├── schema/agents.schema.ts     → database-schema
-├── repositories/agents.repository.ts → database-schema
-
-electron/ipc/
-├── agent.handlers.ts           → ipc-handler
-├── agent-*.handlers.ts         → ipc-handler
-```
-
-### Discovery Rules
-
-For a given route `/route-name`:
-
-1. **Page Files**: `app/(app)/{route-name}/**/*.tsx`
-2. **Route Types**: `app/(app)/{route-name}/**/route-type.ts`
-3. **Query Hooks**: `hooks/queries/use-{entity}.ts`, `hooks/use-{entity}-*.ts`
-4. **Query Keys**: `lib/queries/{entity}.ts`
-5. **Validations**: `lib/validations/{entity}.ts`
-6. **Stores**: `lib/stores/{entity}-*-store.ts`
-7. **Schemas**: `db/schema/{entity}*.schema.ts`
-8. **Repositories**: `db/repositories/{entity}*.repository.ts`
-9. **IPC Handlers**: `electron/ipc/{entity}*.handlers.ts`
-
-## Domain Classification
+## Domain Classification Reference
 
 | Domain | File Patterns | Specialist Agent | Skills |
 |--------|---------------|------------------|--------|
@@ -96,7 +62,7 @@ For a given route `/route-name`:
 
 ## Orchestration Workflow
 
-### Phase 1: Input Validation & Discovery
+### Phase 1: Input Validation
 
 **1. Parse Arguments from $ARGUMENTS**:
 
@@ -124,64 +90,100 @@ From the route path, extract the entity name for file discovery:
 - `/workflows/[id]` → `workflows`, singular: `workflow`
 - `/projects` → `projects`, singular: `project`
 
-**4. Discover Related Files**:
-
-Use Glob to find all files related to the route. Run these searches in parallel:
+**4. Initialize Todo List**:
 
 ```
-# Page files
-app/(app)/{route-name}/**/*.tsx
-app/(app)/{route-name}/**/route-type.ts
-
-# Query hooks (try both plural and singular)
-hooks/queries/use-{entity}.ts
-hooks/queries/use-{singular}.ts
-hooks/use-{singular}-*.ts
-
-# Query keys
-lib/queries/{entity}.ts
-lib/queries/{singular}.ts
-
-# Validations
-lib/validations/{singular}.ts
-lib/validations/{entity}.ts
-
-# Stores
-lib/stores/{singular}-*-store.ts
-
-# Database
-db/schema/{entity}*.schema.ts
-db/schema/{singular}*.schema.ts
-db/repositories/{entity}*.repository.ts
-db/repositories/{singular}*.repository.ts
-
-# IPC
-electron/ipc/{singular}*.handlers.ts
-```
-
-**5. Classify Files by Domain**:
-
-Group discovered files into domains using the Domain Classification table above.
-
-**6. Filter by --domain flag** (if provided):
-
-If `--domain` is specified, only include files from that domain.
-
-**7. Initialize Todo List**:
-
-```
-- Discover files for route
-- Analyze frontend files
-- Analyze backend files
-- Analyze IPC files
-- Analyze hooks/queries files
+- Discover files for route (via Explore agent)
+- Analyze frontend files (via specialist)
+- Analyze backend files (via specialist)
+- Analyze IPC files (via specialist)
+- Analyze hooks/queries files (via specialist)
+- Resolve design decisions with user
 - Generate combined report
-- [If --fix] Apply fixes by domain
-- [If --fix] Validate changes
-- [If --fix] Review and iterate
+- [If --fix] Apply fixes by domain (via specialists)
+- [If --fix] Validate changes (via general-purpose agent)
+- [If --fix] Review and iterate (via specialists)
 ```
 
-**8. Display Discovery Results**:
+### Phase 2: File Discovery (via Explore Agent)
+
+Mark "Discover files for route" as in_progress.
+
+**Dispatch an Explore agent to discover all related files**:
+
+```
+subagent_type: "Explore"
+model: "haiku"
+
+Discover all files related to the route `/{route-name}` for a comprehensive audit.
+
+## Entity Information
+- Route path: /{route-name}
+- Entity name (plural): {entity}
+- Entity name (singular): {singular}
+
+## Discovery Scope
+
+Find ALL files that are part of this route's implementation. Search these locations:
+
+### Page Files
+- `app/(app)/{route-name}/**/*.tsx` - Page components
+- `app/(app)/{route-name}/**/route-type.ts` - Route type definitions
+
+### Query Hooks
+- `hooks/queries/use-{entity}.ts` or `use-{singular}.ts`
+- `hooks/use-{singular}-*.ts` - Custom hooks
+
+### Query Keys
+- `lib/queries/{entity}.ts` or `{singular}.ts`
+
+### Validations
+- `lib/validations/{singular}.ts` or `{entity}.ts`
+
+### Stores
+- `lib/stores/{singular}-*-store.ts`
+
+### Database
+- `db/schema/{entity}*.schema.ts` or `{singular}*.schema.ts`
+- `db/repositories/{entity}*.repository.ts` or `{singular}*.repository.ts`
+
+### IPC
+- `electron/ipc/{singular}*.handlers.ts`
+- Also check: electron/ipc/channels.ts, electron/preload.ts, types/electron.d.ts for related definitions
+
+## Output Format
+
+Return a JSON object:
+```json
+{
+  "frontend": [
+    {"path": "app/(app)/agents/page.tsx", "type": "page"},
+    {"path": "app/(app)/agents/_components/agent-card.tsx", "type": "component"}
+  ],
+  "backend": [
+    {"path": "db/schema/agents.schema.ts", "type": "schema"},
+    {"path": "db/repositories/agents.repository.ts", "type": "repository"}
+  ],
+  "ipc": [
+    {"path": "electron/ipc/agent.handlers.ts", "type": "handlers"}
+  ],
+  "hooks": [
+    {"path": "hooks/queries/use-agents.ts", "type": "query-hook"},
+    {"path": "lib/queries/agents.ts", "type": "query-keys"}
+  ],
+  "forms": [
+    {"path": "lib/validations/agent.ts", "type": "validation"}
+  ],
+  "stores": [
+    {"path": "lib/stores/agent-store.ts", "type": "store"}
+  ]
+}
+```
+```
+
+**Parse the Explore agent's response** and filter by --domain if specified.
+
+**Display Discovery Results**:
 
 ```markdown
 ## File Discovery for Route: `/{route-name}`
@@ -212,11 +214,11 @@ If `--domain` is specified, only include files from that domain.
 
 Mark "Discover files for route" as completed.
 
-### Phase 2: Parallel Domain Analysis
+### Phase 3: Parallel Domain Analysis (via Specialist Agents)
 
-**IMPORTANT**: Run domain analyses IN PARALLEL using multiple Task tool calls in a single message. This dramatically improves performance.
+**IMPORTANT**: Run domain analyses IN PARALLEL using multiple Task tool calls in a single message.
 
-For each domain with files, dispatch a specialist analysis agent:
+For each domain with files, dispatch the appropriate specialist agent.
 
 #### Frontend Analysis
 
@@ -232,12 +234,7 @@ You are a code ANALYST. Identify all violations but DO NOT make changes.
 
 ## Files to Analyze
 
-{List each frontend file with full contents}
-
-### `{file_path}`
-```tsx
-{file contents}
-```
+{List file paths from discovery - agent will read them}
 
 ## Conventions to Check
 
@@ -269,6 +266,8 @@ Load and apply these skills:
 
 ## Report Format
 
+Return a structured report:
+
 ```markdown
 ## Frontend Analysis Report
 
@@ -283,6 +282,7 @@ Load and apply these skills:
    - Rule: `{rule-id}`
    - Problem: {description}
    - Fix: {what should be done}
+   - Design Decision Required: YES/NO (if YES, describe the decision needed)
 
 #### MEDIUM Priority
 ...
@@ -290,10 +290,14 @@ Load and apply these skills:
 #### LOW Priority
 ...
 
+### Design Decisions Required
+List any violations that require user input to resolve (e.g., naming choices, architectural decisions)
+
 ### Summary
 - Total violations: {n}
 - High: {n}, Medium: {n}, Low: {n}
 - Auto-fixable: {n}
+- Requires design decision: {n}
 ```
 ```
 
@@ -311,7 +315,7 @@ You are a code ANALYST. Identify all violations but DO NOT make changes.
 
 ## Files to Analyze
 
-{List each backend file with full contents}
+{List file paths from discovery}
 
 ## Conventions to Check
 
@@ -337,7 +341,7 @@ Load and apply: database-schema-conventions
 
 ## Report Format
 
-{Same format as frontend}
+{Same format as frontend, including "Design Decisions Required" section}
 ```
 
 #### IPC Analysis
@@ -354,9 +358,9 @@ You are a code ANALYST. Identify all violations but DO NOT make changes.
 
 ## Files to Analyze
 
-{List each IPC file with full contents}
+{List file paths from discovery}
 
-Also check for synchronization issues with:
+Also analyze synchronization with:
 - electron/ipc/channels.ts
 - electron/preload.ts
 - types/electron.d.ts
@@ -378,7 +382,7 @@ Load and apply: ipc-handler-conventions
 
 ## Report Format
 
-{Same format as frontend}
+{Same format as frontend, including "Design Decisions Required" section}
 ```
 
 #### Hooks/Queries Analysis
@@ -395,7 +399,7 @@ You are a code ANALYST. Identify all violations but DO NOT make changes.
 
 ## Files to Analyze
 
-{List each hooks file with full contents}
+{List file paths from discovery}
 
 ## Conventions to Check
 
@@ -421,14 +425,43 @@ Load and apply: tanstack-query-conventions
 
 ## Report Format
 
-{Same format as frontend}
+{Same format as frontend, including "Design Decisions Required" section}
 ```
 
-**Wait for all analysis agents to complete**, then combine their reports.
+**Wait for all analysis agents to complete**.
 
 Mark all "Analyze *" todos as completed.
 
-### Phase 3: Generate Combined Report
+### Phase 4: Resolve Design Decisions with User
+
+Mark "Resolve design decisions with user" as in_progress.
+
+**Collect all design decisions from analysis reports**.
+
+If there are design decisions required, use AskUserQuestion to resolve them interactively:
+
+```
+For each design decision:
+1. Present the context (which file, what the issue is)
+2. Offer clear options with descriptions
+3. Record the user's choice for the fix phase
+
+Example questions to ask:
+
+- "The component `AgentCard` doesn't have a loading skeleton. Should I: (A) Create a colocated skeleton component, (B) Use a generic skeleton, (C) Skip loading state for this component?"
+
+- "The IPC handler `agent:update` uses a result object pattern instead of throwing errors. Should I: (A) Convert to throw/catch pattern, (B) Keep current pattern and document exception?"
+
+- "Repository method `findById` returns null instead of undefined. Should I: (A) Change to undefined for consistency, (B) Keep null and update the type?"
+```
+
+Use AskUserQuestion with appropriate options for each decision. Group related decisions if possible (max 4 questions per AskUserQuestion call).
+
+**Store user decisions** for use in the fix phase.
+
+Mark "Resolve design decisions with user" as completed.
+
+### Phase 5: Generate Combined Report
 
 Mark "Generate combined report" as in_progress.
 
@@ -473,6 +506,10 @@ Combine all domain reports into a single comprehensive report:
 
 ---
 
+## User Decisions Made
+
+{List the design decisions that were resolved via AskUserQuestion}
+
 ## Prioritized Fix List
 
 ### High Priority (fix first)
@@ -506,22 +543,20 @@ Mark "Generate combined report" as completed.
 
 **If --fix flag NOT provided**: Stop here. The audit is complete.
 
-### Phase 4: Apply Fixes (if --fix)
+### Phase 6: Apply Fixes (if --fix)
 
-**Ask for confirmation**:
+**Ask for confirmation using AskUserQuestion**:
 
 ```
-Found {n} violations ({auto-fixable} auto-fixable).
-
-Proceed with automatic fixes?
-- Fixes will be applied by domain-specific specialists
-- Changes will be validated (lint, typecheck)
-- Up to 2 fix-review cycles will run
-
-[Y/n]
+Use AskUserQuestion:
+- question: "Found {n} violations ({auto-fixable} auto-fixable). Proceed with automatic fixes?"
+- options:
+  - "Yes, fix all": Fix all violations automatically
+  - "Review each": Ask before each major fix
+  - "No, just report": Skip fixes, keep report only
 ```
 
-If user confirms, proceed. Otherwise, stop.
+If user chooses "No", stop here.
 
 Mark "[If --fix] Apply fixes by domain" as in_progress.
 
@@ -539,15 +574,15 @@ You are an implementer. Fix all violations while preserving existing functionali
 
 ## Files to Fix
 
-{List files with current contents}
+{List file paths}
 
 ## Violations to Fix
 
 {List violations for this domain from the audit report}
 
-## Reference Files
+## User Decisions
 
-{Include 1-2 well-implemented reference files for this domain}
+{Include any relevant user decisions from Phase 4}
 
 ## Conventions
 
@@ -555,10 +590,11 @@ You are an implementer. Fix all violations while preserving existing functionali
 
 ## Instructions
 
-1. Fix each violation listed
-2. Follow the patterns from reference files
-3. Preserve existing functionality
-4. Report changes made
+1. Read each file
+2. Fix each violation listed
+3. Apply user decisions where applicable
+4. Preserve existing functionality
+5. Report changes made
 
 ## Report Format
 
@@ -584,18 +620,23 @@ You are an implementer. Fix all violations while preserving existing functionali
 
 Mark "[If --fix] Apply fixes by domain" as completed.
 
-### Phase 5: Validate Changes (if --fix)
+### Phase 7: Validate Changes (via General-Purpose Agent)
 
 Mark "[If --fix] Validate changes" as in_progress.
 
-Run validation:
+**Dispatch a general-purpose agent to run validation**:
 
-```bash
-pnpm lint
-pnpm typecheck
 ```
+subagent_type: "general-purpose"
 
-**Track results**:
+Run validation checks on the codebase after fixes were applied.
+
+## Task
+
+1. Run ESLint: `pnpm lint`
+2. Run TypeScript: `pnpm typecheck`
+
+## Report Format
 
 ```markdown
 ## Validation Results
@@ -603,17 +644,23 @@ pnpm typecheck
 ### ESLint
 - Status: PASS/FAIL
 - Errors: {n}
-- {Details if failed}
+- Warnings: {n}
+- Error details (if any):
+  - `{file}:{line}`: {error}
 
 ### TypeScript
 - Status: PASS/FAIL
 - Errors: {n}
-- {Details if failed}
+- Error details (if any):
+  - `{file}:{line}`: {error}
+
+### Overall Status: PASS/FAIL
+```
 ```
 
 Mark "[If --fix] Validate changes" as completed.
 
-### Phase 6: Review and Iterate (if --fix)
+### Phase 8: Review and Iterate (if --fix)
 
 Mark "[If --fix] Review and iterate" as in_progress.
 
@@ -629,7 +676,7 @@ You are a code REVIEWER. Verify fixes are correct and identify any remaining iss
 
 ## Files to Review
 
-{List files with current (post-fix) contents}
+{List file paths}
 
 ## Original Violations
 
@@ -637,7 +684,7 @@ You are a code REVIEWER. Verify fixes are correct and identify any remaining iss
 
 ## Validation Results
 
-{Include lint/typecheck results}
+{Include results from validation agent}
 
 ## Review Checklist
 
@@ -671,15 +718,23 @@ You are a code REVIEWER. Verify fixes are correct and identify any remaining iss
 
 **If issues remain and cycle < 2**:
 
-Dispatch fix agents again with specific remaining issues.
+Use AskUserQuestion to ask user:
+```
+- question: "Review found {n} remaining issues. Continue with another fix cycle?"
+- options:
+  - "Yes, continue": Run another fix cycle
+  - "No, stop here": Accept current state
+```
 
-**If cycle >= 2 or all fixed**:
+If user wants to continue, dispatch fix agents again with specific remaining issues.
+
+**If cycle >= 2 or user declines or all fixed**:
 
 Proceed to final summary.
 
 Mark "[If --fix] Review and iterate" as completed.
 
-### Phase 7: Final Summary
+### Phase 9: Final Summary
 
 ```markdown
 ## Audit Complete: `/{route-name}`
@@ -702,6 +757,10 @@ Mark "[If --fix] Review and iterate" as completed.
 
 - Cycle 1: Fixed {n} violations
 - Cycle 2: Fixed {n} additional violations (if applicable)
+
+### User Decisions Applied
+
+{List decisions made during the audit}
 
 ### Files Modified
 
@@ -732,7 +791,9 @@ Mark all todos as completed.
 
 ## Performance Notes
 
-- **Parallel analysis**: All domain analyses run concurrently
-- **Parallel fixes**: All domain fixes run concurrently
+- **Parallel analysis**: All domain analyses run concurrently via separate specialist agents
+- **Parallel fixes**: All domain fixes run concurrently via separate specialist agents
 - **Max 2 iterations**: Prevents infinite fix loops
 - **Domain filtering**: Use --domain to focus on specific areas
+- **Explore agent for discovery**: Keeps main context clean
+- **Interactive decisions**: Uses AskUserQuestion instead of deferred reporting
