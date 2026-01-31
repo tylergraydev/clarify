@@ -41,7 +41,7 @@ export const ConfirmDeleteProjectDialog = ({
     <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
       {/* Portal */}
       <DialogPortal>
-        <DialogBackdrop />
+        <DialogBackdrop onClick={(e) => e.stopPropagation()} />
         <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
           <DialogHeader>

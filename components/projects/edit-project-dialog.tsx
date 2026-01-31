@@ -116,7 +116,13 @@ export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDi
               {/* Name Field */}
               <form.AppField name={'name'}>
                 {(field) => (
-                  <field.TextField autoFocus isRequired label={'Project Name'} placeholder={'Enter project name'} />
+                  <field.TextField
+                    autoFocus
+                    isDisabled={isSubmitting}
+                    isRequired
+                    label={'Project Name'}
+                    placeholder={'Enter project name'}
+                  />
                 )}
               </form.AppField>
 
@@ -125,6 +131,7 @@ export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDi
                 {(field) => (
                   <field.TextareaField
                     description={'Optional description for your project'}
+                    isDisabled={isSubmitting}
                     label={'Description'}
                     placeholder={'Describe your project...'}
                     rows={3}
@@ -132,6 +139,9 @@ export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDi
                 )}
               </form.AppField>
             </div>
+
+            {/* Form Error */}
+            <form.FormError />
 
             {/* Action Buttons */}
             <DialogFooter sticky={false}>

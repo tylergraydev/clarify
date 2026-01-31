@@ -9,7 +9,7 @@ import { type NewProject, type Project, projects } from '../schema';
 export interface ProjectsRepository {
   archive(id: number): Promise<Project | undefined>;
   create(data: NewProject): Promise<Project>;
-  delete(id: number): Promise<void>;
+  delete(id: number): Promise<boolean>;
   findAll(options?: { includeArchived?: boolean }): Promise<Array<Project>>;
   findById(id: number): Promise<Project | undefined>;
   unarchive(id: number): Promise<Project | undefined>;
@@ -37,15 +37,16 @@ export function createProjectsRepository(db: DrizzleDatabase): ProjectsRepositor
       return result[0];
     },
 
-    async delete(id: number): Promise<void> {
-      await db.delete(projects).where(eq(projects.id, id));
+    async delete(id: number): Promise<boolean> {
+      const result = db.delete(projects).where(eq(projects.id, id)).run();
+      return result.changes > 0;
     },
 
     async findAll(options?: { includeArchived?: boolean }): Promise<Array<Project>> {
       if (options?.includeArchived) {
-        return db.select().from(projects);
+        return db.select().from(projects).all();
       }
-      return db.select().from(projects).where(isNull(projects.archivedAt));
+      return db.select().from(projects).where(isNull(projects.archivedAt)).all();
     },
 
     async findById(id: number): Promise<Project | undefined> {

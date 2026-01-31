@@ -89,10 +89,13 @@ export {
 // ============================================================================
 export {
   useAddRepositoryToProject,
+  useArchiveProject,
   useCreateProject,
   useDeleteProject,
+  useDeleteProjectPermanently,
   useProject,
   useProjects,
+  useUnarchiveProject,
   useUpdateProject,
 } from './use-projects';
 

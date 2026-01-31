@@ -1,7 +1,9 @@
 'use client';
 
+import type { ComponentPropsWithRef } from 'react';
+
 import { Plus } from 'lucide-react';
-import { ComponentPropsWithRef, Fragment } from 'react';
+import { Fragment } from 'react';
 
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
 import { Badge } from '@/components/ui/badge';

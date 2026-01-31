@@ -13,20 +13,30 @@ import { useElectron } from '../use-electron';
 import { useToast } from '../use-toast';
 
 // ============================================================================
-// Query Hooks
+// Mutation Hooks
 // ============================================================================
 
 /**
  * Add a repository to a project
  * Invalidates both project detail and repository queries
  */
-export function useAddRepositoryToProject() {
+export function useAddRepositoryToProject(options?: { showToast?: boolean }) {
+  const { showToast = true } = options ?? {};
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ projectId, repoData }: { projectId: number; repoData: NewRepository }) =>
       api!.project.addRepo(projectId, repoData),
+    onError: (error) => {
+      if (showToast) {
+        toast.error({
+          description: error instanceof Error ? error.message : 'Failed to add repository',
+          title: 'Add Repository Failed',
+        });
+      }
+    },
     onSuccess: (repository) => {
       // Invalidate project detail cache (project may have updated repository count)
       void queryClient.invalidateQueries({
@@ -40,6 +50,13 @@ export function useAddRepositoryToProject() {
       void queryClient.invalidateQueries({
         queryKey: repositoryKeys.byProject(repository.projectId).queryKey,
       });
+
+      if (showToast) {
+        toast.success({
+          description: 'Repository added to project',
+          title: 'Repository Added',
+        });
+      }
     },
   });
 }
@@ -80,10 +97,6 @@ export function useArchiveProject(options?: { showToast?: boolean }) {
     },
   });
 }
-
-// ============================================================================
-// Mutation Hooks
-// ============================================================================
 
 /**
  * Create a new project
@@ -196,6 +209,10 @@ export function useDeleteProjectPermanently(options?: { showToast?: boolean }) {
   });
 }
 
+// ============================================================================
+// Query Hooks
+// ============================================================================
+
 /**
  * Fetch a single project by ID
  */
@@ -221,6 +238,10 @@ export function useProjects() {
     queryFn: () => api!.project.list({ includeArchived: true }),
   });
 }
+
+// ============================================================================
+// Mutation Hooks (continued)
+// ============================================================================
 
 /**
  * Unarchive a project by clearing the archivedAt timestamp
@@ -262,18 +283,35 @@ export function useUnarchiveProject(options?: { showToast?: boolean }) {
 /**
  * Update an existing project
  */
-export function useUpdateProject() {
+export function useUpdateProject(options?: { showToast?: boolean }) {
+  const { showToast = true } = options ?? {};
   const queryClient = useQueryClient();
   const { api } = useElectron();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ data, id }: { data: Partial<NewProject>; id: number }) => api!.project.update(id, data),
+    onError: (error) => {
+      if (showToast) {
+        toast.error({
+          description: error instanceof Error ? error.message : 'Failed to update project',
+          title: 'Update Failed',
+        });
+      }
+    },
     onSuccess: (project) => {
       if (project) {
         // Update detail cache directly
         queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
         // Invalidate list queries
         void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
+
+        if (showToast) {
+          toast.success({
+            description: 'Project updated successfully',
+            title: 'Project Updated',
+          });
+        }
       }
     },
   });

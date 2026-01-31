@@ -97,9 +97,10 @@ export function registerProjectHandlers(
   // Archive (soft delete) a project
   ipcMain.handle(
     IpcChannels.project.delete,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Project | undefined> => {
+    async (_event: IpcMainInvokeEvent, id: number): Promise<boolean> => {
       try {
-        return projectsRepository.archive(id);
+        const result = await projectsRepository.archive(id);
+        return !!result;
       } catch (error) {
         console.error('[IPC Error] project:delete:', error);
         throw error;
