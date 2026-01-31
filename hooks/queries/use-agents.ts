@@ -35,6 +35,11 @@ export function useActivateAgent() {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
         // Only invalidate active queries since activation status changed
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+
+        toast.success({
+          description: 'Agent has been activated successfully',
+          title: 'Agent Activated',
+        });
       }
     },
   });
@@ -308,6 +313,11 @@ export function useDeactivateAgent() {
         queryClient.setQueryData(agentKeys.detail(agent.id).queryKey, agent);
         // Only invalidate active queries since deactivation status changed
         void queryClient.invalidateQueries({ queryKey: agentKeys.active._def });
+
+        toast.success({
+          description: 'Agent has been deactivated successfully',
+          title: 'Agent Deactivated',
+        });
       }
     },
   });

@@ -19,28 +19,28 @@ export type FilterValue = null | string;
 export interface UseAgentFiltersReturn {
   /** Whether any filter (type, project, or status) is currently active */
   hasActiveFilters: boolean;
+  /** Whether to show built-in agents */
+  isShowingBuiltIn: boolean;
+  /** Whether to show deactivated agents */
+  isShowingDeactivated: boolean;
   /** Callback to reset all filters to their default values */
   onResetFilters: () => void;
   /** Current project filter value */
   projectFilter: FilterValue;
   /** Current search filter value */
   searchFilter: string;
+  /** Callback to update whether to show built-in agents */
+  setIsShowingBuiltIn: (value: boolean) => void;
+  /** Callback to update whether to show deactivated agents */
+  setIsShowingDeactivated: (value: boolean) => void;
   /** Callback to update the project filter */
   setProjectFilter: (value: FilterValue) => void;
   /** Callback to update the search filter */
   setSearchFilter: (value: string) => void;
-  /** Callback to update show built-in toggle */
-  setShowBuiltIn: (value: boolean) => void;
-  /** Callback to update show deactivated toggle */
-  setShowDeactivated: (value: boolean) => void;
   /** Callback to update the status filter */
   setStatusFilter: (value: FilterValue) => void;
   /** Callback to update the type filter */
   setTypeFilter: (value: FilterValue) => void;
-  /** Whether to show built-in agents */
-  showBuiltIn: boolean;
-  /** Whether to show deactivated agents */
-  showDeactivated: boolean;
   /** Current status filter value */
   statusFilter: FilterValue;
   /** Current type filter value */
@@ -66,15 +66,15 @@ export interface UseAgentFiltersReturn {
  *   typeFilter,
  *   projectFilter,
  *   statusFilter,
- *   showBuiltIn,
- *   showDeactivated,
+ *   isShowingBuiltIn,
+ *   isShowingDeactivated,
  *   hasActiveFilters,
  *   setSearchFilter,
  *   setTypeFilter,
  *   setProjectFilter,
  *   setStatusFilter,
- *   setShowBuiltIn,
- *   setShowDeactivated,
+ *   setIsShowingBuiltIn,
+ *   setIsShowingDeactivated,
  *   onResetFilters,
  * } = useAgentFilters();
  * ```
@@ -101,17 +101,17 @@ export const useAgentFilters = (): UseAgentFiltersReturn => {
 
   return {
     hasActiveFilters,
+    isShowingBuiltIn: showBuiltIn,
+    isShowingDeactivated: showDeactivated,
     onResetFilters: handleResetFilters,
     projectFilter,
     searchFilter,
+    setIsShowingBuiltIn: setShowBuiltIn,
+    setIsShowingDeactivated: setShowDeactivated,
     setProjectFilter,
     setSearchFilter,
-    setShowBuiltIn,
-    setShowDeactivated,
     setStatusFilter,
     setTypeFilter,
-    showBuiltIn,
-    showDeactivated,
     statusFilter,
     typeFilter,
   };

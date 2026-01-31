@@ -2,8 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { NewAgentSkill } from '@/types/electron';
-
 import { agentSkillKeys } from '@/lib/queries/agent-skills';
 
 import { useElectronDb } from '../use-electron';
@@ -39,7 +37,7 @@ export function useCreateAgentSkill() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (data: NewAgentSkill) => agentSkills.create(data),
+    mutationFn: (data: Parameters<typeof agentSkills.create>[0]) => agentSkills.create(data),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to create skill',
@@ -133,7 +131,7 @@ export function useUpdateAgentSkill() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Partial<NewAgentSkill>; id: number }) =>
+    mutationFn: ({ data, id }: { data: Parameters<typeof agentSkills.update>[1]; id: number }) =>
       agentSkills.update(id, data),
     onError: (error) => {
       toast.error({

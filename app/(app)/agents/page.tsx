@@ -2,7 +2,6 @@
 
 import type { RowSelectionState } from '@tanstack/react-table';
 
-import { withParamValidation } from 'next-typesafe-url/app/hoc';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AgentTable } from '@/components/agents/agent-table';
@@ -19,7 +18,6 @@ import { useFilteredAgents } from '@/hooks/use-filtered-agents';
 import { AgentsDialogs } from './_components/agents-dialogs';
 import { AgentsPageHeader } from './_components/agents-page-header';
 import { AgentsPageSkeleton } from './_components/agents-page-skeleton';
-import { Route } from './route-type';
 
 // ============================================================================
 // Component
@@ -36,23 +34,23 @@ import { Route } from './route-type';
  * - Move and copy agents between projects
  * - Import and export agents as markdown files
  */
-function AgentsPageContent() {
+const AgentsPage = () => {
   // Row selection state for batch operations
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   // Filter state management
   const {
+    isShowingBuiltIn,
+    isShowingDeactivated,
     onResetFilters,
     projectFilter,
     searchFilter,
+    setIsShowingBuiltIn,
+    setIsShowingDeactivated,
     setProjectFilter,
     setSearchFilter,
-    setShowBuiltIn,
-    setShowDeactivated,
     setStatusFilter,
     setTypeFilter,
-    showBuiltIn,
-    showDeactivated,
     statusFilter,
     typeFilter,
   } = useAgentFilters();
@@ -70,7 +68,7 @@ function AgentsPageContent() {
 
   // Data fetching
   const { data: allAgents, isLoading: isLoadingAgents } = useAllAgents({
-    includeDeactivated: showDeactivated,
+    includeDeactivated: isShowingDeactivated,
     includeSkills: true,
     includeTools: true,
   });
@@ -82,9 +80,9 @@ function AgentsPageContent() {
   // Client-side filtering
   const { filteredAgents, filteredCount, isFiltered, totalCount } = useFilteredAgents({
     agents: allAgents,
+    isShowingBuiltIn,
     projectFilter,
     searchFilter,
-    showBuiltIn,
     statusFilter,
     typeFilter,
   });
@@ -110,19 +108,13 @@ function AgentsPageContent() {
   });
 
   // Import/Export handlers
-  const {
-    isExporting,
-    isImporting,
-    onExportSelected,
-    onExportSingle,
-    onImportClick,
-    onImportConfirm,
-  } = useAgentImportExport({
-    onCloseImportDialog: () => dispatchDialog({ type: 'CLOSE_IMPORT_DIALOG' }),
-    onOpenImportDialog,
-    rowSelection,
-    setRowSelection,
-  });
+  const { isExporting, isImporting, onExportSelected, onExportSingle, onImportClick, onImportConfirm } =
+    useAgentImportExport({
+      onCloseImportDialog: () => dispatchDialog({ type: 'CLOSE_IMPORT_DIALOG' }),
+      onOpenImportDialog,
+      rowSelection,
+      setRowSelection,
+    });
 
   // Row selection handlers
   const handleRowSelectionChange = useCallback(
@@ -186,19 +178,19 @@ function AgentsPageContent() {
             rowSelection={rowSelection}
             toolbarContent={
               <AgentTableToolbar
+                isShowingBuiltIn={isShowingBuiltIn}
+                isShowingDeactivated={isShowingDeactivated}
                 onExportSelected={onExportSelected}
                 onImport={onImportClick}
+                onIsShowingBuiltInChange={setIsShowingBuiltIn}
+                onIsShowingDeactivatedChange={setIsShowingDeactivated}
                 onProjectFilterChange={setProjectFilter}
                 onResetFilters={onResetFilters}
-                onShowBuiltInChange={setShowBuiltIn}
-                onShowDeactivatedChange={setShowDeactivated}
                 onStatusFilterChange={setStatusFilter}
                 onTypeFilterChange={setTypeFilter}
                 projectFilter={projectFilter}
                 projects={projects ?? []}
                 selectedCount={selectedCount}
-                showBuiltIn={showBuiltIn}
-                showDeactivated={showDeactivated}
                 statusFilter={statusFilter}
                 typeFilter={typeFilter}
               />
@@ -226,6 +218,6 @@ function AgentsPageContent() {
       </main>
     </QueryErrorBoundary>
   );
-}
+};
 
-export default withParamValidation(AgentsPageContent, Route);
+export default AgentsPage;

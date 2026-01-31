@@ -2,13 +2,13 @@ import { and, asc, eq, isNotNull } from 'drizzle-orm';
 
 import type { DrizzleDatabase } from '../index';
 
-import { agentSkillInputSchema } from '../../lib/validations/agent';
+import { createAgentSkillSchema, updateAgentSkillSchema } from '../../lib/validations/agent';
 import { type AgentSkill, agentSkills, type NewAgentSkill } from '../schema';
 
 export interface AgentSkillsRepository {
   create(data: NewAgentSkill): Promise<AgentSkill>;
-  delete(id: number): Promise<void>;
-  deleteByAgentId(agentId: number): Promise<void>;
+  delete(id: number): Promise<boolean>;
+  deleteByAgentId(agentId: number): Promise<boolean>;
   findByAgentId(agentId: number): Promise<Array<AgentSkill>>;
   findById(id: number): Promise<AgentSkill | undefined>;
   findRequired(agentId: number): Promise<Array<AgentSkill>>;
@@ -19,10 +19,8 @@ export interface AgentSkillsRepository {
 export function createAgentSkillsRepository(db: DrizzleDatabase): AgentSkillsRepository {
   return {
     async create(data: NewAgentSkill): Promise<AgentSkill> {
-      // Validate skill name
-      agentSkillInputSchema.parse({
-        name: data.skillName,
-      });
+      // Validate all fields
+      createAgentSkillSchema.parse(data);
 
       const result = db.insert(agentSkills).values(data).returning().get();
       if (!result) {
@@ -31,12 +29,14 @@ export function createAgentSkillsRepository(db: DrizzleDatabase): AgentSkillsRep
       return result;
     },
 
-    async delete(id: number): Promise<void> {
-      await db.delete(agentSkills).where(eq(agentSkills.id, id));
+    async delete(id: number): Promise<boolean> {
+      const result = db.delete(agentSkills).where(eq(agentSkills.id, id)).run();
+      return result.changes > 0;
     },
 
-    async deleteByAgentId(agentId: number): Promise<void> {
-      await db.delete(agentSkills).where(eq(agentSkills.agentId, agentId));
+    async deleteByAgentId(agentId: number): Promise<boolean> {
+      const result = db.delete(agentSkills).where(eq(agentSkills.agentId, agentId)).run();
+      return result.changes > 0;
     },
 
     async findByAgentId(agentId: number): Promise<Array<AgentSkill>> {
@@ -69,12 +69,8 @@ export function createAgentSkillsRepository(db: DrizzleDatabase): AgentSkillsRep
     },
 
     async update(id: number, data: Partial<Omit<NewAgentSkill, 'createdAt' | 'id'>>): Promise<AgentSkill | undefined> {
-      // Validate skill name if present
-      if (data.skillName !== undefined) {
-        agentSkillInputSchema.parse({
-          name: data.skillName,
-        });
-      }
+      // Validate all provided fields
+      updateAgentSkillSchema.parse(data);
 
       const now = new Date().toISOString();
       return db

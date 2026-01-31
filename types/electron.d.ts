@@ -168,7 +168,7 @@ export interface ElectronAPI {
   };
   agentSkill: {
     create(data: import('../db/schema').NewAgentSkill): Promise<import('../db/schema').AgentSkill>;
-    delete(id: number): Promise<void>;
+    delete(id: number): Promise<boolean>;
     list(agentId: number): Promise<Array<import('../db/schema').AgentSkill>>;
     setRequired(id: number, required: boolean): Promise<import('../db/schema').AgentSkill | undefined>;
     update(
@@ -179,7 +179,7 @@ export interface ElectronAPI {
   agentTool: {
     allow(id: number): Promise<import('../db/schema').AgentTool | undefined>;
     create(data: import('../db/schema').NewAgentTool): Promise<import('../db/schema').AgentTool>;
-    delete(id: number): Promise<void>;
+    delete(id: number): Promise<boolean>;
     disallow(id: number): Promise<import('../db/schema').AgentTool | undefined>;
     list(agentId: number): Promise<Array<import('../db/schema').AgentTool>>;
     update(

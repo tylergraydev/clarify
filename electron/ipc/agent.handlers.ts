@@ -38,15 +38,6 @@ interface AgentExportBatchItem {
 }
 
 /**
- * Result type for agent export operations
- */
-interface AgentExportResult {
-  error?: string;
-  markdown?: string;
-  success: boolean;
-}
-
-/**
  * Hook entry structure matching Claude Code specification.
  */
 interface AgentImportHookEntry {
@@ -131,15 +122,6 @@ interface AgentListFilters {
 }
 
 /**
- * Result type for operations that can fail due to validation or protection rules
- */
-interface AgentOperationResult {
-  agent?: Agent;
-  error?: string;
-  success: boolean;
-}
-
-/**
  * Extended Agent type that includes optional tools, skills, and hooks arrays
  * for list responses when includeTools/includeSkills filters are used.
  */
@@ -171,87 +153,79 @@ export function registerAgentHandlers(
   agentHooksRepository: AgentHooksRepository,
   projectsRepository: ProjectsRepository
 ): void {
-  // Create a new agent
+  /**
+   * Create a new agent with validation for required fields and duplicate names.
+   */
   ipcMain.handle(
     IpcChannels.agent.create,
-    async (_event: IpcMainInvokeEvent, data: NewAgent): Promise<AgentOperationResult> => {
+    async (_event: IpcMainInvokeEvent, data: NewAgent): Promise<Agent> => {
       try {
         // Validate required fields
         if (!data.name || !data.name.trim()) {
-          return { error: 'Agent name is required', success: false };
+          throw new Error('Agent name is required');
         }
         if (!data.displayName || !data.displayName.trim()) {
-          return { error: 'Agent display name is required', success: false };
+          throw new Error('Agent display name is required');
         }
         if (!data.systemPrompt || !data.systemPrompt.trim()) {
-          return { error: 'Agent system prompt is required', success: false };
+          throw new Error('Agent system prompt is required');
         }
         if (!data.type || !data.type.trim()) {
-          return { error: 'Agent type is required', success: false };
+          throw new Error('Agent type is required');
         }
 
         // Check for duplicate names
         const existingAgent = await agentsRepository.findByName(data.name);
         if (existingAgent) {
-          return {
-            error: `An agent with the name "${data.name}" already exists`,
-            success: false,
-          };
+          throw new Error(`An agent with the name "${data.name}" already exists`);
         }
 
-        const agent = await agentsRepository.create(data);
-        return { agent, success: true };
+        return agentsRepository.create(data);
       } catch (error) {
         console.error('[IPC Error] agent:create:', error);
-        return {
-          error: error instanceof Error ? error.message : 'Failed to create agent',
-          success: false,
-        };
+        throw error;
       }
     }
   );
 
-  // Delete an agent (with built-in protection)
+  /**
+   * Delete an agent with built-in protection (built-in agents cannot be deleted).
+   */
   ipcMain.handle(
     IpcChannels.agent.delete,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<AgentOperationResult> => {
+    async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
       try {
         // Get the agent to check if it's built-in
         const agent = await agentsRepository.findById(id);
         if (!agent) {
-          return { error: 'Agent not found', success: false };
+          throw new Error('Agent not found');
         }
 
         // Protect built-in agents from deletion
         if (isBuiltInAgent(agent)) {
-          return {
-            error: 'Cannot delete built-in agents. You can only deactivate them.',
-            success: false,
-          };
+          throw new Error('Cannot delete built-in agents. You can only deactivate them.');
         }
 
         // Delete the custom agent
         await agentsRepository.delete(id);
-        return { success: true };
       } catch (error) {
         console.error('[IPC Error] agent:delete:', error);
-        return {
-          error: error instanceof Error ? error.message : 'Failed to delete agent',
-          success: false,
-        };
+        throw error;
       }
     }
   );
 
-  // Duplicate an agent (creates a copy with modified name)
+  /**
+   * Duplicate an agent, creating a copy with modified name and copying all tools and skills.
+   */
   ipcMain.handle(
     IpcChannels.agent.duplicate,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<AgentOperationResult> => {
+    async (_event: IpcMainInvokeEvent, id: number): Promise<Agent> => {
       try {
         // Fetch the source agent by ID
         const sourceAgent = await agentsRepository.findById(id);
         if (!sourceAgent) {
-          return { error: 'Agent not found', success: false };
+          throw new Error('Agent not found');
         }
 
         // Generate a unique name by appending "-copy" and checking for conflicts
@@ -309,42 +283,35 @@ export function registerAgentHandlers(
           });
         }
 
-        return { agent: duplicatedAgent, success: true };
+        return duplicatedAgent;
       } catch (error) {
         console.error('[IPC Error] agent:duplicate:', error);
-        return {
-          error: error instanceof Error ? error.message : 'Failed to duplicate agent',
-          success: false,
-        };
+        throw error;
       }
     }
   );
 
-  // Create a project-specific override of a global agent
+  /**
+   * Create a project-specific override of a global agent.
+   */
   ipcMain.handle(
     IpcChannels.agent.createOverride,
-    async (_event: IpcMainInvokeEvent, agentId: number, projectId: number): Promise<AgentOperationResult> => {
+    async (_event: IpcMainInvokeEvent, agentId: number, projectId: number): Promise<Agent> => {
       try {
         // Validate projectId
         if (!projectId || projectId <= 0) {
-          return {
-            error: 'A valid project ID is required to create an override',
-            success: false,
-          };
+          throw new Error('A valid project ID is required to create an override');
         }
 
         // Fetch the source agent by ID
         const sourceAgent = await agentsRepository.findById(agentId);
         if (!sourceAgent) {
-          return { error: 'Agent not found', success: false };
+          throw new Error('Agent not found');
         }
 
         // Ensure the source agent is a global agent (no projectId)
         if (sourceAgent.projectId !== null) {
-          return {
-            error: 'Can only create overrides of global agents',
-            success: false,
-          };
+          throw new Error('Can only create overrides of global agents');
         }
 
         // Check if an override already exists for this agent and project
@@ -354,10 +321,7 @@ export function registerAgentHandlers(
         });
         const hasExistingOverride = existingOverrides.some((agent) => agent.parentAgentId === agentId);
         if (hasExistingOverride) {
-          return {
-            error: 'An override for this agent already exists in this project',
-            success: false,
-          };
+          throw new Error('An override for this agent already exists in this project');
         }
 
         // Generate a unique name by appending project ID
@@ -389,19 +353,17 @@ export function registerAgentHandlers(
           version: 1,
         };
 
-        const overrideAgent = await agentsRepository.create(newAgentData);
-        return { agent: overrideAgent, success: true };
+        return agentsRepository.create(newAgentData);
       } catch (error) {
         console.error('[IPC Error] agent:createOverride:', error);
-        return {
-          error: error instanceof Error ? error.message : 'Failed to create agent override',
-          success: false,
-        };
+        throw error;
       }
     }
   );
 
-  // List agents with optional filters
+  /**
+   * List agents with optional filters for type, project, scope, and relation includes.
+   */
   ipcMain.handle(
     IpcChannels.agent.list,
     async (_event: IpcMainInvokeEvent, filters?: AgentListFilters): Promise<Array<AgentWithRelations>> => {
@@ -438,7 +400,9 @@ export function registerAgentHandlers(
     }
   );
 
-  // Get an agent by ID
+  /**
+   * Get an agent by ID.
+   */
   ipcMain.handle(IpcChannels.agent.get, async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
     try {
       return agentsRepository.findById(id);
@@ -448,52 +412,50 @@ export function registerAgentHandlers(
     }
   });
 
-  // Update an agent's configuration (with built-in protection)
+  /**
+   * Update an agent's configuration with built-in protection for core properties.
+   */
   ipcMain.handle(
     IpcChannels.agent.update,
     async (
       _event: IpcMainInvokeEvent,
       id: number,
       data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>
-    ): Promise<AgentOperationResult> => {
+    ): Promise<Agent> => {
       try {
         // Get the agent to check if it's built-in
         const agent = await agentsRepository.findById(id);
         if (!agent) {
-          return { error: 'Agent not found', success: false };
+          throw new Error('Agent not found');
         }
 
         // For built-in agents, restrict which fields can be modified
         if (isBuiltInAgent(agent)) {
           const protectedFields = getProtectedFieldsInUpdate(data);
           if (protectedFields.length > 0) {
-            return {
-              error: `Cannot modify protected properties of built-in agents: ${protectedFields.join(', ')}. Only displayName, description, and color can be changed.`,
-              success: false,
-            };
+            throw new Error(
+              `Cannot modify protected properties of built-in agents: ${protectedFields.join(', ')}. Only displayName, description, and color can be changed.`
+            );
           }
         }
 
         // Perform the update
         const updatedAgent = await agentsRepository.update(id, data);
         if (!updatedAgent) {
-          return { error: 'Failed to update agent', success: false };
+          throw new Error('Failed to update agent');
         }
 
-        return { agent: updatedAgent, success: true };
+        return updatedAgent;
       } catch (error) {
         console.error('[IPC Error] agent:update:', error);
-        return {
-          error: error instanceof Error ? error.message : 'Failed to update agent',
-          success: false,
-        };
+        throw error;
       }
     }
   );
 
-  // Reset an agent to built-in defaults
-  // This deletes any custom agent and activates the built-in version
-  // Properly cascades to clean up orphaned records
+  /**
+   * Reset an agent to built-in defaults by deleting custom overrides and activating the parent.
+   */
   ipcMain.handle(
     IpcChannels.agent.reset,
     async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
@@ -524,7 +486,9 @@ export function registerAgentHandlers(
     }
   );
 
-  // Activate an agent
+  /**
+   * Activate an agent (set deactivatedAt to null).
+   */
   ipcMain.handle(
     IpcChannels.agent.activate,
     async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
@@ -537,7 +501,9 @@ export function registerAgentHandlers(
     }
   );
 
-  // Deactivate an agent
+  /**
+   * Deactivate an agent (set deactivatedAt to current timestamp).
+   */
   ipcMain.handle(
     IpcChannels.agent.deactivate,
     async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
@@ -550,42 +516,38 @@ export function registerAgentHandlers(
     }
   );
 
-  // Move an agent to a different project (reassign projectId)
+  /**
+   * Move an agent to a different project by reassigning its projectId.
+   */
   ipcMain.handle(
     IpcChannels.agent.move,
     async (
       _event: IpcMainInvokeEvent,
       agentId: number,
       targetProjectId: null | number
-    ): Promise<AgentOperationResult> => {
+    ): Promise<Agent> => {
       try {
         // Validate agent exists
         const agent = await agentsRepository.findById(agentId);
         if (!agent) {
-          return { error: 'Agent not found', success: false };
+          throw new Error('Agent not found');
         }
 
         // Built-in agents cannot be moved (they should remain global)
         if (isBuiltInAgent(agent)) {
-          return {
-            error: 'Cannot move built-in agents. Create an override instead.',
-            success: false,
-          };
+          throw new Error('Cannot move built-in agents. Create an override instead.');
         }
 
         // If moving to a project, validate the project exists
         if (targetProjectId !== null) {
           const project = await projectsRepository.findById(targetProjectId);
           if (!project) {
-            return { error: 'Target project not found', success: false };
+            throw new Error('Target project not found');
           }
 
           // Check if project is archived
           if (project.archivedAt !== null) {
-            return {
-              error: 'Cannot move agent to an archived project',
-              success: false,
-            };
+            throw new Error('Cannot move agent to an archived project');
           }
         }
 
@@ -594,51 +556,44 @@ export function registerAgentHandlers(
           projectId: targetProjectId,
         });
         if (!updatedAgent) {
-          return { error: 'Failed to move agent', success: false };
+          throw new Error('Failed to move agent');
         }
 
-        return { agent: updatedAgent, success: true };
+        return updatedAgent;
       } catch (error) {
         console.error('[IPC Error] agent:move:', error);
-        return {
-          error: error instanceof Error ? error.message : 'Failed to move agent',
-          success: false,
-        };
+        throw error;
       }
     }
   );
 
-  // Copy an agent to a specific project (creates a new agent with tools and skills)
+  /**
+   * Copy an agent to a specific project, creating a new agent with all tools and skills.
+   */
   ipcMain.handle(
     IpcChannels.agent.copyToProject,
-    async (_event: IpcMainInvokeEvent, agentId: number, targetProjectId: number): Promise<AgentOperationResult> => {
+    async (_event: IpcMainInvokeEvent, agentId: number, targetProjectId: number): Promise<Agent> => {
       try {
         // Validate agent exists
         const sourceAgent = await agentsRepository.findById(agentId);
         if (!sourceAgent) {
-          return { error: 'Agent not found', success: false };
+          throw new Error('Agent not found');
         }
 
         // Validate projectId is provided and valid
         if (!targetProjectId || targetProjectId <= 0) {
-          return {
-            error: 'A valid target project ID is required',
-            success: false,
-          };
+          throw new Error('A valid target project ID is required');
         }
 
         // Validate the target project exists
         const project = await projectsRepository.findById(targetProjectId);
         if (!project) {
-          return { error: 'Target project not found', success: false };
+          throw new Error('Target project not found');
         }
 
         // Check if project is archived
         if (project.archivedAt !== null) {
-          return {
-            error: 'Cannot copy agent to an archived project',
-            success: false,
-          };
+          throw new Error('Cannot copy agent to an archived project');
         }
 
         // Generate a unique name for the copy
@@ -695,18 +650,19 @@ export function registerAgentHandlers(
           });
         }
 
-        return { agent: copiedAgent, success: true };
+        return copiedAgent;
       } catch (error) {
         console.error('[IPC Error] agent:copyToProject:', error);
-        return {
-          error: error instanceof Error ? error.message : 'Failed to copy agent to project',
-          success: false,
-        };
+        throw error;
       }
     }
   );
 
-  // Import an agent from parsed markdown data
+  /**
+   * Import an agent from parsed markdown data with validation.
+   * Note: This handler returns AgentImportResult which includes validation errors and warnings.
+   * This is intentional as import operations need to communicate validation details to the user.
+   */
   ipcMain.handle(
     IpcChannels.agent.import,
     async (_event: IpcMainInvokeEvent, parsedMarkdown: AgentImportInput): Promise<AgentImportResult> => {
@@ -847,15 +803,17 @@ export function registerAgentHandlers(
     }
   );
 
-  // Export an agent to markdown format
+  /**
+   * Export an agent to markdown format for sharing or backup.
+   */
   ipcMain.handle(
     IpcChannels.agent.export,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<AgentExportResult> => {
+    async (_event: IpcMainInvokeEvent, id: number): Promise<string> => {
       try {
         // Fetch the agent
         const agent = await agentsRepository.findById(id);
         if (!agent) {
-          return { error: 'Agent not found', success: false };
+          throw new Error('Agent not found');
         }
 
         // Fetch associated tools, skills, and hooks
@@ -868,7 +826,7 @@ export function registerAgentHandlers(
         const disallowedTools = allTools.filter((t) => t.disallowedAt !== null);
 
         // Serialize to markdown format
-        const markdown = serializeAgentToMarkdown({
+        return serializeAgentToMarkdown({
           agent: {
             color: agent.color,
             description: agent.description,
@@ -894,19 +852,17 @@ export function registerAgentHandlers(
             toolName: tool.toolName,
           })),
         });
-
-        return { markdown, success: true };
       } catch (error) {
         console.error('[IPC Error] agent:export:', error);
-        return {
-          error: error instanceof Error ? error.message : 'Failed to export agent',
-          success: false,
-        };
+        throw error;
       }
     }
   );
 
-  // Export multiple agents to markdown format (batch export)
+  /**
+   * Export multiple agents to markdown format (batch export).
+   * Note: This handler returns per-item results as some agents may succeed while others fail.
+   */
   ipcMain.handle(
     IpcChannels.agent.exportBatch,
     async (_event: IpcMainInvokeEvent, ids: Array<number>): Promise<Array<AgentExportBatchItem>> => {

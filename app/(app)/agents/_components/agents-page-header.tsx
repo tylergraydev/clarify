@@ -1,9 +1,7 @@
 'use client';
 
-import type { ComponentPropsWithRef } from 'react';
-
 import { Plus } from 'lucide-react';
-import { Fragment } from 'react';
+import { ComponentPropsWithRef, Fragment } from 'react';
 
 import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
 import { Badge } from '@/components/ui/badge';

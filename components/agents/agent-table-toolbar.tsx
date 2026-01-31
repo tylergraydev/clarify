@@ -39,18 +39,22 @@ import { cn } from '@/lib/utils';
 // ============================================================================
 
 interface AgentTableToolbarProps extends ComponentPropsWithRef<'div'> {
+  /** Whether to show built-in agents */
+  isShowingBuiltIn: boolean;
+  /** Whether to show deactivated agents */
+  isShowingDeactivated: boolean;
   /** Callback when export selected button is clicked */
   onExportSelected?: () => void;
   /** Callback when import button is clicked */
   onImport?: () => void;
+  /** Callback when show built-in toggle changes */
+  onIsShowingBuiltInChange: (value: boolean) => void;
+  /** Callback when show deactivated toggle changes */
+  onIsShowingDeactivatedChange: (value: boolean) => void;
   /** Callback when project filter changes */
   onProjectFilterChange: (value: null | string) => void;
   /** Callback when reset filters button is clicked */
   onResetFilters?: () => void;
-  /** Callback when show built-in toggle changes */
-  onShowBuiltInChange: (value: boolean) => void;
-  /** Callback when show deactivated toggle changes */
-  onShowDeactivatedChange: (value: boolean) => void;
   /** Callback when status filter changes */
   onStatusFilterChange: (value: null | string) => void;
   /** Callback when type filter changes */
@@ -61,10 +65,6 @@ interface AgentTableToolbarProps extends ComponentPropsWithRef<'div'> {
   projects: Array<Project>;
   /** Number of selected rows for export button state */
   selectedCount?: number;
-  /** Whether to show built-in agents */
-  showBuiltIn: boolean;
-  /** Whether to show deactivated agents */
-  showDeactivated: boolean;
   /** Current status filter value */
   statusFilter: null | string;
   /** Current type filter value */
@@ -99,16 +99,16 @@ const getActiveFilterCount = (
   typeFilter: null | string,
   projectFilter: null | string,
   statusFilter: null | string,
-  showBuiltIn: boolean,
-  showDeactivated: boolean
+  isShowingBuiltIn: boolean,
+  isShowingDeactivated: boolean
 ): number => {
   let count = 0;
   if (typeFilter !== null) count++;
   if (projectFilter !== null) count++;
   if (statusFilter !== null) count++;
   // Count toggles if they differ from defaults
-  if (showBuiltIn !== DEFAULT_AGENT_SHOW_BUILTIN) count++;
-  if (showDeactivated !== DEFAULT_AGENT_SHOW_DEACTIVATED) count++;
+  if (isShowingBuiltIn !== DEFAULT_AGENT_SHOW_BUILTIN) count++;
+  if (isShowingDeactivated !== DEFAULT_AGENT_SHOW_DEACTIVATED) count++;
   return count;
 };
 
@@ -160,17 +160,17 @@ const FilterCountBadge = ({ count }: FilterCountBadgeProps) => {
  *   // ...other props
  *   toolbarContent={
  *     <AgentTableToolbar
- *       typeFilter={typeFilter}
- *       projectFilter={projectFilter}
- *       statusFilter={statusFilter}
- *       showBuiltIn={showBuiltIn}
- *       showDeactivated={showDeactivated}
- *       onTypeFilterChange={handleTypeFilterChange}
+ *       isShowingBuiltIn={isShowingBuiltIn}
+ *       isShowingDeactivated={isShowingDeactivated}
+ *       onIsShowingBuiltInChange={handleIsShowingBuiltInChange}
+ *       onIsShowingDeactivatedChange={handleIsShowingDeactivatedChange}
  *       onProjectFilterChange={handleProjectFilterChange}
  *       onStatusFilterChange={handleStatusFilterChange}
- *       onShowBuiltInChange={handleShowBuiltInChange}
- *       onShowDeactivatedChange={handleShowDeactivatedChange}
+ *       onTypeFilterChange={handleTypeFilterChange}
+ *       projectFilter={projectFilter}
  *       projects={projects}
+ *       statusFilter={statusFilter}
+ *       typeFilter={typeFilter}
  *     />
  *   }
  * />
@@ -178,26 +178,32 @@ const FilterCountBadge = ({ count }: FilterCountBadgeProps) => {
  */
 export const AgentTableToolbar = memo(function AgentTableToolbar({
   className,
+  isShowingBuiltIn,
+  isShowingDeactivated,
   onExportSelected,
   onImport,
+  onIsShowingBuiltInChange,
+  onIsShowingDeactivatedChange,
   onProjectFilterChange,
   onResetFilters,
-  onShowBuiltInChange,
-  onShowDeactivatedChange,
   onStatusFilterChange,
   onTypeFilterChange,
   projectFilter,
   projects,
   ref,
   selectedCount = 0,
-  showBuiltIn,
-  showDeactivated,
   statusFilter,
   typeFilter,
   ...props
 }: AgentTableToolbarProps) {
   // Computed state
-  const activeFilterCount = getActiveFilterCount(typeFilter, projectFilter, statusFilter, showBuiltIn, showDeactivated);
+  const activeFilterCount = getActiveFilterCount(
+    typeFilter,
+    projectFilter,
+    statusFilter,
+    isShowingBuiltIn,
+    isShowingDeactivated
+  );
   const hasActiveFilters = activeFilterCount > 0;
   const isExportDisabled = selectedCount === 0;
 
@@ -214,12 +220,12 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
     onStatusFilterChange(value === '' ? null : value);
   };
 
-  const handleShowBuiltInToggle = (isChecked: boolean) => {
-    onShowBuiltInChange(isChecked);
+  const handleIsShowingBuiltInToggle = (isChecked: boolean) => {
+    onIsShowingBuiltInChange(isChecked);
   };
 
-  const handleShowDeactivatedToggle = (isChecked: boolean) => {
-    onShowDeactivatedChange(isChecked);
+  const handleIsShowingDeactivatedToggle = (isChecked: boolean) => {
+    onIsShowingDeactivatedChange(isChecked);
   };
 
   const handleImportClick = () => {
@@ -235,8 +241,8 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
     onTypeFilterChange(null);
     onProjectFilterChange(null);
     onStatusFilterChange(null);
-    onShowBuiltInChange(DEFAULT_AGENT_SHOW_BUILTIN);
-    onShowDeactivatedChange(DEFAULT_AGENT_SHOW_DEACTIVATED);
+    onIsShowingBuiltInChange(DEFAULT_AGENT_SHOW_BUILTIN);
+    onIsShowingDeactivatedChange(DEFAULT_AGENT_SHOW_DEACTIVATED);
     onResetFilters?.();
   };
 
@@ -358,9 +364,9 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
                       {'Show built-in agents'}
                     </label>
                     <Switch
-                      checked={showBuiltIn}
+                      checked={isShowingBuiltIn}
                       id={'filter-show-builtin'}
-                      onCheckedChange={handleShowBuiltInToggle}
+                      onCheckedChange={handleIsShowingBuiltInToggle}
                       size={'sm'}
                     />
                   </div>
@@ -371,9 +377,9 @@ export const AgentTableToolbar = memo(function AgentTableToolbar({
                       {'Show deactivated agents'}
                     </label>
                     <Switch
-                      checked={showDeactivated}
+                      checked={isShowingDeactivated}
                       id={'filter-show-deactivated'}
-                      onCheckedChange={handleShowDeactivatedToggle}
+                      onCheckedChange={handleIsShowingDeactivatedToggle}
                       size={'sm'}
                     />
                   </div>

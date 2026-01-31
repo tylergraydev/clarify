@@ -18,6 +18,46 @@ export const agentSkillInputSchema = z.object({
 
 export type AgentSkillInput = z.infer<typeof agentSkillInputSchema>;
 
+// Create agent skill schema for repository validation
+export const createAgentSkillSchema = z.object({
+  agentId: z.number().int().positive('Invalid agent ID'),
+  orderIndex: z.number().int().nonnegative('Order index must be non-negative').optional(),
+  requiredAt: z.string().nullable().optional(),
+  skillName: z.string().min(1, 'Skill name is required').max(255, 'Skill name is too long'),
+});
+
+export type CreateAgentSkillInput = z.infer<typeof createAgentSkillSchema>;
+
+// Update agent skill schema for repository validation
+export const updateAgentSkillSchema = z.object({
+  orderIndex: z.number().int().nonnegative('Order index must be non-negative').optional(),
+  requiredAt: z.string().nullable().optional(),
+  skillName: z.string().min(1, 'Skill name is required').max(255, 'Skill name is too long').optional(),
+});
+
+export type UpdateAgentSkillInput = z.infer<typeof updateAgentSkillSchema>;
+
+// Create agent tool schema for repository validation
+export const createAgentToolSchema = z.object({
+  agentId: z.number().int().positive('Invalid agent ID'),
+  disallowedAt: z.string().nullable().optional(),
+  orderIndex: z.number().int().nonnegative('Order index must be non-negative').optional(),
+  toolName: z.string().min(1, 'Tool name is required').max(255, 'Tool name is too long'),
+  toolPattern: z.string().max(1000, 'Pattern is too long').optional(),
+});
+
+export type CreateAgentToolInput = z.infer<typeof createAgentToolSchema>;
+
+// Update agent tool schema for repository validation
+export const updateAgentToolSchema = z.object({
+  disallowedAt: z.string().nullable().optional(),
+  orderIndex: z.number().int().nonnegative('Order index must be non-negative').optional(),
+  toolName: z.string().min(1, 'Tool name is required').max(255, 'Tool name is too long').optional(),
+  toolPattern: z.string().max(1000, 'Pattern is too long').optional(),
+});
+
+export type UpdateAgentToolInput = z.infer<typeof updateAgentToolSchema>;
+
 // Create agent schema for repository validation
 export const createAgentSchema = z.object({
   builtInAt: z.string().nullable().optional(),

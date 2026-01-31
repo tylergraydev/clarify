@@ -2,8 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { NewAgentTool } from '@/types/electron';
-
 import { agentToolKeys } from '@/lib/queries/agent-tools';
 
 import { useElectronDb } from '../use-electron';
@@ -69,7 +67,7 @@ export function useCreateAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (data: NewAgentTool) => agentTools.create(data),
+    mutationFn: (data: Parameters<typeof agentTools.create>[0]) => agentTools.create(data),
     onError: (error) => {
       toast.error({
         description: error instanceof Error ? error.message : 'Failed to create tool',
@@ -162,7 +160,7 @@ export function useUpdateAgentTool() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Partial<NewAgentTool>; id: number }) =>
+    mutationFn: ({ data, id }: { data: Parameters<typeof agentTools.update>[1]; id: number }) =>
       agentTools.update(id, data),
     onError: (error) => {
       toast.error({

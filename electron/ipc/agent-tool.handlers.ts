@@ -21,7 +21,9 @@ import { IpcChannels } from './channels';
  * @param agentToolsRepository - The agent tools repository for database operations
  */
 export function registerAgentToolHandlers(agentToolsRepository: AgentToolsRepository): void {
-  // List tools for an agent
+  /**
+   * List all tools for a specific agent by agent ID.
+   */
   ipcMain.handle(
     IpcChannels.agentTool.list,
     async (_event: IpcMainInvokeEvent, agentId: number): Promise<Array<AgentTool>> => {
@@ -34,7 +36,9 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
     }
   );
 
-  // Create a new tool for an agent
+  /**
+   * Create a new tool for an agent.
+   */
   ipcMain.handle(
     IpcChannels.agentTool.create,
     async (_event: IpcMainInvokeEvent, data: NewAgentTool): Promise<AgentTool> => {
@@ -47,7 +51,9 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
     }
   );
 
-  // Update a tool's configuration
+  /**
+   * Update a tool's configuration (name, pattern, order index, etc.).
+   */
   ipcMain.handle(
     IpcChannels.agentTool.update,
     async (
@@ -64,7 +70,9 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
     }
   );
 
-  // Allow a tool (clear disallowedAt)
+  /**
+   * Allow a tool by clearing its disallowedAt timestamp.
+   */
   ipcMain.handle(
     IpcChannels.agentTool.allow,
     async (_event: IpcMainInvokeEvent, id: number): Promise<AgentTool | undefined> => {
@@ -77,7 +85,9 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
     }
   );
 
-  // Disallow a tool (set disallowedAt)
+  /**
+   * Disallow a tool by setting its disallowedAt timestamp.
+   */
   ipcMain.handle(
     IpcChannels.agentTool.disallow,
     async (_event: IpcMainInvokeEvent, id: number): Promise<AgentTool | undefined> => {
@@ -90,8 +100,10 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
     }
   );
 
-  // Delete a tool
-  ipcMain.handle(IpcChannels.agentTool.delete, async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
+  /**
+   * Delete a tool by ID.
+   */
+  ipcMain.handle(IpcChannels.agentTool.delete, async (_event: IpcMainInvokeEvent, id: number): Promise<boolean> => {
     try {
       return agentToolsRepository.delete(id);
     } catch (error) {

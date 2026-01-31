@@ -15,12 +15,12 @@ import type { FilterValue } from '@/hooks/use-agent-filters';
 export interface UseFilteredAgentsOptions {
   /** Array of agents to filter */
   agents: Array<AgentWithRelations> | undefined;
+  /** Whether to include built-in agents */
+  isShowingBuiltIn: boolean;
   /** Filter by project ID or 'global' for global agents */
   projectFilter: FilterValue;
   /** Search term to filter by name, display name, or description */
   searchFilter: string;
-  /** Whether to include built-in agents */
-  showBuiltIn: boolean;
   /** Filter by status ('active' or 'inactive') */
   statusFilter: FilterValue;
   /** Filter by agent type */
@@ -59,19 +59,19 @@ export interface UseFilteredAgentsReturn {
  * ```tsx
  * const { filteredAgents, filteredCount, totalCount, isFiltered } = useFilteredAgents({
  *   agents: allAgents,
- *   searchFilter,
- *   typeFilter,
+ *   isShowingBuiltIn,
  *   projectFilter,
+ *   searchFilter,
  *   statusFilter,
- *   showBuiltIn,
+ *   typeFilter,
  * });
  * ```
  */
 export const useFilteredAgents = ({
   agents,
+  isShowingBuiltIn,
   projectFilter,
   searchFilter,
-  showBuiltIn,
   statusFilter,
   typeFilter,
 }: UseFilteredAgentsOptions): UseFilteredAgentsReturn => {
@@ -80,8 +80,8 @@ export const useFilteredAgents = ({
     if (!agents) return [];
 
     return agents.filter((agent) => {
-      // Filter by showBuiltIn preference
-      if (!showBuiltIn && agent.builtInAt !== null) {
+      // Filter by isShowingBuiltIn preference
+      if (!isShowingBuiltIn && agent.builtInAt !== null) {
         return false;
       }
 
@@ -117,7 +117,7 @@ export const useFilteredAgents = ({
 
       return true;
     });
-  }, [agents, projectFilter, searchFilter, showBuiltIn, statusFilter, typeFilter]);
+  }, [agents, isShowingBuiltIn, projectFilter, searchFilter, statusFilter, typeFilter]);
 
   // Derived state
   const totalCount = agents?.length ?? 0;
