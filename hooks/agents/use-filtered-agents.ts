@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import type { AgentWithRelations } from '@/components/agents/agent-table';
-import type { FilterValue } from '@/hooks/use-agent-filters';
+import type { FilterValue } from '@/hooks/agents/use-agent-filters';
 
 // ============================================================================
 // Types
