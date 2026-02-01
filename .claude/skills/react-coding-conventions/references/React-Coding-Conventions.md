@@ -10,17 +10,22 @@ A comprehensive guide for consistent, maintainable React development patterns an
 
 ```tsx
 // ✅ Correct
-import { Component } from "react";
-const message = "Hello world";
-<Button className={"btn-primary"} />;
+import { Component } from 'react';
+const message = 'Hello world';
+<Button className={'btn-primary'}>Click Me</Button>;
+<Input placeholder={'Enter value'} />;
 
-// ❌ Incorrect
-import { Component } from "react";
-const message = "Hello world";
-<Button className="btn-primary" />;
+// ❌ Incorrect - missing curly braces on attributes
+<Button className="btn-primary">Click Me</Button>;
+
+// ❌ Incorrect - children text should NOT be wrapped
+<Button>{'Click Me'}</Button>;
 ```
 
-**Rule**: Single quotes for strings and imports. JSX attributes must use curly braces with single quotes.
+**Rules**:
+- Single quotes for strings and imports
+- JSX attributes must use curly braces with single quotes: `className={'value'}`
+- Children text content must be plain text, NOT wrapped in curly braces: `<Button>Click Me</Button>`
 
 ### Fragment Syntax
 

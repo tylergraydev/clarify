@@ -223,11 +223,12 @@ You MUST enforce all conventions from both skills:
 **React Conventions**:
 
 1. **Single Quotes**: For all strings and imports
-2. **JSX Curly Braces**: `className={'value'}` not `className="value"`
-3. **Boolean Naming**: Prefix with `is`: `isLoading`, `isError`
-4. **Handler Naming**: `handle` prefix: `handleClick`, `handleSubmit`
-5. **Section Comments**: Use `// ============` dividers
-6. **Named Exports**: No default exports except for page component
+2. **JSX Curly Braces**: `className={'value'}` not `className="value"` (attributes only)
+3. **Plain Text Children**: `<Button>Click Me</Button>` not `<Button>{'Click Me'}</Button>`
+4. **Boolean Naming**: Prefix with `is`: `isLoading`, `isError`
+5. **Handler Naming**: `handle` prefix: `handleClick`, `handleSubmit`
+6. **Section Comments**: Use `// ============` dividers
+7. **Named Exports**: No default exports except for page component
 
 ## Conditional Skills
 
