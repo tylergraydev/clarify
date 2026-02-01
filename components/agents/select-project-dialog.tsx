@@ -1,13 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { AgentWithRelations } from '@/components/agents/agent-table';
-import type { Project } from '@/db/schema';
+import type { Project } from '@/types/electron';
 
 import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
+  DialogBody,
   DialogClose,
   DialogDescription,
   DialogFooter,
@@ -46,6 +47,19 @@ interface SelectProjectDialogProps {
   sourceAgent: AgentWithRelations | null;
 }
 
+/**
+ * Dialog for selecting a destination project when moving or copying an agent.
+ * Displays a select dropdown with available projects and handles the selection confirmation.
+ *
+ * @param props - Component props
+ * @param props.isLoading - Whether the action is in progress
+ * @param props.isOpen - Whether the dialog is open
+ * @param props.mode - The mode of the operation (copy or move)
+ * @param props.onOpenChange - Callback when the dialog open state changes
+ * @param props.onSelect - Callback when user confirms with a project ID (null = global)
+ * @param props.projects - List of available projects
+ * @param props.sourceAgent - The source agent being moved/copied
+ */
 export const SelectProjectDialog = ({
   isLoading = false,
   isOpen,
@@ -81,22 +95,25 @@ export const SelectProjectDialog = ({
 
   const items = useMemo(() => optionsToItems(options), [options]);
 
-  const handleConfirmClick = () => {
+  const handleConfirmClick = useCallback(() => {
     if (!selectedValue) return;
     const projectId = selectedValue === 'global' ? null : Number(selectedValue);
     onSelect(projectId);
-  };
+  }, [onSelect, selectedValue]);
 
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      setSelectedValue('');
-    }
-    onOpenChange(isOpen);
-  };
+  const handleOpenChange = useCallback(
+    (isOpen: boolean) => {
+      if (!isOpen) {
+        setSelectedValue('');
+      }
+      onOpenChange(isOpen);
+    },
+    [onOpenChange]
+  );
 
-  const handleValueChange = (value: null | string) => {
+  const handleValueChange = useCallback((value: null | string) => {
     setSelectedValue(value ?? '');
-  };
+  }, []);
 
   const title = isMoveMode ? 'Move Agent' : 'Copy Agent to Project';
   const description = isMoveMode
@@ -109,7 +126,7 @@ export const SelectProjectDialog = ({
     <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup aria-modal={'true'} role={'dialog'} size={'sm'}>
+        <DialogPopup size={'sm'}>
           {/* Header */}
           <DialogHeader>
             <DialogTitle id={'select-project-dialog-title'}>{title}</DialogTitle>
@@ -117,7 +134,7 @@ export const SelectProjectDialog = ({
           </DialogHeader>
 
           {/* Content */}
-          <div className={'mt-4 space-y-4'}>
+          <DialogBody>
             <SelectRoot disabled={isLoading} items={items} onValueChange={handleValueChange} value={selectedValue}>
               <SelectTrigger aria-label={'Select destination'}>
                 <SelectValue placeholder={'Select a destination...'} />
@@ -136,12 +153,12 @@ export const SelectProjectDialog = ({
                 </SelectPositioner>
               </SelectPortal>
             </SelectRoot>
-          </div>
+          </DialogBody>
 
           {/* Footer */}
           <DialogFooter sticky={false}>
             <DialogClose>
-              <Button disabled={isLoading} variant={'outline'}>
+              <Button type={'button'} variant={'outline'}>
                 Cancel
               </Button>
             </DialogClose>

@@ -437,10 +437,10 @@ export const AgentTable = ({
         header: '',
         id: 'actions',
         meta: {
-          cellClassName: 'text-left',
-          headerClassName: 'text-left',
+          cellClassName: 'px-2',
+          headerClassName: 'px-2',
         },
-        size: 30,
+        size: 48,
       }),
 
       // Name column with color indicator

@@ -1,9 +1,8 @@
 import { eq, isNull } from 'drizzle-orm';
 
-import { createProjectSchema, updateProjectSchema } from '@/lib/validations/project';
-
 import type { DrizzleDatabase } from '../index';
 
+import { createProjectSchema, updateProjectSchema } from '../../lib/validations/project';
 import { type NewProject, type Project, projects } from '../schema';
 
 export interface ProjectsRepository {

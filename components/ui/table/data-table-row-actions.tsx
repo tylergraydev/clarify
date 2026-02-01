@@ -209,7 +209,7 @@ export const DataTableRowActions = <TData,>({
   }
 
   return (
-    <div className={cn('flex justify-start', className)} onClick={(e) => e.stopPropagation()} ref={ref} {...props}>
+    <div className={cn('flex justify-center', className)} onClick={(e) => e.stopPropagation()} ref={ref} {...props}>
       <DropdownMenuRoot>
         <DropdownMenuTrigger>
           <BaseButton

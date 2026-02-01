@@ -3,10 +3,10 @@
 import type { ChangeEvent } from 'react';
 
 import { AlertTriangle, Info, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { ParsedAgentMarkdown } from '@/lib/utils/agent-markdown';
-import type { AgentImportValidationResult, AgentImportWarning } from '@/lib/validations/agent-import';
+import type { AgentImportValidationResult } from '@/lib/validations/agent-import';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -48,14 +48,6 @@ interface ImportAgentDialogProps {
  * Dialog for previewing and confirming agent import from markdown files.
  * Displays parsed agent configuration with validation errors and warnings,
  * and allows users to review before importing.
- *
- * @param props - Component props
- * @param props.isLoading - Whether import is in progress
- * @param props.isOpen - Whether the dialog is open
- * @param props.onImport - Callback when import is confirmed
- * @param props.onOpenChange - Callback when dialog open state changes
- * @param props.parsedData - The parsed agent markdown data to preview
- * @param props.validationResult - Validation result from agent import validation
  */
 export const ImportAgentDialog = ({
   isLoading = false,
@@ -65,12 +57,8 @@ export const ImportAgentDialog = ({
   parsedData,
   validationResult,
 }: ImportAgentDialogProps) => {
-  // Track state for name editing with controlled reset pattern
-  // syncKey combines isOpen state with source data to detect all reset scenarios:
-  // - Dialog opens with new data (different name)
-  // - Dialog closes and reopens with same data (isOpen changes false->true)
-  // - Dialog opens with null parsedData (name is empty string)
-  const [syncKey, setSyncKey] = useState<string>('');
+  // Track previous original name to detect when source data changes
+  const [prevOriginalName, setPrevOriginalName] = useState<string>('');
   const [modifiedName, setModifiedName] = useState<string>('');
 
   const { data: allAgents } = useAllAgents();
@@ -81,26 +69,13 @@ export const ImportAgentDialog = ({
   }, [allAgents]);
 
   const originalName = parsedData?.frontmatter.name ?? '';
-  const currentSourceName = parsedData?.frontmatter.name ?? '';
 
-  // Create a composite key that changes when:
-  // 1. Dialog opens (isOpen becomes true)
-  // 2. Source data name changes while dialog is open
-  // When dialog is closed, use empty key to reset tracking
-  const currentSyncKey = isOpen ? `open:${currentSourceName}` : '';
-
-  // Sync modifiedName when the sync key changes
-  // This handles all edge cases:
-  // - Dialog opens fresh: syncKey changes from '' to 'open:name'
-  // - New file loaded while open: syncKey changes from 'open:oldName' to 'open:newName'
-  // - Dialog closes: syncKey changes to '', then next open triggers fresh sync
-  if (currentSyncKey !== syncKey) {
-    setSyncKey(currentSyncKey);
-    // Only set modifiedName when dialog is opening with data
-    // When closing (currentSyncKey is ''), we just reset the syncKey
-    if (isOpen) {
-      setModifiedName(currentSourceName);
-    }
+  // Sync modifiedName when the source data name changes while dialog is open
+  // This is the React-recommended pattern for adjusting state based on props
+  // See: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  if (isOpen && originalName !== prevOriginalName) {
+    setPrevOriginalName(originalName);
+    setModifiedName(originalName);
   }
 
   // Compute validation error from current state (no useEffect needed)
@@ -144,6 +119,17 @@ export const ImportAgentDialog = ({
     setModifiedName(event.target.value);
   };
 
+  const handleOpenChange = useCallback(
+    (nextIsOpen: boolean) => {
+      if (!nextIsOpen) {
+        setModifiedName('');
+        setPrevOriginalName('');
+      }
+      onOpenChange(nextIsOpen);
+    },
+    [onOpenChange]
+  );
+
   const frontmatter = parsedData?.frontmatter;
   const toolsCount = frontmatter?.tools?.length ?? 0;
   const skillsCount = frontmatter?.skills?.length ?? 0;
@@ -156,7 +142,7 @@ export const ImportAgentDialog = ({
   const totalHooksCount = preToolUseHooksCount + postToolUseHooksCount + stopHooksCount;
 
   return (
-    <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
+    <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
@@ -165,7 +151,7 @@ export const ImportAgentDialog = ({
           <DialogHeader>
             <DialogTitle id={'import-agent-title'}>{'Import Agent Preview'}</DialogTitle>
             <DialogDescription id={'import-agent-description'}>
-              {'Review the agent configuration before importing.'}
+              Review the agent configuration before importing.
             </DialogDescription>
           </DialogHeader>
 
@@ -173,10 +159,10 @@ export const ImportAgentDialog = ({
           <DialogBody className={'pr-4'}>
             {/* Validation Errors */}
             {hasErrors && validationResult && (
-              <Alert className={'mb-4'} variant={'destructive'}>
+              <Alert aria-live={'polite'} className={'mb-4'} variant={'destructive'}>
                 <X aria-hidden={'true'} className={'size-4'} />
                 <div>
-                  <AlertTitle>{'Validation Errors'}</AlertTitle>
+                  <AlertTitle>Validation Errors</AlertTitle>
                   <AlertDescription>
                     <ul className={'mt-2 list-inside list-disc space-y-1'}>
                       {validationResult.errors.map((error, index) => (
@@ -192,13 +178,13 @@ export const ImportAgentDialog = ({
 
             {/* Validation Warnings */}
             {hasWarnings && validationResult && (
-              <Alert className={'mb-4'} variant={'warning'}>
+              <Alert aria-live={'polite'} className={'mb-4'} variant={'warning'}>
                 <AlertTriangle aria-hidden={'true'} className={'size-4'} />
                 <div>
-                  <AlertTitle>{'Warnings'}</AlertTitle>
+                  <AlertTitle>Warnings</AlertTitle>
                   <AlertDescription>
                     <ul className={'mt-2 list-inside list-disc space-y-1'}>
-                      {validationResult.warnings.map((warning: AgentImportWarning, index: number) => (
+                      {validationResult.warnings.map((warning, index) => (
                         <li key={index}>
                           <span className={'font-medium'}>{warning.field}:</span> {warning.message}
                         </li>
@@ -215,7 +201,7 @@ export const ImportAgentDialog = ({
                 {/* Agent Identity */}
                 <section>
                   <h3 className={'mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase'}>
-                    {'Agent Identity'}
+                    Agent Identity
                   </h3>
                   <div className={'rounded-md border border-border bg-muted/50 p-4'}>
                     {/* Display Name and Color */}
@@ -240,7 +226,7 @@ export const ImportAgentDialog = ({
                         className={'mb-1.5 block text-sm font-medium text-foreground'}
                         htmlFor={'agent-name-input'}
                       >
-                        {'Agent Name (kebab-case)'}
+                        Agent Name (kebab-case)
                       </label>
                       <Input
                         aria-describedby={nameError ? 'agent-name-error' : undefined}
@@ -309,7 +295,7 @@ export const ImportAgentDialog = ({
                       </div>
                     ) : (
                       <p className={'text-sm text-muted-foreground'}>
-                        {'No tools configured. Agent will have no tool restrictions.'}
+                        No tools configured. Agent will have no tool restrictions.
                       </p>
                     )}
                   </div>
@@ -330,7 +316,7 @@ export const ImportAgentDialog = ({
                         ))}
                       </div>
                     ) : (
-                      <p className={'text-sm text-muted-foreground'}>{'No skills configured.'}</p>
+                      <p className={'text-sm text-muted-foreground'}>No skills configured.</p>
                     )}
                   </div>
                 </section>
@@ -393,7 +379,7 @@ export const ImportAgentDialog = ({
                 {/* System Prompt Preview */}
                 <section>
                   <h3 className={'mb-2 text-sm font-medium tracking-wider text-muted-foreground uppercase'}>
-                    {'System Prompt Preview'}
+                    System Prompt Preview
                   </h3>
                   <div className={cn('rounded-md border border-border bg-muted/50 p-4', 'max-h-40 overflow-y-auto')}>
                     <pre className={'font-mono text-xs whitespace-pre-wrap text-foreground'}>
@@ -408,9 +394,8 @@ export const ImportAgentDialog = ({
                 <Alert variant={'info'}>
                   <Info aria-hidden={'true'} className={'size-4'} />
                   <AlertDescription>
-                    {
-                      'Importing will create a new custom agent with this configuration. You can edit the agent after import.'
-                    }
+                    Importing will create a new custom agent with this configuration. You can edit the agent after
+                    import.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -418,14 +403,16 @@ export const ImportAgentDialog = ({
 
             {/* No Data State */}
             {!frontmatter && !hasErrors && (
-              <div className={'py-8 text-center text-muted-foreground'}>{'No agent data to preview.'}</div>
+              <div className={'py-8 text-center text-muted-foreground'}>No agent data to preview.</div>
             )}
           </DialogBody>
 
           {/* Footer Actions */}
-          <DialogFooter>
+          <DialogFooter sticky={false}>
             <DialogClose>
-              <Button variant={'outline'}>{'Cancel'}</Button>
+              <Button disabled={isLoading} variant={'outline'}>
+                Cancel
+              </Button>
             </DialogClose>
             <Button
               aria-describedby={'import-agent-description'}

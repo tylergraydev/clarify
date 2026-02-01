@@ -24,6 +24,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["./**/*.ts", "../db/**/*.ts"],
+  "include": ["./**/*.ts", "../db/**/*.ts", "../lib/validations/**/*.ts"],
   "exclude": ["node_modules"]
 }
