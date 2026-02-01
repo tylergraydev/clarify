@@ -1,7 +1,7 @@
 'use client';
 
 import { format } from 'date-fns';
-import { Archive, Building2, Calendar, ChevronRight, FolderGit2, Settings, Workflow } from 'lucide-react';
+import { Archive, Building2, Calendar, ChevronRight, FolderGit2, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { useRouteParams } from 'next-typesafe-url/app';
 import Link from 'next/link';
@@ -10,7 +10,6 @@ import { redirect } from 'next/navigation';
 import type { Project } from '@/types/electron';
 
 import { ProjectDetailSkeleton, ProjectNotFound } from '@/components/projects';
-import { SettingsTabContent } from '@/components/projects/settings-tab-content';
 import { RepositoriesTabContent } from '@/components/repositories/repositories-tab-content';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,15 +21,7 @@ import { useWorkflowsByProject } from '@/hooks/queries/use-workflows';
 
 import { Route } from './route-type';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 type ProjectWithDates = Pick<Project, 'archivedAt' | 'createdAt' | 'updatedAt'>;
-
-// ============================================================================
-// Helpers
-// ============================================================================
 
 /**
  * Formats a date to a readable string (e.g., "Jan 15, 2025")
@@ -65,10 +56,6 @@ const getRepositoryCountText = (count: number): string => {
   }
   return count === 1 ? '1 repository configured' : `${count} repositories configured`;
 };
-
-// ============================================================================
-// Main Component
-// ============================================================================
 
 /**
  * Project detail page with breadcrumb navigation and tabbed layout.
@@ -163,10 +150,6 @@ const ProjectDetailPage = () => {
           <TabsTrigger value={'workflows'}>
             <Workflow aria-hidden={'true'} className={'mr-2 size-4'} />
             {'Workflows'}
-          </TabsTrigger>
-          <TabsTrigger value={'settings'}>
-            <Settings aria-hidden={'true'} className={'mr-2 size-4'} />
-            {'Settings'}
           </TabsTrigger>
           <TabsIndicator />
         </TabsList>
@@ -264,18 +247,9 @@ const ProjectDetailPage = () => {
         <TabsPanel value={'workflows'}>
           <WorkflowsTabContent projectId={projectId} projectName={project.name} />
         </TabsPanel>
-
-        {/* Settings Tab */}
-        <TabsPanel value={'settings'}>
-          <SettingsTabContent projectId={projectId} />
-        </TabsPanel>
       </TabsRoot>
     </div>
   );
 };
-
-// ============================================================================
-// Export
-// ============================================================================
 
 export default ProjectDetailPage;

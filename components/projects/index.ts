@@ -1,5 +1,3 @@
-// Project component exports
-
 // Dialog components
 export { AddRepositoryDialog } from '../repositories/add-repository-dialog';
 // Tab content components
@@ -16,4 +14,3 @@ export { ProjectNotFound } from './project-not-found';
 // Display components
 export { ProjectTable } from './project-table';
 export { type ArchiveFilterValue, ProjectTableToolbar, type ProjectTableToolbarProps } from './project-table-toolbar';
-export { SettingsTabContent } from './settings-tab-content';
