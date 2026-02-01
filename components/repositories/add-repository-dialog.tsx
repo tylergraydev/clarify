@@ -1,12 +1,16 @@
 'use client';
 
-import { type ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
+
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
   DialogClose,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogPopup,
   DialogPortal,
   DialogRoot,
@@ -67,7 +71,7 @@ export const AddRepositoryDialog = ({ onSuccess, projectId, trigger }: AddReposi
     form.reset();
   };
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChangeInternal = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
       form.reset();
@@ -75,7 +79,7 @@ export const AddRepositoryDialog = ({ onSuccess, projectId, trigger }: AddReposi
   };
 
   return (
-    <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
+    <DialogRoot onOpenChange={handleOpenChangeInternal} open={isOpen}>
       {/* Trigger */}
       <DialogTrigger>{trigger}</DialogTrigger>
 
@@ -84,8 +88,10 @@ export const AddRepositoryDialog = ({ onSuccess, projectId, trigger }: AddReposi
         <DialogBackdrop />
         <DialogPopup>
           {/* Header */}
-          <DialogTitle>{'Add Repository'}</DialogTitle>
-          <DialogDescription>{'Add a repository to this project for workflow management.'}</DialogDescription>
+          <DialogHeader>
+            <DialogTitle>Add Repository</DialogTitle>
+            <DialogDescription>Add a repository to this project for workflow management.</DialogDescription>
+          </DialogHeader>
 
           {/* Form */}
           <form
@@ -102,6 +108,7 @@ export const AddRepositoryDialog = ({ onSuccess, projectId, trigger }: AddReposi
                 {(field) => (
                   <field.TextField
                     autoFocus
+                    isDisabled={isSubmitting}
                     isRequired
                     label={'Repository Name'}
                     placeholder={'Enter repository name'}
@@ -114,6 +121,7 @@ export const AddRepositoryDialog = ({ onSuccess, projectId, trigger }: AddReposi
                 {(field) => (
                   <field.PathInputField
                     description={'Select the local directory containing the repository'}
+                    isDisabled={isSubmitting}
                     isRequired
                     label={'Repository Path'}
                     placeholder={'Select or enter repository path'}
@@ -126,24 +134,26 @@ export const AddRepositoryDialog = ({ onSuccess, projectId, trigger }: AddReposi
                 {(field) => (
                   <field.TextField
                     description={'The default branch to use for workflows'}
+                    isDisabled={isSubmitting}
+                    isRequired
                     label={'Default Branch'}
                     placeholder={'main'}
                   />
                 )}
               </form.AppField>
-
-              {/* Action Buttons */}
-              <div className={'mt-2 flex justify-end gap-3'}>
-                <DialogClose>
-                  <Button disabled={isSubmitting} type={'button'} variant={'outline'}>
-                    {'Cancel'}
-                  </Button>
-                </DialogClose>
-                <form.AppForm>
-                  <form.SubmitButton>{isSubmitting ? 'Adding...' : 'Add Repository'}</form.SubmitButton>
-                </form.AppForm>
-              </div>
             </div>
+
+            {/* Action Buttons */}
+            <DialogFooter sticky={false}>
+              <DialogClose>
+                <Button disabled={isSubmitting} type={'button'} variant={'outline'}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <form.AppForm>
+                <form.SubmitButton>{isSubmitting ? 'Adding...' : 'Add Repository'}</form.SubmitButton>
+              </form.AppForm>
+            </DialogFooter>
           </form>
         </DialogPopup>
       </DialogPortal>

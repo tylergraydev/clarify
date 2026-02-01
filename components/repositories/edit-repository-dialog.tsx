@@ -90,8 +90,8 @@ export const EditRepositoryDialog = ({ isOpen, onOpenChange, onSuccess, reposito
         <DialogPopup>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle>{'Edit Repository'}</DialogTitle>
-            <DialogDescription>{"Update your repository's name and default branch."}</DialogDescription>
+            <DialogTitle>Edit Repository</DialogTitle>
+            <DialogDescription>Update your repository&#39;s name and default branch.</DialogDescription>
           </DialogHeader>
 
           {/* Form */}
@@ -126,9 +126,7 @@ export const EditRepositoryDialog = ({ isOpen, onOpenChange, onSuccess, reposito
                 >
                   {repository.path}
                 </div>
-                <p className={'text-xs text-muted-foreground'}>
-                  {'The repository path cannot be changed after creation.'}
-                </p>
+                <p className={'text-xs text-muted-foreground'}>The repository path cannot be changed after creation.</p>
               </div>
 
               {/* Default Branch Field */}
@@ -148,7 +146,7 @@ export const EditRepositoryDialog = ({ isOpen, onOpenChange, onSuccess, reposito
             <DialogFooter sticky={false}>
               <DialogClose>
                 <Button disabled={isSubmitting} type={'button'} variant={'outline'}>
-                  {'Cancel'}
+                  Cancel
                 </Button>
               </DialogClose>
               <form.AppForm>

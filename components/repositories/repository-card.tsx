@@ -5,7 +5,7 @@ import type { ComponentPropsWithRef } from 'react';
 import { format } from 'date-fns';
 import { FolderGit2, Pencil, Star, StarOff, Trash2 } from 'lucide-react';
 
-import type { Repository } from '@/db/schema/repositories.schema';
+import type { Repository } from '@/db/schema';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,17 +49,30 @@ export const RepositoryCard = ({
   };
 
   const formattedDate = format(new Date(repository.createdAt), 'MMM d, yyyy');
+  const titleId = `repository-title-${repository.id}`;
 
   return (
-    <Card className={cn('flex flex-col transition-opacity', className)} ref={ref} {...props}>
+    <Card
+      aria-label={`${repository.name} repository`}
+      className={cn('flex flex-col transition-opacity', className)}
+      ref={ref}
+      role={'article'}
+      {...props}
+    >
       {/* Header */}
       <CardHeader>
         <div className={'flex items-start justify-between gap-2'}>
           <div className={'flex items-center gap-2'}>
             <FolderGit2 aria-hidden={'true'} className={'size-4 shrink-0 text-muted-foreground'} />
-            <CardTitle className={'line-clamp-1'}>{repository.name}</CardTitle>
+            <CardTitle className={'line-clamp-1'} id={titleId}>
+              {repository.name}
+            </CardTitle>
           </div>
-          {isDefault && <Badge variant={'default'}>{'Default'}</Badge>}
+          {isDefault && (
+            <Badge aria-label={'Repository is default'} variant={'default'}>
+              {'Default'}
+            </Badge>
+          )}
         </div>
         <CardDescription className={'line-clamp-1 font-mono text-xs'}>{repository.path}</CardDescription>
       </CardHeader>
@@ -67,7 +80,7 @@ export const RepositoryCard = ({
       {/* Content */}
       <CardContent className={'flex flex-1 flex-col gap-2'}>
         {/* Branch Info */}
-        <div className={'flex items-center gap-2'}>
+        <div aria-label={'Branch information'} className={'flex items-center gap-2'} role={'group'}>
           <span className={'text-sm text-muted-foreground'}>{'Default branch:'}</span>
           <code className={'rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground'}>
             {repository.defaultBranch}
@@ -75,17 +88,20 @@ export const RepositoryCard = ({
         </div>
 
         {/* Created Date */}
-        <p className={'text-xs text-muted-foreground'}>
-          {'Created '}
-          {formattedDate}
-        </p>
+        <div aria-label={'Creation date'} role={'group'}>
+          <p className={'text-xs text-muted-foreground'}>
+            {'Created '}
+            {formattedDate}
+          </p>
+        </div>
       </CardContent>
 
       {/* Actions */}
-      <CardFooter className={'gap-2'}>
+      <CardFooter aria-label={'Repository actions'} className={'gap-2'} role={'group'}>
         {isDefault ? (
           <Button
-            aria-label={'Clear default repository status'}
+            aria-describedby={titleId}
+            aria-label={`Clear default status for ${repository.name}`}
             onClick={handleClearDefaultClick}
             size={'sm'}
             variant={'outline'}
@@ -95,7 +111,8 @@ export const RepositoryCard = ({
           </Button>
         ) : (
           <Button
-            aria-label={'Set repository as default'}
+            aria-describedby={titleId}
+            aria-label={`Set ${repository.name} as default`}
             onClick={handleSetDefaultClick}
             size={'sm'}
             variant={'outline'}
@@ -104,11 +121,23 @@ export const RepositoryCard = ({
             {'Set Default'}
           </Button>
         )}
-        <Button aria-label={'Edit repository'} onClick={handleEditClick} size={'sm'} variant={'ghost'}>
+        <Button
+          aria-describedby={titleId}
+          aria-label={`Edit ${repository.name} repository`}
+          onClick={handleEditClick}
+          size={'sm'}
+          variant={'ghost'}
+        >
           <Pencil aria-hidden={'true'} className={'size-4'} />
           {'Edit'}
         </Button>
-        <Button aria-label={'Remove repository'} onClick={handleDeleteClick} size={'sm'} variant={'ghost'}>
+        <Button
+          aria-describedby={titleId}
+          aria-label={`Remove ${repository.name} repository`}
+          onClick={handleDeleteClick}
+          size={'sm'}
+          variant={'ghost'}
+        >
           <Trash2 aria-hidden={'true'} className={'size-4'} />
           {'Remove'}
         </Button>

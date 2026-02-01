@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 import type { Repository } from '@/types/electron';
 
-import { AddRepositoryDialog } from '@/components/projects/add-repository-dialog';
+import { AddRepositoryDialog } from '@/components/repositories/add-repository-dialog';
 import { ConfirmDeleteRepositoryDialog } from '@/components/repositories/confirm-delete-repository-dialog';
 import { EditRepositoryDialog } from '@/components/repositories/edit-repository-dialog';
 import { RepositoryCard } from '@/components/repositories/repository-card';
