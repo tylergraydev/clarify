@@ -54,12 +54,13 @@ export const ConfirmDeleteProjectDialog = ({
           {/* Warning */}
           <div
             aria-live={'polite'}
-            className={'mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3'}
+            className={
+              'mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 dark:border-destructive/30 dark:bg-destructive/20'
+            }
             role={'alert'}
           >
             <p className={'text-sm text-destructive'}>
-              This action is permanent and cannot be undone. The project and all its data (repositories, workflows, and
-              agents) will be permanently removed.
+              {'This action is permanent and cannot be undone. The project and all its data (repositories, workflows, and agents) will be permanently removed.'}
             </p>
           </div>
 
@@ -67,7 +68,7 @@ export const ConfirmDeleteProjectDialog = ({
           <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={'outline'}>
-                Cancel
+                {'Cancel'}
               </Button>
             </DialogClose>
             <Button

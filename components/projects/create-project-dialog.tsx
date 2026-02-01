@@ -1,6 +1,10 @@
 'use client';
 
-import { type ReactNode, useCallback, useState } from 'react';
+import type { ReactNode } from 'react';
+
+import { useState } from 'react';
+
+import type { CreateProjectFormValues } from '@/lib/validations/project';
 
 import { ConfirmDiscardDialog } from '@/components/agents/confirm-discard-dialog';
 import { Button } from '@/components/ui/button';
@@ -18,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { useCreateProject } from '@/hooks/queries/use-projects';
 import { useAppForm } from '@/lib/forms/form-hook';
-import { type CreateProjectFormValues, createProjectSchema } from '@/lib/validations/project';
+import { createProjectSchema } from '@/lib/validations/project';
 
 interface CreateProjectDialogProps {
   /** Callback when project is successfully created */
@@ -61,34 +65,31 @@ export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogP
     },
   });
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     setIsOpen(false);
     form.reset();
-  }, [form]);
+  };
 
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open && form.state.isDirty) {
-        // Show discard confirmation if form has unsaved changes
-        setIsDiscardDialogOpen(true);
-        return;
-      }
-      setIsOpen(open);
-      if (!open) {
-        form.reset();
-      }
-    },
-    [form]
-  );
+  const handleOpenChangeInternal = (open: boolean) => {
+    if (!open && form.state.isDirty) {
+      // Show discard confirmation if form has unsaved changes
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+    setIsOpen(open);
+    if (!open) {
+      form.reset();
+    }
+  };
 
-  const handleConfirmDiscard = useCallback(() => {
+  const handleConfirmDiscard = () => {
     setIsDiscardDialogOpen(false);
     setIsOpen(false);
     form.reset();
-  }, [form]);
+  };
 
   return (
-    <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
+    <DialogRoot onOpenChange={handleOpenChangeInternal} open={isOpen}>
       {/* Trigger */}
       <DialogTrigger>{trigger}</DialogTrigger>
 
