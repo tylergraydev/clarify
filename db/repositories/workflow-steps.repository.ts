@@ -44,6 +44,20 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
     },
 
     createPlanningSteps(workflowId: number, skipClarification: boolean): Array<WorkflowStep> {
+      // Guard: Check if steps already exist for this workflow to prevent duplicates
+      const existingSteps = db
+        .select()
+        .from(workflowSteps)
+        .where(eq(workflowSteps.workflowId, workflowId))
+        .all();
+
+      if (existingSteps.length > 0) {
+        console.warn(
+          `[Repository] createPlanningSteps - steps already exist for workflow ${workflowId}, returning existing`
+        );
+        return existingSteps;
+      }
+
       const planningStepDefinitions = [
         {
           description:

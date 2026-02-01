@@ -85,6 +85,10 @@ const formatTypeLabel = (type: WorkflowType): string => {
 /**
  * Formats a date string to a relative time string (e.g., "2 hours ago", "3 days ago").
  * Returns a fallback string if the date is null or invalid.
+ *
+ * SQLite CURRENT_TIMESTAMP returns UTC time in format 'YYYY-MM-DD HH:MM:SS' without
+ * timezone indicator. We normalize this to ISO 8601 with 'Z' suffix so date-fns
+ * correctly interprets it as UTC rather than local time.
  */
 const formatRelativeTime = (dateString: null | string | undefined): string => {
   if (!dateString) {
@@ -92,7 +96,9 @@ const formatRelativeTime = (dateString: null | string | undefined): string => {
   }
 
   try {
-    const date = parseISO(dateString);
+    // Normalize SQLite timestamp to ISO 8601 UTC format
+    const normalizedDate = dateString.includes('T') ? dateString : dateString.replace(' ', 'T') + 'Z';
+    const date = parseISO(normalizedDate);
     return formatDistanceToNow(date, { addSuffix: true });
   } catch {
     return 'Unknown';

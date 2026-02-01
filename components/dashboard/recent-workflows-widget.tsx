@@ -26,13 +26,19 @@ type WorkflowItemProps = ClassName<{
 
 /**
  * Formats a timestamp to relative time (e.g., "2 hours ago")
+ *
+ * SQLite CURRENT_TIMESTAMP returns UTC time in format 'YYYY-MM-DD HH:MM:SS' without
+ * timezone indicator. We normalize this to ISO 8601 with 'Z' suffix so date-fns
+ * correctly interprets it as UTC rather than local time.
  */
 const formatRelativeTime = (timestamp: null | string): string => {
   if (!timestamp) {
     return 'Unknown';
   }
 
-  return formatDistanceToNow(parseISO(timestamp), { addSuffix: true });
+  // Normalize SQLite timestamp to ISO 8601 UTC format
+  const normalizedDate = timestamp.includes('T') ? timestamp : timestamp.replace(' ', 'T') + 'Z';
+  return formatDistanceToNow(parseISO(normalizedDate), { addSuffix: true });
 };
 
 /**

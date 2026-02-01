@@ -58,6 +58,12 @@ export function registerWorkflowHandlers(
         return undefined;
       }
 
+      // Guard: Only start workflows in 'created' status to prevent duplicate step creation
+      if (workflow.status !== 'created') {
+        console.warn(`[IPC] workflow:start - workflow ${id} already has status '${workflow.status}'`);
+        return workflow; // Return current state without modification
+      }
+
       // Start the workflow (update status to running)
       const startedWorkflow = workflowsRepository.start(id);
       if (!startedWorkflow) {
