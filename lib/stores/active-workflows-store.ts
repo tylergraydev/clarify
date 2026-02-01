@@ -140,18 +140,9 @@ export const useActiveWorkflowsStore = create<ActiveWorkflowsStore>()((set) => (
     persistToElectronStore(ACTIVE_WORKFLOWS_STATUS_FILTER_STORAGE_KEY, initialState.statusFilter);
     persistToElectronStore(ACTIVE_WORKFLOWS_TYPE_FILTER_STORAGE_KEY, initialState.typeFilter);
     persistToElectronStore(ACTIVE_WORKFLOWS_SORT_COLUMN_STORAGE_KEY, initialState.sortColumn);
-    persistToElectronStore(
-      ACTIVE_WORKFLOWS_SORT_DIRECTION_STORAGE_KEY,
-      initialState.sortDirection
-    );
-    persistToElectronStore(
-      ACTIVE_WORKFLOWS_GROUP_BY_PROJECT_STORAGE_KEY,
-      initialState.isGroupByProject
-    );
-    persistToElectronStore(
-      ACTIVE_WORKFLOWS_COLLAPSED_GROUPS_STORAGE_KEY,
-      initialState.collapsedGroups
-    );
+    persistToElectronStore(ACTIVE_WORKFLOWS_SORT_DIRECTION_STORAGE_KEY, initialState.sortDirection);
+    persistToElectronStore(ACTIVE_WORKFLOWS_GROUP_BY_PROJECT_STORAGE_KEY, initialState.isGroupByProject);
+    persistToElectronStore(ACTIVE_WORKFLOWS_COLLAPSED_GROUPS_STORAGE_KEY, initialState.collapsedGroups);
   },
 
   setCollapsedGroup: (projectId: string, isCollapsed: boolean) => {

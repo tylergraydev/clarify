@@ -10,10 +10,8 @@ export const TEMPLATE_SHOW_BUILTIN_STORAGE_KEY = 'app:template-show-builtin';
 export const TEMPLATE_SHOW_DEACTIVATED_STORAGE_KEY = 'app:template-show-deactivated';
 
 // Active workflows storage keys
-export const ACTIVE_WORKFLOWS_COLLAPSED_GROUPS_STORAGE_KEY =
-  'app:active-workflows-collapsed-groups';
-export const ACTIVE_WORKFLOWS_GROUP_BY_PROJECT_STORAGE_KEY =
-  'app:active-workflows-group-by-project';
+export const ACTIVE_WORKFLOWS_COLLAPSED_GROUPS_STORAGE_KEY = 'app:active-workflows-collapsed-groups';
+export const ACTIVE_WORKFLOWS_GROUP_BY_PROJECT_STORAGE_KEY = 'app:active-workflows-group-by-project';
 export const ACTIVE_WORKFLOWS_SORT_COLUMN_STORAGE_KEY = 'app:active-workflows-sort-column';
 export const ACTIVE_WORKFLOWS_SORT_DIRECTION_STORAGE_KEY = 'app:active-workflows-sort-direction';
 export const ACTIVE_WORKFLOWS_STATUS_FILTER_STORAGE_KEY = 'app:active-workflows-status-filter';

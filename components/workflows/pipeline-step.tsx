@@ -75,8 +75,7 @@ export const pipelineStepVariants = cva(
 );
 
 interface PipelineStepProps
-  extends Omit<ComponentPropsWithRef<'div'>, 'title'>,
-    VariantProps<typeof pipelineStepVariants> {
+  extends Omit<ComponentPropsWithRef<'div'>, 'title'>, VariantProps<typeof pipelineStepVariants> {
   /** Whether the step is currently expanded */
   isExpanded: boolean;
   /** Whether form submission is in progress */
@@ -139,11 +138,7 @@ export const PipelineStep = ({
 
   return (
     <BaseCollapsible.Root onOpenChange={onToggle} open={isExpanded}>
-      <div
-        className={cn(pipelineStepVariants({ status }), className)}
-        ref={ref}
-        {...props}
-      >
+      <div className={cn(pipelineStepVariants({ status }), className)} ref={ref} {...props}>
         {/* Step Header */}
         <BaseCollapsible.Trigger
           aria-expanded={isExpanded}
@@ -172,34 +167,15 @@ export const PipelineStep = ({
           <span className={'flex-1 text-left text-sm font-medium'}>{title}</span>
 
           {/* Step Metrics Badge (collapsed header) */}
-          {metrics && status && (
-            <PipelineStepMetrics
-              metrics={metrics}
-              status={status}
-              stepType={stepType}
-            />
-          )}
+          {metrics && status && <PipelineStepMetrics metrics={metrics} status={status} stepType={stepType} />}
 
           {/* Status Indicator */}
           <div className={'flex items-center gap-2'}>
             {isCompleted && (
-              <CircleCheck
-                aria-label={'Completed'}
-                className={'size-5 text-green-600 dark:text-green-400'}
-              />
+              <CircleCheck aria-label={'Completed'} className={'size-5 text-green-600 dark:text-green-400'} />
             )}
-            {isRunning && (
-              <Loader2
-                aria-label={'Running'}
-                className={'size-5 animate-spin text-accent'}
-              />
-            )}
-            {isPending && (
-              <CircleDashed
-                aria-label={'Pending'}
-                className={'size-5 text-muted-foreground'}
-              />
-            )}
+            {isRunning && <Loader2 aria-label={'Running'} className={'size-5 animate-spin text-accent'} />}
+            {isPending && <CircleDashed aria-label={'Pending'} className={'size-5 text-muted-foreground'} />}
           </div>
         </BaseCollapsible.Trigger>
 
@@ -233,12 +209,7 @@ export const PipelineStep = ({
 
             {/* Output Container (for non-clarification steps or completed clarification) */}
             {!isFormReady && (
-              <div
-                className={cn(
-                  'rounded-md border border-border/50 bg-background p-3',
-                  'min-h-20 text-sm'
-                )}
-              >
+              <div className={cn('rounded-md border border-border/50 bg-background p-3', 'min-h-20 text-sm')}>
                 {output ? (
                   <p className={'whitespace-pre-wrap text-foreground'}>{output}</p>
                 ) : (

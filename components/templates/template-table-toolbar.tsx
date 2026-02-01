@@ -176,12 +176,7 @@ export const TemplateTableToolbar = memo(function TemplateTableToolbar({
   ...props
 }: TemplateTableToolbarProps) {
   // Computed state
-  const activeFilterCount = getActiveFilterCount(
-    categoryFilter,
-    statusFilter,
-    isShowingBuiltIn,
-    isShowingDeactivated
-  );
+  const activeFilterCount = getActiveFilterCount(categoryFilter, statusFilter, isShowingBuiltIn, isShowingDeactivated);
   const hasActiveFilters = activeFilterCount > 0;
 
   // Handlers
@@ -262,7 +257,12 @@ export const TemplateTableToolbar = memo(function TemplateTableToolbar({
                               All categories
                             </SelectItem>
                             {templateCategories.map((category) => (
-                              <SelectItem key={category} label={formatCategoryLabel(category)} size={'sm'} value={category}>
+                              <SelectItem
+                                key={category}
+                                label={formatCategoryLabel(category)}
+                                size={'sm'}
+                                value={category}
+                              >
                                 {formatCategoryLabel(category)}
                               </SelectItem>
                             ))}

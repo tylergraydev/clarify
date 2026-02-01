@@ -92,10 +92,7 @@ export const ClarificationForm = ({
             }));
 
             return (
-              <div
-                className={'rounded-lg border border-border bg-card/50 p-4'}
-                key={fieldName}
-              >
+              <div className={'rounded-lg border border-border bg-card/50 p-4'} key={fieldName}>
                 {/* Question Header */}
                 <div className={'mb-1 text-sm font-medium text-foreground'}>{question.header}</div>
 
@@ -104,13 +101,7 @@ export const ClarificationForm = ({
 
                 {/* Radio Field - Shows options with descriptions */}
                 <form.AppField name={fieldName}>
-                  {(field) => (
-                    <field.RadioField
-                      isDisabled={isSubmitting}
-                      label={''}
-                      options={options}
-                    />
-                  )}
+                  {(field) => <field.RadioField isDisabled={isSubmitting} label={''} options={options} />}
                 </form.AppField>
               </div>
             );

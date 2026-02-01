@@ -103,9 +103,7 @@ const FavoriteProjectCard = ({ className, onClick, project }: FavoriteProjectCar
       <h4 className={'truncate font-medium'}>{project.name}</h4>
 
       {/* Description */}
-      {truncatedDescription && (
-        <p className={'mt-1 text-sm text-muted-foreground'}>{truncatedDescription}</p>
-      )}
+      {truncatedDescription && <p className={'mt-1 text-sm text-muted-foreground'}>{truncatedDescription}</p>}
     </div>
   );
 };
@@ -145,11 +143,7 @@ const FavoritesContent = () => {
   return (
     <div aria-live={'polite'} className={'space-y-3'}>
       {favoriteProjects.map((project) => (
-        <FavoriteProjectCard
-          key={project.id}
-          onClick={() => handleProjectClick(project.id)}
-          project={project}
-        />
+        <FavoriteProjectCard key={project.id} onClick={() => handleProjectClick(project.id)} project={project} />
       ))}
     </div>
   );

@@ -53,9 +53,7 @@ function computeStepMetrics(step: WorkflowStep): StepMetrics {
       if (!output) {
         return {};
       }
-      const answeredCount = output.answers
-        ? Object.values(output.answers).filter((v) => v && v.length > 0).length
-        : 0;
+      const answeredCount = output.answers ? Object.values(output.answers).filter((v) => v && v.length > 0).length : 0;
       return {
         clarification: {
           answeredCount,
@@ -236,14 +234,12 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
   const isStepsEmpty = sortedSteps.length === 0;
 
   return (
-    <div
-      className={cn('flex h-full flex-col', className)}
-      ref={ref}
-      {...props}
-    >
+    <div className={cn('flex h-full flex-col', className)} ref={ref} {...props}>
       {/* Sticky Progress Bar */}
       {sortedSteps.length > 0 && (
-        <div className={'sticky top-0 z-10 bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/80'}>
+        <div
+          className={'sticky top-0 z-10 bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/80'}
+        >
           <PipelineProgressBar
             completedSteps={completedCount}
             currentStepTitle={currentStep?.title}
@@ -261,10 +257,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         <div className={'w-full max-w-4xl px-4'}>
           {/* Empty State - Workflow created but no steps yet */}
           {isStepsEmpty && !isLoading && (
-            <div
-              className={'flex min-h-24 w-full items-center justify-center text-muted-foreground'}
-              role={'listitem'}
-            >
+            <div className={'flex min-h-24 w-full items-center justify-center text-muted-foreground'} role={'listitem'}>
               {isWorkflowCreated ? (
                 <p className={'text-sm'}>Workflow is ready. Start the workflow to create pipeline steps.</p>
               ) : (
@@ -297,11 +290,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
             const metrics = computeStepMetrics(step);
 
             return (
-              <div
-                className={'relative mb-4 last:mb-0'}
-                key={step.id}
-                role={'listitem'}
-              >
+              <div className={'relative mb-4 last:mb-0'} key={step.id} role={'listitem'}>
                 {/* Vertical Connector */}
                 <VerticalConnector
                   isFirst={isFirstStep}

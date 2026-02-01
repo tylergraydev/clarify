@@ -71,16 +71,10 @@ export const CollapsedNavMenu = ({
         <PopoverTrigger closeDelay={100} delay={0} openOnHover>
           <button
             aria-label={label}
-            className={cn(
-              navItemVariants({ variant: isActive ? 'active' : 'default' }),
-              'justify-center px-0'
-            )}
+            className={cn(navItemVariants({ variant: isActive ? 'active' : 'default' }), 'justify-center px-0')}
             type={'button'}
           >
-            <Icon
-              aria-hidden={'true'}
-              className={cn('size-4 shrink-0', isActive && 'text-accent-foreground')}
-            />
+            <Icon aria-hidden={'true'} className={cn('size-4 shrink-0', isActive && 'text-accent-foreground')} />
           </button>
         </PopoverTrigger>
         <PopoverPortal>

@@ -339,9 +339,7 @@ export const TemplatePlaceholdersSection = ({
                               <span className={'font-mono'}>{placeholder.validationPattern}</span>
                             </div>
                           )}
-                          {hasNoDetails && (
-                            <div className={'text-muted-foreground'}>No additional details</div>
-                          )}
+                          {hasNoDetails && <div className={'text-muted-foreground'}>No additional details</div>}
                         </div>
                       )}
                     </div>

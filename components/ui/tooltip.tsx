@@ -45,9 +45,7 @@ interface TooltipProps {
 export const Tooltip = ({ children, content, fullWidth = false, side = 'top' }: TooltipProps) => {
   return (
     <TooltipRoot>
-      <TooltipTrigger render={<span className={cn('inline-flex', fullWidth && 'w-full')} />}>
-        {children}
-      </TooltipTrigger>
+      <TooltipTrigger render={<span className={cn('inline-flex', fullWidth && 'w-full')} />}>{children}</TooltipTrigger>
       <TooltipPortal>
         <TooltipPositioner side={side} sideOffset={6}>
           <TooltipPopup>{content}</TooltipPopup>

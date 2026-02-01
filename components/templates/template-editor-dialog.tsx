@@ -110,11 +110,7 @@ export const TemplateEditorDialog = ({
 
   // Memoized values
   const dialogLabels = useMemo(() => {
-    const dialogTitle = isViewMode
-      ? 'View Template'
-      : isEditMode
-        ? 'Edit Template'
-        : 'Create Template';
+    const dialogTitle = isViewMode ? 'View Template' : isEditMode ? 'Edit Template' : 'Create Template';
 
     const dialogDescription = isViewMode
       ? 'View the built-in template configuration. Duplicate to create an editable copy.'
@@ -353,7 +349,9 @@ export const TemplateEditorDialog = ({
                 {shouldShowBuiltInBadge && <Badge variant={'default'}>Built-in Template</Badge>}
                 {shouldShowCustomBadge && <Badge variant={'custom'}>Custom Template</Badge>}
                 {template?.category && (
-                  <Badge variant={template.category}>{template.category.charAt(0).toUpperCase() + template.category.slice(1)}</Badge>
+                  <Badge variant={template.category}>
+                    {template.category.charAt(0).toUpperCase() + template.category.slice(1)}
+                  </Badge>
                 )}
               </Fragment>
             }

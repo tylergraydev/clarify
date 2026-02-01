@@ -45,11 +45,7 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
 
     createPlanningSteps(workflowId: number, skipClarification: boolean): Array<WorkflowStep> {
       // Guard: Check if steps already exist for this workflow to prevent duplicates
-      const existingSteps = db
-        .select()
-        .from(workflowSteps)
-        .where(eq(workflowSteps.workflowId, workflowId))
-        .all();
+      const existingSteps = db.select().from(workflowSteps).where(eq(workflowSteps.workflowId, workflowId)).all();
 
       if (existingSteps.length > 0) {
         console.warn(
@@ -74,8 +70,7 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
           title: 'Refinement',
         },
         {
-          description:
-            'Discover all relevant files and code patterns in the codebase that relate to this feature.',
+          description: 'Discover all relevant files and code patterns in the codebase that relate to this feature.',
           stepNumber: 3,
           stepType: 'discovery',
           title: 'Discovery',
@@ -93,8 +88,7 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
         const createdSteps: Array<WorkflowStep> = [];
 
         for (const stepDef of planningStepDefinitions) {
-          const status =
-            stepDef.stepType === 'clarification' && skipClarification ? 'skipped' : 'pending';
+          const status = stepDef.stepType === 'clarification' && skipClarification ? 'skipped' : 'pending';
 
           const step = tx
             .insert(workflowSteps)

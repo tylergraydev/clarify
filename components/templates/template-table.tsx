@@ -437,7 +437,9 @@ export const TemplateTable = ({
       // Status column
       // Uses memoized StatusCell with stable toggle handler
       columnHelper.display({
-        cell: ({ row }) => <StatusCell isToggling={isToggling} onToggleActive={onToggleActive} template={row.original} />,
+        cell: ({ row }) => (
+          <StatusCell isToggling={isToggling} onToggleActive={onToggleActive} template={row.original} />
+        ),
         enableSorting: false,
         header: 'Status',
         id: 'status',

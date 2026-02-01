@@ -28,13 +28,7 @@ type PipelineConnectorProps = Omit<ComponentPropsWithRef<'div'>, 'children'> &
     isCompleted?: boolean;
   };
 
-export const PipelineConnector = ({
-  className,
-  isCompleted = false,
-  ref,
-  state,
-  ...props
-}: PipelineConnectorProps) => {
+export const PipelineConnector = ({ className, isCompleted = false, ref, state, ...props }: PipelineConnectorProps) => {
   const resolvedState = state ?? (isCompleted ? 'completed' : 'pending');
 
   return (
