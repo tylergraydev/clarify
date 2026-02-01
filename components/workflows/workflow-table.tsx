@@ -13,6 +13,7 @@ import { Badge, type badgeVariants } from '@/components/ui/badge';
 import {
   createColumnHelper,
   DataTable,
+  DataTableColumnHeader,
   type DataTableRowAction,
   DataTableRowActions,
   type DataTableRowStyleCallback,
@@ -255,7 +256,7 @@ export const WorkflowTable = ({
           );
         },
         enableHiding: false,
-        header: 'Feature Name',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Feature Name'} />,
         size: 400,
       }),
 
@@ -265,6 +266,7 @@ export const WorkflowTable = ({
           const projectName = projectMap[row.original.projectId] ?? 'Unknown';
           return <span className={'text-muted-foreground'}>{projectName}</span>;
         },
+        enableSorting: false,
         header: 'Project',
         id: 'project',
         size: 200,
@@ -277,7 +279,7 @@ export const WorkflowTable = ({
             {formatTypeLabel(row.original.type as WorkflowType)}
           </Badge>
         ),
-        header: 'Type',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Type'} />,
         size: 120,
       }),
 
@@ -288,7 +290,7 @@ export const WorkflowTable = ({
             {formatStatusLabel(row.original.status as WorkflowStatus)}
           </Badge>
         ),
-        header: 'Status',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Status'} />,
         size: 120,
       }),
 
@@ -299,6 +301,7 @@ export const WorkflowTable = ({
           const progressDisplay = `${workflow.currentStepNumber ?? 0}/${workflow.totalSteps ?? '?'}`;
           return <span className={'whitespace-nowrap text-muted-foreground'}>{progressDisplay}</span>;
         },
+        enableSorting: false,
         header: 'Progress',
         id: 'progress',
         size: 100,
@@ -311,7 +314,7 @@ export const WorkflowTable = ({
             {formatDate(row.original.createdAt)}
           </span>
         ),
-        header: 'Created',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Created'} />,
         size: 110,
       }),
 
@@ -322,7 +325,7 @@ export const WorkflowTable = ({
             {formatDate(row.original.updatedAt)}
           </span>
         ),
-        header: 'Updated',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Updated'} />,
         meta: {
           isFillerColumn: true,
         },

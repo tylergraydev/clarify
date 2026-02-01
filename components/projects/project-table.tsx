@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import {
   createColumnHelper,
   DataTable,
+  DataTableColumnHeader,
   type DataTableRowAction,
   DataTableRowActions,
   type DataTableRowStyleCallback,
@@ -300,7 +301,7 @@ export const ProjectTable = ({
           );
         },
         enableHiding: false,
-        header: 'Name',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Name'} />,
         size: 200,
       }),
 
@@ -310,7 +311,7 @@ export const ProjectTable = ({
           const description = row.original.description;
           return <span className={'text-muted-foreground'}>{description || '-'}</span>;
         },
-        header: 'Description',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Description'} />,
         size: 450,
       }),
 
@@ -334,7 +335,7 @@ export const ProjectTable = ({
         cell: ({ row }) => {
           return <span className={'text-sm text-muted-foreground'}>{formatDate(row.original.createdAt)}</span>;
         },
-        header: 'Created',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Created'} />,
         size: 110,
       }),
 
@@ -343,7 +344,7 @@ export const ProjectTable = ({
         cell: ({ row }) => {
           return <span className={'text-sm text-muted-foreground'}>{formatDate(row.original.updatedAt)}</span>;
         },
-        header: 'Updated',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Updated'} />,
         meta: {
           isFillerColumn: true,
         },

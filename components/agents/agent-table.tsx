@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import {
   createColumnHelper,
   DataTable,
+  DataTableColumnHeader,
   type DataTableRowAction,
   DataTableRowActions,
   type DataTableRowStyleCallback,
@@ -516,7 +517,7 @@ export const AgentTable = ({
           );
         },
         enableHiding: false,
-        header: 'Name',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Name'} />,
         size: 280,
       }),
 
@@ -530,7 +531,7 @@ export const AgentTable = ({
             </Badge>
           );
         },
-        header: 'Type',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Type'} />,
         size: 100,
       }),
 
@@ -545,7 +546,7 @@ export const AgentTable = ({
             </Badge>
           );
         },
-        header: 'Project',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Project'} />,
         size: 140,
       }),
 
@@ -556,6 +557,7 @@ export const AgentTable = ({
           const toolCount = agent.tools?.length ?? 0;
           return <span className={'text-muted-foreground'}>{toolCount}</span>;
         },
+        enableSorting: false,
         header: 'Tools',
         id: 'toolCount',
         size: 70,
@@ -568,6 +570,7 @@ export const AgentTable = ({
           const skillCount = agent.skills?.length ?? 0;
           return <span className={'text-muted-foreground'}>{skillCount}</span>;
         },
+        enableSorting: false,
         header: 'Skills',
         id: 'skillCount',
         size: 70,
@@ -580,6 +583,7 @@ export const AgentTable = ({
           const hookCount = agent.hooks?.length ?? 0;
           return <span className={'text-muted-foreground'}>{hookCount}</span>;
         },
+        enableSorting: false,
         header: 'Hooks',
         id: 'hookCount',
         size: 70,
@@ -601,7 +605,7 @@ export const AgentTable = ({
           const agent = row.original;
           return <span className={'text-sm text-muted-foreground'}>{formatDate(agent.createdAt)}</span>;
         },
-        header: 'Created',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Created'} />,
         size: 110,
       }),
 
@@ -611,7 +615,7 @@ export const AgentTable = ({
           const agent = row.original;
           return <span className={'text-sm text-muted-foreground'}>{formatDate(agent.updatedAt)}</span>;
         },
-        header: 'Updated',
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Updated'} />,
         meta: {
           isFillerColumn: true,
         },

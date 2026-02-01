@@ -1,6 +1,6 @@
 # Claude Orchestrator - Design Document
 
-A standalone desktop application that provides a polished UI and granular control over Claude Code CLI orchestration workflows for feature planning and implementation.
+A standalone desktop application that provides a polished UI and granular control over Claude Agent SDK orchestration workflows for feature planning and implementation.
 
 ## 1. Executive Summary
 
@@ -18,27 +18,29 @@ The current Claude Code CLI workflow (`/plan-feature` → `/implement-plan`) is 
 
 A standalone Electron desktop application that:
 
-1. Wraps Claude Code CLI with a visual pipeline interface
+1. Uses the Claude Agent SDK to drive a visual pipeline interface
 2. Provides configurable pause points between orchestration steps
 3. Enables inline editing of all intermediate outputs
 4. Maintains comprehensive audit trails in a queryable database
 5. Supports multiple concurrent workflows via git worktrees
 6. Bundles customizable agents and commands with visual editors
 
+Using the Claude Agent SDK (instead of spawning CLI processes) provides structured events, tool-level hooks, and in-process control, which translates to more flexibility for users and a significantly better developer experience.
+
 ### Key Design Decisions
 
 | Decision              | Choice                                                   |
 | --------------------- | -------------------------------------------------------- |
 | App Type              | Standalone Electron app (not extending Clarify AI)       |
-| CLI Integration       | Spawn Claude Code CLI as child processes                 |
-| Real-time Visibility  | Progress updates at milestones (not full streaming)      |
+| Agent SDK Integration | Claude Agent SDK (in-process, structured events)         |
+| Real-time Visibility  | SDK event stream with configurable granularity           |
 | Concurrent Workflows  | Multiple supported via auto-managed git worktrees        |
 | Intervention Mode     | Configurable (auto-pause vs continuous with manual stop) |
 | Audit Trail           | SQLite database + exportable log files                   |
 | Agent/Command Storage | Bundled with visual editor customization                 |
 | Repository Management | Multi-repo projects                                      |
 | Intermediate Editing  | Inline editing in pipeline view                          |
-| Authentication        | Use existing Claude Code CLI credentials                 |
+| Authentication        | Claude Agent SDK credentials (managed by the app)        |
 | UI Paradigm           | Pipeline view with expandable step details               |
 | Templates             | Included template library for common patterns            |
 
@@ -131,7 +133,7 @@ A **Project** groups related repositories and workflows.
 │  ┌─────────────────────────────────────────────────────────────┐   │
 │  │                    Orchestration Engine                      │   │
 │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │   │
-│  │  │   Workflow  │ │    CLI      │ │   Worktree  │           │   │
+│  │  │   Workflow  │ │  Agent SDK  │ │   Worktree  │           │   │
 │  │  │   Manager   │ │   Spawner   │ │   Manager   │           │   │
 │  │  └─────────────┘ └─────────────┘ └─────────────┘           │   │
 │  └─────────────────────────────────────────────────────────────┘   │
@@ -143,8 +145,8 @@ A **Project** groups related repositories and workflows.
 └─────────────────────────────────────────────────────────────────────┘
                                │
                     ┌──────────┴──────────┐
-                    │   Claude Code CLI   │
-                    │  (child processes)  │
+                    │  Claude Agent SDK   │
+                    │  (in-process API)   │
                     └─────────────────────┘
 ```
 
@@ -159,9 +161,9 @@ A **Project** groups related repositories and workflows.
 | State Management   | TanStack Query + Zustand (for workflow state)      |
 | Forms              | TanStack Form                                      |
 | Database           | SQLite + Drizzle ORM                               |
-| Process Management | Node.js child_process (spawn)                      |
+| Process Management | Async workflow runner (no child_process)           |
 | Code Editor        | Monaco Editor (for advanced agent editing)         |
-| CLI Integration    | Claude Code CLI via spawn with JSON output parsing |
+| Agent SDK Integration | Claude Agent SDK with structured events         |
 
 ### 3.3 Database Schema
 
@@ -211,43 +213,24 @@ A **Project** groups related repositories and workflows.
                                                 └─────────────────┘
 ```
 
-### 3.4 CLI Integration Strategy
+### 3.4 Agent SDK Integration Strategy
 
-The app spawns Claude Code CLI processes with specific flags:
+The app runs agents directly via the Claude Agent SDK (in-process) with structured events and tool hooks.
 
-```typescript
-interface CLISpawnOptions {
-  cwd: string; // Repository or worktree path
-  command: string; // e.g., '/plan-feature', '/implement-plan'
-  args: string[]; // Command arguments
-  timeout?: number; // Per-step timeout
-  onProgress?: (event: ProgressEvent) => void;
-  onComplete?: (result: CLIResult) => void;
-  onError?: (error: CLIError) => void;
-}
+Each step run is configured with:
 
-// Example: Spawning clarification step
-spawn(
-  "claude",
-  [
-    "--print", // Output mode
-    "--output-format",
-    "json", // Structured output
-    "--cwd",
-    "/path/to/repo",
-    "--prompt",
-    'Use clarification-agent to assess: "Add user auth"',
-  ],
-  options
-);
-```
+- Workspace path (repository or worktree)
+- Agent identifier
+- Input payload (user request or step instruction)
+- Optional timeout and cancellation controls
+- Event handlers for structured SDK events
 
-**Progress Detection Strategy:**
+**Progress & Control Strategy:**
 
-1. Parse CLI stdout for milestone markers (e.g., `MILESTONE:STEP_1_COMPLETE`)
-2. Extract structured JSON from output blocks
-3. Detect completion via process exit or specific markers
-4. Handle timeouts with configurable limits per step
+1. Subscribe to SDK event streams for step start/finish, tool calls, and structured outputs
+2. Map SDK events to workflow steps and audit log entries
+3. Pause between steps at the orchestrator level (gates), not by stopping processes
+4. Handle timeouts and cancellation through SDK run controllers
 
 ---
 
@@ -562,7 +545,7 @@ Global application settings.
 │  Keep workflow logs for: [ 30 ] days                                │
 │                                                                     │
 │  [✓] Export logs alongside database entries                         │
-│  [✓] Include full CLI output in audit logs                          │
+│  [✓] Include full Agent SDK event log in audit logs                 │
 │                                                                     │
 │  Log Export Location                                                │
 │  ┌────────────────────────────────────────────────────────────┐    │
@@ -599,7 +582,7 @@ Global application settings.
 
 4. **Start Workflow**
    - Creates workflow record in database
-   - Spawns Claude Code CLI process
+   - Starts Agent SDK run for the first step
    - Redirects to Pipeline View
 
 **State Transitions:**
@@ -643,15 +626,13 @@ CREATED → CLARIFYING → REFINING → DISCOVERING → PLANNING → COMPLETED
 
 **Data Model:**
 
-```typescript
-interface DiscoveredFile {
-  path: string;
-  priority: "high" | "medium" | "low";
-  description: string;
-  included: boolean;
-  userAdded: boolean;
-}
-```
+Each discovered file records:
+
+- Path
+- Priority (high/medium/low)
+- Description
+- Included flag
+- User-added flag
 
 ### 5.4 Implementation Workflow
 
@@ -724,20 +705,11 @@ interface DiscoveredFile {
 
 **Template Structure:**
 
-```typescript
-interface Template {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  template: string; // Feature request template with placeholders
-  placeholders: {
-    name: string;
-    description: string;
-    defaultValue?: string;
-  }[];
-}
-```
+Each template includes:
+
+- ID, name, category, description
+- Template body with placeholders
+- Placeholder definitions (name, description, optional default)
 
 ### 5.7 Audit Trail
 
@@ -748,7 +720,7 @@ interface Template {
 | WORKFLOW_CREATED   | Initial config, repository, feature request |
 | STEP_STARTED       | Step type, agent, input                     |
 | STEP_COMPLETED     | Output, duration, files affected            |
-| STEP_FAILED        | Error message, CLI output                   |
+| STEP_FAILED        | Error message, SDK error payload            |
 | STEP_PAUSED        | Reason (auto/manual/error)                  |
 | STEP_RESUMED       | Who resumed, any modifications              |
 | OUTPUT_EDITED      | Before/after, user                          |
@@ -762,182 +734,47 @@ interface Template {
 
 **Export Format:**
 
-```markdown
-# Workflow Audit Log: Add User Authentication
-
-**ID:** wf_abc123
-**Created:** 2025-01-28T10:30:00Z
-**Completed:** 2025-01-28T11:15:32Z
-**Status:** Completed
-**Repository:** /Users/dev/my-app
-**Branch:** feat/user-auth
-
-## Timeline
-
-### 10:30:00 - Workflow Created
-
-- Feature Request: "Add user authentication with OAuth"
-- Pause Mode: auto-pause
-
-### 10:30:05 - Clarification Started
-
-- Agent: clarification-agent
-- Input: "Add user authentication with OAuth"
-
-### 10:30:42 - Clarification Completed
-
-- Result: SKIP (Score 4/5)
-- Reason: Request included specific technical details
-- Duration: 37s
-
-[... continued ...]
-```
+The export includes a header (ID, created/completed timestamps, status, repository, branch) followed by a chronological timeline of events with timestamps and per-step details.
 
 ---
 
 ## 6. Technical Implementation
 
-### 6.1 Process Management
+### 6.1 Agent Runtime
 
-**CLI Spawner Service:**
+**Agent Runner Service:**
 
-```typescript
-class CLISpawner {
-  private processes: Map<string, ChildProcess> = new Map();
+The runner service:
 
-  async spawn(workflowId: string, options: SpawnOptions): Promise<void> {
-    const proc = spawn("claude", [
-      "--print",
-      "--output-format",
-      "json",
-      "--cwd",
-      options.cwd,
-      "--prompt",
-      options.prompt,
-    ]);
-
-    this.processes.set(workflowId, proc);
-
-    proc.stdout.on("data", (data) => {
-      this.parseProgress(workflowId, data);
-    });
-
-    proc.on("exit", (code) => {
-      this.handleCompletion(workflowId, code);
-    });
-  }
-
-  async pause(workflowId: string): Promise<void> {
-    // Send SIGSTOP to pause process
-  }
-
-  async resume(workflowId: string): Promise<void> {
-    // Send SIGCONT to resume
-  }
-
-  async kill(workflowId: string): Promise<void> {
-    // Graceful termination
-  }
-}
-```
+- Starts SDK runs per workflow step
+- Subscribes to SDK events and maps them to workflow updates
+- Tracks active runs for cancellation and timeout handling
 
 ### 6.2 Worktree Manager
 
-```typescript
-class WorktreeManager {
-  async create(repoPath: string, featureSlug: string): Promise<WorktreeInfo> {
-    const worktreePath = path.join(repoPath, ".worktrees", featureSlug);
-    const branchName = `feat/${featureSlug}`;
+Responsibilities:
 
-    await exec(`git worktree add -b ${branchName} ${worktreePath}`);
-    await exec("pnpm install", { cwd: worktreePath });
+- Create worktrees with feature branches
+- Install dependencies in new worktrees
+- List and clean up worktrees on completion/cancel
 
-    return { path: worktreePath, branch: branchName };
-  }
+### 6.3 Event Mapping
 
-  async cleanup(worktreePath: string): Promise<void> {
-    await exec(`git worktree remove ${worktreePath}`);
-  }
+**SDK Event Mapping:**
 
-  async list(repoPath: string): Promise<WorktreeInfo[]> {
-    // Parse git worktree list output
-  }
-}
-```
-
-### 6.3 Progress Parsing
-
-**Milestone Detection:**
-
-````typescript
-const MILESTONES = {
-  "MILESTONE:STEP_0A_COMPLETE": "clarification_complete",
-  "MILESTONE:STEP_0A_SKIPPED": "clarification_skipped",
-  "MILESTONE:STEP_1_COMPLETE": "refinement_complete",
-  "MILESTONE:STEP_2_COMPLETE": "discovery_complete",
-  "MILESTONE:STEP_3_COMPLETE": "planning_complete",
-  "MILESTONE:PLAN_FEATURE_SUCCESS": "workflow_complete",
-};
-
-function parseProgress(output: string): ProgressEvent | null {
-  for (const [marker, event] of Object.entries(MILESTONES)) {
-    if (output.includes(marker)) {
-      return { type: event, raw: output };
-    }
-  }
-
-  // Parse JSON blocks for structured data
-  const jsonMatch = output.match(/```json\n([\s\S]*?)\n```/);
-  if (jsonMatch) {
-    return { type: "structured_output", data: JSON.parse(jsonMatch[1]) };
-  }
-
-  return null;
-}
-````
+SDK events are mapped to internal workflow events (step started/completed/failed, tool invoked, structured output) for UI updates and audit logging.
 
 ### 6.4 IPC Channels
 
-```typescript
-// Main process channels
-const CHANNELS = {
-  // Workflow management
-  'workflow:create': async (config: WorkflowConfig) => Promise<Workflow>,
-  'workflow:start': async (id: string) => Promise<void>,
-  'workflow:pause': async (id: string) => Promise<void>,
-  'workflow:resume': async (id: string) => Promise<void>,
-  'workflow:cancel': async (id: string) => Promise<void>,
-  'workflow:get': async (id: string) => Promise<Workflow>,
-  'workflow:list': async (filters?: WorkflowFilters) => Promise<Workflow[]>,
+Main channel groups:
 
-  // Step management
-  'step:edit': async (stepId: string, output: unknown) => Promise<void>,
-  'step:regenerate': async (stepId: string, prompt?: string) => Promise<void>,
-
-  // File discovery
-  'discovery:update': async (workflowId: string, files: DiscoveredFile[]) => Promise<void>,
-
-  // Agent management
-  'agent:list': async () => Promise<Agent[]>,
-  'agent:get': async (id: string) => Promise<Agent>,
-  'agent:update': async (id: string, data: Partial<Agent>) => Promise<void>,
-  'agent:reset': async (id: string) => Promise<void>,
-
-  // Template management
-  'template:list': async () => Promise<Template[]>,
-  'template:create': async (data: NewTemplate) => Promise<Template>,
-
-  // Project/Repository management
-  'project:create': async (data: NewProject) => Promise<Project>,
-  'project:addRepo': async (projectId: string, path: string) => Promise<Repository>,
-
-  // Audit
-  'audit:export': async (workflowId: string, format: 'md' | 'json') => Promise<string>,
-
-  // Progress events (renderer subscribes)
-  'workflow:progress': (callback: (event: ProgressEvent) => void) => void,
-};
-```
+- Workflow lifecycle (create/start/pause/resume/cancel/get/list)
+- Step editing and regeneration
+- File discovery updates
+- Agent and template management
+- Project/repository management
+- Audit export
+- Progress event subscription
 
 ---
 
@@ -965,14 +802,14 @@ const CHANNELS = {
 │                         MAIN PROCESS                                │
 │                                                                     │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
-│  │  Workflow   │───▶│    CLI      │───▶│   Parse     │             │
-│  │   Manager   │    │   Spawner   │    │  Progress   │             │
+│  │  Workflow   │───▶│  Agent SDK  │───▶│   Map       │             │
+│  │   Manager   │    │   Runner    │    │  Events     │             │
 │  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘             │
 │         │                  │                  │                     │
 │         ▼                  ▼                  ▼                     │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
-│  │   SQLite    │    │ Claude CLI  │    │   Emit to   │             │
-│  │  Database   │◀───│  Process    │───▶│  Renderer   │             │
+│  │   SQLite    │    │ Agent SDK   │    │   Emit to   │             │
+│  │  Database   │◀───│  Runtime    │───▶│  Renderer   │             │
 │  └─────────────┘    └─────────────┘    └─────────────┘             │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
@@ -1003,7 +840,7 @@ Repository: /path/to/repo
 │  │ Agent: tanstack-qry │         │ Agent: db-schema    │           │
 │  │ Worktree: user-auth │         │ Worktree: dark-mode │           │
 │  │                     │         │                     │           │
-│  │ CLI Process #1      │         │ CLI Process #2      │           │
+│  │ Agent Run #1        │         │ Agent Run #2        │           │
 │  └─────────────────────┘         └─────────────────────┘           │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
@@ -1048,28 +885,7 @@ bundled-agents/
 
 ### 8.2 Build Configuration
 
-```javascript
-// electron-builder config
-{
-  appId: 'com.example.claude-orchestrator',
-  productName: 'Claude Orchestrator',
-  files: [
-    'out/**/*',
-    'bundled-agents/**/*',
-    'templates/**/*'
-  ],
-  extraResources: [
-    {
-      from: 'bundled-agents',
-      to: 'agents'
-    },
-    {
-      from: 'templates',
-      to: 'templates'
-    }
-  ]
-}
-```
+Electron packaging includes the Next.js static output plus bundled agents and templates as extra resources so they are available at runtime.
 
 ---
 
@@ -1077,9 +893,9 @@ bundled-agents/
 
 ### 9.1 Potential Enhancements
 
-1. **Claude Code SDK Integration**
-   - When SDK matures, migrate from CLI spawning
-   - Better streaming and control
+1. **Advanced Agent SDK Capabilities**
+   - Deeper event streaming, richer tool metadata
+   - Step replay and policy/guardrail configuration
 
 2. **Collaborative Workflows**
    - Share workflows between team members
@@ -1100,13 +916,13 @@ bundled-agents/
 
 ### 9.2 Known Limitations
 
-1. **CLI Dependency**
-   - Requires Claude Code CLI installed
-   - CLI updates may break parsing
+1. **Agent SDK Dependency**
+   - Requires SDK runtime and compatible credentials
+   - SDK version changes may require integration updates
 
-2. **Process Management**
-   - Windows process signals differ from Unix
-   - May need platform-specific handling
+2. **Run Control**
+   - Pause/resume occurs at step boundaries
+   - Long-running tools require timeouts/backpressure handling
 
 3. **Worktree Limits**
    - Git worktrees have some edge cases
@@ -1118,7 +934,7 @@ bundled-agents/
 
 | Metric                       | Target                              |
 | ---------------------------- | ----------------------------------- |
-| Time from request to plan    | < 10 minutes (vs 15+ with CLI)      |
+| Time from request to plan    | < 10 minutes (vs current CLI baseline) |
 | User interventions per plan  | Trackable (currently unmeasured)    |
 | Implementation success rate  | > 90% of steps pass validation      |
 | Workflow completion rate     | > 85% of started workflows complete |
@@ -1129,9 +945,9 @@ bundled-agents/
 
 ## 11. Open Questions
 
-1. **CLI Output Format**: Does Claude Code CLI support structured JSON output mode, or do we need to parse plain text?
+1. **SDK Event Schema**: Which SDK event types/payloads should be persisted for audit and replay?
 
-2. **Process Pause/Resume**: Can we reliably pause/resume CLI processes, or do we need to implement checkpointing?
+2. **Run Control**: What pause/resume/cancel semantics should we expose for SDK runs?
 
 3. **Worktree Cleanup**: What happens to uncommitted changes when a workflow is cancelled?
 
@@ -1175,39 +991,20 @@ Transitions:
 
 ---
 
-## Appendix B: CLI Command Examples
+## Appendix B: Agent SDK Usage Examples
 
-**Planning Workflow:**
+**Planning Workflow (conceptual):**
 
-```bash
-# Step 1: Clarification
-claude --print --cwd /repo --prompt "Use Task tool with clarification-agent: 'Add OAuth login'"
+- Run clarification, refinement, discovery, and planning agents sequentially
+- Each step supplies a workspace path, agent ID, and input payload
 
-# Step 2: Refinement
-claude --print --cwd /repo --prompt "Use Task tool with general-purpose to refine: '...'"
+**Implementation Workflow (conceptual):**
 
-# Step 3: File Discovery
-claude --print --cwd /repo --prompt "Use Task tool with file-discovery-agent: '...'"
-
-# Step 4: Planning
-claude --print --cwd /repo --prompt "Use Task tool with implementation-planner: '...'"
-```
-
-**Implementation Workflow:**
-
-```bash
-# Setup worktree
-git worktree add -b feat/oauth .worktrees/oauth
-cd .worktrees/oauth && pnpm install
-
-# Execute steps
-claude --print --cwd .worktrees/oauth --prompt "Use Task tool with database-schema: 'Step 1...'"
-claude --print --cwd .worktrees/oauth --prompt "Use Task tool with tanstack-query: 'Step 2...'"
-# ... etc
-```
+- Create or select a worktree for the feature branch
+- Run specialist agents per plan step against the worktree
 
 ---
 
-_Document Version: 1.0_
-_Last Updated: 2025-01-28_
+_Document Version: 1.1_
+_Last Updated: 2026-02-01_
 _Author: Design Session with Claude_
