@@ -41,7 +41,7 @@ export const ConfirmDeleteAgentDialog = ({
     <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
       {/* Portal */}
       <DialogPortal>
-        <DialogBackdrop />
+        <DialogBackdrop onClick={(e) => e.stopPropagation()} />
         <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
           <DialogHeader>
@@ -58,9 +58,8 @@ export const ConfirmDeleteAgentDialog = ({
             role={'alert'}
           >
             <p className={'text-sm text-destructive'}>
-              {
-                'This action is permanent and cannot be undone. The agent and all its configuration will be permanently removed.'
-              }
+              This action is permanent and cannot be undone. The agent and all its configuration will be permanently
+              removed.
             </p>
           </div>
 
@@ -68,7 +67,7 @@ export const ConfirmDeleteAgentDialog = ({
           <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={'outline'}>
-                {'Cancel'}
+                Cancel
               </Button>
             </DialogClose>
             <Button

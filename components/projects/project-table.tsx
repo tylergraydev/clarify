@@ -4,13 +4,14 @@ import type { Row } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 import { format } from 'date-fns';
-import { ExternalLink, Trash2 } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
 import type { Project } from '@/types/electron';
 
 import { ConfirmArchiveDialog } from '@/components/projects/confirm-archive-dialog';
 import { ConfirmDeleteProjectDialog } from '@/components/projects/confirm-delete-project-dialog';
+import { EditProjectDialog } from '@/components/projects/edit-project-dialog';
 import { Switch } from '@/components/ui/switch';
 import {
   createColumnHelper,
@@ -102,6 +103,8 @@ const ActionsCell = memo(function ActionsCell({
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
   // Dialog state for delete confirmation
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  // Dialog state for edit
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleArchiveConfirm = useCallback(async () => {
     try {
@@ -138,6 +141,15 @@ const ActionsCell = memo(function ActionsCell({
     type: 'button',
   });
 
+  // Edit action
+  actions.push({
+    disabled: isActionDisabled,
+    icon: <Pencil aria-hidden={'true'} className={'size-4'} />,
+    label: 'Edit',
+    onAction: () => setIsEditDialogOpen(true),
+    type: 'button',
+  });
+
   // Separator before destructive actions
   actions.push({ type: 'separator' });
 
@@ -168,6 +180,11 @@ const ActionsCell = memo(function ActionsCell({
         onConfirm={handleDeleteConfirm}
         onOpenChange={setIsDeleteDialogOpen}
         projectName={project.name}
+      />
+      <EditProjectDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        project={project}
       />
     </Fragment>
   );

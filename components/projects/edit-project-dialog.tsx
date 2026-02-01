@@ -21,20 +21,35 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useUpdateProject } from '@/hooks/queries/use-projects';
+import { useControllableState } from '@/hooks/use-controllable-state';
 import { useAppForm } from '@/lib/forms/form-hook';
 import { type EditProjectFormValues, editProjectSchema } from '@/lib/validations/project';
 
 interface EditProjectDialogProps {
+  /** Whether the dialog is open (controlled mode) */
+  isOpen?: boolean;
+  /** Callback when the dialog open state changes (controlled mode) */
+  onOpenChange?: (isOpen: boolean) => void;
   /** Callback when project is successfully updated */
   onSuccess?: () => void;
   /** The project to edit */
   project: Project;
-  /** The trigger element that opens the dialog */
-  trigger: ReactNode;
+  /** The trigger element that opens the dialog (uncontrolled mode) */
+  trigger?: ReactNode;
 }
 
-export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const EditProjectDialog = ({
+  isOpen: controlledIsOpen,
+  onOpenChange: controlledOnOpenChange,
+  onSuccess,
+  project,
+  trigger,
+}: EditProjectDialogProps) => {
+  const [isOpen, setIsOpen] = useControllableState({
+    defaultValue: false,
+    onChange: controlledOnOpenChange,
+    value: controlledIsOpen,
+  });
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
   const updateProjectMutation = useUpdateProject();
@@ -81,7 +96,7 @@ export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDi
   const handleClose = useCallback(() => {
     setIsOpen(false);
     form.reset();
-  }, [form]);
+  }, [form, setIsOpen]);
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -95,19 +110,19 @@ export const EditProjectDialog = ({ onSuccess, project, trigger }: EditProjectDi
         form.reset();
       }
     },
-    [form]
+    [form, setIsOpen]
   );
 
   const handleConfirmDiscard = useCallback(() => {
     setIsDiscardDialogOpen(false);
     setIsOpen(false);
     form.reset();
-  }, [form]);
+  }, [form, setIsOpen]);
 
   return (
     <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
-      {/* Trigger */}
-      <DialogTrigger>{trigger}</DialogTrigger>
+      {/* Trigger (only for uncontrolled mode) */}
+      {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
 
       {/* Portal */}
       <DialogPortal>
