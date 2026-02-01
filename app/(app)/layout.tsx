@@ -1,6 +1,6 @@
 'use client';
 
-import { AppHeader, AppSidebar, MobileDrawer, StatusBar } from '@/components/shell';
+import { AppHeader, AppSidebar, StatusBar } from '@/components/shell';
 import { useActiveWorkflows } from '@/hooks/queries/use-workflows';
 import { useShellStore } from '@/lib/stores/shell-store';
 import { cn } from '@/lib/utils';
@@ -25,9 +25,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <div className={'relative min-h-screen bg-background'}>
       {/* Header - fixed at top */}
       <AppHeader />
-
-      {/* Mobile drawer - only visible on mobile when open */}
-      <MobileDrawer />
 
       {/* Sidebar - fixed on left, hidden on mobile */}
       <AppSidebar />

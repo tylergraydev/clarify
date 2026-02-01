@@ -83,13 +83,8 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
   );
 
   const handleCreateWorkflow = useCallback(() => {
-    router.push(
-      $path({
-        route: '/workflows/new',
-        searchParams: { projectId },
-      })
-    );
-  }, [router, projectId]);
+    // todo
+  }, []);
 
   const handleResetFilters = useCallback(() => {
     setStatusFilter(DEFAULT_STATUS_FILTER);
@@ -155,7 +150,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
         <div className={'flex items-center justify-end'}>
           <Button onClick={handleCreateWorkflow}>
             <Plus aria-hidden={'true'} className={'size-4'} />
-            {'Create Workflow'}
+            Create Workflow
           </Button>
         </div>
 

@@ -11,11 +11,11 @@ import type { Project } from '@/types/electron';
 
 import { ProjectDetailSkeleton, ProjectNotFound } from '@/components/projects';
 import { SettingsTabContent } from '@/components/projects/settings-tab-content';
-import { WorkflowsTabContent } from '@/components/projects/workflows-tab-content';
 import { RepositoriesTabContent } from '@/components/repositories/repositories-tab-content';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTrigger } from '@/components/ui/tabs';
+import { WorkflowsTabContent } from '@/components/workflows/workflows-tab-content';
 import { useProject } from '@/hooks/queries/use-projects';
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useWorkflowsByProject } from '@/hooks/queries/use-workflows';
