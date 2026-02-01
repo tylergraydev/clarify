@@ -13,6 +13,7 @@ import type {
   WorkflowHistoryResult,
   WorkflowsRepository,
   WorkflowStatistics,
+  WorkflowStepsRepository,
 } from '../../db/repositories';
 import type { NewWorkflow, Workflow } from '../../db/schema';
 import type { UpdateWorkflowInput } from '../../lib/validations/workflow';
@@ -32,8 +33,12 @@ interface WorkflowListFilters {
  * Register all workflow-related IPC handlers.
  *
  * @param workflowsRepository - The workflows repository for database operations
+ * @param workflowStepsRepository - The workflow steps repository for creating planning steps
  */
-export function registerWorkflowHandlers(workflowsRepository: WorkflowsRepository): void {
+export function registerWorkflowHandlers(
+  workflowsRepository: WorkflowsRepository,
+  workflowStepsRepository: WorkflowStepsRepository
+): void {
   // Create a new workflow
   ipcMain.handle(IpcChannels.workflow.create, (_event: IpcMainInvokeEvent, data: NewWorkflow): Workflow => {
     try {
@@ -44,10 +49,37 @@ export function registerWorkflowHandlers(workflowsRepository: WorkflowsRepositor
     }
   });
 
-  // Start a workflow (update status to running)
+  // Start a workflow (update status to running and create planning steps)
   ipcMain.handle(IpcChannels.workflow.start, (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
     try {
-      return workflowsRepository.start(id);
+      // Fetch the workflow to access skipClarification flag
+      const workflow = workflowsRepository.findById(id);
+      if (!workflow) {
+        return undefined;
+      }
+
+      // Start the workflow (update status to running)
+      const startedWorkflow = workflowsRepository.start(id);
+      if (!startedWorkflow) {
+        return undefined;
+      }
+
+      // Create planning steps atomically
+      // If step creation fails, we attempt to rollback the workflow status
+      try {
+        workflowStepsRepository.createPlanningSteps(id, workflow.skipClarification);
+      } catch (stepError) {
+        // Attempt to rollback workflow status to 'created'
+        console.error('[IPC Error] workflow:start - step creation failed, rolling back:', stepError);
+        try {
+          workflowsRepository.updateStatus(id, 'created');
+        } catch (rollbackError) {
+          console.error('[IPC Error] workflow:start - rollback failed:', rollbackError);
+        }
+        throw stepError;
+      }
+
+      return startedWorkflow;
     } catch (error) {
       console.error('[IPC Error] workflow:start:', error);
       throw error;

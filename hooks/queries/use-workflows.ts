@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UpdateWorkflowInput } from '@/lib/validations/workflow';
 import type { WorkflowHistoryFilters } from '@/types/electron';
 
+import { stepKeys } from '@/lib/queries/steps';
 import { workflowKeys } from '@/lib/queries/workflows';
 
 import { useElectronDb } from '../use-electron';
@@ -187,6 +188,13 @@ export function useStartWorkflow() {
         });
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.running.queryKey,
+        });
+        // Invalidate step queries to fetch newly created planning steps
+        void queryClient.invalidateQueries({
+          queryKey: stepKeys.byWorkflow(workflow.id).queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: stepKeys.list._def,
         });
         if (workflow.projectId) {
           void queryClient.invalidateQueries({

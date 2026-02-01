@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PipelineView, WorkflowDetailSkeleton } from '@/components/workflows';
 import { useProject } from '@/hooks/queries/use-projects';
-import { useWorkflow } from '@/hooks/queries/use-workflows';
+import { useStartWorkflow, useWorkflow } from '@/hooks/queries/use-workflows';
 
 import { Route } from './route-type';
 
@@ -40,6 +40,7 @@ type WorkflowType = Workflow['type'];
 const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'paused', 'running'];
 const PAUSABLE_STATUSES: Array<WorkflowStatus> = ['running'];
 const RESUMABLE_STATUSES: Array<WorkflowStatus> = ['paused'];
+const STARTABLE_STATUSES: Array<WorkflowStatus> = ['created'];
 
 /**
  * Maps workflow status to badge variant for consistent status styling.
@@ -124,6 +125,9 @@ const WorkflowDetailPage = () => {
   const projectId = workflow?.projectId ?? 0;
   const { data: project, isLoading: isProjectLoading } = useProject(projectId);
 
+  // Workflow action mutations
+  const startWorkflow = useStartWorkflow();
+
   // Handle route params loading state
   if (routeParams.isLoading) {
     return (
@@ -155,6 +159,13 @@ const WorkflowDetailPage = () => {
   // Derived state
   const hasProject = workflow.projectId !== null && project !== null && project !== undefined;
   const isProjectDataLoading = workflow.projectId !== null && isProjectLoading;
+  const isStarting = startWorkflow.isPending;
+  const isStartable = STARTABLE_STATUSES.includes(workflow.status);
+
+  // Event handlers
+  const handleStartWorkflow = () => {
+    startWorkflow.mutate(workflowId);
+  };
 
   return (
     <QueryErrorBoundary>
@@ -251,6 +262,16 @@ const WorkflowDetailPage = () => {
 
           {/* Action Bar */}
           <div className={'mt-4 flex items-center gap-2'}>
+            {isStartable && (
+              <Button
+                aria-label={isStarting ? 'Starting workflow' : 'Start workflow'}
+                disabled={isStarting}
+                onClick={handleStartWorkflow}
+              >
+                <Play className={'mr-2 size-4'} />
+                {isStarting ? 'Starting...' : 'Start'}
+              </Button>
+            )}
             {PAUSABLE_STATUSES.includes(workflow.status) && (
               <Button aria-disabled={'true'} aria-label={'Pause workflow'} disabled variant={'outline'}>
                 <Pause className={'mr-2 size-4'} />

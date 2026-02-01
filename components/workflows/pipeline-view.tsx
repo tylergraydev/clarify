@@ -2,62 +2,17 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { FileText, Lightbulb, MessageSquare, Search } from 'lucide-react';
 import { Fragment } from 'react';
 
 import type { WorkflowStep } from '@/db/schema/workflow-steps.schema';
 
 import { useStepsByWorkflow } from '@/hooks/queries/use-steps';
+import { useWorkflow } from '@/hooks/queries/use-workflows';
 import { usePipelineStore } from '@/lib/stores/pipeline-store';
 import { cn } from '@/lib/utils';
 
 import { PipelineConnector } from './pipeline-connector';
 import { PipelineStep, type PipelineStepStatus, type PipelineStepType } from './pipeline-step';
-
-/**
- * Configuration for an orchestration step.
- */
-interface OrchestrationStepConfig {
-  /** Icon component for the step */
-  icon: typeof MessageSquare;
-  /** Unique identifier for the step (0-based index) */
-  id: number;
-  /** Human-readable title for the step */
-  title: string;
-  /** Step type matching database schema */
-  type: PipelineStepType;
-}
-
-/**
- * Hardcoded orchestration steps for the planning workflow.
- * These four steps represent the planning phase of workflow execution.
- */
-const ORCHESTRATION_STEPS: Array<OrchestrationStepConfig> = [
-  {
-    icon: MessageSquare,
-    id: 0,
-    title: 'Clarification',
-    type: 'clarification',
-  },
-  {
-    icon: Lightbulb,
-    id: 1,
-    title: 'Refinement',
-    type: 'refinement',
-  },
-  {
-    icon: Search,
-    id: 2,
-    title: 'Discovery',
-    type: 'discovery',
-  },
-  {
-    icon: FileText,
-    id: 3,
-    title: 'Planning',
-    type: 'planning',
-  },
-];
 
 /**
  * Database step statuses that map to the 'running' visual state.
@@ -102,23 +57,22 @@ function deriveStepState(status?: string): PipelineStepStatus {
 }
 
 /**
- * Finds a workflow step by its type from the fetched steps array.
+ * Sorts workflow steps by their stepNumber in ascending order.
  *
- * @param steps - Array of workflow steps from the database
- * @param stepType - The step type to find
- * @returns The matching step or undefined
+ * @param steps - Array of workflow steps to sort
+ * @returns New array of steps sorted by stepNumber
  */
-function findStepByType(steps: Array<WorkflowStep> | undefined, stepType: PipelineStepType): undefined | WorkflowStep {
-  return steps?.find((step) => step.stepType === stepType);
+function sortStepsByNumber(steps: Array<WorkflowStep>): Array<WorkflowStep> {
+  return [...steps].sort((a, b) => a.stepNumber - b.stepNumber);
 }
 
 /**
  * Main pipeline view component that orchestrates step layout, state management,
  * and data fetching for the workflow visualization.
  *
- * Displays four hardcoded orchestration steps (clarification, refinement,
- * discovery, planning) with connectors between them. Each step's visual state
- * is derived from the fetched database step data.
+ * Displays workflow steps fetched from the database with connectors between them.
+ * Each step's visual state is derived from its database status.
+ * Handles empty state gracefully when workflow is in 'created' status.
  *
  * @example
  * ```tsx
@@ -126,13 +80,20 @@ function findStepByType(steps: Array<WorkflowStep> | undefined, stepType: Pipeli
  * ```
  */
 export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineViewProps) => {
-  const { data: steps, isLoading } = useStepsByWorkflow(workflowId);
+  const { data: steps, isLoading: isLoadingSteps } = useStepsByWorkflow(workflowId);
+  const { data: workflow, isLoading: isLoadingWorkflow } = useWorkflow(workflowId);
 
   const { expandedStepId, toggleStep } = usePipelineStore();
+
+  const sortedSteps = steps ? sortStepsByNumber(steps) : [];
 
   const handleToggleStep = (stepId: number) => {
     toggleStep(stepId);
   };
+
+  const isLoading = isLoadingSteps || isLoadingWorkflow;
+  const isWorkflowCreated = workflow?.status === 'created';
+  const hasNoSteps = sortedSteps.length === 0;
 
   return (
     <div
@@ -142,37 +103,45 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
       role={'list'}
       {...props}
     >
-      {ORCHESTRATION_STEPS.map((stepConfig, index) => {
-        const dbStep = findStepByType(steps, stepConfig.type);
-        const stepState = deriveStepState(dbStep?.status);
-        const isExpanded = expandedStepId === stepConfig.id;
+      {/* Empty State - Workflow created but no steps yet */}
+      {hasNoSteps && !isLoading && (
+        <div className={'flex min-h-24 w-full items-center justify-center text-muted-foreground'} role={'listitem'}>
+          {isWorkflowCreated ? (
+            <p className={'text-sm'}>Workflow is ready. Start the workflow to create pipeline steps.</p>
+          ) : (
+            <p className={'text-sm'}>No steps available for this workflow.</p>
+          )}
+        </div>
+      )}
 
+      {/* Pipeline Steps */}
+      {sortedSteps.map((step, index) => {
+        const stepState = deriveStepState(step.status);
+        const isExpanded = expandedStepId === step.id;
         const isConnectorCompleted = stepState === 'completed';
-        const isLastStep = index === ORCHESTRATION_STEPS.length - 1;
+        const isLastStep = index === sortedSteps.length - 1;
+
+        // Get the step type safely, defaulting to 'clarification' if not a valid PipelineStepType
+        const stepType = (step.stepType as PipelineStepType) || 'clarification';
 
         return (
-          <Fragment key={stepConfig.id}>
+          <Fragment key={step.id}>
             {/* Step Card */}
             <div className={'min-w-64 shrink-0'} role={'listitem'}>
               <PipelineStep
                 aria-posinset={index + 1}
-                aria-setsize={ORCHESTRATION_STEPS.length}
+                aria-setsize={sortedSteps.length}
                 isExpanded={isExpanded}
-                onToggle={() => handleToggleStep(stepConfig.id)}
-                output={dbStep?.outputText ?? undefined}
+                onToggle={() => handleToggleStep(step.id)}
+                output={step.outputText ?? undefined}
                 status={stepState}
-                stepType={stepConfig.type}
-                title={stepConfig.title}
+                stepType={stepType}
+                title={step.title}
               />
             </div>
 
             {/* Connector (not after last step) */}
-            {!isLastStep && (
-              <PipelineConnector
-                className={'min-w-8'}
-                isCompleted={isConnectorCompleted}
-              />
-            )}
+            {!isLastStep && <PipelineConnector className={'min-w-8'} isCompleted={isConnectorCompleted} />}
           </Fragment>
         );
       })}

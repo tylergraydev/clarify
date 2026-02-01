@@ -8,6 +8,7 @@ import { workflowSteps } from '../schema';
 export interface WorkflowStepsRepository {
   complete(id: number, outputText: string, durationMs: number): undefined | WorkflowStep;
   create(data: NewWorkflowStep): WorkflowStep;
+  createPlanningSteps(workflowId: number, skipClarification: boolean): Array<WorkflowStep>;
   delete(id: number): boolean;
   fail(id: number, errorMessage: string): undefined | WorkflowStep;
   findAll(options?: { status?: string; workflowId?: number }): Array<WorkflowStep>;
@@ -40,6 +41,65 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
 
     create(data: NewWorkflowStep): WorkflowStep {
       return db.insert(workflowSteps).values(data).returning().get();
+    },
+
+    createPlanningSteps(workflowId: number, skipClarification: boolean): Array<WorkflowStep> {
+      const planningStepDefinitions = [
+        {
+          description:
+            'Analyze the feature request to identify ambiguities and missing information that need clarification.',
+          stepNumber: 1,
+          stepType: 'clarification',
+          title: 'Clarification',
+        },
+        {
+          description:
+            'Refine the feature requirements based on clarification responses and create a detailed specification.',
+          stepNumber: 2,
+          stepType: 'refinement',
+          title: 'Refinement',
+        },
+        {
+          description:
+            'Discover all relevant files and code patterns in the codebase that relate to this feature.',
+          stepNumber: 3,
+          stepType: 'discovery',
+          title: 'Discovery',
+        },
+        {
+          description:
+            'Generate a detailed implementation plan with specific steps, file changes, and validation criteria.',
+          stepNumber: 4,
+          stepType: 'planning',
+          title: 'Planning',
+        },
+      ];
+
+      return db.transaction((tx) => {
+        const createdSteps: Array<WorkflowStep> = [];
+
+        for (const stepDef of planningStepDefinitions) {
+          const status =
+            stepDef.stepType === 'clarification' && skipClarification ? 'skipped' : 'pending';
+
+          const step = tx
+            .insert(workflowSteps)
+            .values({
+              description: stepDef.description,
+              status,
+              stepNumber: stepDef.stepNumber,
+              stepType: stepDef.stepType,
+              title: stepDef.title,
+              workflowId,
+            })
+            .returning()
+            .get();
+
+          createdSteps.push(step);
+        }
+
+        return createdSteps;
+      });
     },
 
     delete(id: number): boolean {

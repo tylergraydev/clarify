@@ -135,13 +135,15 @@ export function registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => Br
   // Database handlers - Workflow system
   // ============================================
 
-  // Workflows - orchestration runs
-  const workflowsRepository = createWorkflowsRepository(db);
-  registerWorkflowHandlers(workflowsRepository);
-
   // Workflow steps - individual steps within workflows
+  // Note: Created before workflows because registerWorkflowHandlers needs steps repository
   const workflowStepsRepository = createWorkflowStepsRepository(db);
   registerStepHandlers(workflowStepsRepository);
+
+  // Workflows - orchestration runs
+  // Needs workflowStepsRepository for creating planning steps on start
+  const workflowsRepository = createWorkflowsRepository(db);
+  registerWorkflowHandlers(workflowsRepository, workflowStepsRepository);
 
   // Workflow repositories - repository associations for workflows
   const workflowRepositoriesRepository = createWorkflowRepositoriesRepository(db);
