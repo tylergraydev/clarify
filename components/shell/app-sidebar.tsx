@@ -2,11 +2,16 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { Bot, FolderKanban, LayoutDashboard, Settings } from 'lucide-react';
+import { Bot, FolderKanban, History, LayoutDashboard, Play, Settings, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
+const WORKFLOWS_BASE_PATH = $path({ route: '/workflows/active' }).replace('/active', '');
+
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip } from '@/components/ui/tooltip';
 import { useShellStore } from '@/lib/stores/shell-store';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +22,9 @@ type AppSidebarProps = ComponentPropsWithRef<'aside'>;
 export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
   const { isSidebarCollapsed } = useShellStore();
   const pathname = usePathname();
+
+  const isWorkflowsActive = pathname.startsWith(WORKFLOWS_BASE_PATH);
+  const [isWorkflowsOpen, setIsWorkflowsOpen] = useState(isWorkflowsActive);
 
   const isPathActive = (href: string) => {
     if (href === $path({ route: '/dashboard' })) {
@@ -62,6 +70,53 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             isCollapsed={isSidebarCollapsed}
             label={'Projects'}
           />
+
+          {/* Workflows */}
+          {isSidebarCollapsed ? (
+            <Tooltip content={'Workflows'} side={'right'}>
+              <NavItem
+                href={$path({ route: '/workflows/active' })}
+                icon={Workflow}
+                isActive={isWorkflowsActive}
+                isCollapsed={isSidebarCollapsed}
+                label={'Workflows'}
+              />
+            </Tooltip>
+          ) : (
+            <Collapsible onOpenChange={setIsWorkflowsOpen} open={isWorkflowsOpen || isWorkflowsActive}>
+              <CollapsibleTrigger
+                className={cn(
+                  `
+                    h-10 w-full px-3 py-2
+                    text-muted-foreground
+                    hover:bg-muted hover:text-foreground
+                  `,
+                  isWorkflowsActive && 'text-foreground'
+                )}
+              >
+                <Workflow aria-hidden={'true'} className={'size-4 shrink-0'} />
+                <span className={'flex-1 truncate text-left'}>Workflows</span>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <NavItem
+                  href={$path({ route: '/workflows/active' })}
+                  icon={Play}
+                  isActive={pathname === $path({ route: '/workflows/active' })}
+                  isCollapsed={false}
+                  isNested={true}
+                  label={'Active'}
+                />
+                <NavItem
+                  href={$path({ route: '/workflows/history', searchParams: {} })}
+                  icon={History}
+                  isActive={pathname === $path({ route: '/workflows/history', searchParams: {} })}
+                  isCollapsed={false}
+                  isNested={true}
+                  label={'History'}
+                />
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </div>
 
         {/* Separator */}

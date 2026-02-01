@@ -7,6 +7,8 @@ export {
   RepositorySelectionField,
   repositorySelectionVariants,
 } from './repository-selection-field';
+// Skeleton components
+export { WorkflowDetailSkeleton } from './workflow-detail-skeleton';
 // Table components
 export { WorkflowTable } from './workflow-table';
 export {

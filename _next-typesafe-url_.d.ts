@@ -12,8 +12,6 @@ declare module "@@@next-typesafe-url" {
     "/projects": InferRoute<import("./app/(app)/projects/route-type").RouteType>;
     "/projects/[id]": InferRoute<import("./app/(app)/projects/[id]/route-type").RouteType>;
     "/workflows/history": InferRoute<import("./app/(app)/workflows/history/route-type").RouteType>;
-    "/workflows/new": InferRoute<import("./app/(app)/workflows/new/route-type").RouteType>;
-    "/workflows": InferRoute<import("./app/(app)/workflows/route-type").RouteType>;
     "/workflows/[id]": InferRoute<import("./app/(app)/workflows/[id]/route-type").RouteType>;
   }
 
@@ -21,7 +19,6 @@ declare module "@@@next-typesafe-url" {
     "/agents": StaticRoute;
     "/dashboard": StaticRoute;
     "/settings": StaticRoute;
-    "/templates": StaticRoute;
     "/workflows/active": StaticRoute;
     "/": StaticRoute;
   }

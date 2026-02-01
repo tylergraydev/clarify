@@ -84,7 +84,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
       router.push(
         $path({
           route: '/workflows/[id]',
-          routeParams: { id: String(workflowId) },
+          routeParams: { id: workflowId },
         })
       );
     },
