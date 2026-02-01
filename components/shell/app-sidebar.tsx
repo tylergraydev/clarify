@@ -111,7 +111,9 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
                   favoriteProjects.map((project) => (
                     <NavItem
                       href={$path({ route: '/projects/[id]', routeParams: { id: String(project.id) } })}
-                      isActive={pathname === $path({ route: '/projects/[id]', routeParams: { id: String(project.id) } })}
+                      isActive={
+                        pathname === $path({ route: '/projects/[id]', routeParams: { id: String(project.id) } })
+                      }
                       isCollapsed={false}
                       isNested={true}
                       key={project.id}
@@ -202,6 +204,15 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             isActive={isPathActive($path({ route: '/agents' }))}
             isCollapsed={isSidebarCollapsed}
             label={'Agents'}
+          />
+
+          {/* Templates */}
+          <NavItem
+            href={$path({ route: '/templates' })}
+            icon={Bot}
+            isActive={isPathActive($path({ route: '/templates' }))}
+            isCollapsed={isSidebarCollapsed}
+            label={'Templates'}
           />
 
           {/* Separator */}

@@ -19,6 +19,7 @@ declare module "@@@next-typesafe-url" {
     "/agents": StaticRoute;
     "/dashboard": StaticRoute;
     "/settings": StaticRoute;
+    "/templates": StaticRoute;
     "/workflows/active": StaticRoute;
     "/": StaticRoute;
   }
