@@ -1,15 +1,11 @@
 'use client';
 
-import type { ReactNode } from 'react';
-
 import { useEffect, useState } from 'react';
 
 import { AGENT_SHOW_BUILTIN_STORAGE_KEY, AGENT_SHOW_DEACTIVATED_STORAGE_KEY } from '@/lib/layout/constants';
 import { useAgentLayoutStore } from '@/lib/stores/agent-layout-store';
 
-interface AgentLayoutProviderProps {
-  children: ReactNode;
-}
+type AgentLayoutProviderProps = RequiredChildren;
 
 /**
  * Provider component that hydrates the agent filter store from electron-store
@@ -63,7 +59,7 @@ export const AgentLayoutProvider = ({ children }: AgentLayoutProviderProps) => {
       setIsHydrated(true);
     };
 
-    hydrateStore();
+    void hydrateStore();
   }, []);
 
   // Prevent flash of default values by not rendering until hydrated
