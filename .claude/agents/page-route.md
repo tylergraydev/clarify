@@ -95,8 +95,9 @@ Create the page file following project structure:
 import { useRouteParams } from 'next-typesafe-url/app';
 import { redirect } from 'next/navigation';
 
+import { ProjectDetailSkeleton } from '@/components/projects';
+
 import { Route } from './route-type';
-import { PageSkeleton } from './_components/page-skeleton';
 
 // ============================================================================
 // Types
@@ -126,12 +127,12 @@ export default function PageName() {
 
   // Handle route params loading state
   if (routeParams.isLoading) {
-    return <PageSkeleton />;
+    return <ProjectDetailSkeleton />;
   }
 
   // Redirect if ID is invalid
   if (routeParams.isError || !id) {
-    redirect('/fallback-route');
+    redirect($path({route: '/fallback-route'}));
   }
 
   // Fetch data using TanStack Query hooks
@@ -153,16 +154,17 @@ export default function PageName() {
 - Section comments for organization (Types, Helpers, Main Component)
 - JSDoc comment describing the page
 
-### Step 6: Create Skeleton Component
+### Step 6: Create Page Components in Feature Directory
 
-Create `_components/page-skeleton.tsx` for loading states:
+Create page-specific components in `components/{feature-area}/` (NOT in route-level `_components/`):
 
 ```typescript
+// components/projects/project-detail-skeleton.tsx
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
 
-export const PageSkeleton = () => {
+export const ProjectDetailSkeleton = () => {
   return (
     <div className={'space-y-6'}>
       {/* Match the structure of actual page content */}
@@ -175,16 +177,17 @@ export const PageSkeleton = () => {
 
 **Mandatory Requirements**:
 
-- Colocate in `_components/` directory
+- Place components in `components/{feature-area}/` directory (e.g., `components/projects/`, `components/workflows/`)
 - Match skeleton structure to actual page content
 - Use project's Skeleton component
+- Name components descriptively based on the page (e.g., `ProjectDetailSkeleton`, `WorkflowPipelineSkeleton`)
 
-### Step 7: Create Barrel Export (if _components has multiple files)
+### Step 7: Create Barrel Export (if feature directory has multiple files)
 
-Create `_components/index.ts`:
+Create or update `components/{feature-area}/index.ts`:
 
 ```typescript
-export { PageSkeleton } from './page-skeleton';
+export { ProjectDetailSkeleton } from './project-detail-skeleton';
 export { OtherComponent } from './other-component';
 ```
 
@@ -217,7 +220,7 @@ You MUST enforce all conventions from both skills:
 2. **Numeric IDs**: Use `z.coerce.number().int().positive()` for IDs
 3. **Type Safety**: Use `satisfies DynamicRoute` for route objects
 4. **Client Directive**: All pages use `'use client'` (Electron requirement)
-5. **Loading States**: Use skeleton components in `_components/`
+5. **Loading States**: Use skeleton components in `components/{feature-area}/`
 6. **Error Handling**: Handle `routeParams.isError` with redirect
 
 **React Conventions**:
@@ -239,7 +242,7 @@ Invoke these additional skills when the situation requires:
   - Creating query hooks for page-specific data
 
 - **`component-conventions`** - Load when:
-  - Creating complex page-specific components in `_components/`
+  - Creating complex page-specific components in `components/{feature-area}/`
   - Components need CVA variants
 
 - **`accessibility-a11y`** - Load when:
@@ -260,7 +263,7 @@ After completing work, provide a summary:
 - Search params: { tab?: 'overview' | 'details' }
 
 **Components Created**:
-- `_components/page-skeleton.tsx` - Loading skeleton
+- `components/{feature-area}/page-detail-skeleton.tsx` - Loading skeleton
 
 **Data Dependencies**:
 - useEntity(id) - Fetches entity data
