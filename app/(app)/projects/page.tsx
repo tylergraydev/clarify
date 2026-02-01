@@ -185,18 +185,6 @@ function ProjectsPageContent() {
             icon={<FolderOpen aria-hidden={'true'} className={'size-6'} />}
             title={'No projects yet'}
           />
-        ) : filteredProjects.length === 0 ? (
-          // Empty state when filters hide all projects
-          <EmptyState
-            action={
-              <Button onClick={() => handleArchiveFilterChange('all')} variant={'outline'}>
-                {'Show all projects'}
-              </Button>
-            }
-            description={'No projects match your current filter. Try adjusting the status filter.'}
-            icon={<FolderOpen aria-hidden={'true'} className={'size-6'} />}
-            title={'No matching projects'}
-          />
         ) : (
           <ProjectTable
             archivingIds={archivingIds}
