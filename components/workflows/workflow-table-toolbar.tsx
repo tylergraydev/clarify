@@ -33,6 +33,15 @@ import { cn, optionsToItems } from '@/lib/utils';
 // Types
 // ============================================================================
 
+/** Available workflow status filter values for active workflows (running, paused, editing) */
+export type ActiveWorkflowStatusFilterValue = 'all' | 'editing' | 'paused' | 'running';
+
+/** Project option for project filter select */
+export interface ProjectFilterOption {
+  label: string;
+  value: string;
+}
+
 /** Available workflow status filter values */
 export type WorkflowStatusFilterValue =
   | 'all'
@@ -45,12 +54,20 @@ export type WorkflowStatusFilterValue =
   | 'running';
 
 export interface WorkflowTableToolbarProps extends ComponentPropsWithRef<'div'> {
+  /** Callback when project filter changes */
+  onProjectFilterChange?: (value: string) => void;
   /** Callback when reset filters button is clicked */
   onResetFilters?: () => void;
   /** Callback when status filter changes */
   onStatusFilterChange: (value: WorkflowStatusFilterValue) => void;
   /** Callback when type filter changes */
   onTypeFilterChange: (value: WorkflowTypeFilterValue) => void;
+  /** Current project filter value */
+  projectFilter?: string;
+  /** Available projects for filtering */
+  projects?: Array<ProjectFilterOption>;
+  /** Whether to show the project filter */
+  showProjectFilter?: boolean;
   /** Current status filter value */
   statusFilter: WorkflowStatusFilterValue;
   /** Current type filter value */
@@ -64,8 +81,17 @@ export type WorkflowTypeFilterValue = 'all' | 'implementation' | 'planning';
 // Constants
 // ============================================================================
 
+const DEFAULT_PROJECT_FILTER = 'all';
 const DEFAULT_STATUS_FILTER: WorkflowStatusFilterValue = 'all';
 const DEFAULT_TYPE_FILTER: WorkflowTypeFilterValue = 'all';
+
+/** Status filter options for active workflows only (running, paused, editing) */
+export const ACTIVE_STATUS_FILTER_OPTIONS = [
+  { label: 'All statuses', value: 'all' },
+  { label: 'Running', value: 'running' },
+  { label: 'Paused', value: 'paused' },
+  { label: 'Editing', value: 'editing' },
+] as const;
 
 const STATUS_FILTER_OPTIONS = [
   { label: 'All statuses', value: 'all' },
@@ -88,13 +114,26 @@ const TYPE_FILTER_OPTIONS = [
 // Helper Functions
 // ============================================================================
 
+interface FilterCountParams {
+  projectFilter?: string;
+  showProjectFilter?: boolean;
+  statusFilter: WorkflowStatusFilterValue;
+  typeFilter: WorkflowTypeFilterValue;
+}
+
 /**
  * Calculate the number of active filters
  */
-const getActiveFilterCount = (statusFilter: WorkflowStatusFilterValue, typeFilter: WorkflowTypeFilterValue): number => {
+const getActiveFilterCount = ({
+  projectFilter,
+  showProjectFilter,
+  statusFilter,
+  typeFilter,
+}: FilterCountParams): number => {
   let count = 0;
   if (statusFilter !== DEFAULT_STATUS_FILTER) count++;
   if (typeFilter !== DEFAULT_TYPE_FILTER) count++;
+  if (showProjectFilter && projectFilter && projectFilter !== DEFAULT_PROJECT_FILTER) count++;
   return count;
 };
 
@@ -157,19 +196,32 @@ const FilterCountBadge = ({ count }: FilterCountBadgeProps) => {
  */
 export const WorkflowTableToolbar = memo(function WorkflowTableToolbar({
   className,
+  onProjectFilterChange,
   onResetFilters,
   onStatusFilterChange,
   onTypeFilterChange,
+  projectFilter,
+  projects,
   ref,
+  showProjectFilter = false,
   statusFilter,
   typeFilter,
   ...props
 }: WorkflowTableToolbarProps) {
   // Computed state
-  const activeFilterCount = getActiveFilterCount(statusFilter, typeFilter);
+  const activeFilterCount = getActiveFilterCount({
+    projectFilter,
+    showProjectFilter,
+    statusFilter,
+    typeFilter,
+  });
   const hasActiveFilters = activeFilterCount > 0;
 
   // Handlers
+  const handleProjectFilterChange = (value: null | string) => {
+    onProjectFilterChange?.(value || DEFAULT_PROJECT_FILTER);
+  };
+
   const handleStatusFilterChange = (value: null | string) => {
     onStatusFilterChange((value || DEFAULT_STATUS_FILTER) as WorkflowStatusFilterValue);
   };
@@ -181,10 +233,18 @@ export const WorkflowTableToolbar = memo(function WorkflowTableToolbar({
   const handleResetFilters = () => {
     onStatusFilterChange(DEFAULT_STATUS_FILTER);
     onTypeFilterChange(DEFAULT_TYPE_FILTER);
+    if (showProjectFilter) {
+      onProjectFilterChange?.(DEFAULT_PROJECT_FILTER);
+    }
     onResetFilters?.();
   };
 
   // Build items maps for SelectRoot to display labels instead of raw values
+  const projectFilterOptions = useMemo(() => {
+    const allOption = { label: 'All projects', value: 'all' };
+    return [allOption, ...(projects || [])];
+  }, [projects]);
+  const projectFilterItems = useMemo(() => optionsToItems(projectFilterOptions), [projectFilterOptions]);
   const statusFilterItems = useMemo(() => optionsToItems(STATUS_FILTER_OPTIONS), []);
   const typeFilterItems = useMemo(() => optionsToItems(TYPE_FILTER_OPTIONS), []);
 
@@ -211,6 +271,37 @@ export const WorkflowTableToolbar = memo(function WorkflowTableToolbar({
               </PopoverHeader>
 
               <PopoverContent className={'space-y-4'}>
+                {/* Project Filter */}
+                {showProjectFilter && (
+                  <div className={'space-y-1.5'}>
+                    <label className={'text-xs font-medium text-muted-foreground'} id={'filter-project-label'}>
+                      Project
+                    </label>
+                    <SelectRoot
+                      items={projectFilterItems}
+                      onValueChange={handleProjectFilterChange}
+                      value={projectFilter || DEFAULT_PROJECT_FILTER}
+                    >
+                      <SelectTrigger aria-labelledby={'filter-project-label'} className={'w-full'} size={'sm'}>
+                        <SelectValue placeholder={'All projects'} />
+                      </SelectTrigger>
+                      <SelectPortal>
+                        <SelectPositioner>
+                          <SelectPopup size={'sm'}>
+                            <SelectList>
+                              {projectFilterOptions.map((option) => (
+                                <SelectItem key={option.value} label={option.label} size={'sm'} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectList>
+                          </SelectPopup>
+                        </SelectPositioner>
+                      </SelectPortal>
+                    </SelectRoot>
+                  </div>
+                )}
+
                 {/* Status Filter */}
                 <div className={'space-y-1.5'}>
                   <label className={'text-xs font-medium text-muted-foreground'} id={'filter-status-label'}>

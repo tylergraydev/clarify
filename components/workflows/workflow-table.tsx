@@ -4,7 +4,7 @@ import type { Row } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 import { format } from 'date-fns';
-import { Eye, Pencil, X } from 'lucide-react';
+import { Eye, Pause, Pencil, Play, X } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo } from 'react';
 
 import type { Workflow } from '@/types/electron';
@@ -28,7 +28,7 @@ type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
 type WorkflowStatus = Workflow['status'];
 
-interface WorkflowTableProps extends ComponentPropsWithRef<'div'> {
+interface WorkflowTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onPause'> {
   /** Set of workflow IDs currently being cancelled */
   cancellingIds?: Set<number>;
   /** Callback when the user clicks cancel on a workflow */
@@ -37,10 +37,18 @@ interface WorkflowTableProps extends ComponentPropsWithRef<'div'> {
   onEdit?: (workflow: Workflow) => void;
   /** Callback fired when global filter (search) changes */
   onGlobalFilterChange?: (value: string) => void;
+  /** Callback when the user clicks pause on a workflow */
+  onPause?: (workflowId: number) => void;
+  /** Callback when the user clicks resume on a workflow */
+  onResume?: (workflowId: number) => void;
   /** Callback when the user clicks view details on a workflow */
   onViewDetails?: (workflowId: number) => void;
+  /** Set of workflow IDs currently being paused */
+  pausingIds?: Set<number>;
   /** Map of project IDs to project names for display */
   projectMap: Record<number, string>;
+  /** Set of workflow IDs currently being resumed */
+  resumingIds?: Set<number>;
   /** Custom toolbar content (e.g., filters) */
   toolbarContent?: ReactNode;
   /** Array of workflows to display */
@@ -54,6 +62,8 @@ type WorkflowType = Workflow['type'];
 // ============================================================================
 
 const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'running', 'paused'];
+const PAUSABLE_STATUSES: Array<WorkflowStatus> = ['running'];
+const RESUMABLE_STATUSES: Array<WorkflowStatus> = ['paused'];
 
 const getStatusVariant = (status: WorkflowStatus): BadgeVariant => {
   const statusVariantMap: Record<WorkflowStatus, BadgeVariant> = {
@@ -98,8 +108,12 @@ const columnHelper = createColumnHelper<Workflow>();
 
 interface ActionsCellProps {
   isCancelling: boolean;
+  isPausing: boolean;
+  isResuming: boolean;
   onCancel?: (workflowId: number) => void;
   onEdit?: (workflow: Workflow) => void;
+  onPause?: (workflowId: number) => void;
+  onResume?: (workflowId: number) => void;
   onViewDetails?: (workflowId: number) => void;
   row: Row<Workflow>;
 }
@@ -110,15 +124,22 @@ interface ActionsCellProps {
  */
 const ActionsCell = memo(function ActionsCell({
   isCancelling,
+  isPausing,
+  isResuming,
   onCancel,
   onEdit,
+  onPause,
+  onResume,
   onViewDetails,
   row,
 }: ActionsCellProps) {
   const workflow = row.original;
   const isCancellable = CANCELLABLE_STATUSES.includes(workflow.status as WorkflowStatus);
   const isEditable = workflow.status === 'created';
+  const isPausable = PAUSABLE_STATUSES.includes(workflow.status as WorkflowStatus);
+  const isResumable = RESUMABLE_STATUSES.includes(workflow.status as WorkflowStatus);
 
+  const isActionPending = isCancelling || isPausing || isResuming;
   const actions: Array<DataTableRowAction<Workflow>> = [];
 
   // -------------------------------------------------------------------------
@@ -127,7 +148,7 @@ const ActionsCell = memo(function ActionsCell({
 
   // View action
   actions.push({
-    disabled: isCancelling,
+    disabled: isActionPending,
     icon: <Eye aria-hidden={'true'} className={'size-4'} />,
     label: 'View',
     onAction: (r) => onViewDetails?.(r.original.id),
@@ -141,7 +162,7 @@ const ActionsCell = memo(function ActionsCell({
   // Edit action (only for 'created' status)
   if (isEditable) {
     actions.push({
-      disabled: isCancelling,
+      disabled: isActionPending,
       icon: <Pencil aria-hidden={'true'} className={'size-4'} />,
       label: 'Edit',
       onAction: (r) => onEdit?.(r.original),
@@ -149,10 +170,32 @@ const ActionsCell = memo(function ActionsCell({
     });
   }
 
+  // Pause action (only for running workflows)
+  if (isPausable) {
+    actions.push({
+      disabled: isActionPending,
+      icon: <Pause aria-hidden={'true'} className={'size-4'} />,
+      label: 'Pause',
+      onAction: (r) => onPause?.(r.original.id),
+      type: 'button',
+    });
+  }
+
+  // Resume action (only for paused workflows)
+  if (isResumable) {
+    actions.push({
+      disabled: isActionPending,
+      icon: <Play aria-hidden={'true'} className={'size-4'} />,
+      label: 'Resume',
+      onAction: (r) => onResume?.(r.original.id),
+      type: 'button',
+    });
+  }
+
   // Cancel action (only for cancellable statuses)
   if (isCancellable) {
     actions.push({
-      disabled: isCancelling,
+      disabled: isActionPending,
       icon: <X aria-hidden={'true'} className={'size-4'} />,
       label: 'Cancel',
       onAction: (r) => onCancel?.(r.original.id),
@@ -185,9 +228,13 @@ export const WorkflowTable = ({
   onCancel,
   onEdit,
   onGlobalFilterChange,
+  onPause,
+  onResume,
   onViewDetails,
+  pausingIds = new Set(),
   projectMap,
   ref,
+  resumingIds = new Set(),
   toolbarContent,
   workflows,
   ...props
@@ -216,8 +263,12 @@ export const WorkflowTable = ({
         cell: ({ row }) => (
           <ActionsCell
             isCancelling={cancellingIds.has(row.original.id)}
+            isPausing={pausingIds.has(row.original.id)}
+            isResuming={resumingIds.has(row.original.id)}
             onCancel={onCancel}
             onEdit={onEdit}
+            onPause={onPause}
+            onResume={onResume}
             onViewDetails={onViewDetails}
             row={row}
           />
@@ -332,7 +383,7 @@ export const WorkflowTable = ({
         size: 110,
       }),
     ],
-    [cancellingIds, onCancel, onEdit, onViewDetails, projectMap]
+    [cancellingIds, onCancel, onEdit, onPause, onResume, onViewDetails, pausingIds, projectMap, resumingIds]
   );
 
   return (
