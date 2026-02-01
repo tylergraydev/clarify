@@ -1,3 +1,5 @@
+// Clarification components
+export { ClarificationForm } from './clarification-form';
 // Dialog components
 export { CreateWorkflowDialog } from './create-workflow-dialog';
 export { EditWorkflowDialog } from './edit-workflow-dialog';

@@ -18,6 +18,7 @@ export type {
   NewTemplate,
   NewTemplatePlaceholder,
   NewWorkflow,
+  NewWorkflowStep,
   Project,
   Repository,
   Setting,
@@ -306,6 +307,10 @@ export interface ElectronAPI {
     list(workflowId: number): Promise<Array<import('../db/schema').WorkflowStep>>;
     regenerate(id: number): Promise<import('../db/schema').WorkflowStep | undefined>;
     skip(id: number): Promise<import('../db/schema').WorkflowStep | undefined>;
+    update(
+      id: number,
+      data: Partial<import('../db/schema').NewWorkflowStep>
+    ): Promise<import('../db/schema').WorkflowStep | undefined>;
   };
   store: {
     delete(key: string): Promise<boolean>;

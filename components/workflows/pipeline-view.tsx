@@ -2,11 +2,12 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { Fragment } from 'react';
+import { Fragment, useCallback, useState } from 'react';
 
 import type { WorkflowStep } from '@/db/schema/workflow-steps.schema';
+import type { ClarificationAnswers, ClarificationStepOutput } from '@/lib/validations/clarification';
 
-import { useStepsByWorkflow } from '@/hooks/queries/use-steps';
+import { useCompleteStep, useSkipStep, useStepsByWorkflow, useUpdateStep } from '@/hooks/queries/use-steps';
 import { useWorkflow } from '@/hooks/queries/use-workflows';
 import { usePipelineStore } from '@/lib/stores/pipeline-store';
 import { cn } from '@/lib/utils';
@@ -80,8 +81,14 @@ function sortStepsByNumber(steps: Array<WorkflowStep>): Array<WorkflowStep> {
  * ```
  */
 export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineViewProps) => {
+  const [submittingStepId, setSubmittingStepId] = useState<null | number>(null);
+
   const { data: steps, isLoading: isLoadingSteps } = useStepsByWorkflow(workflowId);
   const { data: workflow, isLoading: isLoadingWorkflow } = useWorkflow(workflowId);
+
+  const updateStep = useUpdateStep();
+  const completeStep = useCompleteStep();
+  const skipStep = useSkipStep();
 
   const { expandedStepId, toggleStep } = usePipelineStore();
 
@@ -90,6 +97,50 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
   const handleToggleStep = (stepId: number) => {
     toggleStep(stepId);
   };
+
+  /**
+   * Handles clarification form submission by merging answers into outputStructured
+   * and transitioning the step to completed status.
+   */
+  const handleSubmitClarification = useCallback(
+    async (stepId: number, currentOutput: ClarificationStepOutput, answers: ClarificationAnswers) => {
+      setSubmittingStepId(stepId);
+      try {
+        // Merge answers into existing outputStructured
+        const updatedOutput: ClarificationStepOutput = {
+          ...currentOutput,
+          answers,
+        };
+
+        // Update step with answers
+        await updateStep.mutateAsync({
+          data: { outputStructured: updatedOutput },
+          id: stepId,
+        });
+
+        // Transition step to completed
+        await completeStep.mutateAsync({ id: stepId });
+      } finally {
+        setSubmittingStepId(null);
+      }
+    },
+    [updateStep, completeStep]
+  );
+
+  /**
+   * Handles skipping clarification by transitioning the step to skipped status.
+   */
+  const handleSkipClarification = useCallback(
+    async (stepId: number) => {
+      setSubmittingStepId(stepId);
+      try {
+        await skipStep.mutateAsync(stepId);
+      } finally {
+        setSubmittingStepId(null);
+      }
+    },
+    [skipStep]
+  );
 
   const isLoading = isLoadingSteps || isLoadingWorkflow;
   const isWorkflowCreated = workflow?.status === 'created';
@@ -124,6 +175,15 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         // Get the step type safely, defaulting to 'clarification' if not a valid PipelineStepType
         const stepType = (step.stepType as PipelineStepType) || 'clarification';
 
+        // Cast outputStructured from unknown to ClarificationStepOutput for clarification steps
+        const isClarificationStep = stepType === 'clarification';
+        const outputStructured = isClarificationStep
+          ? (step.outputStructured as ClarificationStepOutput | null)
+          : null;
+
+        // Determine if clarification handlers can be provided
+        const isSubmittable = isClarificationStep && outputStructured;
+
         return (
           <Fragment key={step.id}>
             {/* Step Card */}
@@ -132,8 +192,16 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
                 aria-posinset={index + 1}
                 aria-setsize={sortedSteps.length}
                 isExpanded={isExpanded}
+                isSubmitting={submittingStepId === step.id}
+                onSkipStep={isClarificationStep ? () => handleSkipClarification(step.id) : undefined}
+                onSubmitClarification={
+                  isSubmittable
+                    ? (answers) => handleSubmitClarification(step.id, outputStructured, answers)
+                    : undefined
+                }
                 onToggle={() => handleToggleStep(step.id)}
                 output={step.outputText ?? undefined}
+                outputStructured={outputStructured}
                 status={stepState}
                 stepType={stepType}
                 title={step.title}

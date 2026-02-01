@@ -174,3 +174,27 @@ export function useStepsByWorkflow(workflowId: number) {
     queryFn: () => steps.list(workflowId),
   });
 }
+
+/**
+ * Update a step with partial data
+ */
+export function useUpdateStep() {
+  const queryClient = useQueryClient();
+  const { steps } = useElectronDb();
+
+  return useMutation({
+    mutationFn: ({ data, id }: { data: Parameters<typeof steps.update>[1]; id: number }) => steps.update(id, data),
+    onSuccess: (step) => {
+      if (step) {
+        queryClient.setQueryData(stepKeys.detail(step.id).queryKey, step);
+        void queryClient.invalidateQueries({ queryKey: stepKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.detail(step.workflowId).queryKey,
+        });
+      }
+    },
+  });
+}

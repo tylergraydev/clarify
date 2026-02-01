@@ -124,6 +124,7 @@ export const IpcChannels = {
     list: 'step:list',
     regenerate: 'step:regenerate',
     skip: 'step:skip',
+    update: 'step:update',
   },
   store: {
     delete: 'store:delete',

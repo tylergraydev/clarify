@@ -6,7 +6,10 @@ import { Collapsible as BaseCollapsible } from '@base-ui/react/collapsible';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { CircleCheck, CircleDashed, FileText, Lightbulb, Loader2, MessageSquare, Search } from 'lucide-react';
 
+import type { ClarificationAnswers, ClarificationStepOutput } from '@/lib/validations/clarification';
+
 import { Badge } from '@/components/ui/badge';
+import { ClarificationForm } from '@/components/workflows/clarification-form';
 import { cn } from '@/lib/utils';
 
 /**
@@ -73,10 +76,18 @@ interface PipelineStepProps
     VariantProps<typeof pipelineStepVariants> {
   /** Whether the step is currently expanded */
   isExpanded: boolean;
+  /** Whether form submission is in progress */
+  isSubmitting?: boolean;
+  /** Callback when user skips clarification */
+  onSkipStep?: () => void;
+  /** Callback when clarification form is submitted */
+  onSubmitClarification?: (answers: ClarificationAnswers) => void;
   /** Callback when expand/collapse is toggled */
   onToggle: () => void;
   /** Output content to display when expanded */
   output?: string;
+  /** Structured output containing questions and answers */
+  outputStructured?: ClarificationStepOutput | null;
   /** The type of step (determines icon) */
   stepType: PipelineStepType;
   /** The title of the step */
@@ -86,8 +97,12 @@ interface PipelineStepProps
 export const PipelineStep = ({
   className,
   isExpanded,
+  isSubmitting = false,
+  onSkipStep,
+  onSubmitClarification,
   onToggle,
   output,
+  outputStructured,
   ref,
   status = 'pending',
   stepType,
@@ -98,6 +113,44 @@ export const PipelineStep = ({
   const isRunning = status === 'running';
   const isCompleted = status === 'completed';
   const isPending = status === 'pending';
+  const isClarificationStep = stepType === 'clarification';
+
+  // Calculate answered questions count from outputStructured.answers
+  const answeredCount = outputStructured?.answers
+    ? Object.values(outputStructured.answers).filter((val) => val && val.length > 0).length
+    : 0;
+
+  // Determine clarification badge text for collapsed header
+  const clarificationBadgeText = (() => {
+    if (!isClarificationStep) return null;
+
+    if (isCompleted) {
+      // Check if step was skipped
+      if (outputStructured?.skipped) {
+        return 'Skipped';
+      }
+      // Show count of answered questions
+      if (answeredCount > 0) {
+        return `${answeredCount} question${answeredCount === 1 ? '' : 's'} answered`;
+      }
+      return 'Skipped';
+    }
+
+    if (isRunning && outputStructured?.questions && outputStructured.questions.length > 0) {
+      return 'Awaiting answers';
+    }
+
+    return null;
+  })();
+
+  // Determine if clarification form should be shown (all required conditions met)
+  const isFormReady =
+    isClarificationStep &&
+    isRunning &&
+    outputStructured?.questions &&
+    outputStructured.questions.length > 0 &&
+    onSubmitClarification &&
+    onSkipStep;
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -140,6 +193,22 @@ export const PipelineStep = ({
           {/* Title */}
           <span className={'flex-1 text-left text-sm font-medium'}>{title}</span>
 
+          {/* Clarification Badge (collapsed header) */}
+          {clarificationBadgeText && (
+            <Badge
+              size={'sm'}
+              variant={
+                clarificationBadgeText === 'Awaiting answers'
+                  ? 'pending'
+                  : clarificationBadgeText === 'Skipped'
+                    ? 'default'
+                    : 'completed'
+              }
+            >
+              {clarificationBadgeText}
+            </Badge>
+          )}
+
           {/* Status Indicator */}
           <div className={'flex items-center gap-2'}>
             {isCompleted && (
@@ -180,19 +249,32 @@ export const PipelineStep = ({
               </Badge>
             </div>
 
-            {/* Output Container */}
-            <div
-              className={cn(
-                'rounded-md border border-border/50 bg-background p-3',
-                'min-h-20 text-sm'
-              )}
-            >
-              {output ? (
-                <p className={'whitespace-pre-wrap text-foreground'}>{output}</p>
-              ) : (
-                <p className={'text-muted-foreground'}>Output will appear here</p>
-              )}
-            </div>
+            {/* Clarification Form (when step is running and waiting for input) */}
+            {isFormReady && (
+              <ClarificationForm
+                existingAnswers={outputStructured?.answers}
+                isSubmitting={isSubmitting}
+                onSkip={onSkipStep}
+                onSubmit={onSubmitClarification}
+                questions={outputStructured.questions}
+              />
+            )}
+
+            {/* Output Container (for non-clarification steps or completed clarification) */}
+            {!isFormReady && (
+              <div
+                className={cn(
+                  'rounded-md border border-border/50 bg-background p-3',
+                  'min-h-20 text-sm'
+                )}
+              >
+                {output ? (
+                  <p className={'whitespace-pre-wrap text-foreground'}>{output}</p>
+                ) : (
+                  <p className={'text-muted-foreground'}>Output will appear here</p>
+                )}
+              </div>
+            )}
           </div>
         </BaseCollapsible.Panel>
       </div>

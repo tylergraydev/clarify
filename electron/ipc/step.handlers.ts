@@ -12,7 +12,7 @@
 import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 
 import type { WorkflowStepsRepository } from '../../db/repositories';
-import type { WorkflowStep } from '../../db/schema';
+import type { NewWorkflowStep, WorkflowStep } from '../../db/schema';
 
 import { IpcChannels } from './channels';
 
@@ -111,4 +111,17 @@ export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepos
       throw error;
     }
   });
+
+  // Update a step with partial data
+  ipcMain.handle(
+    IpcChannels.step.update,
+    (_event: IpcMainInvokeEvent, id: number, data: Partial<NewWorkflowStep>): undefined | WorkflowStep => {
+      try {
+        return workflowStepsRepository.update(id, data);
+      } catch (error) {
+        console.error('[IPC Error] step:update:', error);
+        throw error;
+      }
+    }
+  );
 }

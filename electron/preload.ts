@@ -18,6 +18,7 @@ import type {
   NewTemplate,
   NewTemplatePlaceholder,
   NewWorkflow,
+  NewWorkflowStep,
   Project,
   Repository,
   Setting,
@@ -148,6 +149,7 @@ const IpcChannels = {
     list: 'step:list',
     regenerate: 'step:regenerate',
     skip: 'step:skip',
+    update: 'step:update',
   },
   store: {
     delete: 'store:delete',
@@ -444,6 +446,7 @@ export interface ElectronAPI {
     list(workflowId: number): Promise<Array<WorkflowStep>>;
     regenerate(id: number): Promise<undefined | WorkflowStep>;
     skip(id: number): Promise<undefined | WorkflowStep>;
+    update(id: number, data: Partial<NewWorkflowStep>): Promise<undefined | WorkflowStep>;
   };
   store: {
     delete(key: string): Promise<boolean>;
@@ -664,6 +667,7 @@ const electronAPI: ElectronAPI = {
     list: (workflowId) => ipcRenderer.invoke(IpcChannels.step.list, workflowId),
     regenerate: (id) => ipcRenderer.invoke(IpcChannels.step.regenerate, id),
     skip: (id) => ipcRenderer.invoke(IpcChannels.step.skip, id),
+    update: (id, data) => ipcRenderer.invoke(IpcChannels.step.update, id, data),
   },
   store: {
     delete: (key) => ipcRenderer.invoke(IpcChannels.store.delete, key),
