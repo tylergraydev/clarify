@@ -28,10 +28,6 @@ import { useCancelWorkflow, usePauseWorkflow, useResumeWorkflow, useWorkflows } 
 import { useWorktreeByWorkflowId } from '@/hooks/queries/use-worktrees';
 import { cn } from '@/lib/utils';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 type ActiveWorkflowsWidgetProps = ClassName;
 
 type WorkflowCardProps = ClassName<{
@@ -48,17 +44,9 @@ type WorkflowCardProps = ClassName<{
 
 type WorkflowStatus = Workflow['status'];
 
-// ============================================================================
-// Constants
-// ============================================================================
-
 const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'paused', 'running'];
 const PAUSABLE_STATUSES: Array<WorkflowStatus> = ['running'];
 const RESUMABLE_STATUSES: Array<WorkflowStatus> = ['paused'];
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
 
 /**
  * Formats elapsed time from a start date to now in a human-readable format
@@ -112,15 +100,28 @@ const getStatusVariant = (status: string): 'clarifying' | 'completed' | 'default
 };
 
 /**
+ * Gets the progress bar color class based on workflow status
+ */
+const getProgressBarColor = (status: WorkflowStatus): string => {
+  switch (status) {
+    case 'completed':
+      return 'bg-success-indicator';
+    case 'failed':
+      return 'bg-destructive';
+    case 'paused':
+      return 'bg-warning-text';
+    case 'running':
+    default:
+      return 'bg-accent';
+  }
+};
+
+/**
  * Formats status for display
  */
 const formatStatus = (status: string): string => {
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
-
-// ============================================================================
-// Skeleton Components
-// ============================================================================
 
 const WorkflowCardSkeleton = () => {
   return (
@@ -178,10 +179,6 @@ const LoadingSkeleton = () => {
   );
 };
 
-// ============================================================================
-// Branch Name Component
-// ============================================================================
-
 /**
  * Fetches and displays the branch name for a workflow
  * Only renders for workflows with a worktreeId
@@ -201,10 +198,6 @@ const WorkflowBranchName = ({ workflowId }: { workflowId: number }) => {
   );
 };
 
-// ============================================================================
-// Workflow Card Component
-// ============================================================================
-
 const WorkflowCard = ({
   className,
   isCancelPending,
@@ -222,13 +215,9 @@ const WorkflowCard = ({
   const statusVariant = getStatusVariant(workflow.status);
   const formattedStatus = formatStatus(workflow.status);
 
-  const isPausable = PAUSABLE_STATUSES.includes(workflow.status as WorkflowStatus);
-  const isResumable = RESUMABLE_STATUSES.includes(workflow.status as WorkflowStatus);
-  const isCancellable = CANCELLABLE_STATUSES.includes(workflow.status as WorkflowStatus);
-
-  const handleClick = () => {
-    onClick();
-  };
+  const isPausable = PAUSABLE_STATUSES.includes(workflow.status);
+  const isResumable = RESUMABLE_STATUSES.includes(workflow.status);
+  const isCancellable = CANCELLABLE_STATUSES.includes(workflow.status);
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -269,7 +258,7 @@ const WorkflowCard = ({
         `,
         className
       )}
-      onClick={handleClick}
+      onClick={onClick}
       onKeyDown={handleKeyDown}
       role={'button'}
       tabIndex={0}
@@ -291,14 +280,7 @@ const WorkflowCard = ({
       <div className={'mt-4'}>
         <div className={'h-2 w-full overflow-hidden rounded-full bg-muted'}>
           <div
-            className={cn(
-              'h-full rounded-full transition-all',
-              workflow.status === 'running' && 'bg-accent',
-              workflow.status === 'paused' && 'bg-yellow-500',
-              workflow.status === 'completed' && 'bg-green-500',
-              workflow.status === 'failed' && 'bg-destructive',
-              !['completed', 'failed', 'paused', 'running'].includes(workflow.status) && 'bg-accent'
-            )}
+            className={cn('h-full rounded-full transition-all', getProgressBarColor(workflow.status))}
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -368,33 +350,22 @@ const WorkflowCard = ({
   );
 };
 
-// ============================================================================
-// Main Widget Content
-// ============================================================================
-
 const ActiveWorkflowsContent = () => {
+  const [workflowToCancel, setWorkflowToCancel] = useState<null | Workflow>(null);
+
   const router = useRouter();
   const { data: workflows = [], isLoading: isWorkflowsLoading } = useWorkflows();
   const { data: projects = [], isLoading: isProjectsLoading } = useProjects();
-
-  // Mutations
   const pauseMutation = usePauseWorkflow();
   const resumeMutation = useResumeWorkflow();
   const cancelMutation = useCancelWorkflow();
 
-  // Cancel confirmation dialog state
-  const [workflowToCancel, setWorkflowToCancel] = useState<null | Workflow>(null);
-
-  const isLoading = isWorkflowsLoading || isProjectsLoading;
-
-  // Filter for active workflows (running or paused)
   const activeWorkflows = useMemo(() => {
     return workflows.filter(
       (workflow) => workflow.status === 'running' || workflow.status === 'paused' || workflow.status === 'editing'
     );
   }, [workflows]);
 
-  // Create a map of project IDs to project names
   const projectMap = useMemo(() => {
     return projects.reduce<Record<number, Project>>((acc, project) => {
       acc[project.id] = project;
@@ -402,9 +373,6 @@ const ActiveWorkflowsContent = () => {
     }, {});
   }, [projects]);
 
-  /**
-   * Navigate to workflow detail page
-   */
   const handleWorkflowClick = (workflowId: number) => {
     router.push(
       $path({
@@ -433,7 +401,8 @@ const ActiveWorkflowsContent = () => {
     }
   };
 
-  const hasActiveWorkflows = activeWorkflows.length > 0;
+  const isLoading = isWorkflowsLoading || isProjectsLoading;
+  const isActiveWorkflowsEmpty = activeWorkflows.length === 0;
 
   // Loading State
   if (isLoading) {
@@ -441,7 +410,7 @@ const ActiveWorkflowsContent = () => {
   }
 
   // Empty State
-  if (!hasActiveWorkflows) {
+  if (isActiveWorkflowsEmpty) {
     return (
       <EmptyState
         action={
@@ -463,6 +432,7 @@ const ActiveWorkflowsContent = () => {
   // Workflows List
   return (
     <Fragment>
+      {/* Active Workflow Cards */}
       <div aria-live={'polite'} className={'space-y-3'}>
         {activeWorkflows.map((workflow) => (
           <WorkflowCard
@@ -503,10 +473,6 @@ const ActiveWorkflowsContent = () => {
     </Fragment>
   );
 };
-
-// ============================================================================
-// Main Export
-// ============================================================================
 
 export const ActiveWorkflowsWidget = ({ className }: ActiveWorkflowsWidgetProps) => {
   return (

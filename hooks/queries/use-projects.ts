@@ -24,6 +24,7 @@ export function useAddRepositoryToProject(options?: { showToast?: boolean }) {
   const { showToast = true } = options ?? {};
   const queryClient = useQueryClient();
   const { api } = useElectron();
+
   const toast = useToast();
 
   return useMutation({

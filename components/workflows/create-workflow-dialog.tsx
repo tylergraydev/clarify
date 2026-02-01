@@ -11,6 +11,7 @@ import { ConfirmDiscardDialog } from '@/components/agents/confirm-discard-dialog
 import { Button } from '@/components/ui/button';
 import {
   DialogBackdrop,
+  DialogBody,
   DialogClose,
   DialogDescription,
   DialogFooter,
@@ -180,109 +181,116 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup size={'lg'}>
+        <DialogPopup aria-modal={'true'} role={'dialog'} scrollable={true} size={'xl'}>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle>{'Create Workflow'}</DialogTitle>
-            <DialogDescription>Create a new workflow to plan or implement a feature in your project.</DialogDescription>
+            <DialogTitle id={'create-workflow-title'}>{'Create Workflow'}</DialogTitle>
+            <DialogDescription id={'create-workflow-description'}>
+              Create a new workflow to plan or implement a feature in your project.
+            </DialogDescription>
           </DialogHeader>
 
           {/* Form */}
           <form
-            className={'mt-6'}
+            aria-describedby={'create-workflow-description'}
+            aria-labelledby={'create-workflow-title'}
+            className={'flex min-h-0 flex-1 flex-col'}
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
               void form.handleSubmit();
             }}
           >
-            <div className={'flex flex-col gap-4'}>
-              {/* Workflow Type Field */}
-              <form.AppField name={'type'}>
-                {(field) => (
-                  <field.SelectField
-                    isRequired
-                    label={'Workflow Type'}
-                    options={workflowTypeOptions}
-                    placeholder={'Select workflow type'}
-                  />
+            <DialogBody className={'px-2'}>
+              <div className={'flex flex-col gap-4'}>
+                {/* Workflow Type Field */}
+                <form.AppField name={'type'}>
+                  {(field) => (
+                    <field.SelectField
+                      isRequired
+                      label={'Workflow Type'}
+                      options={workflowTypeOptions}
+                      placeholder={'Select workflow type'}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Feature Name Field */}
+                <form.AppField name={'featureName'}>
+                  {(field) => (
+                    <field.TextField
+                      autoFocus
+                      isRequired
+                      label={'Feature Name'}
+                      placeholder={'Enter a name for this feature'}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Template Field */}
+                <form.AppField name={'templateId'}>
+                  {(field) => (
+                    <field.SelectField
+                      description={'Optionally use a template to pre-fill the feature request'}
+                      label={'Template'}
+                      options={templateOptions}
+                      placeholder={'Select a template (optional)'}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Feature Request Field */}
+                <form.AppField name={'featureRequest'}>
+                  {(field) => (
+                    <field.TextareaField
+                      isRequired
+                      label={'Feature Request'}
+                      placeholder={'Describe the feature you want to build...'}
+                      rows={6}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Repository Selection Field */}
+                <RepositorySelectionField
+                  description={'Select one or more repositories and choose a primary'}
+                  form={form}
+                  isRequired
+                  label={'Repositories'}
+                  repositories={repositories}
+                />
+
+                {/* Pause Behavior Field */}
+                <form.AppField name={'pauseBehavior'}>
+                  {(field) => (
+                    <field.SelectField
+                      description={'Control when the workflow pauses for review'}
+                      isRequired
+                      label={'Pause Behavior'}
+                      options={pauseBehaviorOptions}
+                      placeholder={'Select pause behavior'}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Skip Clarification Field - Only for planning workflows */}
+                {isPlanning && (
+                  <Fragment>
+                    <form.AppField name={'skipClarification'}>
+                      {(field) => (
+                        <field.SwitchField
+                          description={'Skip the clarification step and proceed directly to planning'}
+                          label={'Skip Clarification'}
+                        />
+                      )}
+                    </form.AppField>
+                  </Fragment>
                 )}
-              </form.AppField>
-
-              {/* Feature Name Field */}
-              <form.AppField name={'featureName'}>
-                {(field) => (
-                  <field.TextField
-                    autoFocus
-                    isRequired
-                    label={'Feature Name'}
-                    placeholder={'Enter a name for this feature'}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Template Field */}
-              <form.AppField name={'templateId'}>
-                {(field) => (
-                  <field.SelectField
-                    description={'Optionally use a template to pre-fill the feature request'}
-                    label={'Template'}
-                    options={templateOptions}
-                    placeholder={'Select a template (optional)'}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Feature Request Field */}
-              <form.AppField name={'featureRequest'}>
-                {(field) => (
-                  <field.TextareaField
-                    isRequired
-                    label={'Feature Request'}
-                    placeholder={'Describe the feature you want to build...'}
-                    rows={6}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Repository Selection Field */}
-              <RepositorySelectionField
-                description={'Select one or more repositories and choose a primary'}
-                form={form}
-                isRequired
-                label={'Repositories'}
-                repositories={repositories}
-              />
-
-              {/* Pause Behavior Field */}
-              <form.AppField name={'pauseBehavior'}>
-                {(field) => (
-                  <field.SelectField
-                    description={'Control when the workflow pauses for review'}
-                    label={'Pause Behavior'}
-                    options={pauseBehaviorOptions}
-                    placeholder={'Select pause behavior'}
-                  />
-                )}
-              </form.AppField>
-
-              {/* Skip Clarification Field - Only for planning workflows */}
-              {isPlanning && (
-                <Fragment>
-                  <form.AppField name={'skipClarification'}>
-                    {(field) => (
-                      <field.SwitchField
-                        description={'Skip the clarification step and proceed directly to planning'}
-                        label={'Skip Clarification'}
-                      />
-                    )}
-                  </form.AppField>
-                </Fragment>
-              )}
-            </div>
+              </div>
+            </DialogBody>
 
             {/* Action Buttons */}
-            <DialogFooter sticky={false}>
+            <DialogFooter>
               <DialogClose>
                 <Button disabled={isSubmitting} type={'button'} variant={'outline'}>
                   Cancel

@@ -7,13 +7,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { AgentTable } from '@/components/agents/agent-table';
 import { AgentTableToolbar } from '@/components/agents/agent-table-toolbar';
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
+import { useAgentActions } from '@/hooks/agents/use-agent-actions';
+import { useAgentDialogs } from '@/hooks/agents/use-agent-dialogs';
+import { useAgentFilters } from '@/hooks/agents/use-agent-filters';
+import { useAgentImportExport } from '@/hooks/agents/use-agent-import-export';
+import { useFilteredAgents } from '@/hooks/agents/use-filtered-agents';
 import { useAllAgents } from '@/hooks/queries/use-agents';
 import { useProjects } from '@/hooks/queries/use-projects';
-import { useAgentActions } from '@/hooks/use-agent-actions';
-import { useAgentDialogs } from '@/hooks/use-agent-dialogs';
-import { useAgentFilters } from '@/hooks/use-agent-filters';
-import { useAgentImportExport } from '@/hooks/use-agent-import-export';
-import { useFilteredAgents } from '@/hooks/use-filtered-agents';
 
 import { AgentsDialogs } from './_components/agents-dialogs';
 import { AgentsPageHeader } from './_components/agents-page-header';
