@@ -112,6 +112,11 @@ export interface AgentListFilters {
   excludeProjectAgents?: boolean;
   includeDeactivated?: boolean;
   /**
+   * When true, includes the hooks array for each agent.
+   * Useful for displaying hook counts in table views.
+   */
+  includeHooks?: boolean;
+  /**
    * When true, includes the skills array for each agent.
    * Useful for displaying skill counts in table views.
    */

@@ -102,6 +102,11 @@ interface AgentListFilters {
   excludeProjectAgents?: boolean;
   includeDeactivated?: boolean;
   /**
+   * When true, includes the hooks array for each agent.
+   * Useful for displaying hook counts in table views.
+   */
+  includeHooks?: boolean;
+  /**
    * When true, includes the skills array for each agent.
    * Useful for displaying skill counts in table views.
    */
@@ -373,12 +378,12 @@ export function registerAgentHandlers(
       try {
         const agents = await agentsRepository.findAll(filters);
 
-        // If neither includeTools nor includeSkills is requested, return plain agents
-        if (!filters?.includeTools && !filters?.includeSkills) {
+        // If no relation includes are requested, return plain agents
+        if (!filters?.includeTools && !filters?.includeSkills && !filters?.includeHooks) {
           return agents;
         }
 
-        // Fetch tools and/or skills for each agent
+        // Fetch tools, skills, and/or hooks for each agent
         const agentsWithRelations: Array<AgentWithRelations> = await Promise.all(
           agents.map(async (agent) => {
             const result: AgentWithRelations = { ...agent };
@@ -389,6 +394,10 @@ export function registerAgentHandlers(
 
             if (filters?.includeSkills) {
               result.skills = await agentSkillsRepository.findByAgentId(agent.id);
+            }
+
+            if (filters?.includeHooks) {
+              result.hooks = await agentHooksRepository.findByAgentId(agent.id);
             }
 
             return result;

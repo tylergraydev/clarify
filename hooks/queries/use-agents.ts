@@ -126,6 +126,7 @@ export function useAgentsByType(type: 'planning' | 'review' | 'specialist') {
 export function useAllAgents(filters?: {
   includeBuiltIn?: boolean;
   includeDeactivated?: boolean;
+  includeHooks?: boolean;
   includeSkills?: boolean;
   includeTools?: boolean;
 }) {
@@ -137,6 +138,7 @@ export function useAllAgents(filters?: {
     queryFn: () =>
       agents.list({
         includeDeactivated: filters?.includeDeactivated,
+        includeHooks: filters?.includeHooks,
         includeSkills: filters?.includeSkills,
         includeTools: filters?.includeTools,
       }),

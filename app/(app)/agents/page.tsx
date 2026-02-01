@@ -71,6 +71,7 @@ const AgentsPage = () => {
   // Data fetching
   const { data: allAgents, isLoading: isLoadingAgents } = useAllAgents({
     includeDeactivated: isShowingDeactivated,
+    includeHooks: true,
     includeSkills: true,
     includeTools: true,
   });

@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { Copy, Download, Eye, FolderInput, FolderOutput, FolderPlus, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
-import type { Agent, AgentSkill, AgentTool, Project } from '@/db/schema';
+import type { Agent, AgentHook, AgentSkill, AgentTool, Project } from '@/db/schema';
 
 import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
 import { Badge, type badgeVariants } from '@/components/ui/badge';
@@ -28,10 +28,11 @@ import { cn } from '@/lib/utils';
 // ============================================================================
 
 /**
- * Extended Agent type that includes optional tools and skills arrays
+ * Extended Agent type that includes optional tools, skills, and hooks arrays
  * for display in the unified table view.
  */
 export interface AgentWithRelations extends Agent {
+  hooks?: Array<AgentHook>;
   skills?: Array<AgentSkill>;
   tools?: Array<AgentTool>;
 }
@@ -569,6 +570,18 @@ export const AgentTable = ({
         },
         header: 'Skills',
         id: 'skillCount',
+        size: 70,
+      }),
+
+      // Hooks count column
+      columnHelper.display({
+        cell: ({ row }) => {
+          const agent = row.original;
+          const hookCount = agent.hooks?.length ?? 0;
+          return <span className={'text-muted-foreground'}>{hookCount}</span>;
+        },
+        header: 'Hooks',
+        id: 'hookCount',
         size: 70,
       }),
 

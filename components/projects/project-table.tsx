@@ -4,7 +4,7 @@ import type { Row } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 import { format } from 'date-fns';
-import { Archive, ArchiveRestore, ExternalLink, Trash2 } from 'lucide-react';
+import { ExternalLink, Trash2 } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
 import type { Project } from '@/types/electron';
@@ -133,19 +133,6 @@ const ActionsCell = memo(function ActionsCell({
     icon: <ExternalLink aria-hidden={'true'} className={'size-4'} />,
     label: 'View',
     onAction: (r) => onViewDetails?.(r.original.id),
-    type: 'button',
-  });
-
-  // Archive/Unarchive action - opens dialog
-  actions.push({
-    disabled: isActionDisabled,
-    icon: isArchived ? (
-      <ArchiveRestore aria-hidden={'true'} className={'size-4'} />
-    ) : (
-      <Archive aria-hidden={'true'} className={'size-4'} />
-    ),
-    label: isArchived ? 'Unarchive' : 'Archive',
-    onAction: () => setIsArchiveDialogOpen(true),
     type: 'button',
   });
 
