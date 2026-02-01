@@ -59,7 +59,14 @@ type DialogBackdropProps = ComponentPropsWithRef<typeof BaseDialog.Backdrop> &
   VariantProps<typeof dialogBackdropVariants>;
 
 export const DialogBackdrop = ({ blur, className, ref, ...props }: DialogBackdropProps) => {
-  return <BaseDialog.Backdrop className={cn(dialogBackdropVariants({ blur }), className)} ref={ref} {...props} />;
+  return (
+    <BaseDialog.Backdrop
+      className={cn(dialogBackdropVariants({ blur }), className)}
+      onClick={(e) => e.stopPropagation()}
+      ref={ref}
+      {...props}
+    />
+  );
 };
 
 export const dialogPopupVariants = cva(
@@ -93,7 +100,15 @@ export const dialogPopupVariants = cva(
 type DialogPopupProps = ComponentPropsWithRef<typeof BaseDialog.Popup> & VariantProps<typeof dialogPopupVariants>;
 
 export const DialogPopup = ({ className, ref, scrollable, size, ...props }: DialogPopupProps) => {
-  return <BaseDialog.Popup className={cn(dialogPopupVariants({ scrollable, size }), className)} ref={ref} {...props} />;
+  return (
+    <BaseDialog.Popup
+      className={cn(dialogPopupVariants({ scrollable, size }), className)}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      ref={ref}
+      {...props}
+    />
+  );
 };
 
 type DialogTitleProps = ComponentPropsWithRef<typeof BaseDialog.Title>;

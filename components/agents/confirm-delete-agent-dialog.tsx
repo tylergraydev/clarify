@@ -41,7 +41,7 @@ export const ConfirmDeleteAgentDialog = ({
     <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
       {/* Portal */}
       <DialogPortal>
-        <DialogBackdrop onClick={(e) => e.stopPropagation()} />
+        <DialogBackdrop />
         <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
           <DialogHeader>

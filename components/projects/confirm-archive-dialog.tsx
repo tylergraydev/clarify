@@ -54,10 +54,9 @@ export const ConfirmArchiveDialog = ({
   // Controlled mode (no trigger)
   return (
     <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
-      {/* Portal - stopPropagation on backdrop and popup prevents clicks from bubbling to table row */}
       <DialogPortal>
-        <DialogBackdrop onClick={(e) => e.stopPropagation()} />
-        <DialogPopup onClick={(e) => e.stopPropagation()}>
+        <DialogBackdrop />
+        <DialogPopup>
           {/* Header */}
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
