@@ -1,31 +1,41 @@
 'use client';
 
-import { Dialog as BaseDialog } from '@base-ui/react/dialog';
-import { Bot, FileText, FolderKanban, History, LayoutDashboard, Play, Settings, Workflow, X } from 'lucide-react';
+import { Bot, FileText, FolderKanban, History, LayoutDashboard, Play, Settings, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { usePathname } from 'next/navigation';
 import { useEffect, useEffectEvent, useState } from 'react';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { IconButton } from '@/components/ui/icon-button';
+import { DialogBackdrop, DialogCloseButton, DialogPortal, DialogRoot } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useShellStore } from '@/lib/stores/shell-store';
 import { cn } from '@/lib/utils';
 
 import { NavItem } from './nav-item';
 
-/**
- * Mobile navigation drawer component.
- * Displays navigation as a slide-out overlay on mobile viewports.
- * Uses Base UI Dialog for accessible overlay behavior.
- */
 export const MobileDrawer = () => {
+  const [isWorkflowsOpen, setIsWorkflowsOpen] = useState(false);
+
   const { isMobileDrawerOpen, setMobileDrawerOpen } = useShellStore();
   const pathname = usePathname();
 
-  /**
-   * Check if a path is currently active
-   */
+  const updateIsWorkflowsOpen = useEffectEvent((isOpen: boolean) => {
+    setIsWorkflowsOpen(isOpen);
+  });
+  const previousPathname = useEffectEvent(() => pathname);
+
+  useEffect(() => {
+    if (pathname.startsWith($path({ route: '/workflows' }))) {
+      updateIsWorkflowsOpen(true);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (isMobileDrawerOpen && pathname !== previousPathname()) {
+      setMobileDrawerOpen(false);
+    }
+  }, [pathname, isMobileDrawerOpen, setMobileDrawerOpen]);
+
   const isPathActive = (href: string) => {
     if (href === $path({ route: '/dashboard' })) {
       return pathname === href || pathname === '/';
@@ -33,50 +43,16 @@ export const MobileDrawer = () => {
     return pathname.startsWith(href);
   };
 
-  /**
-   * Check if any workflow path is active
-   */
   const isWorkflowsSectionActive = pathname.startsWith($path({ route: '/workflows' }));
 
-  /**
-   * Controlled state for Workflows collapsible section.
-   */
-  const [isWorkflowsOpen, setIsWorkflowsOpen] = useState(isWorkflowsSectionActive);
-  const updateIsWorkflowsOpen = useEffectEvent((isOpen: boolean) => {
-    setIsWorkflowsOpen(isOpen);
-  });
-
-  useEffect(() => {
-    if (isWorkflowsSectionActive) {
-      updateIsWorkflowsOpen(true);
-    }
-  }, [isWorkflowsSectionActive]);
-
-  /**
-   * Close drawer on navigation (pathname change)
-   */
-  const previousPathname = useEffectEvent(() => pathname);
-  useEffect(() => {
-    if (isMobileDrawerOpen && pathname !== previousPathname()) {
-      setMobileDrawerOpen(false);
-    }
-  }, [pathname, isMobileDrawerOpen, setMobileDrawerOpen]);
-
   return (
-    <BaseDialog.Root onOpenChange={setMobileDrawerOpen} open={isMobileDrawerOpen}>
-      <BaseDialog.Portal>
+    <DialogRoot onOpenChange={setMobileDrawerOpen} open={isMobileDrawerOpen}>
+      <DialogPortal>
         {/* Backdrop */}
-        <BaseDialog.Backdrop
-          className={cn(
-            'fixed inset-0 z-50 bg-black/50 backdrop-blur-sm',
-            'transition-opacity duration-200',
-            'data-ending-style:opacity-0',
-            'data-starting-style:opacity-0'
-          )}
-        />
+        <DialogBackdrop />
 
         {/* Drawer Panel */}
-        <BaseDialog.Popup
+        <div
           className={cn(
             'fixed inset-y-0 left-0 z-50 w-64',
             'border-r border-sidebar-border bg-sidebar-bg',
@@ -85,17 +61,12 @@ export const MobileDrawer = () => {
             'data-ending-style:-translate-x-full',
             'data-starting-style:-translate-x-full'
           )}
+          role={'dialog'}
         >
           {/* Header */}
           <div className={'flex h-12 items-center justify-between border-b border-sidebar-border px-4'}>
-            <span className={'text-sm font-semibold text-foreground'}>{'Navigation'}</span>
-            <BaseDialog.Close
-              render={(props) => (
-                <IconButton {...props} aria-label={'Close navigation'}>
-                  <X aria-hidden={'true'} className={'size-4'} />
-                </IconButton>
-              )}
-            />
+            <span className={'text-sm font-semibold text-foreground'}>Navigation</span>
+            <DialogCloseButton aria-label={'Close navigation'} />
           </div>
 
           {/* Navigation Content */}
@@ -134,7 +105,7 @@ export const MobileDrawer = () => {
                   )}
                 >
                   <Workflow aria-hidden={'true'} className={'size-4 shrink-0'} />
-                  <span className={'flex-1 truncate text-left text-sm font-medium'}>{'Workflows'}</span>
+                  <span className={'flex-1 truncate text-left text-sm font-medium'}>Workflows</span>
                 </CollapsibleTrigger>
 
                 <CollapsibleContent>
@@ -182,23 +153,18 @@ export const MobileDrawer = () => {
                 isCollapsed={false}
                 label={'Agents'}
               />
+              {/* Settings */}
+              <NavItem
+                href={$path({ route: '/settings' })}
+                icon={Settings}
+                isActive={isPathActive($path({ route: '/settings' }))}
+                isCollapsed={false}
+                label={'Settings'}
+              />
             </div>
-
-            {/* Spacer to push footer down */}
-            <div className={'flex-1'} />
-
-            {/* Footer Navigation */}
-            <Separator className={'my-2'} />
-            <NavItem
-              href={$path({ route: '/settings' })}
-              icon={Settings}
-              isActive={isPathActive($path({ route: '/settings' }))}
-              isCollapsed={false}
-              label={'Settings'}
-            />
           </nav>
-        </BaseDialog.Popup>
-      </BaseDialog.Portal>
-    </BaseDialog.Root>
+        </div>
+      </DialogPortal>
+    </DialogRoot>
   );
 };

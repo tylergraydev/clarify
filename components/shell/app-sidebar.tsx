@@ -1,9 +1,11 @@
 'use client';
 
+import type { ComponentPropsWithRef } from 'react';
+
 import { Bot, FileText, FolderKanban, History, LayoutDashboard, Play, Settings, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { usePathname } from 'next/navigation';
-import { type ComponentPropsWithRef, useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
@@ -16,12 +18,21 @@ import { NavItem } from './nav-item';
 type AppSidebarProps = ComponentPropsWithRef<'aside'>;
 
 export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
+  const [isWorkflowsOpen, setIsWorkflowsOpen] = useState(false);
+
   const { isSidebarCollapsed } = useShellStore();
   const pathname = usePathname();
 
-  /**
-   * Check if a path is currently active
-   */
+  const updateIsWorkflowsOpen = useEffectEvent((isOpen: boolean) => {
+    setIsWorkflowsOpen(isOpen);
+  });
+
+  useEffect(() => {
+    if (pathname.startsWith($path({ route: '/workflows' }))) {
+      updateIsWorkflowsOpen(true);
+    }
+  }, [pathname]);
+
   const isPathActive = (href: string) => {
     if (href === $path({ route: '/dashboard' })) {
       return pathname === href || pathname === '/';
@@ -29,25 +40,7 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
     return pathname.startsWith(href);
   };
 
-  /**
-   * Check if any child path is active (for expandable sections)
-   */
   const isWorkflowsSectionActive = pathname.startsWith($path({ route: '/workflows' }));
-
-  /**
-   * Controlled state for Workflows collapsible section.
-   * Auto-expands when navigating to workflow routes.
-   */
-  const [isWorkflowsOpen, setIsWorkflowsOpen] = useState(isWorkflowsSectionActive);
-  const updateIsWorkflowsOpen = useEffectEvent((isOpen: boolean) => {
-    setIsWorkflowsOpen(isOpen);
-  });
-
-  useEffect(() => {
-    if (isWorkflowsSectionActive) {
-      updateIsWorkflowsOpen(true);
-    }
-  }, [isWorkflowsSectionActive]);
 
   return (
     <aside
@@ -115,7 +108,7 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
                 )}
               >
                 <Workflow aria-hidden={'true'} className={'size-4 shrink-0'} />
-                <span className={'flex-1 truncate text-left text-sm font-medium'}>{'Workflows'}</span>
+                <span className={'flex-1 truncate text-left text-sm font-medium'}>Workflows</span>
               </CollapsibleTrigger>
 
               <CollapsibleContent>
@@ -125,7 +118,7 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
                     icon={Play}
                     isActive={isPathActive($path({ route: '/workflows/active' }))}
                     isCollapsed={isSidebarCollapsed}
-                    isNested={true}
+                    isNested
                     label={'Active'}
                   />
                   <NavItem
@@ -133,7 +126,7 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
                     icon={History}
                     isActive={isPathActive($path({ route: '/workflows/history' }))}
                     isCollapsed={isSidebarCollapsed}
-                    isNested={true}
+                    isNested
                     label={'History'}
                   />
                 </div>

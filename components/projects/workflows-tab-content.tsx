@@ -5,10 +5,17 @@ import type { ComponentPropsWithRef } from 'react';
 import { AlertCircle, GitBranch, Plus } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { useRouter } from 'next/navigation';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { DataTableSkeleton } from '@/components/ui/table';
 import { WorkflowTable } from '@/components/workflows/workflow-table';
+import {
+  type WorkflowStatusFilterValue,
+  WorkflowTableToolbar,
+  type WorkflowTypeFilterValue,
+} from '@/components/workflows/workflow-table-toolbar';
 import { useCancelWorkflow, useWorkflowsByProject } from '@/hooks/queries/use-workflows';
 import { cn } from '@/lib/utils';
 
@@ -19,39 +26,76 @@ interface WorkflowsTabContentProps extends ComponentPropsWithRef<'div'> {
   projectName?: string;
 }
 
+const DEFAULT_STATUS_FILTER: WorkflowStatusFilterValue = 'all';
+const DEFAULT_TYPE_FILTER: WorkflowTypeFilterValue = 'all';
+
 export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ...props }: WorkflowsTabContentProps) => {
   const router = useRouter();
 
+  // Data fetching
   const { data: workflows, error, isLoading } = useWorkflowsByProject(projectId);
-
   const cancelWorkflowMutation = useCancelWorkflow();
 
-  const handleCancelWorkflow = (workflowId: number) => {
-    cancelWorkflowMutation.mutate(workflowId);
-  };
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState<WorkflowStatusFilterValue>(DEFAULT_STATUS_FILTER);
+  const [typeFilter, setTypeFilter] = useState<WorkflowTypeFilterValue>(DEFAULT_TYPE_FILTER);
+  const [cancellingIds, setCancellingIds] = useState<Set<number>>(new Set());
 
-  const handleViewDetails = (workflowId: number) => {
-    router.push(
-      $path({
-        route: '/workflows/[id]',
-        routeParams: { id: String(workflowId) },
-      })
-    );
-  };
+  // Filtered workflows
+  const filteredWorkflows = useMemo(() => {
+    if (!workflows) return [];
+    return workflows.filter((w) => {
+      const matchesStatus = statusFilter === 'all' || w.status === statusFilter;
+      const matchesType = typeFilter === 'all' || w.type === typeFilter;
+      return matchesStatus && matchesType;
+    });
+  }, [workflows, statusFilter, typeFilter]);
 
-  const handleCreateWorkflow = () => {
+  // Build project map for WorkflowTable
+  const projectMap: Record<number, string> = projectName ? { [projectId]: projectName } : {};
+
+  const handleCancelWorkflow = useCallback(
+    async (workflowId: number) => {
+      setCancellingIds((prev) => new Set(prev).add(workflowId));
+      try {
+        await cancelWorkflowMutation.mutateAsync(workflowId);
+      } finally {
+        setCancellingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(workflowId);
+          return next;
+        });
+      }
+    },
+    [cancelWorkflowMutation]
+  );
+
+  const handleViewDetails = useCallback(
+    (workflowId: number) => {
+      router.push(
+        $path({
+          route: '/workflows/[id]',
+          routeParams: { id: String(workflowId) },
+        })
+      );
+    },
+    [router]
+  );
+
+  const handleCreateWorkflow = useCallback(() => {
     router.push(
       $path({
         route: '/workflows/new',
         searchParams: { projectId },
       })
     );
-  };
+  }, [router, projectId]);
 
-  // Build project map for WorkflowTable
-  const projectMap: Record<number, string> = projectName ? { [projectId]: projectName } : {};
+  const handleResetFilters = useCallback(() => {
+    setStatusFilter(DEFAULT_STATUS_FILTER);
+    setTypeFilter(DEFAULT_TYPE_FILTER);
+  }, []);
 
-  // Derived state
   const isWorkflowsEmpty = !isLoading && !error && workflows?.length === 0;
   const hasWorkflows = !isLoading && !error && workflows && workflows.length > 0;
   const hasError = !isLoading && error;
@@ -66,7 +110,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
         </div>
 
         {/* Table Skeleton */}
-        <WorkflowTableSkeleton />
+        <DataTableSkeleton columnCount={8} density={'default'} rowCount={5} />
       </div>
     );
   }
@@ -117,10 +161,20 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
 
         {/* Workflows Table */}
         <WorkflowTable
+          cancellingIds={cancellingIds}
           onCancel={handleCancelWorkflow}
           onViewDetails={handleViewDetails}
           projectMap={projectMap}
-          workflows={workflows}
+          toolbarContent={
+            <WorkflowTableToolbar
+              onResetFilters={handleResetFilters}
+              onStatusFilterChange={setStatusFilter}
+              onTypeFilterChange={setTypeFilter}
+              statusFilter={statusFilter}
+              typeFilter={typeFilter}
+            />
+          }
+          workflows={filteredWorkflows}
         />
       </div>
     );
@@ -128,57 +182,3 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
 
   return null;
 };
-
-/**
- * Loading skeleton for the workflows table view
- */
-const WorkflowTableSkeleton = () => {
-  return (
-    <div className={'animate-pulse overflow-x-auto rounded-lg border border-border'}>
-      <table className={'w-full border-collapse text-sm'}>
-        <thead className={'border-b border-border bg-muted/50'}>
-          <tr>
-            {['Feature Name', 'Project', 'Type', 'Status', 'Progress', 'Created', 'Actions'].map((header) => (
-              <th className={'px-4 py-3 text-left font-medium text-muted-foreground'} key={header}>
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className={'divide-y divide-border'}>
-          {Array.from({ length: 3 }).map((_, index) => (
-            <tr key={index}>
-              <td className={'px-4 py-3'}>
-                <div className={'h-4 w-32 rounded-sm bg-muted'} />
-              </td>
-              <td className={'px-4 py-3'}>
-                <div className={'h-4 w-24 rounded-sm bg-muted'} />
-              </td>
-              <td className={'px-4 py-3'}>
-                <div className={'h-5 w-20 rounded-full bg-muted'} />
-              </td>
-              <td className={'px-4 py-3'}>
-                <div className={'h-5 w-16 rounded-full bg-muted'} />
-              </td>
-              <td className={'px-4 py-3'}>
-                <div className={'h-4 w-12 rounded-sm bg-muted'} />
-              </td>
-              <td className={'px-4 py-3'}>
-                <div className={'h-4 w-24 rounded-sm bg-muted'} />
-              </td>
-              <td className={'px-4 py-3'}>
-                <div className={'flex justify-end gap-2'}>
-                  <div className={'h-8 w-16 rounded-sm bg-muted'} />
-                  <div className={'h-8 w-20 rounded-sm bg-muted'} />
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-// Export the skeleton for potential external use
-export { WorkflowTableSkeleton };
