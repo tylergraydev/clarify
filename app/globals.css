@@ -10,6 +10,12 @@
   --sidebar-width-collapsed: 64px;
   --sidebar-transition-duration: 200ms;
 
+  /* Pipeline layout dimensions */
+  --pipeline-connector-width: 2px;
+  --pipeline-node-size: 32px;
+  --pipeline-step-indent: 48px;
+  --pipeline-max-width: 896px;
+
   /* Scrollbar dimensions */
   --scrollbar-width: 8px;
 
@@ -342,4 +348,19 @@
 
 *::-webkit-scrollbar-corner {
   background: var(--scrollbar-track);
+}
+
+/* Pipeline step glow animation for active/running state */
+@keyframes step-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 15px oklch(from var(--accent) l c h / 0.25);
+  }
+  50% {
+    box-shadow: 0 0 25px oklch(from var(--accent) l c h / 0.35);
+  }
+}
+
+.step-glow-pulse {
+  animation: step-glow 2s ease-in-out infinite;
 }

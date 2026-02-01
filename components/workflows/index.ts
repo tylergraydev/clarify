@@ -5,12 +5,14 @@ export { CreateWorkflowDialog } from './create-workflow-dialog';
 export { EditWorkflowDialog } from './edit-workflow-dialog';
 // Pipeline components
 export { PipelineConnector, pipelineConnectorVariants } from './pipeline-connector';
+export { PipelineProgressBar } from './pipeline-progress-bar';
 export {
   PipelineStep,
   type PipelineStepStatus,
   type PipelineStepType,
   pipelineStepVariants,
 } from './pipeline-step';
+export { PipelineStepMetrics, type StepMetrics } from './pipeline-step-metrics';
 export { PipelineView } from './pipeline-view';
 // Field components
 export {
@@ -18,6 +20,12 @@ export {
   RepositorySelectionField,
   repositorySelectionVariants,
 } from './repository-selection-field';
+export {
+  VerticalConnector,
+  verticalConnectorLineVariants,
+  verticalConnectorNodeVariants,
+  type VerticalConnectorState,
+} from './vertical-connector';
 // Skeleton components
 export { WorkflowDetailSkeleton } from './workflow-detail-skeleton';
 // Table components

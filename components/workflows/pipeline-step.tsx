@@ -10,6 +10,7 @@ import type { ClarificationAnswers, ClarificationStepOutput } from '@/lib/valida
 
 import { Badge } from '@/components/ui/badge';
 import { ClarificationForm } from '@/components/workflows/clarification-form';
+import { PipelineStepMetrics, type StepMetrics } from '@/components/workflows/pipeline-step-metrics';
 import { cn } from '@/lib/utils';
 
 /**
@@ -52,10 +53,11 @@ const statusLabels: Record<PipelineStepStatus, string> = {
 
 export const pipelineStepVariants = cva(
   `
-    flex flex-col rounded-lg border transition-colors
-    focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0
-    focus-visible:outline-none
-    data-disabled:pointer-events-none data-disabled:opacity-50
+    ml-14 flex flex-col rounded-lg border transition-all
+    duration-200 focus-visible:ring-2 focus-visible:ring-accent
+    focus-visible:ring-offset-0
+    focus-visible:outline-none data-disabled:pointer-events-none
+    data-disabled:opacity-50
   `,
   {
     defaultVariants: {
@@ -63,9 +65,10 @@ export const pipelineStepVariants = cva(
     },
     variants: {
       status: {
-        completed: 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30',
-        pending: 'border-border bg-muted/30 opacity-60',
-        running: 'border-accent bg-accent/5',
+        completed: 'border-green-300 bg-green-50 opacity-75 dark:border-green-800 dark:bg-green-950/30',
+        pending: 'border-border bg-muted/30 opacity-50',
+        // eslint-disable-next-line better-tailwindcss/no-unknown-classes -- step-glow-pulse is defined in globals.css
+        running: 'step-glow-pulse border-accent bg-accent/5 ring-1 ring-accent/30',
       },
     },
   }
@@ -78,6 +81,8 @@ interface PipelineStepProps
   isExpanded: boolean;
   /** Whether form submission is in progress */
   isSubmitting?: boolean;
+  /** Metrics data for collapsed state display */
+  metrics?: StepMetrics;
   /** Callback when user skips clarification */
   onSkipStep?: () => void;
   /** Callback when clarification form is submitted */
@@ -98,6 +103,7 @@ export const PipelineStep = ({
   className,
   isExpanded,
   isSubmitting = false,
+  metrics,
   onSkipStep,
   onSubmitClarification,
   onToggle,
@@ -114,34 +120,6 @@ export const PipelineStep = ({
   const isCompleted = status === 'completed';
   const isPending = status === 'pending';
   const isClarificationStep = stepType === 'clarification';
-
-  // Calculate answered questions count from outputStructured.answers
-  const answeredCount = outputStructured?.answers
-    ? Object.values(outputStructured.answers).filter((val) => val && val.length > 0).length
-    : 0;
-
-  // Determine clarification badge text for collapsed header
-  const clarificationBadgeText = (() => {
-    if (!isClarificationStep) return null;
-
-    if (isCompleted) {
-      // Check if step was skipped
-      if (outputStructured?.skipped) {
-        return 'Skipped';
-      }
-      // Show count of answered questions
-      if (answeredCount > 0) {
-        return `${answeredCount} question${answeredCount === 1 ? '' : 's'} answered`;
-      }
-      return 'Skipped';
-    }
-
-    if (isRunning && outputStructured?.questions && outputStructured.questions.length > 0) {
-      return 'Awaiting answers';
-    }
-
-    return null;
-  })();
 
   // Determine if clarification form should be shown (all required conditions met)
   const isFormReady =
@@ -193,20 +171,13 @@ export const PipelineStep = ({
           {/* Title */}
           <span className={'flex-1 text-left text-sm font-medium'}>{title}</span>
 
-          {/* Clarification Badge (collapsed header) */}
-          {clarificationBadgeText && (
-            <Badge
-              size={'sm'}
-              variant={
-                clarificationBadgeText === 'Awaiting answers'
-                  ? 'pending'
-                  : clarificationBadgeText === 'Skipped'
-                    ? 'default'
-                    : 'completed'
-              }
-            >
-              {clarificationBadgeText}
-            </Badge>
+          {/* Step Metrics Badge (collapsed header) */}
+          {metrics && status && (
+            <PipelineStepMetrics
+              metrics={metrics}
+              status={status}
+              stepType={stepType}
+            />
           )}
 
           {/* Status Indicator */}

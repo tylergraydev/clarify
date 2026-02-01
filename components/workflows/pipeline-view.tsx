@@ -2,7 +2,7 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { Fragment, useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { WorkflowStep } from '@/db/schema/workflow-steps.schema';
 import type { ClarificationAnswers, ClarificationStepOutput } from '@/lib/validations/clarification';
@@ -12,8 +12,11 @@ import { useWorkflow } from '@/hooks/queries/use-workflows';
 import { usePipelineStore } from '@/lib/stores/pipeline-store';
 import { cn } from '@/lib/utils';
 
-import { PipelineConnector } from './pipeline-connector';
+import type { StepMetrics } from './pipeline-step-metrics';
+
+import { PipelineProgressBar } from './pipeline-progress-bar';
 import { PipelineStep, type PipelineStepStatus, type PipelineStepType } from './pipeline-step';
+import { VerticalConnector, type VerticalConnectorState } from './vertical-connector';
 
 /**
  * Database step statuses that map to the 'running' visual state.
@@ -28,6 +31,72 @@ const COMPLETED_STATUSES = ['completed', 'failed', 'skipped'] as const;
 interface PipelineViewProps extends Omit<ComponentPropsWithRef<'div'>, 'children'> {
   /** The workflow ID to fetch steps for */
   workflowId: number;
+}
+
+/**
+ * Computes metrics for a workflow step based on its type.
+ *
+ * @param step - The workflow step to compute metrics for
+ * @returns Metrics object with type-specific data
+ */
+function computeStepMetrics(step: WorkflowStep): StepMetrics {
+  const stepType = step.stepType as PipelineStepType;
+
+  switch (stepType) {
+    case 'clarification': {
+      const output = step.outputStructured as ClarificationStepOutput | null;
+      if (!output) {
+        return {};
+      }
+      const answeredCount = output.answers
+        ? Object.values(output.answers).filter((v) => v && v.length > 0).length
+        : 0;
+      return {
+        clarification: {
+          answeredCount,
+          skipped: output.skipped,
+          totalCount: output.questions?.length,
+        },
+      };
+    }
+
+    case 'discovery': {
+      // Discovery metrics would come from discoveredFiles table
+      // For now, return placeholder - will be enhanced when discovery data is available
+      return {
+        discovery: {
+          includedCount: 0,
+        },
+      };
+    }
+
+    case 'planning': {
+      // Planning metrics would come from implementationPlanSteps table
+      // For now, return placeholder - will be enhanced when planning data is available
+      return {
+        planning: {
+          taskCount: 0,
+        },
+      };
+    }
+
+    default:
+      return {};
+  }
+}
+
+/**
+ * Maps PipelineStepStatus to VerticalConnectorState.
+ */
+function deriveConnectorState(status: PipelineStepStatus): VerticalConnectorState {
+  switch (status) {
+    case 'completed':
+      return 'completed';
+    case 'running':
+      return 'active';
+    default:
+      return 'pending';
+  }
 }
 
 /**
@@ -71,7 +140,7 @@ function sortStepsByNumber(steps: Array<WorkflowStep>): Array<WorkflowStep> {
  * Main pipeline view component that orchestrates step layout, state management,
  * and data fetching for the workflow visualization.
  *
- * Displays workflow steps fetched from the database with connectors between them.
+ * Displays workflow steps in a vertical accordion layout with a sticky progress bar.
  * Each step's visual state is derived from its database status.
  * Handles empty state gracefully when workflow is in 'created' status.
  *
@@ -92,7 +161,19 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
   const { expandedStepId, toggleStep } = usePipelineStore();
 
-  const sortedSteps = steps ? sortStepsByNumber(steps) : [];
+  const sortedSteps = useMemo(() => (steps ? sortStepsByNumber(steps) : []), [steps]);
+
+  // Calculate progress metrics
+  const completedCount = useMemo(
+    () => sortedSteps.filter((step) => deriveStepState(step.status) === 'completed').length,
+    [sortedSteps]
+  );
+
+  // Find current running step for progress bar title
+  const currentStep = useMemo(
+    () => sortedSteps.find((step) => deriveStepState(step.status) === 'running'),
+    [sortedSteps]
+  );
 
   const handleToggleStep = (stepId: number) => {
     toggleStep(stepId);
@@ -148,78 +229,111 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
   return (
     <div
-      aria-label={'Workflow pipeline'}
-      className={cn('flex items-center gap-4 overflow-x-auto py-4', className)}
+      className={cn('flex h-full flex-col', className)}
       ref={ref}
-      role={'list'}
       {...props}
     >
-      {/* Empty State - Workflow created but no steps yet */}
-      {hasNoSteps && !isLoading && (
-        <div className={'flex min-h-24 w-full items-center justify-center text-muted-foreground'} role={'listitem'}>
-          {isWorkflowCreated ? (
-            <p className={'text-sm'}>Workflow is ready. Start the workflow to create pipeline steps.</p>
-          ) : (
-            <p className={'text-sm'}>No steps available for this workflow.</p>
+      {/* Sticky Progress Bar */}
+      {sortedSteps.length > 0 && (
+        <div className={'sticky top-0 z-10 bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/80'}>
+          <PipelineProgressBar
+            completedSteps={completedCount}
+            currentStepTitle={currentStep?.title}
+            totalSteps={sortedSteps.length}
+          />
+        </div>
+      )}
+
+      {/* Vertical Pipeline Container */}
+      <div
+        aria-label={'Workflow pipeline'}
+        className={'flex flex-1 flex-col items-center overflow-y-auto py-6'}
+        role={'list'}
+      >
+        <div className={'w-full max-w-4xl px-4'}>
+          {/* Empty State - Workflow created but no steps yet */}
+          {hasNoSteps && !isLoading && (
+            <div
+              className={'flex min-h-24 w-full items-center justify-center text-muted-foreground'}
+              role={'listitem'}
+            >
+              {isWorkflowCreated ? (
+                <p className={'text-sm'}>Workflow is ready. Start the workflow to create pipeline steps.</p>
+              ) : (
+                <p className={'text-sm'}>No steps available for this workflow.</p>
+              )}
+            </div>
+          )}
+
+          {/* Pipeline Steps */}
+          {sortedSteps.map((step, index) => {
+            const stepState = deriveStepState(step.status);
+            const connectorState = deriveConnectorState(stepState);
+            const isExpanded = expandedStepId === step.id;
+            const isFirstStep = index === 0;
+            const isLastStep = index === sortedSteps.length - 1;
+
+            // Get the step type safely, defaulting to 'clarification' if not a valid PipelineStepType
+            const stepType = (step.stepType as PipelineStepType) || 'clarification';
+
+            // Cast outputStructured from unknown to ClarificationStepOutput for clarification steps
+            const isClarificationStep = stepType === 'clarification';
+            const outputStructured = isClarificationStep
+              ? (step.outputStructured as ClarificationStepOutput | null)
+              : null;
+
+            // Determine if clarification handlers can be provided
+            const isSubmittable = isClarificationStep && outputStructured;
+
+            // Compute metrics for this step
+            const metrics = computeStepMetrics(step);
+
+            return (
+              <div
+                className={'relative mb-4 last:mb-0'}
+                key={step.id}
+                role={'listitem'}
+              >
+                {/* Vertical Connector */}
+                <VerticalConnector
+                  isFirst={isFirstStep}
+                  isLast={isLastStep}
+                  state={connectorState}
+                  stepNumber={index + 1}
+                />
+
+                {/* Step Card */}
+                <PipelineStep
+                  aria-posinset={index + 1}
+                  aria-setsize={sortedSteps.length}
+                  isExpanded={isExpanded}
+                  isSubmitting={submittingStepId === step.id}
+                  metrics={metrics}
+                  onSkipStep={isClarificationStep ? () => handleSkipClarification(step.id) : undefined}
+                  onSubmitClarification={
+                    isSubmittable
+                      ? (answers) => handleSubmitClarification(step.id, outputStructured, answers)
+                      : undefined
+                  }
+                  onToggle={() => handleToggleStep(step.id)}
+                  output={step.outputText ?? undefined}
+                  outputStructured={outputStructured}
+                  status={stepState}
+                  stepType={stepType}
+                  title={step.title}
+                />
+              </div>
+            );
+          })}
+
+          {/* Loading State Indicator */}
+          {isLoading && (
+            <div className={'sr-only'} role={'status'}>
+              Loading workflow steps...
+            </div>
           )}
         </div>
-      )}
-
-      {/* Pipeline Steps */}
-      {sortedSteps.map((step, index) => {
-        const stepState = deriveStepState(step.status);
-        const isExpanded = expandedStepId === step.id;
-        const isConnectorCompleted = stepState === 'completed';
-        const isLastStep = index === sortedSteps.length - 1;
-
-        // Get the step type safely, defaulting to 'clarification' if not a valid PipelineStepType
-        const stepType = (step.stepType as PipelineStepType) || 'clarification';
-
-        // Cast outputStructured from unknown to ClarificationStepOutput for clarification steps
-        const isClarificationStep = stepType === 'clarification';
-        const outputStructured = isClarificationStep
-          ? (step.outputStructured as ClarificationStepOutput | null)
-          : null;
-
-        // Determine if clarification handlers can be provided
-        const isSubmittable = isClarificationStep && outputStructured;
-
-        return (
-          <Fragment key={step.id}>
-            {/* Step Card */}
-            <div className={'min-w-64 shrink-0'} role={'listitem'}>
-              <PipelineStep
-                aria-posinset={index + 1}
-                aria-setsize={sortedSteps.length}
-                isExpanded={isExpanded}
-                isSubmitting={submittingStepId === step.id}
-                onSkipStep={isClarificationStep ? () => handleSkipClarification(step.id) : undefined}
-                onSubmitClarification={
-                  isSubmittable
-                    ? (answers) => handleSubmitClarification(step.id, outputStructured, answers)
-                    : undefined
-                }
-                onToggle={() => handleToggleStep(step.id)}
-                output={step.outputText ?? undefined}
-                outputStructured={outputStructured}
-                status={stepState}
-                stepType={stepType}
-                title={step.title}
-              />
-            </div>
-
-            {/* Connector (not after last step) */}
-            {!isLastStep && <PipelineConnector className={'min-w-8'} isCompleted={isConnectorCompleted} />}
-          </Fragment>
-        );
-      })}
-
-      {/* Loading State Indicator */}
-      {isLoading && (
-        <div className={'sr-only'} role={'status'}>
-          Loading workflow steps...
-        </div>
-      )}
+      </div>
     </div>
   );
 };

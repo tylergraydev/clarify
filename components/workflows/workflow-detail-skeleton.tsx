@@ -3,11 +3,11 @@
 /**
  * Loading skeleton for the workflow detail page.
  * Mimics the page layout: breadcrumb, header with workflow name, metadata badges,
- * timestamps, and action bar.
+ * timestamps, action bar, and vertical pipeline with progress bar.
  */
 export const WorkflowDetailSkeleton = () => {
   return (
-    <div className={'space-y-6'}>
+    <div className={'flex h-full flex-col space-y-6'}>
       {/* Breadcrumb Skeleton */}
       <div className={'flex items-center gap-2'}>
         <div className={'h-4 w-16 animate-pulse rounded-sm bg-muted'} />
@@ -71,64 +71,96 @@ export const WorkflowDetailSkeleton = () => {
         <div className={'size-9 animate-pulse rounded-md bg-muted'} />
       </div>
 
-      {/* Pipeline Skeleton */}
-      <div className={'flex items-center gap-4 overflow-x-auto py-4'}>
-        {/* Step 1 - Clarification */}
-        <div className={'min-w-64 shrink-0'}>
-          <div className={'animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
-            <div className={'flex items-center gap-3'}>
-              <div className={'size-8 rounded-full bg-muted'} />
-              <div className={'h-4 flex-1 rounded-sm bg-muted'} />
-              <div className={'size-5 rounded-full bg-muted'} />
+      {/* Vertical Pipeline Skeleton */}
+      <div className={'flex flex-1 flex-col'}>
+        {/* Progress Bar Skeleton */}
+        <div className={'border-b border-border px-4 py-3'}>
+          <div className={'mx-auto max-w-4xl'}>
+            <div className={'mb-2 flex items-center justify-between'}>
+              <div className={'h-4 w-32 animate-pulse rounded-sm bg-muted'} />
+              <div className={'h-4 w-20 animate-pulse rounded-sm bg-muted'} />
             </div>
+            <div className={'h-1.5 w-full animate-pulse rounded-full bg-muted'} />
           </div>
         </div>
 
-        {/* Connector 1 */}
-        <div className={'h-0.5 min-w-8 flex-1 animate-pulse rounded-full bg-muted'} />
-
-        {/* Step 2 - Refinement */}
-        <div className={'min-w-64 shrink-0'}>
-          <div className={'animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
-            <div className={'flex items-center gap-3'}>
-              <div className={'size-8 rounded-full bg-muted'} />
-              <div className={'h-4 flex-1 rounded-sm bg-muted'} />
-              <div className={'size-5 rounded-full bg-muted'} />
+        {/* Steps Container */}
+        <div className={'flex flex-1 flex-col items-center py-6'}>
+          <div className={'w-full max-w-4xl space-y-4 px-4'}>
+            {/* Step 1 Skeleton */}
+            <div className={'relative'}>
+              {/* Vertical Connector */}
+              <div className={'absolute top-0 bottom-0 left-0 flex w-12 flex-col items-center'}>
+                <div className={'size-8 animate-pulse rounded-full bg-muted'} />
+                <div className={'w-0.5 flex-1 animate-pulse bg-muted'} />
+              </div>
+              {/* Step Card */}
+              <div className={'ml-14 animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
+                <div className={'flex items-center gap-3'}>
+                  <div className={'size-8 rounded-full bg-muted'} />
+                  <div className={'h-4 flex-1 rounded-sm bg-muted'} />
+                  <div className={'h-5 w-24 rounded-full bg-muted'} />
+                  <div className={'size-5 rounded-full bg-muted'} />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Connector 2 */}
-        <div className={'h-0.5 min-w-8 flex-1 animate-pulse rounded-full bg-muted'} />
-
-        {/* Step 3 - Discovery */}
-        <div className={'min-w-64 shrink-0'}>
-          <div className={'animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
-            <div className={'flex items-center gap-3'}>
-              <div className={'size-8 rounded-full bg-muted'} />
-              <div className={'h-4 flex-1 rounded-sm bg-muted'} />
-              <div className={'size-5 rounded-full bg-muted'} />
+            {/* Step 2 Skeleton */}
+            <div className={'relative'}>
+              {/* Vertical Connector */}
+              <div className={'absolute top-0 bottom-0 left-0 flex w-12 flex-col items-center'}>
+                <div className={'h-4 w-0.5 animate-pulse bg-muted'} />
+                <div className={'size-8 animate-pulse rounded-full bg-muted'} />
+                <div className={'w-0.5 flex-1 animate-pulse bg-muted'} />
+              </div>
+              {/* Step Card */}
+              <div className={'ml-14 animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
+                <div className={'flex items-center gap-3'}>
+                  <div className={'size-8 rounded-full bg-muted'} />
+                  <div className={'h-4 flex-1 rounded-sm bg-muted'} />
+                  <div className={'h-5 w-20 rounded-full bg-muted'} />
+                  <div className={'size-5 rounded-full bg-muted'} />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Connector 3 */}
-        <div className={'h-0.5 min-w-8 flex-1 animate-pulse rounded-full bg-muted'} />
+            {/* Step 3 Skeleton */}
+            <div className={'relative'}>
+              {/* Vertical Connector */}
+              <div className={'absolute top-0 bottom-0 left-0 flex w-12 flex-col items-center'}>
+                <div className={'h-4 w-0.5 animate-pulse bg-muted'} />
+                <div className={'size-8 animate-pulse rounded-full bg-muted'} />
+                <div className={'w-0.5 flex-1 animate-pulse bg-muted'} />
+              </div>
+              {/* Step Card */}
+              <div className={'ml-14 animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
+                <div className={'flex items-center gap-3'}>
+                  <div className={'size-8 rounded-full bg-muted'} />
+                  <div className={'h-4 flex-1 rounded-sm bg-muted'} />
+                  <div className={'size-5 rounded-full bg-muted'} />
+                </div>
+              </div>
+            </div>
 
-        {/* Step 4 - Planning */}
-        <div className={'min-w-64 shrink-0'}>
-          <div className={'animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
-            <div className={'flex items-center gap-3'}>
-              <div className={'size-8 rounded-full bg-muted'} />
-              <div className={'h-4 flex-1 rounded-sm bg-muted'} />
-              <div className={'size-5 rounded-full bg-muted'} />
+            {/* Step 4 Skeleton (last step, no bottom connector) */}
+            <div className={'relative'}>
+              {/* Vertical Connector */}
+              <div className={'absolute top-0 bottom-0 left-0 flex w-12 flex-col items-center'}>
+                <div className={'h-4 w-0.5 animate-pulse bg-muted'} />
+                <div className={'size-8 animate-pulse rounded-full bg-muted'} />
+              </div>
+              {/* Step Card */}
+              <div className={'ml-14 animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
+                <div className={'flex items-center gap-3'}>
+                  <div className={'size-8 rounded-full bg-muted'} />
+                  <div className={'h-4 flex-1 rounded-sm bg-muted'} />
+                  <div className={'size-5 rounded-full bg-muted'} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Content Area Placeholder */}
-      <div className={'h-64 animate-pulse rounded-lg bg-muted'} />
     </div>
   );
 };
