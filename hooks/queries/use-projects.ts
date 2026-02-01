@@ -22,13 +22,8 @@ export function useAddRepositoryToProject(options?: { showToast?: boolean }) {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({
-      projectId,
-      repoData,
-    }: {
-      projectId: number;
-      repoData: Parameters<typeof projects.addRepo>[1];
-    }) => projects.addRepo(projectId, repoData),
+    mutationFn: ({ projectId, repoData }: { projectId: number; repoData: Parameters<typeof projects.addRepo>[1] }) =>
+      projects.addRepo(projectId, repoData),
     onError: (error) => {
       if (showToast) {
         toast.error({
@@ -264,13 +259,8 @@ export function useUpdateProject(options?: { showToast?: boolean }) {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({
-      data,
-      id,
-    }: {
-      data: Parameters<typeof projects.update>[1];
-      id: number;
-    }) => projects.update(id, data),
+    mutationFn: ({ data, id }: { data: Parameters<typeof projects.update>[1]; id: number }) =>
+      projects.update(id, data),
     onError: (error) => {
       if (showToast) {
         toast.error({

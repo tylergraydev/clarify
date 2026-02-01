@@ -9,24 +9,6 @@ interface UseElectronResult {
   isElectron: boolean;
 }
 
-export function useElectron(): UseElectronResult {
-  const isElectron = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    return window.electronAPI !== undefined;
-  }, []);
-
-  const api = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-    return window.electronAPI ?? null;
-  }, []);
-
-  return { api, isElectron };
-}
-
 export function useElectronApp() {
   const { api, isElectron } = useElectron();
 
@@ -695,4 +677,22 @@ export function useElectronStore() {
     remove,
     set,
   };
+}
+
+function useElectron(): UseElectronResult {
+  const isElectron = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.electronAPI !== undefined;
+  }, []);
+
+  const api = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    return window.electronAPI ?? null;
+  }, []);
+
+  return { api, isElectron };
 }

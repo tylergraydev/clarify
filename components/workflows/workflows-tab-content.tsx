@@ -49,8 +49,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
     return workflows.filter((w) => {
       const matchesStatus = statusFilter === 'all' || w.status === statusFilter;
       const matchesType = typeFilter === 'all' || w.type === typeFilter;
-      const matchesSearch =
-        !searchFilter || w.featureName.toLowerCase().includes(searchFilter.toLowerCase());
+      const matchesSearch = !searchFilter || w.featureName.toLowerCase().includes(searchFilter.toLowerCase());
       return matchesStatus && matchesType && matchesSearch;
     });
   }, [workflows, statusFilter, typeFilter, searchFilter]);
