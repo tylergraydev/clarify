@@ -1,8 +1,10 @@
 'use client';
 
+import type { ComponentPropsWithRef, ReactNode } from 'react';
+
 import { differenceInMinutes, parseISO } from 'date-fns';
 import { BarChart3, CheckCircle2, Clock, FolderKanban, Workflow } from 'lucide-react';
-import { type ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,13 +16,13 @@ import { cn } from '@/lib/utils';
 // Types
 // ============================================================================
 
-type StatisticCardProps = ClassName<{
+type StatisticCardProps = ComponentPropsWithRef<'div'> & {
   description: string;
   icon: ReactNode;
   isLoading?: boolean;
   title: string;
   value: string;
-}>;
+};
 
 type StatisticsWidgetProps = ClassName;
 
@@ -143,13 +145,26 @@ const StatisticCardSkeleton = () => {
 // Statistic Card Component
 // ============================================================================
 
-const StatisticCard = ({ className, description, icon, isLoading = false, title, value }: StatisticCardProps) => {
+const StatisticCard = ({
+  className,
+  description,
+  icon,
+  isLoading = false,
+  ref,
+  title,
+  value,
+  ...props
+}: StatisticCardProps) => {
   if (isLoading) {
     return <StatisticCardSkeleton />;
   }
 
   return (
-    <div className={cn('flex items-center gap-4 rounded-lg border border-card-border bg-card p-4', className)}>
+    <div
+      className={cn('flex items-center gap-4 rounded-lg border border-card-border bg-card p-4', className)}
+      ref={ref}
+      {...props}
+    >
       {/* Icon */}
       <div
         className={`
@@ -249,6 +264,7 @@ const StatisticsContent = () => {
 export const StatisticsWidget = ({ className }: StatisticsWidgetProps) => {
   return (
     <Card className={className}>
+      {/* Header */}
       <CardHeader>
         <div className={'flex items-center gap-2'}>
           <BarChart3 aria-hidden={'true'} className={'size-5 text-muted-foreground'} />
@@ -256,6 +272,8 @@ export const StatisticsWidget = ({ className }: StatisticsWidgetProps) => {
         </div>
         <CardDescription>Key metrics and performance indicators</CardDescription>
       </CardHeader>
+
+      {/* Content */}
       <CardContent>
         <QueryErrorBoundary>
           <StatisticsContent />

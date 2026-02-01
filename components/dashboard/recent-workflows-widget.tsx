@@ -5,7 +5,7 @@ import { CheckCircle, Clock, History, Plus, XCircle } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { type KeyboardEvent, useMemo } from 'react';
+import { type KeyboardEvent, useCallback, useMemo } from 'react';
 
 import type { Project, Workflow } from '@/types/electron';
 
@@ -259,14 +259,17 @@ const RecentWorkflowsContent = () => {
    * Navigate to workflow detail page
    * Note: Requires /workflows/[id] route to be implemented
    */
-  const handleWorkflowClick = (workflowId: number) => {
-    router.push(
-      $path({
-        route: '/workflows/[id]',
-        routeParams: { id: String(workflowId) },
-      })
-    );
-  };
+  const handleWorkflowClick = useCallback(
+    (workflowId: number) => {
+      router.push(
+        $path({
+          route: '/workflows/[id]',
+          routeParams: { id: String(workflowId) },
+        })
+      );
+    },
+    [router]
+  );
 
   const hasRecentWorkflows = recentWorkflows.length > 0;
 

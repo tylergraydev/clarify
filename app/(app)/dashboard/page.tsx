@@ -1,23 +1,15 @@
 import type { Metadata } from 'next';
 
-import { ActiveWorkflowsWidget } from './_components/active-workflows-widget';
-import { QuickActionsWidget } from './_components/quick-actions-widget';
-import { RecentWorkflowsWidget } from './_components/recent-workflows-widget';
-import { StatisticsWidget } from './_components/statistics-widget';
-
-// ============================================================================
-// Page Metadata
-// ============================================================================
+import { ActiveWorkflowsWidget } from '@/components/dashboard/active-workflows-widget';
+import { QuickActionsWidget } from '@/components/dashboard/quick-actions-widget';
+import { RecentWorkflowsWidget } from '@/components/dashboard/recent-workflows-widget';
+import { StatisticsWidget } from '@/components/dashboard/statistics-widget';
 
 export const metadata: Metadata = {
   description:
     'Monitor your active workflows, view recent activity, and access quick actions from your Clarify dashboard.',
   title: 'Dashboard',
 };
-
-// ============================================================================
-// Dashboard Page
-// ============================================================================
 
 /**
  * Dashboard page component.

@@ -10,6 +10,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DataTableSkeleton } from '@/components/ui/table';
+import { CreateWorkflowDialog } from '@/components/workflows/create-workflow-dialog';
 import { WorkflowTable } from '@/components/workflows/workflow-table';
 import {
   type WorkflowStatusFilterValue,
@@ -82,10 +83,6 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
     [router]
   );
 
-  const handleCreateWorkflow = useCallback(() => {
-    // todo
-  }, []);
-
   const handleResetFilters = useCallback(() => {
     setStatusFilter(DEFAULT_STATUS_FILTER);
     setTypeFilter(DEFAULT_TYPE_FILTER);
@@ -129,10 +126,15 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
       <div className={cn('flex flex-col gap-4', className)} ref={ref} {...props}>
         <EmptyState
           action={
-            <Button onClick={handleCreateWorkflow}>
-              <Plus aria-hidden={'true'} className={'size-4'} />
-              {'Create Workflow'}
-            </Button>
+            <CreateWorkflowDialog
+              projectId={projectId}
+              trigger={
+                <Button>
+                  <Plus aria-hidden={'true'} className={'size-4'} />
+                  Create Workflow
+                </Button>
+              }
+            />
           }
           description={'Create a workflow to plan or implement features for this project.'}
           icon={<GitBranch className={'size-6'} />}
@@ -148,10 +150,15 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
       <div className={cn('flex flex-col gap-4', className)} ref={ref} {...props}>
         {/* Header with Create Button */}
         <div className={'flex items-center justify-end'}>
-          <Button onClick={handleCreateWorkflow}>
-            <Plus aria-hidden={'true'} className={'size-4'} />
-            Create Workflow
-          </Button>
+          <CreateWorkflowDialog
+            projectId={projectId}
+            trigger={
+              <Button>
+                <Plus aria-hidden={'true'} className={'size-4'} />
+                Create Workflow
+              </Button>
+            }
+          />
         </div>
 
         {/* Workflows Table */}
