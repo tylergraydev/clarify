@@ -1,9 +1,8 @@
 'use client';
 
 import { differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
-import { Activity, Clock, Eye, GitBranch, Pause, Play, Plus, X } from 'lucide-react';
+import { Activity, Clock, Eye, GitBranch, Pause, Play, X } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Fragment, type KeyboardEvent, type MouseEvent, useMemo, useState } from 'react';
 
@@ -11,7 +10,7 @@ import type { Project, Workflow } from '@/types/electron';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DialogBackdrop,
@@ -413,16 +412,7 @@ const ActiveWorkflowsContent = () => {
   if (isActiveWorkflowsEmpty) {
     return (
       <EmptyState
-        action={
-          <Link
-            className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
-            href={$path({ route: '/workflows/new' })}
-          >
-            <Plus aria-hidden={'true'} className={'size-4'} />
-            Start Workflow
-          </Link>
-        }
-        description={'Start a new workflow to see it here.'}
+        description={'Start a new workflow from a project to see it here.'}
         icon={<Play aria-hidden={'true'} className={'size-6'} />}
         title={'No active workflows'}
       />

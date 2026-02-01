@@ -1,8 +1,6 @@
 'use client';
 
-import { FolderPlus, Play, Zap } from 'lucide-react';
-import { $path } from 'next-typesafe-url';
-import { useRouter } from 'next/navigation';
+import { FolderPlus, Zap } from 'lucide-react';
 
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
 import { Button } from '@/components/ui/button';
@@ -11,12 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 type QuickActionsWidgetProps = ClassName;
 
 export const QuickActionsWidget = ({ className }: QuickActionsWidgetProps) => {
-  const router = useRouter();
-
-  const handleNewWorkflowClick = () => {
-    router.push($path({ route: '/workflows/new' }));
-  };
-
   return (
     <Card className={className}>
       {/* Header */}
@@ -25,28 +17,20 @@ export const QuickActionsWidget = ({ className }: QuickActionsWidgetProps) => {
           <Zap aria-hidden={'true'} className={'size-5 text-muted-foreground'} />
           <CardTitle>Quick Actions</CardTitle>
         </div>
-        <CardDescription>Start a new workflow or create a project</CardDescription>
+        <CardDescription>Create a new project to get started</CardDescription>
       </CardHeader>
 
       {/* Content */}
       <CardContent>
-        <div aria-label={'Quick action buttons'} className={'flex flex-col gap-3 sm:flex-row sm:gap-4'} role={'group'}>
-          {/* New Workflow Button */}
-          <Button className={'w-full sm:flex-1'} onClick={handleNewWorkflowClick} variant={'default'}>
-            <Play aria-hidden={'true'} className={'size-4'} />
-            New Workflow
-          </Button>
-
-          {/* New Project Button */}
-          <CreateProjectDialog
-            trigger={
-              <Button className={'w-full sm:flex-1'} variant={'outline'}>
-                <FolderPlus aria-hidden={'true'} className={'size-4'} />
-                New Project
-              </Button>
-            }
-          />
-        </div>
+        {/* New Project Button */}
+        <CreateProjectDialog
+          trigger={
+            <Button className={'w-full'} variant={'default'}>
+              <FolderPlus aria-hidden={'true'} className={'size-4'} />
+              New Project
+            </Button>
+          }
+        />
       </CardContent>
     </Card>
   );

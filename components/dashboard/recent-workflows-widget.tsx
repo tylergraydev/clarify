@@ -1,9 +1,8 @@
 'use client';
 
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { CheckCircle, Clock, History, Plus, XCircle } from 'lucide-react';
+import { CheckCircle, Clock, History, XCircle } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type KeyboardEvent, useCallback, useMemo } from 'react';
 
@@ -11,7 +10,6 @@ import type { Project, Workflow } from '@/types/electron';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { Badge } from '@/components/ui/badge';
-import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useProjects } from '@/hooks/queries/use-projects';
@@ -258,15 +256,6 @@ const RecentWorkflowsContent = () => {
   if (!hasRecentWorkflows) {
     return (
       <EmptyState
-        action={
-          <Link
-            className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
-            href={$path({ route: '/workflows/new' })}
-          >
-            <Plus aria-hidden={'true'} className={'size-4'} />
-            Start Workflow
-          </Link>
-        }
         description={'Completed workflows will appear here.'}
         icon={<History aria-hidden={'true'} className={'size-6'} />}
         title={'No recent workflows'}
