@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { ActiveWorkflowsWidget } from '@/components/dashboard/active-workflows-widget';
+import { FavoritesWidget } from '@/components/dashboard/favorites-widget';
 import { QuickActionsWidget } from '@/components/dashboard/quick-actions-widget';
 import { RecentWorkflowsWidget } from '@/components/dashboard/recent-workflows-widget';
 import { StatisticsWidget } from '@/components/dashboard/statistics-widget';
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
  *
  * Displays a comprehensive overview of the user's Clarify workspace including:
  * - Quick Actions for starting new workflows or projects
+ * - Favorite Projects for quick access to starred projects
  * - Active Workflows showing currently running or paused workflows
  * - Recent Workflows displaying completed, failed, or cancelled workflows
  * - Statistics Overview with key metrics and performance indicators
@@ -42,6 +44,14 @@ export default function DashboardPage() {
           Quick Actions
         </h2>
         <QuickActionsWidget />
+      </section>
+
+      {/* Favorites Section - Quick access to starred projects */}
+      <section aria-labelledby={'favorites-heading'}>
+        <h2 className={'sr-only'} id={'favorites-heading'}>
+          Favorite Projects
+        </h2>
+        <FavoritesWidget />
       </section>
 
       {/* Workflows Section - Two-column layout on desktop */}

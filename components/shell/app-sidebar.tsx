@@ -2,7 +2,7 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { Bot, FolderKanban, History, LayoutDashboard, Play, Settings, Workflow } from 'lucide-react';
+import { Bot, FolderKanban, History, LayoutDashboard, Play, Settings, Star, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -12,6 +12,7 @@ const WORKFLOWS_BASE_PATH = $path({ route: '/workflows/active' }).replace('/acti
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip } from '@/components/ui/tooltip';
+import { useFavoriteProjects } from '@/hooks/queries/use-projects';
 import { useShellStore } from '@/lib/stores/shell-store';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +24,10 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
   const { isSidebarCollapsed } = useShellStore();
   const pathname = usePathname();
 
+  const { data: favoriteProjects = [], isLoading: isFavoritesLoading } = useFavoriteProjects();
+
   const isWorkflowsActive = pathname.startsWith(WORKFLOWS_BASE_PATH);
+  const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [isWorkflowsOpen, setIsWorkflowsOpen] = useState(isWorkflowsActive);
 
   const isPathActive = (href: string) => {
@@ -61,6 +65,52 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             isCollapsed={isSidebarCollapsed}
             label={'Dashboard'}
           />
+
+          {/* Favorites */}
+          {isSidebarCollapsed ? (
+            <Tooltip content={'Favorites'} side={'right'}>
+              <NavItem
+                href={$path({ route: '/projects' })}
+                icon={Star}
+                isActive={false}
+                isCollapsed={isSidebarCollapsed}
+                label={'Favorites'}
+              />
+            </Tooltip>
+          ) : (
+            <Collapsible onOpenChange={setIsFavoritesOpen} open={isFavoritesOpen}>
+              <CollapsibleTrigger
+                className={cn(
+                  `
+                    h-10 w-full px-3 py-2
+                    text-muted-foreground
+                    hover:bg-muted hover:text-foreground
+                  `
+                )}
+              >
+                <Star aria-hidden={'true'} className={'size-4 shrink-0'} />
+                <span className={'flex-1 truncate text-left'}>Favorites</span>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                {isFavoritesLoading ? (
+                  <div className={'px-9 py-2 text-xs text-muted-foreground'}>Loading...</div>
+                ) : favoriteProjects.length === 0 ? (
+                  <div className={'px-9 py-2 text-xs text-muted-foreground'}>No favorites yet</div>
+                ) : (
+                  favoriteProjects.map((project) => (
+                    <NavItem
+                      href={$path({ route: '/projects/[id]', routeParams: { id: String(project.id) } })}
+                      isActive={pathname === $path({ route: '/projects/[id]', routeParams: { id: String(project.id) } })}
+                      isCollapsed={false}
+                      isNested={true}
+                      key={project.id}
+                      label={project.name}
+                    />
+                  ))
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
 
           {/* Projects */}
           <NavItem

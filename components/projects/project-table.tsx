@@ -1,10 +1,10 @@
 'use client';
 
 import type { Row } from '@tanstack/react-table';
-import type { ComponentPropsWithRef, ReactNode } from 'react';
+import type { ComponentPropsWithRef, MouseEvent, ReactNode } from 'react';
 
 import { format } from 'date-fns';
-import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { ExternalLink, Pencil, Star, Trash2 } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
 import type { Project } from '@/types/electron';
@@ -34,12 +34,16 @@ interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
   onDelete?: (projectId: number) => Promise<void>;
   /** Callback fired when global filter (search) changes */
   onGlobalFilterChange?: (value: string) => void;
+  /** Callback when the user toggles a project's favorite status */
+  onToggleFavorite?: (projectId: number) => void;
   /** Callback when the user confirms unarchiving a project. Returns a promise that resolves when the mutation completes. */
   onUnarchive?: (projectId: number) => Promise<void>;
   /** Callback when the user clicks view details on a project */
   onViewDetails?: (projectId: number) => void;
   /** Array of projects to display */
   projects: Array<Project>;
+  /** Set of project IDs currently toggling favorite status */
+  togglingFavoriteIds?: Set<number>;
   /** Custom toolbar content (e.g., filters) */
   toolbarContent?: ReactNode;
 }
@@ -140,6 +144,54 @@ const StatusCell = memo(function StatusCell({ isArchiving, onOpenArchiveDialog, 
   );
 });
 
+interface FavoriteCellProps {
+  isToggling: boolean;
+  onToggleFavorite?: (projectId: number) => void;
+  row: Row<Project>;
+}
+
+/**
+ * Memoized favorite cell component with star icon button.
+ * Shows filled yellow star when favorite, outline star when not.
+ */
+const FavoriteCell = memo(function FavoriteCell({ isToggling, onToggleFavorite, row }: FavoriteCellProps) {
+  const project = row.original;
+  const isFavorite = project.isFavorite;
+
+  const handleClick = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation();
+      onToggleFavorite?.(project.id);
+    },
+    [onToggleFavorite, project.id]
+  );
+
+  return (
+    <button
+      aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      aria-pressed={isFavorite}
+      className={cn(
+        'inline-flex items-center justify-center rounded-sm p-1',
+        'transition-colors hover:bg-muted',
+        'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0 focus-visible:outline-none',
+        'data-disabled:pointer-events-none data-disabled:opacity-50'
+      )}
+      data-disabled={isToggling || undefined}
+      disabled={isToggling}
+      onClick={handleClick}
+      type={'button'}
+    >
+      <Star
+        aria-hidden={'true'}
+        className={cn(
+          'size-4 transition-colors',
+          isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground hover:text-foreground'
+        )}
+      />
+    </button>
+  );
+});
+
 /**
  * Table view component for displaying projects using the DataTable component.
  *
@@ -158,10 +210,12 @@ export const ProjectTable = ({
   onArchive,
   onDelete,
   onGlobalFilterChange,
+  onToggleFavorite,
   onUnarchive,
   onViewDetails,
   projects,
   ref,
+  togglingFavoriteIds = new Set(),
   toolbarContent,
   ...props
 }: ProjectTableProps) => {
@@ -255,7 +309,27 @@ export const ProjectTable = ({
   // Define columns using the column helper
   const columns = useMemo(
     () => [
-      // Actions column (first for easy access)
+      // Favorite column (first for visual priority)
+      columnHelper.accessor('isFavorite', {
+        cell: ({ row }) => (
+          <FavoriteCell
+            isToggling={togglingFavoriteIds.has(row.original.id)}
+            onToggleFavorite={onToggleFavorite}
+            row={row}
+          />
+        ),
+        enableHiding: false,
+        enableResizing: false,
+        enableSorting: false,
+        header: '',
+        meta: {
+          cellClassName: 'text-center',
+          headerClassName: 'text-center',
+        },
+        size: 40,
+      }),
+
+      // Actions column
       columnHelper.display({
         cell: ({ row }) => (
           <ActionsCell
@@ -351,8 +425,25 @@ export const ProjectTable = ({
         size: 110,
       }),
     ],
-    [archivingIds, deletingIds, handleOpenArchiveDialog, handleOpenDeleteDialog, handleOpenEditDialog, onViewDetails]
-    // Note: handleOpenArchiveDialog is used by StatusCell within the Status column
+    [
+      archivingIds,
+      deletingIds,
+      handleOpenArchiveDialog,
+      handleOpenDeleteDialog,
+      handleOpenEditDialog,
+      onToggleFavorite,
+      onViewDetails,
+      togglingFavoriteIds,
+    ]
+  );
+
+  // Default sorting: favorites first, then by name
+  const defaultSorting = useMemo(
+    () => [
+      { desc: true, id: 'isFavorite' },
+      { desc: false, id: 'name' },
+    ],
+    []
   );
 
   return (
@@ -385,6 +476,7 @@ export const ProjectTable = ({
         ref={ref}
         rowStyleCallback={rowStyleCallback}
         searchPlaceholder={'Search projects...'}
+        state={{ sorting: defaultSorting }}
         toolbarContent={toolbarContent}
         {...props}
       />

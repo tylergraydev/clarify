@@ -19,6 +19,11 @@ import { PipelineStep, type PipelineStepStatus, type PipelineStepType } from './
 import { VerticalConnector, type VerticalConnectorState } from './vertical-connector';
 
 /**
+ * Default step type used when step.stepType is not a valid PipelineStepType.
+ */
+const DEFAULT_STEP_TYPE: PipelineStepType = 'clarification';
+
+/**
  * Database step statuses that map to the 'running' visual state.
  */
 const RUNNING_STATUSES = ['running', 'paused', 'editing'] as const;
@@ -175,9 +180,12 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
     [sortedSteps]
   );
 
-  const handleToggleStep = (stepId: number) => {
-    toggleStep(stepId);
-  };
+  const handleToggleStep = useCallback(
+    (stepId: number) => {
+      toggleStep(stepId);
+    },
+    [toggleStep]
+  );
 
   /**
    * Handles clarification form submission by merging answers into outputStructured
@@ -225,7 +233,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
   const isLoading = isLoadingSteps || isLoadingWorkflow;
   const isWorkflowCreated = workflow?.status === 'created';
-  const hasNoSteps = sortedSteps.length === 0;
+  const isStepsEmpty = sortedSteps.length === 0;
 
   return (
     <div
@@ -252,7 +260,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
       >
         <div className={'w-full max-w-4xl px-4'}>
           {/* Empty State - Workflow created but no steps yet */}
-          {hasNoSteps && !isLoading && (
+          {isStepsEmpty && !isLoading && (
             <div
               className={'flex min-h-24 w-full items-center justify-center text-muted-foreground'}
               role={'listitem'}
@@ -273,8 +281,8 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
             const isFirstStep = index === 0;
             const isLastStep = index === sortedSteps.length - 1;
 
-            // Get the step type safely, defaulting to 'clarification' if not a valid PipelineStepType
-            const stepType = (step.stepType as PipelineStepType) || 'clarification';
+            // Get the step type safely, defaulting to DEFAULT_STEP_TYPE if not a valid PipelineStepType
+            const stepType = (step.stepType as PipelineStepType) || DEFAULT_STEP_TYPE;
 
             // Cast outputStructured from unknown to ClarificationStepOutput for clarification steps
             const isClarificationStep = stepType === 'clarification';

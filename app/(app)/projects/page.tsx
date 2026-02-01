@@ -17,6 +17,7 @@ import {
   useArchiveProject,
   useDeleteProjectPermanently,
   useProjects,
+  useToggleFavorite,
   useUnarchiveProject,
 } from '@/hooks/queries/use-projects';
 import { DEFAULT_PROJECT_ARCHIVE_FILTER } from '@/lib/layout/constants';
@@ -60,6 +61,7 @@ const ProjectsPage = () => {
   const archiveProjectMutation = useArchiveProject();
   const unarchiveProjectMutation = useUnarchiveProject();
   const deleteProjectMutation = useDeleteProjectPermanently();
+  const toggleFavoriteMutation = useToggleFavorite();
 
   // Search filter state
   const [searchFilter, setSearchFilter] = useState('');
@@ -67,6 +69,7 @@ const ProjectsPage = () => {
   // Per-row loading state tracking
   const [archivingIds, setArchivingIds] = useState<Set<number>>(new Set());
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
+  const [togglingFavoriteIds, setTogglingFavoriteIds] = useState<Set<number>>(new Set());
 
   // Filter projects based on archiveFilter and searchFilter state
   const filteredProjects = useMemo(() => {
@@ -151,6 +154,19 @@ const ProjectsPage = () => {
     router.push($path({ route: '/projects/[id]', routeParams: { id: projectId } }));
   };
 
+  const handleToggleFavorite = async (projectId: number) => {
+    setTogglingFavoriteIds((prev) => new Set(prev).add(projectId));
+    try {
+      await toggleFavoriteMutation.mutateAsync(projectId);
+    } finally {
+      setTogglingFavoriteIds((prev) => {
+        const next = new Set(prev);
+        next.delete(projectId);
+        return next;
+      });
+    }
+  };
+
   // Check if there are no projects at all (not just filtered)
   const hasNoProjects = projects && projects.length === 0;
 
@@ -205,9 +221,11 @@ const ProjectsPage = () => {
               onArchive={handleArchive}
               onDelete={handleDelete}
               onGlobalFilterChange={setSearchFilter}
+              onToggleFavorite={handleToggleFavorite}
               onUnarchive={handleUnarchive}
               onViewDetails={handleViewDetails}
               projects={filteredProjects}
+              togglingFavoriteIds={togglingFavoriteIds}
               toolbarContent={
                 <ProjectTableToolbar
                   archiveFilter={archiveFilter}

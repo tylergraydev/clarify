@@ -1,4 +1,4 @@
-import { eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import type { DrizzleDatabase } from '../index';
 
@@ -11,6 +11,8 @@ export interface ProjectsRepository {
   delete(id: number): Promise<boolean>;
   findAll(options?: { includeArchived?: boolean }): Promise<Array<Project>>;
   findById(id: number): Promise<Project | undefined>;
+  findFavorites(): Promise<Array<Project>>;
+  toggleFavorite(id: number): Promise<Project | undefined>;
   unarchive(id: number): Promise<Project | undefined>;
   update(id: number, data: Partial<Omit<NewProject, 'createdAt' | 'id'>>): Promise<Project | undefined>;
 }
@@ -50,6 +52,33 @@ export function createProjectsRepository(db: DrizzleDatabase): ProjectsRepositor
 
     async findById(id: number): Promise<Project | undefined> {
       const result = await db.select().from(projects).where(eq(projects.id, id));
+      return result[0];
+    },
+
+    async findFavorites(): Promise<Array<Project>> {
+      return db
+        .select()
+        .from(projects)
+        .where(and(eq(projects.isFavorite, true), isNull(projects.archivedAt)))
+        .all();
+    },
+
+    async toggleFavorite(id: number): Promise<Project | undefined> {
+      // First, get the current project to determine its favorite status
+      const existing = await db.select().from(projects).where(eq(projects.id, id));
+      if (!existing[0]) {
+        return undefined;
+      }
+
+      const now = new Date().toISOString();
+      const newFavoriteStatus = !existing[0].isFavorite;
+
+      const result = await db
+        .update(projects)
+        .set({ isFavorite: newFavoriteStatus, updatedAt: now })
+        .where(eq(projects.id, id))
+        .returning();
+
       return result[0];
     },
 

@@ -10,6 +10,7 @@ export const projects = sqliteTable(
       .notNull(),
     description: text('description'),
     id: integer('id').primaryKey({ autoIncrement: true }),
+    isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
     name: text('name').notNull(),
     updatedAt: text('updated_at')
       .default(sql`(CURRENT_TIMESTAMP)`)
@@ -18,6 +19,7 @@ export const projects = sqliteTable(
   (table) => [
     index('projects_archived_at_idx').on(table.archivedAt),
     index('projects_created_at_idx').on(table.createdAt),
+    index('projects_is_favorite_idx').on(table.isFavorite),
   ]
 );
 

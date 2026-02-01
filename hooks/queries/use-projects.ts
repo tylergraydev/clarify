@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import type { Project } from '@/db/schema';
+
 import { agentKeys } from '@/lib/queries/agents';
 import { projectKeys } from '@/lib/queries/projects';
 import { repositoryKeys } from '@/lib/queries/repositories';
@@ -189,6 +191,19 @@ export function useDeleteProjectPermanently(options?: { showToast?: boolean }) {
 }
 
 /**
+ * Fetch favorite projects
+ */
+export function useFavoriteProjects() {
+  const { isElectron, projects } = useElectronDb();
+
+  return useQuery({
+    ...projectKeys.favorites,
+    enabled: isElectron,
+    queryFn: () => projects.listFavorites(),
+  });
+}
+
+/**
  * Fetch a single project by ID
  */
 export function useProject(id: number) {
@@ -211,6 +226,86 @@ export function useProjects() {
     ...projectKeys.list({ includeArchived: true }),
     enabled: isElectron,
     queryFn: () => projects.list({ includeArchived: true }),
+  });
+}
+
+/**
+ * Toggle a project's favorite status.
+ * Uses optimistic updates for immediate UI feedback.
+ */
+export function useToggleFavorite(options?: { showToast?: boolean }) {
+  const { showToast = true } = options ?? {};
+  const queryClient = useQueryClient();
+  const { projects } = useElectronDb();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: (id: number) => projects.toggleFavorite(id),
+    onError: (error, id, context) => {
+      // Rollback optimistic updates on error
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(projectKeys.favorites.queryKey, context.previousFavorites);
+      }
+      if (context?.previousProject) {
+        queryClient.setQueryData(projectKeys.detail(id).queryKey, context.previousProject);
+      }
+
+      if (showToast) {
+        toast.error({
+          description: error instanceof Error ? error.message : 'Failed to toggle favorite',
+          title: 'Toggle Favorite Failed',
+        });
+      }
+    },
+    onMutate: async (id: number) => {
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: projectKeys.favorites.queryKey });
+      await queryClient.cancelQueries({ queryKey: projectKeys.detail(id).queryKey });
+
+      // Snapshot previous values
+      const previousFavorites = queryClient.getQueryData<Array<Project>>(projectKeys.favorites.queryKey);
+      const previousProject = queryClient.getQueryData<Project>(projectKeys.detail(id).queryKey);
+
+      // Optimistically update the project detail cache if present
+      if (previousProject) {
+        queryClient.setQueryData(projectKeys.detail(id).queryKey, {
+          ...previousProject,
+          isFavorite: !previousProject.isFavorite,
+        });
+      }
+
+      // Optimistically update favorites list
+      if (previousFavorites) {
+        const isCurrentlyFavorite = previousFavorites.some((p) => p.id === id);
+        if (isCurrentlyFavorite) {
+          // Remove from favorites
+          queryClient.setQueryData(
+            projectKeys.favorites.queryKey,
+            previousFavorites.filter((p) => p.id !== id)
+          );
+        }
+        // Note: We don't add to favorites optimistically since we don't have full project data
+      }
+
+      return { previousFavorites, previousProject };
+    },
+    onSuccess: (project) => {
+      if (project) {
+        // Update detail cache with actual server response
+        queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
+        // Invalidate list queries to refetch with updated favorite status
+        void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
+        // Invalidate favorites list to refetch
+        void queryClient.invalidateQueries({ queryKey: projectKeys.favorites.queryKey });
+
+        if (showToast) {
+          toast.success({
+            description: project.isFavorite ? 'Project added to favorites' : 'Project removed from favorites',
+            title: project.isFavorite ? 'Added to Favorites' : 'Removed from Favorites',
+          });
+        }
+      }
+    },
   });
 }
 

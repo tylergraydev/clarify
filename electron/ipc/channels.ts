@@ -93,6 +93,8 @@ export const IpcChannels = {
     deleteHard: 'project:deleteHard',
     get: 'project:get',
     list: 'project:list',
+    listFavorites: 'project:listFavorites',
+    toggleFavorite: 'project:toggleFavorite',
     unarchive: 'project:unarchive',
     update: 'project:update',
   },

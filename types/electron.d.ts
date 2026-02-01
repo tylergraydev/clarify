@@ -266,6 +266,8 @@ export interface ElectronAPI {
     deleteHard(id: number): Promise<void>;
     get(id: number): Promise<import('../db/schema').Project | undefined>;
     list(options?: { includeArchived?: boolean }): Promise<Array<import('../db/schema').Project>>;
+    listFavorites(): Promise<Array<import('../db/schema').Project>>;
+    toggleFavorite(id: number): Promise<import('../db/schema').Project | undefined>;
     unarchive(id: number): Promise<import('../db/schema').Project | undefined>;
     update(
       id: number,

@@ -162,4 +162,27 @@ export function registerProjectHandlers(
       }
     }
   );
+
+  // Toggle favorite status for a project
+  ipcMain.handle(
+    IpcChannels.project.toggleFavorite,
+    async (_event: IpcMainInvokeEvent, id: number): Promise<Project | undefined> => {
+      try {
+        return projectsRepository.toggleFavorite(id);
+      } catch (error) {
+        console.error('[IPC Error] project:toggleFavorite:', error);
+        throw error;
+      }
+    }
+  );
+
+  // List all favorite projects
+  ipcMain.handle(IpcChannels.project.listFavorites, async (): Promise<Array<Project>> => {
+    try {
+      return projectsRepository.findFavorites();
+    } catch (error) {
+      console.error('[IPC Error] project:listFavorites:', error);
+      throw error;
+    }
+  });
 }

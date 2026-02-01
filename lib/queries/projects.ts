@@ -14,6 +14,10 @@ export const projectKeys = createQueryKeys('projects', {
    */
   detail: (id: number) => [id],
   /**
+   * Query key for favorite projects list.
+   */
+  favorites: null,
+  /**
    * Query key for project lists with optional filtering.
    * @param filters - Optional filters
    * @param filters.includeArchived - When true, includes archived projects in results

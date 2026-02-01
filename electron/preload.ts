@@ -118,6 +118,8 @@ const IpcChannels = {
     deleteHard: 'project:deleteHard',
     get: 'project:get',
     list: 'project:list',
+    listFavorites: 'project:listFavorites',
+    toggleFavorite: 'project:toggleFavorite',
     unarchive: 'project:unarchive',
     update: 'project:update',
   },
@@ -415,6 +417,8 @@ export interface ElectronAPI {
     deleteHard(id: number): Promise<void>;
     get(id: number): Promise<Project | undefined>;
     list(options?: { includeArchived?: boolean }): Promise<Array<Project>>;
+    listFavorites(): Promise<Array<Project>>;
+    toggleFavorite(id: number): Promise<Project | undefined>;
     unarchive(id: number): Promise<Project | undefined>;
     update(id: number, data: Partial<NewProject>): Promise<Project | undefined>;
   };
@@ -636,6 +640,8 @@ const electronAPI: ElectronAPI = {
     deleteHard: (id) => ipcRenderer.invoke(IpcChannels.project.deleteHard, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.project.get, id),
     list: (options) => ipcRenderer.invoke(IpcChannels.project.list, options),
+    listFavorites: () => ipcRenderer.invoke(IpcChannels.project.listFavorites),
+    toggleFavorite: (id) => ipcRenderer.invoke(IpcChannels.project.toggleFavorite, id),
     unarchive: (id) => ipcRenderer.invoke(IpcChannels.project.unarchive, id),
     update: (id, data) => ipcRenderer.invoke(IpcChannels.project.update, id, data),
   },

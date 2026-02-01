@@ -385,6 +385,14 @@ export function useElectronDb() {
         if (!api) return [];
         return api.project.list(options);
       },
+      listFavorites: async () => {
+        if (!api) return [];
+        return api.project.listFavorites();
+      },
+      toggleFavorite: async (id: number) => {
+        const electronApi = throwIfNoApi('project.toggleFavorite');
+        return electronApi.project.toggleFavorite(id);
+      },
       unarchive: async (id: number) => {
         const electronApi = throwIfNoApi('project.unarchive');
         return electronApi.project.unarchive(id);
