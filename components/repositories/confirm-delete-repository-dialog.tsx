@@ -50,22 +50,33 @@ export const ConfirmDeleteRepositoryDialog = ({
         <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle id={'confirm-delete-repository-title'}>{'Remove Repository'}</DialogTitle>
+            <DialogTitle id={'confirm-delete-repository-title'}>Remove Repository</DialogTitle>
             <DialogDescription id={'confirm-delete-repository-description'}>
-              {`Are you sure you want to remove "${repositoryName}" from this project? This action cannot be undone.`}
+              {`Are you sure you want to remove "${repositoryName}" from this project?`}
             </DialogDescription>
           </DialogHeader>
+
+          {/* Warning */}
+          <div
+            aria-live={'polite'}
+            className={
+              'mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 dark:border-destructive/30 dark:bg-destructive/20'
+            }
+            role={'alert'}
+          >
+            <p className={'text-sm text-destructive'}>
+              This action is permanent and cannot be undone. The repository will be removed from this project.
+            </p>
+          </div>
 
           {/* Workflow Warning */}
           {hasWorkflows && (
             <div
               aria-live={'polite'}
-              className={
-                'mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30'
-              }
+              className={'mt-4 rounded-md border border-warning-border bg-warning-bg p-3'}
               role={'alert'}
             >
-              <p className={'text-sm text-amber-800 dark:text-amber-200'}>
+              <p className={'text-sm text-warning-text'}>
                 {`This repository is associated with ${workflowCount} ${workflowCount === 1 ? 'workflow' : 'workflows'}. Removing it will not delete workflow history but may affect active workflows.`}
               </p>
             </div>
@@ -75,7 +86,7 @@ export const ConfirmDeleteRepositoryDialog = ({
           <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={'outline'}>
-                {'Cancel'}
+                Cancel
               </Button>
             </DialogClose>
             <Button

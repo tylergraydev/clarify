@@ -5,14 +5,14 @@ import type { ComponentPropsWithRef } from 'react';
 import { AlertCircle, FolderGit2, Plus } from 'lucide-react';
 import { useState } from 'react';
 
-import type { Repository } from '@/types/electron';
+import type { Repository } from '@/db/schema';
 
 import { AddRepositoryDialog } from '@/components/repositories/add-repository-dialog';
 import { ConfirmDeleteRepositoryDialog } from '@/components/repositories/confirm-delete-repository-dialog';
 import { EditRepositoryDialog } from '@/components/repositories/edit-repository-dialog';
 import { RepositoryCard } from '@/components/repositories/repository-card';
+import { RepositoryCardSkeleton } from '@/components/repositories/repository-card-skeleton';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
   useClearDefaultRepository,
@@ -27,6 +27,10 @@ interface RepositoriesTabContentProps extends ComponentPropsWithRef<'div'> {
   projectId: number;
 }
 
+/**
+ * Repositories tab content for project detail page.
+ * Displays project repositories with add, edit, and delete functionality.
+ */
 export const RepositoriesTabContent = ({ className, projectId, ref, ...props }: RepositoriesTabContentProps) => {
   // Dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -74,6 +78,7 @@ export const RepositoriesTabContent = ({ className, projectId, ref, ...props }: 
     setDefaultRepositoryMutation.mutate(repositoryId);
   };
 
+  // Derived state
   const isRepositoriesEmpty = !isLoading && !error && repositories?.length === 0;
   const hasRepositories = !isLoading && !error && repositories && repositories.length > 0;
   const hasError = !isLoading && error;
@@ -103,7 +108,7 @@ export const RepositoriesTabContent = ({ className, projectId, ref, ...props }: 
       <div className={cn('flex flex-col gap-4', className)} ref={ref} {...props}>
         <EmptyState
           description={'Failed to load repositories. Please try again.'}
-          icon={<AlertCircle className={'size-6'} />}
+          icon={<AlertCircle aria-hidden={'true'} className={'size-6'} />}
           title={'Error Loading Repositories'}
         />
       </div>
@@ -127,7 +132,7 @@ export const RepositoriesTabContent = ({ className, projectId, ref, ...props }: 
             />
           }
           description={'Add a repository to this project to start managing workflows.'}
-          icon={<FolderGit2 className={'size-6'} />}
+          icon={<FolderGit2 aria-hidden={'true'} className={'size-6'} />}
           title={'No Repositories'}
         />
       </div>
@@ -195,40 +200,4 @@ export const RepositoriesTabContent = ({ className, projectId, ref, ...props }: 
   }
 
   return null;
-};
-
-/**
- * Skeleton loading placeholder for a repository card.
- */
-const RepositoryCardSkeleton = () => {
-  return (
-    <Card className={'flex flex-col p-4'}>
-      {/* Header */}
-      <div className={'flex items-start justify-between gap-2'}>
-        <div className={'flex items-center gap-2'}>
-          <div className={'size-4 animate-pulse rounded-sm bg-muted'} />
-          <div className={'h-5 w-32 animate-pulse rounded-sm bg-muted'} />
-        </div>
-        <div className={'h-5 w-16 animate-pulse rounded-full bg-muted'} />
-      </div>
-
-      {/* Path */}
-      <div className={'mt-2 h-4 w-48 animate-pulse rounded-sm bg-muted'} />
-
-      {/* Content */}
-      <div className={'mt-4 flex flex-col gap-2'}>
-        <div className={'flex items-center gap-2'}>
-          <div className={'h-4 w-24 animate-pulse rounded-sm bg-muted'} />
-          <div className={'h-5 w-12 animate-pulse rounded-sm bg-muted'} />
-        </div>
-        <div className={'h-3 w-28 animate-pulse rounded-sm bg-muted'} />
-      </div>
-
-      {/* Actions */}
-      <div className={'mt-4 flex gap-2 border-t border-border pt-4'}>
-        <div className={'h-8 w-24 animate-pulse rounded-md bg-muted'} />
-        <div className={'h-8 w-20 animate-pulse rounded-md bg-muted'} />
-      </div>
-    </Card>
-  );
 };

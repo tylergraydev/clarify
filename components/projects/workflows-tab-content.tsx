@@ -2,21 +2,15 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { AlertCircle, GitBranch, Grid3X3, List, Plus } from 'lucide-react';
+import { AlertCircle, GitBranch, Plus } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { ButtonGroup } from '@/components/ui/button-group';
-import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { WorkflowCard } from '@/components/workflows/workflow-card';
 import { WorkflowTable } from '@/components/workflows/workflow-table';
 import { useCancelWorkflow, useWorkflowsByProject } from '@/hooks/queries/use-workflows';
 import { cn } from '@/lib/utils';
-
-type ViewOption = 'card' | 'table';
 
 interface WorkflowsTabContentProps extends ComponentPropsWithRef<'div'> {
   /** The ID of the project to display workflows for */
@@ -27,8 +21,6 @@ interface WorkflowsTabContentProps extends ComponentPropsWithRef<'div'> {
 
 export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ...props }: WorkflowsTabContentProps) => {
   const router = useRouter();
-
-  const [view, setView] = useState<ViewOption>('table');
 
   const { data: workflows, error, isLoading } = useWorkflowsByProject(projectId);
 
@@ -45,10 +37,6 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
         routeParams: { id: String(workflowId) },
       })
     );
-  };
-
-  const handleViewChange = (newView: ViewOption) => {
-    setView(newView);
   };
 
   const handleCreateWorkflow = () => {
@@ -72,13 +60,12 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
   if (isLoading) {
     return (
       <div className={cn('flex flex-col gap-4', className)} ref={ref} {...props}>
-        {/* Header with View Toggle Skeleton */}
-        <div className={'flex items-center justify-between'}>
-          <div className={'h-9 w-40 animate-pulse rounded-md bg-muted'} />
+        {/* Header Skeleton */}
+        <div className={'flex items-center justify-end'}>
           <div className={'h-9 w-32 animate-pulse rounded-md bg-muted'} />
         </div>
 
-        {/* Table Skeleton (default view) */}
+        {/* Table Skeleton */}
         <WorkflowTableSkeleton />
       </div>
     );
@@ -120,61 +107,21 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
   if (hasWorkflows) {
     return (
       <div className={cn('flex flex-col gap-4', className)} ref={ref} {...props}>
-        {/* Header with View Toggle and Create Button */}
-        <div className={'flex items-center justify-between'}>
-          {/* View Toggle */}
-          <ButtonGroup>
-            <Button
-              aria-label={'Card view'}
-              aria-pressed={view === 'card'}
-              className={cn(view === 'card' && 'bg-muted')}
-              onClick={() => handleViewChange('card')}
-              size={'sm'}
-              variant={'outline'}
-            >
-              <Grid3X3 aria-hidden={'true'} className={'size-4'} />
-              {'Cards'}
-            </Button>
-            <Button
-              aria-label={'Table view'}
-              aria-pressed={view === 'table'}
-              className={cn(view === 'table' && 'bg-muted')}
-              onClick={() => handleViewChange('table')}
-              size={'sm'}
-              variant={'outline'}
-            >
-              <List aria-hidden={'true'} className={'size-4'} />
-              {'Table'}
-            </Button>
-          </ButtonGroup>
-
-          {/* Create Workflow Button */}
+        {/* Header with Create Button */}
+        <div className={'flex items-center justify-end'}>
           <Button onClick={handleCreateWorkflow}>
             <Plus aria-hidden={'true'} className={'size-4'} />
             {'Create Workflow'}
           </Button>
         </div>
 
-        {/* Workflows Content */}
-        {view === 'card' ? (
-          <div className={'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'}>
-            {workflows.map((workflow) => (
-              <WorkflowCard
-                key={workflow.id}
-                onCancel={handleCancelWorkflow}
-                onViewDetails={handleViewDetails}
-                workflow={workflow}
-              />
-            ))}
-          </div>
-        ) : (
-          <WorkflowTable
-            onCancel={handleCancelWorkflow}
-            onViewDetails={handleViewDetails}
-            projectMap={projectMap}
-            workflows={workflows}
-          />
-        )}
+        {/* Workflows Table */}
+        <WorkflowTable
+          onCancel={handleCancelWorkflow}
+          onViewDetails={handleViewDetails}
+          projectMap={projectMap}
+          workflows={workflows}
+        />
       </div>
     );
   }
@@ -233,36 +180,5 @@ const WorkflowTableSkeleton = () => {
   );
 };
 
-/**
- * Loading skeleton for the workflows card view
- */
-const WorkflowCardSkeleton = () => {
-  return (
-    <Card className={'animate-pulse'}>
-      <CardContent className={'p-6'}>
-        <div className={'space-y-3'}>
-          <div className={'flex items-start justify-between gap-2'}>
-            <div className={'h-5 w-3/4 rounded-sm bg-muted'} />
-            <div className={'h-5 w-16 rounded-full bg-muted'} />
-          </div>
-          <div className={'h-4 w-1/2 rounded-sm bg-muted'} />
-        </div>
-        <div className={'mt-4 space-y-2'}>
-          <div className={'flex items-center gap-2'}>
-            <div className={'h-4 w-12 rounded-sm bg-muted'} />
-            <div className={'h-5 w-20 rounded-full bg-muted'} />
-          </div>
-          <div className={'h-2 w-full rounded-full bg-muted'} />
-          <div className={'h-4 w-32 rounded-sm bg-muted'} />
-        </div>
-        <div className={'mt-4 flex gap-2'}>
-          <div className={'h-8 w-16 rounded-sm bg-muted'} />
-          <div className={'h-8 w-20 rounded-sm bg-muted'} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
 // Export the skeleton for potential external use
-export { WorkflowCardSkeleton, WorkflowTableSkeleton };
+export { WorkflowTableSkeleton };

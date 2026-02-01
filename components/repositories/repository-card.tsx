@@ -70,7 +70,7 @@ export const RepositoryCard = ({
           </div>
           {isDefault && (
             <Badge aria-label={'Repository is default'} variant={'default'}>
-              {'Default'}
+              Default
             </Badge>
           )}
         </div>
@@ -90,7 +90,7 @@ export const RepositoryCard = ({
         {/* Created Date */}
         <div aria-label={'Creation date'} role={'group'}>
           <p className={'text-xs text-muted-foreground'}>
-            {'Created '}
+            Created
             {formattedDate}
           </p>
         </div>
@@ -107,7 +107,7 @@ export const RepositoryCard = ({
             variant={'outline'}
           >
             <StarOff aria-hidden={'true'} className={'size-4'} />
-            {'Clear Default'}
+            Clear Default
           </Button>
         ) : (
           <Button
@@ -118,7 +118,7 @@ export const RepositoryCard = ({
             variant={'outline'}
           >
             <Star aria-hidden={'true'} className={'size-4'} />
-            {'Set Default'}
+            Set Default
           </Button>
         )}
         <Button
@@ -129,7 +129,7 @@ export const RepositoryCard = ({
           variant={'ghost'}
         >
           <Pencil aria-hidden={'true'} className={'size-4'} />
-          {'Edit'}
+          Edit
         </Button>
         <Button
           aria-describedby={titleId}
@@ -139,7 +139,7 @@ export const RepositoryCard = ({
           variant={'ghost'}
         >
           <Trash2 aria-hidden={'true'} className={'size-4'} />
-          {'Remove'}
+          Remove
         </Button>
       </CardFooter>
     </Card>
