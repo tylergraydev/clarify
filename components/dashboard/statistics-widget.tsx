@@ -12,10 +12,6 @@ import { useProjects } from '@/hooks/queries/use-projects';
 import { useWorkflows } from '@/hooks/queries/use-workflows';
 import { cn } from '@/lib/utils';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 type StatisticCardProps = ComponentPropsWithRef<'div'> & {
   description: string;
   icon: ReactNode;
@@ -25,10 +21,6 @@ type StatisticCardProps = ComponentPropsWithRef<'div'> & {
 };
 
 type StatisticsWidgetProps = ClassName;
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
 
 /**
  * Calculates the average duration in minutes from completed workflows
@@ -113,10 +105,6 @@ const formatDuration = (minutes: number): string => {
   return `${hours}h ${remainingMinutes}m`;
 };
 
-// ============================================================================
-// Skeleton Component
-// ============================================================================
-
 const StatisticCardSkeleton = () => {
   return (
     <div
@@ -140,10 +128,6 @@ const StatisticCardSkeleton = () => {
     </div>
   );
 };
-
-// ============================================================================
-// Statistic Card Component
-// ============================================================================
 
 const StatisticCard = ({
   className,
@@ -184,10 +168,6 @@ const StatisticCard = ({
     </div>
   );
 };
-
-// ============================================================================
-// Main Widget Content
-// ============================================================================
 
 const StatisticsContent = () => {
   const { data: workflows = [], isLoading: isWorkflowsLoading } = useWorkflows();
@@ -256,10 +236,6 @@ const StatisticsContent = () => {
     </div>
   );
 };
-
-// ============================================================================
-// Main Export
-// ============================================================================
 
 export const StatisticsWidget = ({ className }: StatisticsWidgetProps) => {
   return (

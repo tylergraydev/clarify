@@ -18,10 +18,6 @@ import { useProjects } from '@/hooks/queries/use-projects';
 import { useWorkflows } from '@/hooks/queries/use-workflows';
 import { cn } from '@/lib/utils';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 type RecentWorkflowsWidgetProps = ClassName;
 
 type WorkflowItemProps = ClassName<{
@@ -29,10 +25,6 @@ type WorkflowItemProps = ClassName<{
   projectName: string;
   workflow: Workflow;
 }>;
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
 
 /**
  * Formats a timestamp to relative time (e.g., "2 hours ago")
@@ -88,10 +80,6 @@ const formatStatus = (status: string): string => {
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
-// ============================================================================
-// Status Icon Component
-// ============================================================================
-
 /**
  * Renders the appropriate icon for a workflow status
  */
@@ -106,10 +94,6 @@ const StatusIcon = ({ status }: { status: string }) => {
       return <Clock aria-hidden={'true'} className={'size-3'} />;
   }
 };
-
-// ============================================================================
-// Skeleton Components
-// ============================================================================
 
 const WorkflowItemSkeleton = () => {
   return (
@@ -157,10 +141,6 @@ const LoadingSkeleton = () => {
     </div>
   );
 };
-
-// ============================================================================
-// Workflow Item Component
-// ============================================================================
 
 const WorkflowItem = ({ className, onClick, projectName, workflow }: WorkflowItemProps) => {
   const statusVariant = getStatusVariant(workflow.status);
@@ -221,10 +201,6 @@ const WorkflowItem = ({ className, onClick, projectName, workflow }: WorkflowIte
     </div>
   );
 };
-
-// ============================================================================
-// Main Widget Content
-// ============================================================================
 
 const RecentWorkflowsContent = () => {
   const router = useRouter();
@@ -312,10 +288,6 @@ const RecentWorkflowsContent = () => {
     </div>
   );
 };
-
-// ============================================================================
-// Main Export
-// ============================================================================
 
 export const RecentWorkflowsWidget = ({ className }: RecentWorkflowsWidgetProps) => {
   return (
