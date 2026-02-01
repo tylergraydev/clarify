@@ -60,7 +60,9 @@ export const ConfirmDeleteProjectDialog = ({
             role={'alert'}
           >
             <p className={'text-sm text-destructive'}>
-              {'This action is permanent and cannot be undone. The project and all its data (repositories, workflows, and agents) will be permanently removed.'}
+              {
+                'This action is permanent and cannot be undone. The project and all its data (repositories, workflows, and agents) will be permanently removed.'
+              }
             </p>
           </div>
 

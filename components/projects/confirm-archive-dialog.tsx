@@ -46,9 +46,7 @@ export const ConfirmArchiveDialog = ({
     onConfirm();
   };
 
-  const confirmButtonLabel = isArchived
-    ? `Unarchive ${projectName} project`
-    : `Archive ${projectName} project`;
+  const confirmButtonLabel = isArchived ? `Unarchive ${projectName} project` : `Archive ${projectName} project`;
 
   return (
     <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
