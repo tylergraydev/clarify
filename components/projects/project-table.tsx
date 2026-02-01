@@ -22,10 +22,6 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
   /** Set of project IDs currently being archived/unarchived */
   archivingIds?: Set<number>;
@@ -47,10 +43,6 @@ interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
   toolbarContent?: ReactNode;
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
 const formatDate = (dateString: null | string | undefined): string => {
   if (!dateString) return '-';
   try {
@@ -60,15 +52,7 @@ const formatDate = (dateString: null | string | undefined): string => {
   }
 };
 
-// ============================================================================
-// Column Helper
-// ============================================================================
-
 const columnHelper = createColumnHelper<Project>();
-
-// ============================================================================
-// Memoized Cell Components
-// ============================================================================
 
 interface ActionsCellProps {
   isArchiving: boolean;
@@ -95,10 +79,6 @@ const ActionsCell = memo(function ActionsCell({
 
   const actions: Array<DataTableRowAction<Project>> = [];
 
-  // -------------------------------------------------------------------------
-  // Primary Actions
-  // -------------------------------------------------------------------------
-
   // View action
   actions.push({
     disabled: isActionDisabled,
@@ -116,10 +96,6 @@ const ActionsCell = memo(function ActionsCell({
     onAction: (r) => onOpenEditDialog(r.original),
     type: 'button',
   });
-
-  // -------------------------------------------------------------------------
-  // Destructive Actions
-  // -------------------------------------------------------------------------
 
   // Separator before destructive actions
   actions.push({ type: 'separator' });
@@ -163,10 +139,6 @@ const StatusCell = memo(function StatusCell({ isArchiving, onOpenArchiveDialog, 
   );
 });
 
-// ============================================================================
-// Main Component
-// ============================================================================
-
 /**
  * Table view component for displaying projects using the DataTable component.
  *
@@ -192,10 +164,6 @@ export const ProjectTable = ({
   toolbarContent,
   ...props
 }: ProjectTableProps) => {
-  // -------------------------------------------------------------------------
-  // Dialog State - Lifted to parent for single instance rendering
-  // -------------------------------------------------------------------------
-
   // State for archive dialog
   const [archiveProject, setArchiveProject] = useState<null | Project>(null);
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
@@ -207,10 +175,6 @@ export const ProjectTable = ({
   // State for edit dialog
   const [editProject, setEditProject] = useState<null | Project>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  // -------------------------------------------------------------------------
-  // Dialog Handlers
-  // -------------------------------------------------------------------------
 
   const handleOpenArchiveDialog = useCallback((project: Project) => {
     setArchiveProject(project);
@@ -273,10 +237,6 @@ export const ProjectTable = ({
       setEditProject(null);
     }
   }, []);
-
-  // -------------------------------------------------------------------------
-  // Row Handlers
-  // -------------------------------------------------------------------------
 
   const handleRowClick = useCallback(
     (row: Row<Project>) => {

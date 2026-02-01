@@ -11,10 +11,6 @@ import { Fragment } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-// =============================================================================
-// CVA Variants
-// =============================================================================
-
 export const dataTableColumnHeaderVariants = cva(
   `
     -ml-3 inline-flex h-8 items-center justify-start gap-1.5 rounded-md px-3
@@ -34,10 +30,6 @@ export const dataTableColumnHeaderVariants = cva(
     },
   }
 );
-
-// =============================================================================
-// Component Types
-// =============================================================================
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends ComponentPropsWithRef<'div'>, VariantProps<typeof dataTableColumnHeaderVariants> {
@@ -59,10 +51,6 @@ interface DataTableColumnHeaderProps<TData, TValue>
    */
   title: string;
 }
-
-// =============================================================================
-// Helper Components
-// =============================================================================
 
 interface SortIconProps {
   isSorted: 'asc' | 'desc' | false;
@@ -94,10 +82,6 @@ const SortIcon = ({ isSorted, sortIndex }: SortIconProps) => {
     </span>
   );
 };
-
-// =============================================================================
-// Component
-// =============================================================================
 
 /**
  * DataTableColumnHeader provides a sortable column header for TanStack Table.
