@@ -179,7 +179,6 @@ export const EditProjectDialog = ({
                 </Button>
               </DialogClose>
               <form.AppForm>
-                <form.FormError />
                 <form.SubmitButton>{isSubmitting ? 'Saving...' : 'Save Changes'}</form.SubmitButton>
               </form.AppForm>
             </DialogFooter>

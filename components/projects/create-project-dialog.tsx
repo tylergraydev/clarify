@@ -147,7 +147,6 @@ export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogP
                 </Button>
               </DialogClose>
               <form.AppForm>
-                <form.FormError />
                 <form.SubmitButton>{isSubmitting ? 'Creating...' : 'Create Project'}</form.SubmitButton>
               </form.AppForm>
             </DialogFooter>
