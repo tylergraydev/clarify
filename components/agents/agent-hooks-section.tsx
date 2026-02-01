@@ -277,13 +277,7 @@ interface HookEntryCardProps {
 /**
  * Card component for displaying a single hook entry.
  */
-const HookEntryCard = ({
-  entry,
-  index,
-  isDisabled = false,
-  isMatcherVisible = true,
-  onDelete,
-}: HookEntryCardProps) => {
+const HookEntryCard = ({ entry, index, isDisabled = false, isMatcherVisible = true, onDelete }: HookEntryCardProps) => {
   const handleDeleteClick = useCallback(() => {
     onDelete(index);
   }, [index, onDelete]);

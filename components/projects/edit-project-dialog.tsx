@@ -1,8 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
-
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { Project } from '@/types/electron';
 
@@ -18,38 +16,23 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useUpdateProject } from '@/hooks/queries/use-projects';
-import { useControllableState } from '@/hooks/use-controllable-state';
 import { useAppForm } from '@/lib/forms/form-hook';
 import { type EditProjectFormValues, editProjectSchema } from '@/lib/validations/project';
 
 interface EditProjectDialogProps {
-  /** Whether the dialog is open (controlled mode) */
-  isOpen?: boolean;
-  /** Callback when the dialog open state changes (controlled mode) */
-  onOpenChange?: (isOpen: boolean) => void;
+  /** Whether the dialog is open (controlled) */
+  isOpen: boolean;
+  /** Callback when the dialog open state changes */
+  onOpenChange: (isOpen: boolean) => void;
   /** Callback when project is successfully updated */
   onSuccess?: () => void;
   /** The project to edit */
   project: Project;
-  /** The trigger element that opens the dialog (uncontrolled mode) */
-  trigger?: ReactNode;
 }
 
-export const EditProjectDialog = ({
-  isOpen: controlledIsOpen,
-  onOpenChange: controlledOnOpenChange,
-  onSuccess,
-  project,
-  trigger,
-}: EditProjectDialogProps) => {
-  const [isOpen, setIsOpen] = useControllableState({
-    defaultValue: false,
-    onChange: controlledOnOpenChange,
-    value: controlledIsOpen,
-  });
+export const EditProjectDialog = ({ isOpen, onOpenChange, onSuccess, project }: EditProjectDialogProps) => {
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
   const updateProjectMutation = useUpdateProject();
@@ -93,37 +76,31 @@ export const EditProjectDialog = ({
     form.reset(resetValues);
   }, [project, form]);
 
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
+  const handleClose = () => {
+    onOpenChange(false);
     form.reset();
-  }, [form, setIsOpen]);
+  };
 
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open && form.state.isDirty) {
-        // Show discard confirmation if form has unsaved changes
-        setIsDiscardDialogOpen(true);
-        return;
-      }
-      setIsOpen(open);
-      if (!open) {
-        form.reset();
-      }
-    },
-    [form, setIsOpen]
-  );
+  const handleOpenChangeInternal = (open: boolean) => {
+    if (!open && form.state.isDirty) {
+      // Show discard confirmation if form has unsaved changes
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+    onOpenChange(open);
+    if (!open) {
+      form.reset();
+    }
+  };
 
-  const handleConfirmDiscard = useCallback(() => {
+  const handleConfirmDiscard = () => {
     setIsDiscardDialogOpen(false);
-    setIsOpen(false);
+    onOpenChange(false);
     form.reset();
-  }, [form, setIsOpen]);
+  };
 
   return (
-    <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
-      {/* Trigger (only for uncontrolled mode) */}
-      {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
-
+    <DialogRoot onOpenChange={handleOpenChangeInternal} open={isOpen}>
       {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />

@@ -15,6 +15,7 @@ import {
 import { useRouteParams } from 'next-typesafe-url/app';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { useState } from 'react';
 
 import { EditProjectDialog } from '@/components/projects/edit-project-dialog';
 import { RepositoriesTabContent } from '@/components/projects/repositories-tab-content';
@@ -132,6 +133,9 @@ export default function ProjectDetailPage() {
   const archiveProjectMutation = useArchiveProject();
   const unarchiveProjectMutation = useUnarchiveProject();
 
+  // Dialog state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   // Handle route params loading state
   if (routeParams.isLoading) {
     return <ProjectDetailSkeleton />;
@@ -193,15 +197,11 @@ export default function ProjectDetailPage() {
 
         {/* Action buttons */}
         <div className={'flex gap-2'}>
-          <EditProjectDialog
-            project={project}
-            trigger={
-              <Button size={'sm'} variant={'outline'}>
-                <Pencil aria-hidden={'true'} className={'size-4'} />
-                {'Edit'}
-              </Button>
-            }
-          />
+          <Button onClick={() => setIsEditDialogOpen(true)} size={'sm'} variant={'outline'}>
+            <Pencil aria-hidden={'true'} className={'size-4'} />
+            {'Edit'}
+          </Button>
+          <EditProjectDialog isOpen={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} project={project} />
           {isArchived ? (
             <Button
               disabled={unarchiveProjectMutation.isPending}

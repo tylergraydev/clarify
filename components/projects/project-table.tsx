@@ -71,66 +71,33 @@ const columnHelper = createColumnHelper<Project>();
 // ============================================================================
 
 interface ActionsCellProps {
-  archivingIds: Set<number>;
-  deletingIds: Set<number>;
-  onArchive?: (projectId: number) => Promise<void>;
-  onDelete?: (projectId: number) => Promise<void>;
-  onUnarchive?: (projectId: number) => Promise<void>;
+  isArchiving: boolean;
+  isDeleting: boolean;
+  onOpenDeleteDialog: (project: Project) => void;
+  onOpenEditDialog: (project: Project) => void;
   onViewDetails?: (projectId: number) => void;
   row: Row<Project>;
 }
 
 /**
  * Memoized actions cell component to prevent recreating action handlers
- * on every table render. Uses dialog for archive/unarchive confirmation.
+ * on every table render. Uses parent-level dialogs for delete confirmation.
  */
 const ActionsCell = memo(function ActionsCell({
-  archivingIds,
-  deletingIds,
-  onArchive,
-  onDelete,
-  onUnarchive,
+  isArchiving,
+  isDeleting,
+  onOpenDeleteDialog,
+  onOpenEditDialog,
   onViewDetails,
   row,
 }: ActionsCellProps) {
-  const project = row.original;
-  const isArchived = project.archivedAt !== null;
-  const isThisRowArchiving = archivingIds.has(project.id);
-  const isThisRowDeleting = deletingIds.has(project.id);
-  const isActionDisabled = isThisRowArchiving || isThisRowDeleting;
-
-  // Dialog state for archive/unarchive confirmation
-  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
-  // Dialog state for delete confirmation
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  // Dialog state for edit
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  const handleArchiveConfirm = useCallback(async () => {
-    try {
-      if (isArchived) {
-        await onUnarchive?.(project.id);
-      } else {
-        await onArchive?.(project.id);
-      }
-      setIsArchiveDialogOpen(false);
-    } catch {
-      // Error is handled by the mutation's onError callback (toast)
-      // Dialog remains open so user can retry or cancel
-    }
-  }, [isArchived, onArchive, onUnarchive, project.id]);
-
-  const handleDeleteConfirm = useCallback(async () => {
-    try {
-      await onDelete?.(project.id);
-      setIsDeleteDialogOpen(false);
-    } catch {
-      // Error is handled by the mutation's onError callback (toast)
-      // Dialog remains open so user can retry or cancel
-    }
-  }, [onDelete, project.id]);
+  const isActionDisabled = isArchiving || isDeleting;
 
   const actions: Array<DataTableRowAction<Project>> = [];
+
+  // -------------------------------------------------------------------------
+  // Primary Actions
+  // -------------------------------------------------------------------------
 
   // View action
   actions.push({
@@ -146,9 +113,13 @@ const ActionsCell = memo(function ActionsCell({
     disabled: isActionDisabled,
     icon: <Pencil aria-hidden={'true'} className={'size-4'} />,
     label: 'Edit',
-    onAction: () => setIsEditDialogOpen(true),
+    onAction: (r) => onOpenEditDialog(r.original),
     type: 'button',
   });
+
+  // -------------------------------------------------------------------------
+  // Destructive Actions
+  // -------------------------------------------------------------------------
 
   // Separator before destructive actions
   actions.push({ type: 'separator' });
@@ -158,42 +129,17 @@ const ActionsCell = memo(function ActionsCell({
     disabled: isActionDisabled,
     icon: <Trash2 aria-hidden={'true'} className={'size-4 text-destructive'} />,
     label: 'Delete',
-    onAction: () => setIsDeleteDialogOpen(true),
+    onAction: (r) => onOpenDeleteDialog(r.original),
     type: 'button',
     variant: 'destructive',
   });
 
-  return (
-    <Fragment>
-      <DataTableRowActions actions={actions} row={row} size={'sm'} />
-      <ConfirmArchiveDialog
-        isArchived={isArchived}
-        isLoading={isThisRowArchiving}
-        isOpen={isArchiveDialogOpen}
-        onConfirm={handleArchiveConfirm}
-        onOpenChange={setIsArchiveDialogOpen}
-        projectName={project.name}
-      />
-      <ConfirmDeleteProjectDialog
-        isLoading={isThisRowDeleting}
-        isOpen={isDeleteDialogOpen}
-        onConfirm={handleDeleteConfirm}
-        onOpenChange={setIsDeleteDialogOpen}
-        projectName={project.name}
-      />
-      <EditProjectDialog
-        isOpen={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        project={project}
-      />
-    </Fragment>
-  );
+  return <DataTableRowActions actions={actions} row={row} size={'sm'} />;
 });
 
 interface StatusCellProps {
-  archivingIds: Set<number>;
-  onArchive?: (projectId: number) => Promise<void>;
-  onUnarchive?: (projectId: number) => Promise<void>;
+  isArchiving: boolean;
+  onOpenArchiveDialog: (project: Project) => void;
   row: Row<Project>;
 }
 
@@ -201,51 +147,19 @@ interface StatusCellProps {
  * Memoized status cell component with interactive toggle switch.
  * Clicking the toggle opens a confirmation dialog before archiving/unarchiving.
  */
-const StatusCell = memo(function StatusCell({ archivingIds, onArchive, onUnarchive, row }: StatusCellProps) {
+const StatusCell = memo(function StatusCell({ isArchiving, onOpenArchiveDialog, row }: StatusCellProps) {
   const project = row.original;
   const isArchived = project.archivedAt !== null;
-  const isThisRowArchiving = archivingIds.has(project.id);
-
-  // Dialog state for archive/unarchive confirmation
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleToggle = useCallback(() => {
-    setIsDialogOpen(true);
-  }, []);
-
-  const handleConfirm = useCallback(async () => {
-    try {
-      if (isArchived) {
-        await onUnarchive?.(project.id);
-      } else {
-        await onArchive?.(project.id);
-      }
-      setIsDialogOpen(false);
-    } catch {
-      // Error is handled by the mutation's onError callback (toast)
-      // Dialog remains open so user can retry or cancel
-    }
-  }, [isArchived, onArchive, onUnarchive, project.id]);
+    onOpenArchiveDialog(project);
+  }, [onOpenArchiveDialog, project]);
 
   return (
-    <Fragment>
-      <div
-        className={'flex items-center gap-2'}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
-        <Switch checked={!isArchived} disabled={isThisRowArchiving} onCheckedChange={handleToggle} size={'sm'} />
-        <span className={'text-sm text-muted-foreground'}>{isArchived ? 'Archived' : 'Active'}</span>
-      </div>
-      <ConfirmArchiveDialog
-        isArchived={isArchived}
-        isLoading={isThisRowArchiving}
-        isOpen={isDialogOpen}
-        onConfirm={handleConfirm}
-        onOpenChange={setIsDialogOpen}
-        projectName={project.name}
-      />
-    </Fragment>
+    <div className={'flex items-center gap-2'} onClick={(e) => e.stopPropagation()}>
+      <Switch checked={!isArchived} disabled={isArchiving} onCheckedChange={handleToggle} size={'sm'} />
+      <span className={'text-sm text-muted-foreground'}>{isArchived ? 'Archived' : 'Active'}</span>
+    </div>
   );
 });
 
@@ -278,6 +192,92 @@ export const ProjectTable = ({
   toolbarContent,
   ...props
 }: ProjectTableProps) => {
+  // -------------------------------------------------------------------------
+  // Dialog State - Lifted to parent for single instance rendering
+  // -------------------------------------------------------------------------
+
+  // State for archive dialog
+  const [archiveProject, setArchiveProject] = useState<null | Project>(null);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+
+  // State for delete dialog
+  const [deleteProject, setDeleteProject] = useState<null | Project>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // State for edit dialog
+  const [editProject, setEditProject] = useState<null | Project>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // -------------------------------------------------------------------------
+  // Dialog Handlers
+  // -------------------------------------------------------------------------
+
+  const handleOpenArchiveDialog = useCallback((project: Project) => {
+    setArchiveProject(project);
+    setIsArchiveDialogOpen(true);
+  }, []);
+
+  const handleArchiveDialogChange = useCallback((isOpen: boolean) => {
+    setIsArchiveDialogOpen(isOpen);
+    if (!isOpen) {
+      setArchiveProject(null);
+    }
+  }, []);
+
+  const handleArchiveConfirm = useCallback(async () => {
+    if (!archiveProject) return;
+    try {
+      if (archiveProject.archivedAt !== null) {
+        await onUnarchive?.(archiveProject.id);
+      } else {
+        await onArchive?.(archiveProject.id);
+      }
+      setIsArchiveDialogOpen(false);
+    } catch {
+      // Error is handled by the mutation's onError callback (toast)
+      // Dialog remains open so user can retry or cancel
+    }
+  }, [archiveProject, onArchive, onUnarchive]);
+
+  const handleOpenDeleteDialog = useCallback((project: Project) => {
+    setDeleteProject(project);
+    setIsDeleteDialogOpen(true);
+  }, []);
+
+  const handleDeleteDialogChange = useCallback((isOpen: boolean) => {
+    setIsDeleteDialogOpen(isOpen);
+    if (!isOpen) {
+      setDeleteProject(null);
+    }
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteProject) return;
+    try {
+      await onDelete?.(deleteProject.id);
+      setIsDeleteDialogOpen(false);
+    } catch {
+      // Error is handled by the mutation's onError callback (toast)
+      // Dialog remains open so user can retry or cancel
+    }
+  }, [deleteProject, onDelete]);
+
+  const handleOpenEditDialog = useCallback((project: Project) => {
+    setEditProject(project);
+    setIsEditDialogOpen(true);
+  }, []);
+
+  const handleEditDialogChange = useCallback((isOpen: boolean) => {
+    setIsEditDialogOpen(isOpen);
+    if (!isOpen) {
+      setEditProject(null);
+    }
+  }, []);
+
+  // -------------------------------------------------------------------------
+  // Row Handlers
+  // -------------------------------------------------------------------------
+
   const handleRowClick = useCallback(
     (row: Row<Project>) => {
       onViewDetails?.(row.original.id);
@@ -298,11 +298,10 @@ export const ProjectTable = ({
       columnHelper.display({
         cell: ({ row }) => (
           <ActionsCell
-            archivingIds={archivingIds}
-            deletingIds={deletingIds}
-            onArchive={onArchive}
-            onDelete={onDelete}
-            onUnarchive={onUnarchive}
+            isArchiving={archivingIds.has(row.original.id)}
+            isDeleting={deletingIds.has(row.original.id)}
+            onOpenDeleteDialog={handleOpenDeleteDialog}
+            onOpenEditDialog={handleOpenEditDialog}
             onViewDetails={onViewDetails}
             row={row}
           />
@@ -352,7 +351,22 @@ export const ProjectTable = ({
           return <span className={'text-muted-foreground'}>{description || '-'}</span>;
         },
         header: 'Description',
-        size: 280,
+        size: 450,
+      }),
+
+      // Status column with interactive toggle
+      columnHelper.display({
+        cell: ({ row }) => (
+          <StatusCell
+            isArchiving={archivingIds.has(row.original.id)}
+            onOpenArchiveDialog={handleOpenArchiveDialog}
+            row={row}
+          />
+        ),
+        enableSorting: false,
+        header: 'Status',
+        id: 'status',
+        size: 120,
       }),
 
       // Created At column
@@ -362,17 +376,6 @@ export const ProjectTable = ({
         },
         header: 'Created',
         size: 110,
-      }),
-
-      // Status column with interactive toggle
-      columnHelper.display({
-        cell: ({ row }) => (
-          <StatusCell archivingIds={archivingIds} onArchive={onArchive} onUnarchive={onUnarchive} row={row} />
-        ),
-        enableSorting: false,
-        header: 'Status',
-        id: 'status',
-        size: 120,
       }),
 
       // Updated At column - filler column to take remaining space
@@ -387,39 +390,71 @@ export const ProjectTable = ({
         size: 110,
       }),
     ],
-    [archivingIds, deletingIds, onArchive, onDelete, onUnarchive, onViewDetails]
+    [archivingIds, deletingIds, handleOpenArchiveDialog, handleOpenDeleteDialog, handleOpenEditDialog, onViewDetails]
+    // Note: handleOpenArchiveDialog is used by StatusCell within the Status column
   );
 
   return (
-    <DataTable
-      className={className}
-      columns={columns}
-      data={projects}
-      density={'default'}
-      emptyState={{
-        noData: {
-          description: 'Create a project to get started.',
-          title: 'No projects found',
-        },
-        noResults: {
-          description: 'Try adjusting your search or filters.',
-          title: 'No matching projects',
-        },
-      }}
-      getRowId={(project) => String(project.id)}
-      isPaginationEnabled={false}
-      isToolbarVisible={true}
-      onGlobalFilterChange={onGlobalFilterChange}
-      onRowClick={handleRowClick}
-      persistence={{
-        persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing'],
-        tableId: 'projects-table',
-      }}
-      ref={ref}
-      rowStyleCallback={rowStyleCallback}
-      searchPlaceholder={'Search projects...'}
-      toolbarContent={toolbarContent}
-      {...props}
-    />
+    <Fragment>
+      {/* Data Table */}
+      <DataTable
+        className={className}
+        columns={columns}
+        data={projects}
+        density={'default'}
+        emptyState={{
+          noData: {
+            description: 'Create a project to get started.',
+            title: 'No projects found',
+          },
+          noResults: {
+            description: 'Try adjusting your search or filters.',
+            title: 'No matching projects',
+          },
+        }}
+        getRowId={(project) => String(project.id)}
+        isPaginationEnabled={false}
+        isToolbarVisible={true}
+        onGlobalFilterChange={onGlobalFilterChange}
+        onRowClick={handleRowClick}
+        persistence={{
+          persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing'],
+          tableId: 'projects-table',
+        }}
+        ref={ref}
+        rowStyleCallback={rowStyleCallback}
+        searchPlaceholder={'Search projects...'}
+        toolbarContent={toolbarContent}
+        {...props}
+      />
+
+      {/* Archive/Unarchive Dialog */}
+      {archiveProject && (
+        <ConfirmArchiveDialog
+          isArchived={archiveProject.archivedAt !== null}
+          isLoading={archivingIds.has(archiveProject.id)}
+          isOpen={isArchiveDialogOpen}
+          onConfirm={handleArchiveConfirm}
+          onOpenChange={handleArchiveDialogChange}
+          projectName={archiveProject.name}
+        />
+      )}
+
+      {/* Delete Dialog */}
+      {deleteProject && (
+        <ConfirmDeleteProjectDialog
+          isLoading={deletingIds.has(deleteProject.id)}
+          isOpen={isDeleteDialogOpen}
+          onConfirm={handleDeleteConfirm}
+          onOpenChange={handleDeleteDialogChange}
+          projectName={deleteProject.name}
+        />
+      )}
+
+      {/* Edit Dialog */}
+      {editProject && (
+        <EditProjectDialog isOpen={isEditDialogOpen} onOpenChange={handleEditDialogChange} project={editProject} />
+      )}
+    </Fragment>
   );
 };

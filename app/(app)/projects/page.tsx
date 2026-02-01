@@ -8,12 +8,7 @@ import { parseAsStringLiteral, useQueryState } from 'nuqs';
 import { useMemo, useState } from 'react';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
-import {
-  type ArchiveFilterValue,
-  CreateProjectDialog,
-  ProjectTable,
-  ProjectTableToolbar,
-} from '@/components/projects';
+import { type ArchiveFilterValue, CreateProjectDialog, ProjectTable, ProjectTableToolbar } from '@/components/projects';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DataTableSkeleton } from '@/components/ui/table';
