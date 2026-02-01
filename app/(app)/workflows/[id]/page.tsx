@@ -1,13 +1,20 @@
 'use client';
 
-import { ChevronRight } from 'lucide-react';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { Calendar, ChevronRight, Clock, FolderOpen, Pause, Play, X } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { useRouteParams } from 'next-typesafe-url/app';
 import { withParamValidation } from 'next-typesafe-url/app/hoc';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { Fragment } from 'react';
+
+import type { badgeVariants } from '@/components/ui/badge';
+import type { Workflow } from '@/types/electron';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { WorkflowDetailSkeleton } from '@/components/workflows';
 import { useProject } from '@/hooks/queries/use-projects';
 import { useWorkflow } from '@/hooks/queries/use-workflows';
@@ -15,10 +22,82 @@ import { useWorkflow } from '@/hooks/queries/use-workflows';
 import { Route } from './route-type';
 
 // ============================================================================
+// Types
+// ============================================================================
+
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
+
+type WorkflowStatus = Workflow['status'];
+
+type WorkflowType = Workflow['type'];
+
+// ============================================================================
 // Helpers
 // ============================================================================
 
-// None needed for placeholder page
+/**
+ * Status arrays for conditional action visibility
+ */
+const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'paused', 'running'];
+const PAUSABLE_STATUSES: Array<WorkflowStatus> = ['running'];
+const RESUMABLE_STATUSES: Array<WorkflowStatus> = ['paused'];
+
+/**
+ * Maps workflow status to badge variant for consistent status styling.
+ *
+ * Mapping:
+ * - created -> default (neutral gray)
+ * - running -> planning (purple/blue)
+ * - paused -> clarifying (yellow)
+ * - editing -> clarifying (yellow)
+ * - completed -> completed (green)
+ * - failed -> failed (red)
+ * - cancelled -> stale (amber)
+ */
+const getStatusVariant = (status: WorkflowStatus): BadgeVariant => {
+  const statusVariantMap: Record<WorkflowStatus, BadgeVariant> = {
+    cancelled: 'stale',
+    completed: 'completed',
+    created: 'default',
+    editing: 'clarifying',
+    failed: 'failed',
+    paused: 'clarifying',
+    running: 'planning',
+  };
+
+  return statusVariantMap[status] ?? 'default';
+};
+
+/**
+ * Formats a workflow status string for display by capitalizing the first letter.
+ */
+const formatStatusLabel = (status: WorkflowStatus): string => {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+/**
+ * Formats a workflow type string for display by capitalizing the first letter.
+ */
+const formatTypeLabel = (type: WorkflowType): string => {
+  return type.charAt(0).toUpperCase() + type.slice(1);
+};
+
+/**
+ * Formats a date string to a relative time string (e.g., "2 hours ago", "3 days ago").
+ * Returns a fallback string if the date is null or invalid.
+ */
+const formatRelativeTime = (dateString: null | string | undefined): string => {
+  if (!dateString) {
+    return 'Unknown';
+  }
+
+  try {
+    const date = parseISO(dateString);
+    return formatDistanceToNow(date, { addSuffix: true });
+  } catch {
+    return 'Unknown';
+  }
+};
 
 // ============================================================================
 // Page Content
@@ -116,9 +195,70 @@ function WorkflowDetailContent() {
 
         {/* Page header */}
         <section aria-label={'Workflow header'}>
-          <h1 className={'text-2xl font-semibold tracking-tight'}>
-            Workflow: {workflow.featureName}
-          </h1>
+          <div className={'flex items-center gap-3'}>
+            <h1 className={'text-3xl font-bold'}>{workflow.featureName}</h1>
+            <Badge variant={getStatusVariant(workflow.status)}>{formatStatusLabel(workflow.status)}</Badge>
+            <Badge variant={'default'}>{formatTypeLabel(workflow.type)}</Badge>
+          </div>
+
+          {/* Metadata */}
+          <div className={'mt-2 flex items-center gap-3 text-sm text-muted-foreground'}>
+            {hasProject ? (
+              <Link
+                className={'flex items-center gap-1 transition-colors hover:text-foreground'}
+                href={$path({ route: '/projects/[id]', routeParams: { id: workflow.projectId as number } })}
+              >
+                <FolderOpen className={'size-4'} />
+                {project.name}
+              </Link>
+            ) : isProjectDataLoading ? (
+              <span className={'flex items-center gap-1'}>
+                <FolderOpen className={'size-4'} />
+                <span className={'h-4 w-20 animate-pulse rounded-sm bg-muted'} />
+              </span>
+            ) : (
+              <span className={'flex items-center gap-1'}>
+                <FolderOpen className={'size-4'} />
+                No Project
+              </span>
+            )}
+            <span aria-hidden={'true'}>·</span>
+            <span className={'flex items-center gap-1'}>
+              <Calendar className={'size-4'} />
+              Created {formatRelativeTime(workflow.createdAt)}
+            </span>
+            {workflow.startedAt && (
+              <Fragment>
+                <span aria-hidden={'true'}>·</span>
+                <span className={'flex items-center gap-1'}>
+                  <Clock className={'size-4'} />
+                  Started {formatRelativeTime(workflow.startedAt)}
+                </span>
+              </Fragment>
+            )}
+          </div>
+
+          {/* Action Bar */}
+          <div className={'mt-4 flex items-center gap-2'}>
+            {PAUSABLE_STATUSES.includes(workflow.status) && (
+              <Button aria-disabled={'true'} aria-label={'Pause workflow'} disabled variant={'outline'}>
+                <Pause className={'mr-2 size-4'} />
+                Pause
+              </Button>
+            )}
+            {RESUMABLE_STATUSES.includes(workflow.status) && (
+              <Button aria-disabled={'true'} aria-label={'Resume workflow'} disabled variant={'outline'}>
+                <Play className={'mr-2 size-4'} />
+                Resume
+              </Button>
+            )}
+            {CANCELLABLE_STATUSES.includes(workflow.status) && (
+              <Button aria-disabled={'true'} aria-label={'Cancel workflow'} disabled variant={'destructive'}>
+                <X className={'mr-2 size-4'} />
+                Cancel
+              </Button>
+            )}
+          </div>
         </section>
       </main>
     </QueryErrorBoundary>
