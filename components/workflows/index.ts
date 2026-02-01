@@ -1,6 +1,15 @@
 // Dialog components
 export { CreateWorkflowDialog } from './create-workflow-dialog';
 export { EditWorkflowDialog } from './edit-workflow-dialog';
+// Pipeline components
+export { PipelineConnector, pipelineConnectorVariants } from './pipeline-connector';
+export {
+  PipelineStep,
+  type PipelineStepStatus,
+  type PipelineStepType,
+  pipelineStepVariants,
+} from './pipeline-step';
+export { PipelineView } from './pipeline-view';
 // Field components
 export {
   repositoryItemVariants,

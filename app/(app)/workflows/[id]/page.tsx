@@ -14,7 +14,7 @@ import type { Workflow } from '@/types/electron';
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { WorkflowDetailSkeleton } from '@/components/workflows';
+import { PipelineView, WorkflowDetailSkeleton } from '@/components/workflows';
 import { useProject } from '@/hooks/queries/use-projects';
 import { useWorkflow } from '@/hooks/queries/use-workflows';
 
@@ -270,6 +270,11 @@ const WorkflowDetailPage = () => {
               </Button>
             )}
           </div>
+        </section>
+
+        {/* Pipeline Section */}
+        <section aria-label={'Workflow pipeline'}>
+          <PipelineView workflowId={workflowId} />
         </section>
       </main>
     </QueryErrorBoundary>

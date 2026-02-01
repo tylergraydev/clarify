@@ -71,6 +71,62 @@ export const WorkflowDetailSkeleton = () => {
         <div className={'size-9 animate-pulse rounded-md bg-muted'} />
       </div>
 
+      {/* Pipeline Skeleton */}
+      <div className={'flex items-center gap-4 overflow-x-auto py-4'}>
+        {/* Step 1 - Clarification */}
+        <div className={'min-w-64 shrink-0'}>
+          <div className={'animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
+            <div className={'flex items-center gap-3'}>
+              <div className={'size-8 rounded-full bg-muted'} />
+              <div className={'h-4 flex-1 rounded-sm bg-muted'} />
+              <div className={'size-5 rounded-full bg-muted'} />
+            </div>
+          </div>
+        </div>
+
+        {/* Connector 1 */}
+        <div className={'h-0.5 min-w-8 flex-1 animate-pulse rounded-full bg-muted'} />
+
+        {/* Step 2 - Refinement */}
+        <div className={'min-w-64 shrink-0'}>
+          <div className={'animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
+            <div className={'flex items-center gap-3'}>
+              <div className={'size-8 rounded-full bg-muted'} />
+              <div className={'h-4 flex-1 rounded-sm bg-muted'} />
+              <div className={'size-5 rounded-full bg-muted'} />
+            </div>
+          </div>
+        </div>
+
+        {/* Connector 2 */}
+        <div className={'h-0.5 min-w-8 flex-1 animate-pulse rounded-full bg-muted'} />
+
+        {/* Step 3 - Discovery */}
+        <div className={'min-w-64 shrink-0'}>
+          <div className={'animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
+            <div className={'flex items-center gap-3'}>
+              <div className={'size-8 rounded-full bg-muted'} />
+              <div className={'h-4 flex-1 rounded-sm bg-muted'} />
+              <div className={'size-5 rounded-full bg-muted'} />
+            </div>
+          </div>
+        </div>
+
+        {/* Connector 3 */}
+        <div className={'h-0.5 min-w-8 flex-1 animate-pulse rounded-full bg-muted'} />
+
+        {/* Step 4 - Planning */}
+        <div className={'min-w-64 shrink-0'}>
+          <div className={'animate-pulse rounded-lg border border-border bg-muted/30 p-4'}>
+            <div className={'flex items-center gap-3'}>
+              <div className={'size-8 rounded-full bg-muted'} />
+              <div className={'h-4 flex-1 rounded-sm bg-muted'} />
+              <div className={'size-5 rounded-full bg-muted'} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Content Area Placeholder */}
       <div className={'h-64 animate-pulse rounded-lg bg-muted'} />
     </div>
