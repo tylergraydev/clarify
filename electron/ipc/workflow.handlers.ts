@@ -15,6 +15,7 @@ import type {
   WorkflowStatistics,
 } from '../../db/repositories';
 import type { NewWorkflow, Workflow } from '../../db/schema';
+import type { UpdateWorkflowInput } from '../../lib/validations/workflow';
 
 import { IpcChannels } from './channels';
 
@@ -140,6 +141,19 @@ export function registerWorkflowHandlers(workflowsRepository: WorkflowsRepositor
         return workflowsRepository.getHistoryStatistics(filters);
       } catch (error) {
         console.error('[IPC Error] workflow:getStatistics:', error);
+        throw error;
+      }
+    }
+  );
+
+  // Update a workflow (only allowed when status is 'created')
+  ipcMain.handle(
+    IpcChannels.workflow.update,
+    (_event: IpcMainInvokeEvent, id: number, data: UpdateWorkflowInput): Workflow => {
+      try {
+        return workflowsRepository.updateWorkflow(id, data);
+      } catch (error) {
+        console.error('[IPC Error] workflow:update:', error);
         throw error;
       }
     }

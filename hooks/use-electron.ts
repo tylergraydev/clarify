@@ -94,6 +94,10 @@ export function useElectronDb() {
         const electronApi = throwIfNoApi('workflow.start');
         return electronApi.workflow.start(id);
       },
+      update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['workflow']['update']>[1]) => {
+        const electronApi = throwIfNoApi('workflow.update');
+        return electronApi.workflow.update(id, data);
+      },
     }),
     [api, throwIfNoApi]
   );

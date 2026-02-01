@@ -28,6 +28,7 @@ import type {
   WorkflowStep,
   Worktree,
 } from '../db/schema';
+import type { UpdateWorkflowInput } from '../lib/validations/workflow';
 
 /**
  * IPC Channel Constants (Duplicate - Required for Preload)
@@ -175,6 +176,7 @@ const IpcChannels = {
     pause: 'workflow:pause',
     resume: 'workflow:resume',
     start: 'workflow:start',
+    update: 'workflow:update',
   },
   workflowRepository: {
     add: 'workflowRepository:add',
@@ -473,6 +475,7 @@ export interface ElectronAPI {
     pause(id: number): Promise<undefined | Workflow>;
     resume(id: number): Promise<undefined | Workflow>;
     start(id: number): Promise<undefined | Workflow>;
+    update(id: number, data: UpdateWorkflowInput): Promise<Workflow>;
   };
   workflowRepository: {
     add(workflowId: number, repositoryId: number, isPrimary?: boolean): Promise<WorkflowRepository>;
@@ -690,6 +693,7 @@ const electronAPI: ElectronAPI = {
     pause: (id) => ipcRenderer.invoke(IpcChannels.workflow.pause, id),
     resume: (id) => ipcRenderer.invoke(IpcChannels.workflow.resume, id),
     start: (id) => ipcRenderer.invoke(IpcChannels.workflow.start, id),
+    update: (id, data) => ipcRenderer.invoke(IpcChannels.workflow.update, id, data),
   },
   workflowRepository: {
     add: (workflowId, repositoryId, isPrimary) =>

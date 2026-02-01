@@ -1,5 +1,6 @@
 // Dialog components
 export { CreateWorkflowDialog } from './create-workflow-dialog';
+export { EditWorkflowDialog } from './edit-workflow-dialog';
 // Field components
 export {
   repositoryItemVariants,

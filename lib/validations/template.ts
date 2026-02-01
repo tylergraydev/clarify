@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { templateCategories } from '@/db/schema/templates.schema';
+import { templateCategories } from '../../db/schema/templates.schema';
 
 // Template placeholder schema for individual placeholder fields
 export const templatePlaceholderSchema = z.object({

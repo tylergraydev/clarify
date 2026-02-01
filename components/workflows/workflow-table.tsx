@@ -4,7 +4,7 @@ import type { Row } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 import { format } from 'date-fns';
-import { Eye, X } from 'lucide-react';
+import { Eye, Pencil, X } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo } from 'react';
 
 import type { Workflow } from '@/types/electron';
@@ -32,6 +32,8 @@ interface WorkflowTableProps extends ComponentPropsWithRef<'div'> {
   cancellingIds?: Set<number>;
   /** Callback when the user clicks cancel on a workflow */
   onCancel?: (workflowId: number) => void;
+  /** Callback when the user clicks edit on a workflow (only for 'created' status) */
+  onEdit?: (workflow: Workflow) => void;
   /** Callback fired when global filter (search) changes */
   onGlobalFilterChange?: (value: string) => void;
   /** Callback when the user clicks view details on a workflow */
@@ -96,6 +98,7 @@ const columnHelper = createColumnHelper<Workflow>();
 interface ActionsCellProps {
   isCancelling: boolean;
   onCancel?: (workflowId: number) => void;
+  onEdit?: (workflow: Workflow) => void;
   onViewDetails?: (workflowId: number) => void;
   row: Row<Workflow>;
 }
@@ -104,9 +107,16 @@ interface ActionsCellProps {
  * Memoized actions cell component to prevent recreating action handlers
  * on every table render.
  */
-const ActionsCell = memo(function ActionsCell({ isCancelling, onCancel, onViewDetails, row }: ActionsCellProps) {
+const ActionsCell = memo(function ActionsCell({
+  isCancelling,
+  onCancel,
+  onEdit,
+  onViewDetails,
+  row,
+}: ActionsCellProps) {
   const workflow = row.original;
   const isCancellable = CANCELLABLE_STATUSES.includes(workflow.status as WorkflowStatus);
+  const isEditable = workflow.status === 'created';
 
   const actions: Array<DataTableRowAction<Workflow>> = [];
 
@@ -126,6 +136,17 @@ const ActionsCell = memo(function ActionsCell({ isCancelling, onCancel, onViewDe
   // -------------------------------------------------------------------------
   // Conditional Actions - Based on workflow state
   // -------------------------------------------------------------------------
+
+  // Edit action (only for 'created' status)
+  if (isEditable) {
+    actions.push({
+      disabled: isCancelling,
+      icon: <Pencil aria-hidden={'true'} className={'size-4'} />,
+      label: 'Edit',
+      onAction: (r) => onEdit?.(r.original),
+      type: 'button',
+    });
+  }
 
   // Cancel action (only for cancellable statuses)
   if (isCancellable) {
@@ -161,6 +182,7 @@ export const WorkflowTable = ({
   cancellingIds = new Set(),
   className,
   onCancel,
+  onEdit,
   onGlobalFilterChange,
   onViewDetails,
   projectMap,
@@ -194,6 +216,7 @@ export const WorkflowTable = ({
           <ActionsCell
             isCancelling={cancellingIds.has(row.original.id)}
             onCancel={onCancel}
+            onEdit={onEdit}
             onViewDetails={onViewDetails}
             row={row}
           />
@@ -306,7 +329,7 @@ export const WorkflowTable = ({
         size: 110,
       }),
     ],
-    [cancellingIds, onCancel, onViewDetails, projectMap]
+    [cancellingIds, onCancel, onEdit, onViewDetails, projectMap]
   );
 
   return (

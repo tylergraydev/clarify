@@ -3,6 +3,7 @@ import { and, asc, count, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import type { DrizzleDatabase } from '../index';
 import type { NewWorkflow, Workflow } from '../schema';
 
+import { type UpdateWorkflowInput, updateWorkflowSchema } from '../../lib/validations/workflow';
 import { workflows } from '../schema';
 
 /**
@@ -63,6 +64,7 @@ export interface WorkflowsRepository {
   start(id: number): undefined | Workflow;
   update(id: number, data: Partial<NewWorkflow>): undefined | Workflow;
   updateStatus(id: number, status: string, errorMessage?: string): undefined | Workflow;
+  updateWorkflow(id: number, data: UpdateWorkflowInput): Workflow;
 }
 
 /**
@@ -317,6 +319,37 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
       }
 
       return db.update(workflows).set(updateData).where(eq(workflows.id, id)).returning().get();
+    },
+
+    updateWorkflow(id: number, data: UpdateWorkflowInput): Workflow {
+      // First, find the workflow and check its status
+      const workflow = db.select().from(workflows).where(eq(workflows.id, id)).get();
+
+      if (!workflow) {
+        throw new Error(`Workflow with id ${id} not found`);
+      }
+
+      if (workflow.status !== 'created') {
+        throw new Error(`Cannot update workflow: status must be 'created' but is '${workflow.status}'`);
+      }
+
+      // Validate the update data
+      const validated = updateWorkflowSchema.parse(data);
+
+      // Update the workflow with validated data
+      const now = new Date().toISOString();
+      const updated = db
+        .update(workflows)
+        .set({ ...validated, updatedAt: now })
+        .where(eq(workflows.id, id))
+        .returning()
+        .get();
+
+      if (!updated) {
+        throw new Error(`Failed to update workflow with id ${id}`);
+      }
+
+      return updated;
     },
   };
 }

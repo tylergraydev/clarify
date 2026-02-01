@@ -340,6 +340,10 @@ export interface ElectronAPI {
     pause(id: number): Promise<import('../db/schema').Workflow | undefined>;
     resume(id: number): Promise<import('../db/schema').Workflow | undefined>;
     start(id: number): Promise<import('../db/schema').Workflow | undefined>;
+    update(
+      id: number,
+      data: import('../lib/validations/workflow').UpdateWorkflowInput
+    ): Promise<import('../db/schema').Workflow>;
   };
   workflowRepository: {
     add(

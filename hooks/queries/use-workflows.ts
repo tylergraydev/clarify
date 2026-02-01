@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import type { UpdateWorkflowInput } from '@/lib/validations/workflow';
 import type { WorkflowHistoryFilters } from '@/types/electron';
 
 import { workflowKeys } from '@/lib/queries/workflows';
@@ -178,6 +179,34 @@ export function useStartWorkflow() {
 
   return useMutation({
     mutationFn: (id: number) => workflows.start(id),
+    onSuccess: (workflow) => {
+      if (workflow) {
+        queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.running.queryKey,
+        });
+        if (workflow.projectId) {
+          void queryClient.invalidateQueries({
+            queryKey: workflowKeys.byProject(workflow.projectId).queryKey,
+          });
+        }
+      }
+    },
+  });
+}
+
+/**
+ * Update a workflow (only allowed when status is 'created')
+ */
+export function useUpdateWorkflow() {
+  const queryClient = useQueryClient();
+  const { workflows } = useElectronDb();
+
+  return useMutation({
+    mutationFn: ({ data, id }: { data: UpdateWorkflowInput; id: number }) => workflows.update(id, data),
     onSuccess: (workflow) => {
       if (workflow) {
         queryClient.setQueryData(workflowKeys.detail(workflow.id).queryKey, workflow);

@@ -7,10 +7,13 @@ import { $path } from 'next-typesafe-url';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 
+import type { Workflow } from '@/db/schema/workflows.schema';
+
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DataTableSkeleton } from '@/components/ui/table';
 import { CreateWorkflowDialog } from '@/components/workflows/create-workflow-dialog';
+import { EditWorkflowDialog } from '@/components/workflows/edit-workflow-dialog';
 import { WorkflowTable } from '@/components/workflows/workflow-table';
 import {
   type WorkflowStatusFilterValue,
@@ -42,6 +45,9 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
   const [typeFilter, setTypeFilter] = useState<WorkflowTypeFilterValue>(DEFAULT_TYPE_FILTER);
   const [searchFilter, setSearchFilter] = useState('');
   const [cancellingIds, setCancellingIds] = useState<Set<number>>(new Set());
+
+  // Edit workflow state
+  const [editingWorkflow, setEditingWorkflow] = useState<null | Workflow>(null);
 
   // Filtered workflows
   const filteredWorkflows = useMemo(() => {
@@ -89,6 +95,16 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
     setStatusFilter(DEFAULT_STATUS_FILTER);
     setTypeFilter(DEFAULT_TYPE_FILTER);
     setSearchFilter('');
+  }, []);
+
+  const handleEditWorkflow = useCallback((workflow: Workflow) => {
+    setEditingWorkflow(workflow);
+  }, []);
+
+  const handleEditDialogOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      setEditingWorkflow(null);
+    }
   }, []);
 
   const isWorkflowsEmpty = !isLoading && !error && workflows?.length === 0;
@@ -168,6 +184,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
         <WorkflowTable
           cancellingIds={cancellingIds}
           onCancel={handleCancelWorkflow}
+          onEdit={handleEditWorkflow}
           onGlobalFilterChange={setSearchFilter}
           onViewDetails={handleViewDetails}
           projectMap={projectMap}
@@ -182,6 +199,15 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
           }
           workflows={filteredWorkflows}
         />
+
+        {/* Edit Workflow Dialog */}
+        {editingWorkflow && (
+          <EditWorkflowDialog
+            onOpenChange={handleEditDialogOpenChange}
+            open={!!editingWorkflow}
+            workflow={editingWorkflow}
+          />
+        )}
       </div>
     );
   }

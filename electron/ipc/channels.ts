@@ -152,6 +152,7 @@ export const IpcChannels = {
     pause: 'workflow:pause',
     resume: 'workflow:resume',
     start: 'workflow:start',
+    update: 'workflow:update',
   },
   workflowRepository: {
     add: 'workflowRepository:add',
