@@ -9,6 +9,7 @@ import { redirect } from 'next/navigation';
 
 import type { Project } from '@/types/electron';
 
+import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { ProjectDetailSkeleton, ProjectNotFound } from '@/components/projects';
 import { RepositoriesTabContent } from '@/components/repositories/repositories-tab-content';
 import { Badge } from '@/components/ui/badge';
@@ -83,7 +84,11 @@ const ProjectDetailPage = () => {
 
   // Handle route params loading state
   if (routeParams.isLoading) {
-    return <ProjectDetailSkeleton />;
+    return (
+      <div aria-busy={'true'} aria-label={'Loading project details'} role={'status'}>
+        <ProjectDetailSkeleton />
+      </div>
+    );
   }
 
   // Redirect if ID is invalid (Zod validation failed)
@@ -93,7 +98,11 @@ const ProjectDetailPage = () => {
 
   // Loading state for project data
   if (isLoading) {
-    return <ProjectDetailSkeleton />;
+    return (
+      <div aria-busy={'true'} aria-label={'Loading project details'} role={'status'}>
+        <ProjectDetailSkeleton />
+      </div>
+    );
   }
 
   // Error or not found state
@@ -114,142 +123,157 @@ const ProjectDetailPage = () => {
   const hasMoreWorkflows = workflowCount > 3;
 
   return (
-    <div className={'space-y-6'}>
-      {/* Breadcrumb navigation */}
-      <nav aria-label={'Breadcrumb'} className={'flex items-center gap-2'}>
-        <Link
-          className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
-          href={$path({ route: '/projects' })}
+    <QueryErrorBoundary>
+      <main aria-label={'Project detail'} className={'space-y-6'}>
+        {/* Skip link for keyboard navigation */}
+        <a
+          className={
+            'sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-background focus:p-2 focus:text-foreground'
+          }
+          href={'#project-content'}
         >
-          {'Projects'}
-        </Link>
-        <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-        <span className={'text-sm text-foreground'}>{project.name}</span>
-      </nav>
+          {'Skip to project content'}
+        </a>
 
-      {/* Page header */}
-      <div className={'space-y-1'}>
-        <div className={'flex items-center gap-3'}>
-          <h1 className={'text-2xl font-semibold tracking-tight'}>{project.name}</h1>
-          {isArchived && <Badge variant={'stale'}>{'Archived'}</Badge>}
-        </div>
-        {project.description && <p className={'text-muted-foreground'}>{project.description}</p>}
-      </div>
+        {/* Breadcrumb navigation */}
+        <nav aria-label={'Breadcrumb'} className={'flex items-center gap-2'}>
+          <Link
+            className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
+            href={$path({ route: '/projects' })}
+          >
+            {'Projects'}
+          </Link>
+          <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+          <span className={'text-sm text-foreground'}>{project.name}</span>
+        </nav>
 
-      {/* Tabbed content */}
-      <TabsRoot defaultValue={'overview'}>
-        <TabsList>
-          <TabsTrigger value={'overview'}>
-            <Building2 aria-hidden={'true'} className={'mr-2 size-4'} />
-            {'Overview'}
-          </TabsTrigger>
-          <TabsTrigger value={'repositories'}>
-            <FolderGit2 aria-hidden={'true'} className={'mr-2 size-4'} />
-            {'Repositories'}
-          </TabsTrigger>
-          <TabsTrigger value={'workflows'}>
-            <Workflow aria-hidden={'true'} className={'mr-2 size-4'} />
-            {'Workflows'}
-          </TabsTrigger>
-          <TabsIndicator />
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsPanel value={'overview'}>
-          <div className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}>
-            {/* Project metadata card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className={'text-base'}>{'Project Details'}</CardTitle>
-              </CardHeader>
-              <CardContent className={'space-y-3'}>
-                <div className={'flex items-center gap-2 text-sm'}>
-                  <Calendar aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-                  <span className={'text-muted-foreground'}>{'Created:'}</span>
-                  <span>{formattedCreatedDate}</span>
-                </div>
-                <div className={'flex items-center gap-2 text-sm'}>
-                  <Calendar aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-                  <span className={'text-muted-foreground'}>{'Updated:'}</span>
-                  <span>{formattedUpdatedDate}</span>
-                </div>
-                {formattedArchivedDate && (
-                  <div className={'flex items-center gap-2 text-sm'}>
-                    <Archive aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-                    <span className={'text-muted-foreground'}>{'Archived:'}</span>
-                    <span>{formattedArchivedDate}</span>
-                  </div>
-                )}
-                <div className={'flex items-center gap-2 text-sm'}>
-                  <span className={'text-muted-foreground'}>{'Status:'}</span>
-                  <Badge variant={isArchived ? 'stale' : 'completed'}>{isArchived ? 'Archived' : 'Active'}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Repositories summary card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className={'text-base'}>{'Repositories'}</CardTitle>
-              </CardHeader>
-              <CardContent className={'space-y-3'}>
-                <div className={'flex items-center gap-2 text-sm'}>
-                  <FolderGit2 aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-                  <span className={'text-muted-foreground'}>{'Total:'}</span>
-                  <span className={'font-medium'}>{repositoryCount}</span>
-                </div>
-                <p className={'text-sm text-muted-foreground'}>
-                  {hasNoRepositories ? 'No repositories added yet.' : getRepositoryCountText(repositoryCount)}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Recent Workflows summary card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className={'text-base'}>{'Recent Workflows'}</CardTitle>
-              </CardHeader>
-              <CardContent className={'space-y-3'}>
-                <div className={'flex items-center gap-2 text-sm'}>
-                  <Workflow aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-                  <span className={'text-muted-foreground'}>{'Total:'}</span>
-                  <span className={'font-medium'}>{workflowCount}</span>
-                </div>
-                {hasNoWorkflows ? (
-                  <p className={'text-sm text-muted-foreground'}>{'No workflows created yet.'}</p>
-                ) : (
-                  <div className={'space-y-1'}>
-                    {recentWorkflows.map((workflow) => (
-                      <p
-                        className={'truncate text-sm text-muted-foreground'}
-                        key={workflow.id}
-                        title={workflow.featureName}
-                      >
-                        {workflow.featureName}
-                      </p>
-                    ))}
-                    {hasMoreWorkflows && (
-                      <p className={'text-sm text-muted-foreground'}>{`+${workflowCount - 3} more`}</p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+        {/* Page header */}
+        <section aria-label={'Project header'}>
+          <div className={'space-y-1'}>
+            <div className={'flex items-center gap-3'}>
+              <h1 className={'text-2xl font-semibold tracking-tight'}>{project.name}</h1>
+              {isArchived && <Badge variant={'stale'}>{'Archived'}</Badge>}
+            </div>
+            {project.description && <p className={'text-muted-foreground'}>{project.description}</p>}
           </div>
-        </TabsPanel>
+        </section>
 
-        {/* Repositories Tab */}
-        <TabsPanel value={'repositories'}>
-          <RepositoriesTabContent projectId={projectId} />
-        </TabsPanel>
+        {/* Tabbed content */}
+        <section aria-label={'Project content'} aria-live={'polite'} id={'project-content'}>
+          <TabsRoot defaultValue={'overview'}>
+            <TabsList>
+              <TabsTrigger value={'overview'}>
+                <Building2 aria-hidden={'true'} className={'mr-2 size-4'} />
+                {'Overview'}
+              </TabsTrigger>
+              <TabsTrigger value={'repositories'}>
+                <FolderGit2 aria-hidden={'true'} className={'mr-2 size-4'} />
+                {'Repositories'}
+              </TabsTrigger>
+              <TabsTrigger value={'workflows'}>
+                <Workflow aria-hidden={'true'} className={'mr-2 size-4'} />
+                {'Workflows'}
+              </TabsTrigger>
+              <TabsIndicator />
+            </TabsList>
 
-        {/* Workflows Tab */}
-        <TabsPanel value={'workflows'}>
-          <WorkflowsTabContent projectId={projectId} projectName={project.name} />
-        </TabsPanel>
-      </TabsRoot>
-    </div>
+            {/* Overview Tab */}
+            <TabsPanel value={'overview'}>
+              <div className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}>
+                {/* Project metadata card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className={'text-base'}>{'Project Details'}</CardTitle>
+                  </CardHeader>
+                  <CardContent className={'space-y-3'}>
+                    <div className={'flex items-center gap-2 text-sm'}>
+                      <Calendar aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+                      <span className={'text-muted-foreground'}>{'Created:'}</span>
+                      <span>{formattedCreatedDate}</span>
+                    </div>
+                    <div className={'flex items-center gap-2 text-sm'}>
+                      <Calendar aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+                      <span className={'text-muted-foreground'}>{'Updated:'}</span>
+                      <span>{formattedUpdatedDate}</span>
+                    </div>
+                    {formattedArchivedDate && (
+                      <div className={'flex items-center gap-2 text-sm'}>
+                        <Archive aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+                        <span className={'text-muted-foreground'}>{'Archived:'}</span>
+                        <span>{formattedArchivedDate}</span>
+                      </div>
+                    )}
+                    <div className={'flex items-center gap-2 text-sm'}>
+                      <span className={'text-muted-foreground'}>{'Status:'}</span>
+                      <Badge variant={isArchived ? 'stale' : 'completed'}>{isArchived ? 'Archived' : 'Active'}</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Repositories summary card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className={'text-base'}>{'Repositories'}</CardTitle>
+                  </CardHeader>
+                  <CardContent className={'space-y-3'}>
+                    <div className={'flex items-center gap-2 text-sm'}>
+                      <FolderGit2 aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+                      <span className={'text-muted-foreground'}>{'Total:'}</span>
+                      <span className={'font-medium'}>{repositoryCount}</span>
+                    </div>
+                    <p className={'text-sm text-muted-foreground'}>
+                      {hasNoRepositories ? 'No repositories added yet.' : getRepositoryCountText(repositoryCount)}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Recent Workflows summary card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className={'text-base'}>{'Recent Workflows'}</CardTitle>
+                  </CardHeader>
+                  <CardContent className={'space-y-3'}>
+                    <div className={'flex items-center gap-2 text-sm'}>
+                      <Workflow aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+                      <span className={'text-muted-foreground'}>{'Total:'}</span>
+                      <span className={'font-medium'}>{workflowCount}</span>
+                    </div>
+                    {hasNoWorkflows ? (
+                      <p className={'text-sm text-muted-foreground'}>{'No workflows created yet.'}</p>
+                    ) : (
+                      <div className={'space-y-1'}>
+                        {recentWorkflows.map((workflow) => (
+                          <p
+                            className={'truncate text-sm text-muted-foreground'}
+                            key={workflow.id}
+                            title={workflow.featureName}
+                          >
+                            {workflow.featureName}
+                          </p>
+                        ))}
+                        {hasMoreWorkflows && (
+                          <p className={'text-sm text-muted-foreground'}>{`+${workflowCount - 3} more`}</p>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsPanel>
+
+            {/* Repositories Tab */}
+            <TabsPanel value={'repositories'}>
+              <RepositoriesTabContent projectId={projectId} />
+            </TabsPanel>
+
+            {/* Workflows Tab */}
+            <TabsPanel value={'workflows'}>
+              <WorkflowsTabContent projectId={projectId} projectName={project.name} />
+            </TabsPanel>
+          </TabsRoot>
+        </section>
+      </main>
+    </QueryErrorBoundary>
   );
 };
-
 export default ProjectDetailPage;
