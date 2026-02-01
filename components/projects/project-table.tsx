@@ -34,6 +34,8 @@ interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
   onArchive?: (projectId: number) => Promise<void>;
   /** Callback when the user confirms permanently deleting a project. Returns a promise that resolves when the mutation completes. */
   onDelete?: (projectId: number) => Promise<void>;
+  /** Callback fired when global filter (search) changes */
+  onGlobalFilterChange?: (value: string) => void;
   /** Callback when the user confirms unarchiving a project. Returns a promise that resolves when the mutation completes. */
   onUnarchive?: (projectId: number) => Promise<void>;
   /** Callback when the user clicks view details on a project */
@@ -251,6 +253,7 @@ export const ProjectTable = ({
   deletingIds = new Set(),
   onArchive,
   onDelete,
+  onGlobalFilterChange,
   onUnarchive,
   onViewDetails,
   projects,
@@ -389,6 +392,7 @@ export const ProjectTable = ({
       getRowId={(project) => String(project.id)}
       isPaginationEnabled={false}
       isToolbarVisible={true}
+      onGlobalFilterChange={onGlobalFilterChange}
       onRowClick={handleRowClick}
       persistence={{
         persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing'],

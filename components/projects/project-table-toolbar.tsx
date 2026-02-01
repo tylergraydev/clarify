@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DEFAULT_PROJECT_ARCHIVE_FILTER } from '@/lib/layout/constants';
 import { cn, optionsToItems } from '@/lib/utils';
 
 // ============================================================================
@@ -36,7 +37,7 @@ import { cn, optionsToItems } from '@/lib/utils';
 /** Available archive filter values */
 export type ArchiveFilterValue = 'active' | 'all' | 'archived';
 
-interface ProjectTableToolbarProps extends ComponentPropsWithRef<'div'> {
+export interface ProjectTableToolbarProps extends ComponentPropsWithRef<'div'> {
   /** Current archive filter value */
   archiveFilter: ArchiveFilterValue;
   /** Callback when archive filter changes */
@@ -48,8 +49,6 @@ interface ProjectTableToolbarProps extends ComponentPropsWithRef<'div'> {
 // ============================================================================
 // Constants
 // ============================================================================
-
-const DEFAULT_ARCHIVE_FILTER: ArchiveFilterValue = 'active';
 
 const ARCHIVE_FILTER_OPTIONS = [
   { label: 'All projects', value: 'all' },
@@ -66,7 +65,7 @@ const ARCHIVE_FILTER_OPTIONS = [
  */
 const getActiveFilterCount = (archiveFilter: ArchiveFilterValue): number => {
   // Count as active if different from default
-  return archiveFilter !== DEFAULT_ARCHIVE_FILTER ? 1 : 0;
+  return archiveFilter !== DEFAULT_PROJECT_ARCHIVE_FILTER ? 1 : 0;
 };
 
 // ============================================================================
@@ -138,11 +137,11 @@ export const ProjectTableToolbar = memo(function ProjectTableToolbar({
 
   // Handlers
   const handleArchiveFilterChange = (value: null | string) => {
-    onArchiveFilterChange((value || DEFAULT_ARCHIVE_FILTER) as ArchiveFilterValue);
+    onArchiveFilterChange((value || DEFAULT_PROJECT_ARCHIVE_FILTER) as ArchiveFilterValue);
   };
 
   const handleResetFilters = () => {
-    onArchiveFilterChange(DEFAULT_ARCHIVE_FILTER);
+    onArchiveFilterChange(DEFAULT_PROJECT_ARCHIVE_FILTER);
     onResetFilters?.();
   };
 

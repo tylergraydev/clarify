@@ -8,8 +8,12 @@ export { EditProjectDialog } from './edit-project-dialog';
 export { ProjectAgentEditorDialog } from './project-agent-editor-dialog';
 
 // Display components
-export { ProjectCard } from './project-card';
 export { ProjectTable } from './project-table';
+export {
+  type ArchiveFilterValue,
+  ProjectTableToolbar,
+  type ProjectTableToolbarProps,
+} from './project-table-toolbar';
 
 // Tab content components
 export { RepositoriesTabContent } from './repositories-tab-content';

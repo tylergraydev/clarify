@@ -8,9 +8,12 @@ import { parseAsStringLiteral, useQueryState } from 'nuqs';
 import { useMemo, useState } from 'react';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
-import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
-import { ProjectTable } from '@/components/projects/project-table';
-import { type ArchiveFilterValue, ProjectTableToolbar } from '@/components/projects/project-table-toolbar';
+import {
+  type ArchiveFilterValue,
+  CreateProjectDialog,
+  ProjectTable,
+  ProjectTableToolbar,
+} from '@/components/projects';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DataTableSkeleton } from '@/components/ui/table';
@@ -20,6 +23,7 @@ import {
   useProjects,
   useUnarchiveProject,
 } from '@/hooks/queries/use-projects';
+import { DEFAULT_PROJECT_ARCHIVE_FILTER } from '@/lib/layout/constants';
 
 import { ProjectsPageHeader } from './_components/projects-page-header';
 import { Route } from './route-type';
@@ -29,7 +33,6 @@ import { Route } from './route-type';
 // ============================================================================
 
 const ARCHIVE_FILTER_VALUES = ['all', 'active', 'archived'] as const;
-const DEFAULT_ARCHIVE_FILTER: ArchiveFilterValue = 'active';
 
 // ============================================================================
 // Page Component
@@ -52,7 +55,7 @@ function ProjectsPageContent() {
   // URL state management with nuqs
   const [archiveFilter, setArchiveFilter] = useQueryState(
     'status',
-    parseAsStringLiteral(ARCHIVE_FILTER_VALUES).withDefault(DEFAULT_ARCHIVE_FILTER)
+    parseAsStringLiteral(ARCHIVE_FILTER_VALUES).withDefault(DEFAULT_PROJECT_ARCHIVE_FILTER)
   );
 
   // Data fetching
@@ -63,22 +66,43 @@ function ProjectsPageContent() {
   const unarchiveProjectMutation = useUnarchiveProject();
   const deleteProjectMutation = useDeleteProjectPermanently();
 
+  // Search filter state
+  const [searchFilter, setSearchFilter] = useState('');
+
   // Per-row loading state tracking
   const [archivingIds, setArchivingIds] = useState<Set<number>>(new Set());
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
 
-  // Filter projects based on archiveFilter state
+  // Filter projects based on archiveFilter and searchFilter state
   const filteredProjects = useMemo(() => {
     if (!projects) return [];
-    if (archiveFilter === 'all') return projects;
-    if (archiveFilter === 'archived') return projects.filter((project) => project.archivedAt !== null);
-    return projects.filter((project) => project.archivedAt === null);
-  }, [projects, archiveFilter]);
+
+    let result = projects;
+
+    // Apply archive filter
+    if (archiveFilter === 'archived') {
+      result = result.filter((project) => project.archivedAt !== null);
+    } else if (archiveFilter !== 'all') {
+      result = result.filter((project) => project.archivedAt === null);
+    }
+
+    // Apply search filter
+    if (searchFilter) {
+      const searchLower = searchFilter.toLowerCase();
+      result = result.filter((project) => {
+        const nameMatch = project.name.toLowerCase().includes(searchLower);
+        const descMatch = project.description?.toLowerCase().includes(searchLower) ?? false;
+        return nameMatch || descMatch;
+      });
+    }
+
+    return result;
+  }, [projects, archiveFilter, searchFilter]);
 
   // Calculate counts for header badge
   const totalCount = projects?.length ?? 0;
   const filteredCount = filteredProjects.length;
-  const isFiltered = archiveFilter !== 'all';
+  const isFiltered = archiveFilter !== 'all' || searchFilter !== '';
 
   // Handlers
   const handleArchiveFilterChange = (value: ArchiveFilterValue) => {
@@ -86,7 +110,7 @@ function ProjectsPageContent() {
   };
 
   const handleResetFilters = () => {
-    void setArchiveFilter(DEFAULT_ARCHIVE_FILTER);
+    void setArchiveFilter(DEFAULT_PROJECT_ARCHIVE_FILTER);
   };
 
   const handleArchive = async (projectId: number) => {
@@ -179,6 +203,7 @@ function ProjectsPageContent() {
             deletingIds={deletingIds}
             onArchive={handleArchive}
             onDelete={handleDelete}
+            onGlobalFilterChange={setSearchFilter}
             onUnarchive={handleUnarchive}
             onViewDetails={handleViewDetails}
             projects={filteredProjects}
