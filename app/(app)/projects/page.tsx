@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { type ArchiveFilterValue, CreateProjectDialog, ProjectTable, ProjectTableToolbar } from '@/components/projects';
+import { ProjectsPageHeader } from '@/components/projects/projects-page-header';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DataTableSkeleton } from '@/components/ui/table';
@@ -20,7 +21,6 @@ import {
 } from '@/hooks/queries/use-projects';
 import { DEFAULT_PROJECT_ARCHIVE_FILTER } from '@/lib/layout/constants';
 
-import { ProjectsPageHeader } from './_components/projects-page-header';
 import { Route } from './route-type';
 
 // ============================================================================
