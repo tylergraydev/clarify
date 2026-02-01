@@ -91,7 +91,7 @@ export const NavItem = ({
 
   if (isCollapsed) {
     return (
-      <Tooltip content={label} side={'right'}>
+      <Tooltip content={label} fullWidth side={'right'}>
         {linkContent}
       </Tooltip>
     );

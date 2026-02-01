@@ -11,11 +11,11 @@ const WORKFLOWS_BASE_PATH = $path({ route: '/workflows/active' }).replace('/acti
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip } from '@/components/ui/tooltip';
 import { useFavoriteProjects } from '@/hooks/queries/use-projects';
 import { useShellStore } from '@/lib/stores/shell-store';
 import { cn } from '@/lib/utils';
 
+import { CollapsedNavMenu } from './collapsed-nav-menu';
 import { NavItem } from './nav-item';
 
 type AppSidebarProps = ComponentPropsWithRef<'aside'>;
@@ -68,7 +68,18 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
 
           {/* Favorites */}
           {isSidebarCollapsed ? (
-            <Tooltip content={'Favorites'} side={'right'}>
+            favoriteProjects.length > 0 ? (
+              <CollapsedNavMenu
+                icon={Star}
+                isActive={false}
+                items={favoriteProjects.map((project) => ({
+                  href: $path({ route: '/projects/[id]', routeParams: { id: String(project.id) } }),
+                  isActive: pathname === $path({ route: '/projects/[id]', routeParams: { id: String(project.id) } }),
+                  label: project.name,
+                }))}
+                label={'Favorites'}
+              />
+            ) : (
               <NavItem
                 href={$path({ route: '/projects' })}
                 icon={Star}
@@ -76,7 +87,7 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
                 isCollapsed={isSidebarCollapsed}
                 label={'Favorites'}
               />
-            </Tooltip>
+            )
           ) : (
             <Collapsible onOpenChange={setIsFavoritesOpen} open={isFavoritesOpen}>
               <CollapsibleTrigger
@@ -123,15 +134,25 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
 
           {/* Workflows */}
           {isSidebarCollapsed ? (
-            <Tooltip content={'Workflows'} side={'right'}>
-              <NavItem
-                href={$path({ route: '/workflows/active' })}
-                icon={Workflow}
-                isActive={isWorkflowsActive}
-                isCollapsed={isSidebarCollapsed}
-                label={'Workflows'}
-              />
-            </Tooltip>
+            <CollapsedNavMenu
+              icon={Workflow}
+              isActive={isWorkflowsActive}
+              items={[
+                {
+                  href: $path({ route: '/workflows/active' }),
+                  icon: Play,
+                  isActive: pathname === $path({ route: '/workflows/active' }),
+                  label: 'Active',
+                },
+                {
+                  href: $path({ route: '/workflows/history', searchParams: {} }),
+                  icon: History,
+                  isActive: pathname === $path({ route: '/workflows/history', searchParams: {} }),
+                  label: 'History',
+                },
+              ]}
+              label={'Workflows'}
+            />
           ) : (
             <Collapsible onOpenChange={setIsWorkflowsOpen} open={isWorkflowsOpen || isWorkflowsActive}>
               <CollapsibleTrigger

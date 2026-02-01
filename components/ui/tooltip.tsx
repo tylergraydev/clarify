@@ -38,13 +38,16 @@ export const TooltipPopup = ({ className, ref, ...props }: TooltipPopupProps) =>
 interface TooltipProps {
   children: ReactNode;
   content: ReactNode;
+  fullWidth?: boolean;
   side?: 'bottom' | 'left' | 'right' | 'top';
 }
 
-export const Tooltip = ({ children, content, side = 'top' }: TooltipProps) => {
+export const Tooltip = ({ children, content, fullWidth = false, side = 'top' }: TooltipProps) => {
   return (
     <TooltipRoot>
-      <TooltipTrigger render={<span className={'inline-flex'} />}>{children}</TooltipTrigger>
+      <TooltipTrigger render={<span className={cn('inline-flex', fullWidth && 'w-full')} />}>
+        {children}
+      </TooltipTrigger>
       <TooltipPortal>
         <TooltipPositioner side={side} sideOffset={6}>
           <TooltipPopup>{content}</TooltipPopup>

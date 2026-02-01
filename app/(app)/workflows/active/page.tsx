@@ -47,19 +47,22 @@ type ActiveWorkflowsStatusFilter = 'all' | 'editing' | 'paused' | 'running';
 // ============================================================================
 
 /**
- * Filter active workflows based on status and type filter values.
+ * Filter active workflows based on status, type, project, and search filter values.
  */
 const filterActiveWorkflows = (
   workflows: Array<Workflow>,
   statusFilter: ActiveWorkflowsStatusFilter,
   typeFilter: WorkflowTypeFilterValue,
-  projectFilter: string
+  projectFilter: string,
+  searchFilter: string
 ): Array<Workflow> => {
+  const searchLower = searchFilter.toLowerCase().trim();
   return workflows.filter((workflow) => {
     const matchesStatus = statusFilter === 'all' || workflow.status === statusFilter;
     const matchesType = typeFilter === 'all' || workflow.type === typeFilter;
     const matchesProject = projectFilter === 'all' || String(workflow.projectId) === projectFilter;
-    return matchesStatus && matchesType && matchesProject;
+    const matchesSearch = !searchLower || workflow.featureName.toLowerCase().includes(searchLower);
+    return matchesStatus && matchesType && matchesProject && matchesSearch;
   });
 };
 
@@ -87,8 +90,9 @@ export default function ActiveWorkflowsPage() {
   // Map store status filter to toolbar compatible type (add 'editing' support)
   const statusFilter = storeStatusFilter as ActiveWorkflowsStatusFilter;
 
-  // Local state for project filter and action tracking
+  // Local state for project filter, search filter, and action tracking
   const [projectFilter, setProjectFilter] = useState<string>('all');
+  const [searchFilter, setSearchFilter] = useState<string>('');
   const [cancellingIds, setCancellingIds] = useState<Set<number>>(new Set());
   const [pausingIds, setPausingIds] = useState<Set<number>>(new Set());
   const [resumingIds, setResumingIds] = useState<Set<number>>(new Set());
@@ -126,8 +130,8 @@ export default function ActiveWorkflowsPage() {
 
   // Filter workflows based on current filter state
   const filteredWorkflows = useMemo(() => {
-    return filterActiveWorkflows(workflows, statusFilter, typeFilter, projectFilter);
-  }, [workflows, statusFilter, typeFilter, projectFilter]);
+    return filterActiveWorkflows(workflows, statusFilter, typeFilter, projectFilter, searchFilter);
+  }, [workflows, statusFilter, typeFilter, projectFilter, searchFilter]);
 
   // Event handlers
   const handleViewDetails = useCallback(
@@ -260,6 +264,7 @@ export default function ActiveWorkflowsPage() {
     setStatusFilter('all');
     setTypeFilter('all');
     setProjectFilter('all');
+    setSearchFilter('');
   }, [setStatusFilter, setTypeFilter]);
 
   const handleRefresh = useCallback(() => {
@@ -374,6 +379,7 @@ export default function ActiveWorkflowsPage() {
                 handleCancelRequest(workflow);
               }
             }}
+            onGlobalFilterChange={setSearchFilter}
             onPause={handlePauseWorkflow}
             onResume={handleResumeWorkflow}
             onViewDetails={handleViewDetails}

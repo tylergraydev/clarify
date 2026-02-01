@@ -18,10 +18,34 @@ export const PopoverRoot = BasePopover.Root;
 // Trigger
 // ============================================================================
 
-type PopoverTriggerProps = RequiredChildren;
+interface PopoverTriggerProps extends RequiredChildren {
+  /**
+   * How long to wait before closing the popover that was opened on hover.
+   * Specified in milliseconds.
+   * @default 0
+   */
+  closeDelay?: number;
+  /**
+   * How long to wait before the popover may be opened on hover. Specified in milliseconds.
+   * @default 300
+   */
+  delay?: number;
+  /**
+   * Whether the popover should also open when the trigger is hovered.
+   * @default false
+   */
+  openOnHover?: boolean;
+}
 
-export const PopoverTrigger = ({ children }: PopoverTriggerProps) => {
-  return <BasePopover.Trigger render={(props) => cloneElement(children as ReactElement<object>, props)} />;
+export const PopoverTrigger = ({ children, closeDelay, delay, openOnHover }: PopoverTriggerProps) => {
+  return (
+    <BasePopover.Trigger
+      closeDelay={closeDelay}
+      delay={delay}
+      openOnHover={openOnHover}
+      render={(props) => cloneElement(children as ReactElement<object>, props)}
+    />
+  );
 };
 
 // ============================================================================
