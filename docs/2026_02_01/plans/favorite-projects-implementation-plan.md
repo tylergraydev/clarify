@@ -83,9 +83,9 @@ pnpm lint && pnpm typecheck
 
 ---
 
-### Step 2: Generate and Apply Database Migration
+### Step 2: Generate Database Migration
 
-**What**: Generate Drizzle migration for the new isFavorite column and apply it.
+**What**: Generate Drizzle migration for the new isFavorite column. The app runs migrations automatically on startup.
 **Why**: The database needs to be updated with the new column before IPC and UI can use it.
 **Confidence**: High
 
@@ -94,18 +94,15 @@ pnpm lint && pnpm typecheck
 
 **Changes:**
 - Run Drizzle migration generator to create SQL for adding isFavorite column
-- Apply migration to development database
 - Verify column exists with correct default value (0/false)
 
 **Validation Commands:**
 ```bash
 pnpm db:generate
-pnpm db:migrate
 ```
 
 **Success Criteria:**
 - [ ] Migration file generated successfully
-- [ ] Migration applied without errors
 - [ ] Database contains new isFavorite column with default value
 
 ---
