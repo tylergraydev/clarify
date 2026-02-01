@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { UpdateWorkflowInput } from '@/lib/validations/workflow';
 import type { WorkflowHistoryFilters } from '@/types/electron';
@@ -250,6 +250,9 @@ export function useWorkflow(id: number) {
 /**
  * Fetch workflow history with pagination, filtering, and sorting
  * Returns terminal-status workflows (completed, failed, cancelled)
+ *
+ * Uses `keepPreviousData` to maintain smooth pagination transitions,
+ * showing previous data while new data is being fetched.
  */
 export function useWorkflowHistory(filters?: WorkflowHistoryFilters) {
   const { isElectron, workflows } = useElectronDb();
@@ -257,6 +260,7 @@ export function useWorkflowHistory(filters?: WorkflowHistoryFilters) {
   return useQuery({
     ...workflowKeys.history(filters),
     enabled: isElectron,
+    placeholderData: keepPreviousData,
     queryFn: () => workflows.listHistory(filters),
   });
 }

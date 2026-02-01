@@ -111,6 +111,13 @@ interface DataTablePaginationProps<TData>
   pageSizeOptions?: Array<number>;
 
   /**
+   * Total number of rows when using server-side pagination.
+   * When provided, this value is used instead of counting rows from the table model.
+   * Used to display "Showing X-Y of Z rows" accurately for server-side pagination.
+   */
+  rowCount?: number;
+
+  /**
    * The TanStack Table instance.
    * Used to access pagination state and control methods.
    */
@@ -351,6 +358,7 @@ export const DataTablePagination = <TData,>({
   onPageSizeChange,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   ref,
+  rowCount,
   size,
   table,
   ...props
@@ -358,7 +366,9 @@ export const DataTablePagination = <TData,>({
   // Extract pagination state from table
   const { pageIndex, pageSize } = table.getState().pagination;
   const pageCount = table.getPageCount();
-  const totalItems = table.getFilteredRowModel().rows.length;
+  // For server-side pagination, use the provided rowCount
+  // For client-side pagination, count the rows from the filtered model
+  const totalItems = rowCount ?? table.getFilteredRowModel().rows.length;
 
   // Calculate row range
   const paginationRange = useMemo(() => {

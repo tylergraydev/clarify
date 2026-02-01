@@ -296,6 +296,13 @@ interface DataTableProps<TData, TValue>
   onSortingChange?: OnChangeFn<SortingState>;
 
   /**
+   * Total number of pages when using server-side pagination.
+   * When provided, enables manual/server-side pagination mode.
+   * Must be used together with controlled pagination state and onPaginationChange.
+   */
+  pageCount?: number;
+
+  /**
    * Available page size options for pagination.
    * @default [10, 25, 50, 100]
    */
@@ -306,6 +313,13 @@ interface DataTableProps<TData, TValue>
    * When provided, table state is saved to electron-store.
    */
   persistence?: DataTablePersistenceConfig;
+
+  /**
+   * Total number of rows when using server-side pagination.
+   * Used by the pagination component to display "Showing X-Y of Z rows".
+   * If not provided in server-side mode, falls back to pageCount * pageSize.
+   */
+  rowCount?: number;
 
   /**
    * Function to determine row styling based on row data.
@@ -531,9 +545,11 @@ export const DataTable = <TData, TValue>({
   onRowClick,
   onRowSelectionChange,
   onSortingChange,
+  pageCount,
   pageSizeOptions,
   persistence,
   ref,
+  rowCount,
   rowStyleCallback,
   searchPlaceholder,
   state: controlledState,
@@ -676,6 +692,10 @@ export const DataTable = <TData, TValue>({
     }),
   };
 
+  // Server-side pagination is enabled when pageCount is provided
+  // This enables manualPagination mode and passes pageCount to the table
+  const isServerSidePagination = pageCount !== undefined;
+
   const table = useReactTable({
     columnResizeMode: 'onChange',
     columns,
@@ -685,11 +705,15 @@ export const DataTable = <TData, TValue>({
     enableSorting: isSortingEnabled,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: isPaginationEnabled ? getPaginationRowModel() : undefined,
+    // Only use client-side pagination row model when NOT in server-side mode
+    getPaginationRowModel: isPaginationEnabled && !isServerSidePagination ? getPaginationRowModel() : undefined,
     getRowId,
     getSortedRowModel: isSortingEnabled ? getSortedRowModel() : undefined,
     globalFilterFn: filterFns.includesString,
-    manualPagination: !isPaginationEnabled,
+    // Server-side pagination requires manualPagination: true
+    // Client-side pagination with isPaginationEnabled uses manualPagination: false
+    // When pagination is disabled entirely, manualPagination is true (no pagination row model)
+    manualPagination: isServerSidePagination || !isPaginationEnabled,
     onColumnFiltersChange,
     onColumnOrderChange: handleColumnOrderChange,
     onColumnSizingChange: handleColumnSizingChange,
@@ -698,6 +722,8 @@ export const DataTable = <TData, TValue>({
     onPaginationChange,
     onRowSelectionChange,
     onSortingChange: handleSortingChange,
+    // pageCount is required for server-side pagination to calculate page boundaries
+    ...(isServerSidePagination && { pageCount }),
     state: tableState,
   });
 
@@ -886,6 +912,7 @@ export const DataTable = <TData, TValue>({
       {isPaginationEnabled && !isShowSkeleton && (
         <DataTablePagination
           pageSizeOptions={pageSizeOptions}
+          rowCount={rowCount}
           size={density === 'compact' ? 'sm' : density === 'comfortable' ? 'lg' : 'default'}
           table={table}
         />

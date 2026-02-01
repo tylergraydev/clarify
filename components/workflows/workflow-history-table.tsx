@@ -1,0 +1,356 @@
+'use client';
+
+import type { OnChangeFn, PaginationState, Row } from '@tanstack/react-table';
+import type { ComponentPropsWithRef, ReactNode } from 'react';
+
+import { format } from 'date-fns';
+import { Eye } from 'lucide-react';
+import { Fragment, memo, useCallback, useMemo } from 'react';
+
+import type { Workflow } from '@/db/schema';
+
+import { Badge, type badgeVariants } from '@/components/ui/badge';
+import {
+  createColumnHelper,
+  DataTable,
+  DataTableColumnHeader,
+  type DataTableRowAction,
+  DataTableRowActions,
+  type DataTableRowStyleCallback,
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
+
+interface WorkflowHistoryTableProps extends ComponentPropsWithRef<'div'> {
+  /** Whether data is loading */
+  isLoading?: boolean;
+  /** Callback fired when pagination changes (for server-side pagination) */
+  onPaginationChange?: OnChangeFn<PaginationState>;
+  /** Callback when the user clicks view details on a workflow */
+  onViewDetails?: (workflowId: number) => void;
+  /** Total number of pages (for server-side pagination) */
+  pageCount?: number;
+  /** Current pagination state (for server-side pagination) */
+  pagination?: PaginationState;
+  /** Map of project IDs to project names for display */
+  projectMap: Record<number, string>;
+  /** Total number of workflow rows (for server-side pagination display) */
+  rowCount?: number;
+  /** Custom toolbar content (e.g., filters) */
+  toolbarContent?: ReactNode;
+  /** Array of workflows to display */
+  workflows: Array<Workflow>;
+}
+
+type WorkflowStatus = Workflow['status'];
+
+type WorkflowType = Workflow['type'];
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Formats a duration in milliseconds to a human-readable string.
+ * Examples: "2h 30m", "45m 12s", "3s", "-"
+ */
+const formatDuration = (durationMs: null | number | undefined): string => {
+  if (durationMs === null || durationMs === undefined) return '-';
+
+  const totalSeconds = Math.floor(durationMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const parts: Array<string> = [];
+
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes}m`);
+  }
+  if (seconds > 0 || parts.length === 0) {
+    parts.push(`${seconds}s`);
+  }
+
+  return parts.join(' ');
+};
+
+const getStatusVariant = (status: WorkflowStatus): BadgeVariant => {
+  const statusVariantMap: Record<WorkflowStatus, BadgeVariant> = {
+    cancelled: 'stale',
+    completed: 'completed',
+    created: 'default',
+    editing: 'clarifying',
+    failed: 'failed',
+    paused: 'draft',
+    running: 'planning',
+  };
+
+  return statusVariantMap[status] ?? 'default';
+};
+
+const formatStatusLabel = (status: WorkflowStatus): string => {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+const formatTypeLabel = (type: WorkflowType): string => {
+  return type.charAt(0).toUpperCase() + type.slice(1);
+};
+
+const formatDateTime = (dateString: null | string | undefined): string => {
+  if (!dateString) return '-';
+  try {
+    return format(new Date(dateString), 'MMM d, yyyy h:mm a');
+  } catch {
+    return '-';
+  }
+};
+
+// ============================================================================
+// Column Helper
+// ============================================================================
+
+const columnHelper = createColumnHelper<Workflow>();
+
+// ============================================================================
+// Memoized Cell Components
+// ============================================================================
+
+interface ActionsCellProps {
+  onViewDetails?: (workflowId: number) => void;
+  row: Row<Workflow>;
+}
+
+/**
+ * Memoized actions cell component for the history table.
+ * Only shows View Details action since historical workflows cannot be modified.
+ */
+const ActionsCell = memo(function ActionsCell({ onViewDetails, row }: ActionsCellProps) {
+  const actions: Array<DataTableRowAction<Workflow>> = [
+    {
+      icon: <Eye aria-hidden={'true'} className={'size-4'} />,
+      label: 'View Details',
+      onAction: (r) => onViewDetails?.(r.original.id),
+      type: 'button',
+    },
+  ];
+
+  return <DataTableRowActions actions={actions} row={row} size={'sm'} />;
+});
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
+/**
+ * Table view component for displaying historical (completed/failed/cancelled) workflows.
+ *
+ * Features:
+ * - Server-side pagination support via onPaginationChange and pagination props
+ * - Duration column showing formatted time (e.g., "2h 30m")
+ * - Completed At column for terminal workflow date
+ * - View Details action only (no edit/pause/resume for historical workflows)
+ * - Reduced opacity styling for failed/cancelled workflows
+ * - Column persistence via tableId
+ * - Custom toolbar content support for filters
+ */
+export const WorkflowHistoryTable = ({
+  className,
+  isLoading = false,
+  onPaginationChange,
+  onViewDetails,
+  pageCount,
+  pagination,
+  projectMap,
+  ref,
+  rowCount,
+  toolbarContent,
+  workflows,
+  ...props
+}: WorkflowHistoryTableProps) => {
+  const handleRowClick = useCallback(
+    (row: Row<Workflow>) => {
+      onViewDetails?.(row.original.id);
+    },
+    [onViewDetails]
+  );
+
+  // Row style callback for cancelled/failed workflows
+  const rowStyleCallback: DataTableRowStyleCallback<Workflow> = useCallback((row) => {
+    const isCancelledOrFailed = row.original.status === 'cancelled' || row.original.status === 'failed';
+    return isCancelledOrFailed ? 'opacity-60' : undefined;
+  }, []);
+
+  // Define columns using the column helper
+  const columns = useMemo(
+    () => [
+      // Actions column (first for easy access)
+      columnHelper.display({
+        cell: ({ row }) => <ActionsCell onViewDetails={onViewDetails} row={row} />,
+        enableHiding: false,
+        enableResizing: false,
+        enableSorting: false,
+        header: '',
+        id: 'actions',
+        meta: {
+          cellClassName: 'text-left',
+          headerClassName: 'text-left',
+        },
+        size: 30,
+      }),
+
+      // Feature Name column
+      columnHelper.accessor('featureName', {
+        cell: ({ row }) => {
+          const workflow = row.original;
+          return (
+            <button
+              className={cn(
+                'cursor-pointer text-left font-medium text-foreground hover:text-accent',
+                'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
+                'focus-visible:outline-none'
+              )}
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails?.(workflow.id);
+              }}
+              type={'button'}
+            >
+              {workflow.featureName}
+            </button>
+          );
+        },
+        enableHiding: false,
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Feature Name'} />,
+        size: 350,
+      }),
+
+      // Project column
+      columnHelper.display({
+        cell: ({ row }) => {
+          const projectName = projectMap[row.original.projectId] ?? 'Unknown';
+          return <span className={'text-muted-foreground'}>{projectName}</span>;
+        },
+        enableSorting: false,
+        header: 'Project',
+        id: 'project',
+        size: 180,
+      }),
+
+      // Type column
+      columnHelper.accessor('type', {
+        cell: ({ row }) => (
+          <Badge size={'sm'} variant={'default'}>
+            {formatTypeLabel(row.original.type as WorkflowType)}
+          </Badge>
+        ),
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Type'} />,
+        size: 120,
+      }),
+
+      // Status column
+      columnHelper.accessor('status', {
+        cell: ({ row }) => (
+          <Badge size={'sm'} variant={getStatusVariant(row.original.status as WorkflowStatus)}>
+            {formatStatusLabel(row.original.status as WorkflowStatus)}
+          </Badge>
+        ),
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Status'} />,
+        size: 120,
+      }),
+
+      // Steps Completed column (progress)
+      columnHelper.display({
+        cell: ({ row }) => {
+          const workflow = row.original;
+          const progressDisplay = `${workflow.currentStepNumber ?? 0}/${workflow.totalSteps ?? '?'}`;
+          return <span className={'whitespace-nowrap text-muted-foreground'}>{progressDisplay}</span>;
+        },
+        enableSorting: false,
+        header: 'Steps',
+        id: 'stepsCompleted',
+        size: 80,
+      }),
+
+      // Duration column
+      columnHelper.accessor('durationMs', {
+        cell: ({ row }) => (
+          <span className={'text-sm whitespace-nowrap text-muted-foreground'}>
+            {formatDuration(row.original.durationMs)}
+          </span>
+        ),
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Duration'} />,
+        size: 100,
+      }),
+
+      // Completed At column - filler column to take remaining space
+      columnHelper.accessor('completedAt', {
+        cell: ({ row }) => (
+          <span className={'text-sm whitespace-nowrap text-muted-foreground'}>
+            {formatDateTime(row.original.completedAt)}
+          </span>
+        ),
+        header: ({ column }) => <DataTableColumnHeader column={column} title={'Completed'} />,
+        meta: {
+          isFillerColumn: true,
+        },
+        size: 160,
+      }),
+    ],
+    [onViewDetails, projectMap]
+  );
+
+  // Build controlled pagination state if provided
+  const controlledState = useMemo(() => {
+    if (pagination) {
+      return { pagination };
+    }
+    return undefined;
+  }, [pagination]);
+
+  return (
+    <Fragment>
+      <DataTable
+        className={className}
+        columns={columns}
+        data={workflows}
+        density={'default'}
+        emptyState={{
+          noData: {
+            description: 'Completed, failed, and cancelled workflows will appear here.',
+            title: 'No workflow history',
+          },
+          noResults: {
+            description: 'Try adjusting your search or filters.',
+            title: 'No matching workflows',
+          },
+        }}
+        getRowId={(workflow) => String(workflow.id)}
+        isLoading={isLoading}
+        isPaginationEnabled={!!onPaginationChange}
+        isToolbarVisible={true}
+        onPaginationChange={onPaginationChange}
+        onRowClick={handleRowClick}
+        persistence={{
+          persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing', 'sorting'],
+          tableId: 'workflow-history-table',
+        }}
+        ref={ref}
+        rowStyleCallback={rowStyleCallback}
+        searchPlaceholder={'Search history...'}
+        state={controlledState}
+        toolbarContent={toolbarContent}
+        {...(pageCount !== undefined && { pageCount })}
+        {...(rowCount !== undefined && { rowCount })}
+        {...props}
+      />
+    </Fragment>
+  );
+};
