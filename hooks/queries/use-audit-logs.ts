@@ -2,11 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { NewAuditLog } from '@/types/electron';
-
 import { auditLogKeys } from '@/lib/queries/audit-logs';
 
-import { useElectron } from '../use-electron';
+import { useElectronDb } from '../use-electron';
 
 // ============================================================================
 // Query Hooks
@@ -16,12 +14,12 @@ import { useElectron } from '../use-electron';
  * Fetch all audit logs
  */
 export function useAuditLogs() {
-  const { api, isElectron } = useElectron();
+  const { audit, isElectron } = useElectronDb();
 
   return useQuery({
     ...auditLogKeys.list(),
     enabled: isElectron,
-    queryFn: () => api!.audit.list(),
+    queryFn: () => audit.list(),
   });
 }
 
@@ -29,12 +27,12 @@ export function useAuditLogs() {
  * Fetch audit logs filtered by workflow step ID
  */
 export function useAuditLogsByStep(stepId: number) {
-  const { api, isElectron } = useElectron();
+  const { audit, isElectron } = useElectronDb();
 
   return useQuery({
     ...auditLogKeys.byWorkflowStep(stepId),
     enabled: isElectron && stepId > 0,
-    queryFn: () => api!.audit.findByStep(stepId),
+    queryFn: () => audit.findByStep(stepId),
   });
 }
 
@@ -42,12 +40,12 @@ export function useAuditLogsByStep(stepId: number) {
  * Fetch audit logs filtered by workflow ID
  */
 export function useAuditLogsByWorkflow(workflowId: number) {
-  const { api, isElectron } = useElectron();
+  const { audit, isElectron } = useElectronDb();
 
   return useQuery({
     ...auditLogKeys.byWorkflow(workflowId),
     enabled: isElectron && workflowId > 0,
-    queryFn: () => api!.audit.findByWorkflow(workflowId),
+    queryFn: () => audit.findByWorkflow(workflowId),
   });
 }
 
@@ -60,10 +58,10 @@ export function useAuditLogsByWorkflow(workflowId: number) {
  */
 export function useCreateAuditLog() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { audit } = useElectronDb();
 
   return useMutation({
-    mutationFn: (data: NewAuditLog) => api!.audit.create(data),
+    mutationFn: (data: Parameters<typeof audit.create>[0]) => audit.create(data),
     onSuccess: (auditLog) => {
       // Invalidate list queries
       void queryClient.invalidateQueries({ queryKey: auditLogKeys.list._def });
@@ -88,9 +86,9 @@ export function useCreateAuditLog() {
  * Returns the exported content for download
  */
 export function useExportAuditLog() {
-  const { api } = useElectron();
+  const { audit } = useElectronDb();
 
   return useMutation({
-    mutationFn: (workflowId: number) => api!.audit.export(workflowId),
+    mutationFn: (workflowId: number) => audit.export(workflowId),
   });
 }

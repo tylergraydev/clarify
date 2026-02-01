@@ -2,19 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { NewProject, NewRepository } from '@/types/electron';
-
 import { agentKeys } from '@/lib/queries/agents';
 import { projectKeys } from '@/lib/queries/projects';
 import { repositoryKeys } from '@/lib/queries/repositories';
 import { workflowKeys } from '@/lib/queries/workflows';
 
-import { useElectron } from '../use-electron';
+import { useElectronDb } from '../use-electron';
 import { useToast } from '../use-toast';
-
-// ============================================================================
-// Mutation Hooks
-// ============================================================================
 
 /**
  * Add a repository to a project
@@ -23,13 +17,18 @@ import { useToast } from '../use-toast';
 export function useAddRepositoryToProject(options?: { showToast?: boolean }) {
   const { showToast = true } = options ?? {};
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { projects } = useElectronDb();
 
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ projectId, repoData }: { projectId: number; repoData: NewRepository }) =>
-      api!.project.addRepo(projectId, repoData),
+    mutationFn: ({
+      projectId,
+      repoData,
+    }: {
+      projectId: number;
+      repoData: Parameters<typeof projects.addRepo>[1];
+    }) => projects.addRepo(projectId, repoData),
     onError: (error) => {
       if (showToast) {
         toast.error({
@@ -39,15 +38,11 @@ export function useAddRepositoryToProject(options?: { showToast?: boolean }) {
       }
     },
     onSuccess: (repository) => {
-      // Invalidate project detail cache (project may have updated repository count)
       void queryClient.invalidateQueries({
         queryKey: projectKeys.detail(repository.projectId).queryKey,
       });
-      // Invalidate project list queries
       void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
-      // Invalidate all repository queries
       void queryClient.invalidateQueries({ queryKey: repositoryKeys._def });
-      // Specifically invalidate byProject queries for this project
       void queryClient.invalidateQueries({
         queryKey: repositoryKeys.byProject(repository.projectId).queryKey,
       });
@@ -68,11 +63,11 @@ export function useAddRepositoryToProject(options?: { showToast?: boolean }) {
 export function useArchiveProject(options?: { showToast?: boolean }) {
   const { showToast = true } = options ?? {};
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { projects } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.project.archive(id),
+    mutationFn: (id: number) => projects.archive(id),
     onError: (error) => {
       if (showToast) {
         toast.error({
@@ -83,9 +78,7 @@ export function useArchiveProject(options?: { showToast?: boolean }) {
     },
     onSuccess: (project) => {
       if (project) {
-        // Update detail cache directly
         queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
-        // Invalidate list queries
         void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
 
         if (showToast) {
@@ -105,16 +98,11 @@ export function useArchiveProject(options?: { showToast?: boolean }) {
 export function useCreateProject(options?: { showToast?: boolean }) {
   const { showToast = true } = options ?? {};
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { projects } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (data: NewProject) => {
-      if (!api) {
-        throw new Error('Electron API not available. Please run in Electron.');
-      }
-      return api.project.create(data);
-    },
+    mutationFn: (data: Parameters<typeof projects.create>[0]) => projects.create(data),
     onError: (error) => {
       if (showToast) {
         toast.error({
@@ -124,7 +112,6 @@ export function useCreateProject(options?: { showToast?: boolean }) {
       }
     },
     onSuccess: () => {
-      // Invalidate list queries to show the new project
       void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
 
       if (showToast) {
@@ -143,11 +130,11 @@ export function useCreateProject(options?: { showToast?: boolean }) {
 export function useDeleteProject(options?: { showToast?: boolean }) {
   const { showToast = true } = options ?? {};
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { projects } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.project.delete(id),
+    mutationFn: (id: number) => projects.delete(id),
     onError: (error) => {
       if (showToast) {
         toast.error({
@@ -157,9 +144,7 @@ export function useDeleteProject(options?: { showToast?: boolean }) {
       }
     },
     onSuccess: () => {
-      // Invalidate all project queries (removes deleted item from cache)
       void queryClient.invalidateQueries({ queryKey: projectKeys._def });
-      // Also invalidate repository queries as repositories may have been deleted
       void queryClient.invalidateQueries({ queryKey: repositoryKeys._def });
 
       if (showToast) {
@@ -179,11 +164,11 @@ export function useDeleteProject(options?: { showToast?: boolean }) {
 export function useDeleteProjectPermanently(options?: { showToast?: boolean }) {
   const { showToast = true } = options ?? {};
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { projects } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.project.deleteHard(id),
+    mutationFn: (id: number) => projects.deleteHard(id),
     onError: (error) => {
       if (showToast) {
         toast.error({
@@ -193,9 +178,7 @@ export function useDeleteProjectPermanently(options?: { showToast?: boolean }) {
       }
     },
     onSuccess: () => {
-      // Invalidate all project queries
       void queryClient.invalidateQueries({ queryKey: projectKeys._def });
-      // Invalidate related queries that may have been cascade deleted
       void queryClient.invalidateQueries({ queryKey: repositoryKeys._def });
       void queryClient.invalidateQueries({ queryKey: workflowKeys._def });
       void queryClient.invalidateQueries({ queryKey: agentKeys._def });
@@ -210,20 +193,16 @@ export function useDeleteProjectPermanently(options?: { showToast?: boolean }) {
   });
 }
 
-// ============================================================================
-// Query Hooks
-// ============================================================================
-
 /**
  * Fetch a single project by ID
  */
 export function useProject(id: number) {
-  const { api, isElectron } = useElectron();
+  const { isElectron, projects } = useElectronDb();
 
   return useQuery({
     ...projectKeys.detail(id),
     enabled: isElectron && id > 0,
-    queryFn: () => api!.project.get(id),
+    queryFn: () => projects.get(id),
   });
 }
 
@@ -231,18 +210,14 @@ export function useProject(id: number) {
  * Fetch all projects (including archived)
  */
 export function useProjects() {
-  const { api, isElectron } = useElectron();
+  const { isElectron, projects } = useElectronDb();
 
   return useQuery({
     ...projectKeys.list({ includeArchived: true }),
     enabled: isElectron,
-    queryFn: () => api!.project.list({ includeArchived: true }),
+    queryFn: () => projects.list({ includeArchived: true }),
   });
 }
-
-// ============================================================================
-// Mutation Hooks (continued)
-// ============================================================================
 
 /**
  * Unarchive a project by clearing the archivedAt timestamp
@@ -250,11 +225,11 @@ export function useProjects() {
 export function useUnarchiveProject(options?: { showToast?: boolean }) {
   const { showToast = true } = options ?? {};
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { projects } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: (id: number) => api!.project.unarchive(id),
+    mutationFn: (id: number) => projects.unarchive(id),
     onError: (error) => {
       if (showToast) {
         toast.error({
@@ -265,9 +240,7 @@ export function useUnarchiveProject(options?: { showToast?: boolean }) {
     },
     onSuccess: (project) => {
       if (project) {
-        // Update detail cache directly
         queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
-        // Invalidate list queries
         void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
 
         if (showToast) {
@@ -287,11 +260,17 @@ export function useUnarchiveProject(options?: { showToast?: boolean }) {
 export function useUpdateProject(options?: { showToast?: boolean }) {
   const { showToast = true } = options ?? {};
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { projects } = useElectronDb();
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Partial<NewProject>; id: number }) => api!.project.update(id, data),
+    mutationFn: ({
+      data,
+      id,
+    }: {
+      data: Parameters<typeof projects.update>[1];
+      id: number;
+    }) => projects.update(id, data),
     onError: (error) => {
       if (showToast) {
         toast.error({
@@ -302,9 +281,7 @@ export function useUpdateProject(options?: { showToast?: boolean }) {
     },
     onSuccess: (project) => {
       if (project) {
-        // Update detail cache directly
         queryClient.setQueryData(projectKeys.detail(project.id).queryKey, project);
-        // Invalidate list queries
         void queryClient.invalidateQueries({ queryKey: projectKeys.list._def });
 
         if (showToast) {

@@ -40,6 +40,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
   // Filter state
   const [statusFilter, setStatusFilter] = useState<WorkflowStatusFilterValue>(DEFAULT_STATUS_FILTER);
   const [typeFilter, setTypeFilter] = useState<WorkflowTypeFilterValue>(DEFAULT_TYPE_FILTER);
+  const [searchFilter, setSearchFilter] = useState('');
   const [cancellingIds, setCancellingIds] = useState<Set<number>>(new Set());
 
   // Filtered workflows
@@ -48,9 +49,11 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
     return workflows.filter((w) => {
       const matchesStatus = statusFilter === 'all' || w.status === statusFilter;
       const matchesType = typeFilter === 'all' || w.type === typeFilter;
-      return matchesStatus && matchesType;
+      const matchesSearch =
+        !searchFilter || w.featureName.toLowerCase().includes(searchFilter.toLowerCase());
+      return matchesStatus && matchesType && matchesSearch;
     });
-  }, [workflows, statusFilter, typeFilter]);
+  }, [workflows, statusFilter, typeFilter, searchFilter]);
 
   // Build project map for WorkflowTable
   const projectMap: Record<number, string> = projectName ? { [projectId]: projectName } : {};
@@ -86,6 +89,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
   const handleResetFilters = useCallback(() => {
     setStatusFilter(DEFAULT_STATUS_FILTER);
     setTypeFilter(DEFAULT_TYPE_FILTER);
+    setSearchFilter('');
   }, []);
 
   const isWorkflowsEmpty = !isLoading && !error && workflows?.length === 0;
@@ -165,6 +169,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
         <WorkflowTable
           cancellingIds={cancellingIds}
           onCancel={handleCancelWorkflow}
+          onGlobalFilterChange={setSearchFilter}
           onViewDetails={handleViewDetails}
           projectMap={projectMap}
           toolbarContent={

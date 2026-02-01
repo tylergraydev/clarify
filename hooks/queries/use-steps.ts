@@ -5,33 +5,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { stepKeys } from '@/lib/queries/steps';
 import { workflowKeys } from '@/lib/queries/workflows';
 
-import { useElectron } from '../use-electron';
-
-// ============================================================================
-// Query Hooks
-// ============================================================================
+import { useElectronDb } from '../use-electron';
 
 /**
  * Complete a step with optional output
  */
 export function useCompleteStep() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { steps } = useElectronDb();
 
   return useMutation({
     mutationFn: ({ durationMs, id, output }: { durationMs?: number; id: number; output?: string }) =>
-      api!.step.complete(id, output, durationMs),
+      steps.complete(id, output, durationMs),
     onSuccess: (step) => {
       if (step) {
-        // Update detail cache directly
         queryClient.setQueryData(stepKeys.detail(step.id).queryKey, step);
-        // Invalidate step list queries
         void queryClient.invalidateQueries({ queryKey: stepKeys.list._def });
-        // Invalidate workflow-specific step queries
         void queryClient.invalidateQueries({
           queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
         });
-        // Invalidate workflow queries since step completion affects workflow state
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.detail(step.workflowId).queryKey,
         });
@@ -51,21 +43,17 @@ export function useCompleteStep() {
  */
 export function useEditStep() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { steps } = useElectronDb();
 
   return useMutation({
-    mutationFn: ({ editedOutput, id }: { editedOutput: string; id: number }) => api!.step.edit(id, editedOutput),
+    mutationFn: ({ editedOutput, id }: { editedOutput: string; id: number }) => steps.edit(id, editedOutput),
     onSuccess: (step) => {
       if (step) {
-        // Update detail cache directly
         queryClient.setQueryData(stepKeys.detail(step.id).queryKey, step);
-        // Invalidate step list queries
         void queryClient.invalidateQueries({ queryKey: stepKeys.list._def });
-        // Invalidate workflow-specific step queries
         void queryClient.invalidateQueries({
           queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
         });
-        // Invalidate workflow queries since edited steps may affect workflow
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.detail(step.workflowId).queryKey,
         });
@@ -74,30 +62,22 @@ export function useEditStep() {
   });
 }
 
-// ============================================================================
-// Mutation Hooks
-// ============================================================================
-
 /**
  * Fail a step with an error message
  */
 export function useFailStep() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { steps } = useElectronDb();
 
   return useMutation({
-    mutationFn: ({ errorMessage, id }: { errorMessage: string; id: number }) => api!.step.fail(id, errorMessage),
+    mutationFn: ({ errorMessage, id }: { errorMessage: string; id: number }) => steps.fail(id, errorMessage),
     onSuccess: (step) => {
       if (step) {
-        // Update detail cache directly
         queryClient.setQueryData(stepKeys.detail(step.id).queryKey, step);
-        // Invalidate step list queries
         void queryClient.invalidateQueries({ queryKey: stepKeys.list._def });
-        // Invalidate workflow-specific step queries
         void queryClient.invalidateQueries({
           queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
         });
-        // Invalidate workflow queries since step failure affects workflow state
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.detail(step.workflowId).queryKey,
         });
@@ -117,21 +97,17 @@ export function useFailStep() {
  */
 export function useRegenerateStep() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { steps } = useElectronDb();
 
   return useMutation({
-    mutationFn: (id: number) => api!.step.regenerate(id),
+    mutationFn: (id: number) => steps.regenerate(id),
     onSuccess: (step) => {
       if (step) {
-        // Update detail cache directly
         queryClient.setQueryData(stepKeys.detail(step.id).queryKey, step);
-        // Invalidate step list queries
         void queryClient.invalidateQueries({ queryKey: stepKeys.list._def });
-        // Invalidate workflow-specific step queries
         void queryClient.invalidateQueries({
           queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
         });
-        // Invalidate workflow queries since regeneration may affect workflow state
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.detail(step.workflowId).queryKey,
         });
@@ -148,21 +124,17 @@ export function useRegenerateStep() {
  */
 export function useSkipStep() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { steps } = useElectronDb();
 
   return useMutation({
-    mutationFn: (id: number) => api!.step.skip(id),
+    mutationFn: (id: number) => steps.skip(id),
     onSuccess: (step) => {
       if (step) {
-        // Update detail cache directly
         queryClient.setQueryData(stepKeys.detail(step.id).queryKey, step);
-        // Invalidate step list queries
         void queryClient.invalidateQueries({ queryKey: stepKeys.list._def });
-        // Invalidate workflow-specific step queries
         void queryClient.invalidateQueries({
           queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
         });
-        // Invalidate workflow queries since skipping may affect workflow state
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.detail(step.workflowId).queryKey,
         });
@@ -181,12 +153,12 @@ export function useSkipStep() {
  * Fetch a single step by ID
  */
 export function useStep(id: number) {
-  const { api, isElectron } = useElectron();
+  const { isElectron, steps } = useElectronDb();
 
   return useQuery({
     ...stepKeys.detail(id),
     enabled: isElectron && id > 0,
-    queryFn: () => api!.step.get(id),
+    queryFn: () => steps.get(id),
   });
 }
 
@@ -194,11 +166,11 @@ export function useStep(id: number) {
  * Fetch all steps for a workflow
  */
 export function useStepsByWorkflow(workflowId: number) {
-  const { api, isElectron } = useElectron();
+  const { isElectron, steps } = useElectronDb();
 
   return useQuery({
     ...stepKeys.byWorkflow(workflowId),
     enabled: isElectron && workflowId > 0,
-    queryFn: () => api!.step.list(workflowId),
+    queryFn: () => steps.list(workflowId),
   });
 }

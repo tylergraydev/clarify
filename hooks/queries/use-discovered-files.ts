@@ -6,7 +6,7 @@ import type { NewDiscoveredFile } from '@/types/electron';
 
 import { discoveredFileKeys } from '@/lib/queries/discovered-files';
 
-import { useElectron } from '../use-electron';
+import { useElectronDb } from '../use-electron';
 
 // ============================================================================
 // Query Hooks
@@ -17,10 +17,10 @@ import { useElectron } from '../use-electron';
  */
 export function useAddDiscoveredFile() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { discovery } = useElectronDb();
 
   return useMutation({
-    mutationFn: ({ data, stepId }: { data: NewDiscoveredFile; stepId: number }) => api!.discovery.add(stepId, data),
+    mutationFn: ({ data, stepId }: { data: NewDiscoveredFile; stepId: number }) => discovery.add(stepId, data),
     onSuccess: (file) => {
       // Invalidate step-specific queries
       void queryClient.invalidateQueries({
@@ -42,12 +42,12 @@ export function useAddDiscoveredFile() {
  * Fetch all discovered files for a workflow step
  */
 export function useDiscoveredFiles(stepId: number) {
-  const { api, isElectron } = useElectron();
+  const { discovery, isElectron } = useElectronDb();
 
   return useQuery({
     ...discoveredFileKeys.byWorkflowStep(stepId),
     enabled: isElectron && stepId > 0,
-    queryFn: () => api!.discovery.list(stepId),
+    queryFn: () => discovery.list(stepId),
   });
 }
 
@@ -60,10 +60,10 @@ export function useDiscoveredFiles(stepId: number) {
  */
 export function useExcludeFile() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { discovery } = useElectronDb();
 
   return useMutation({
-    mutationFn: (id: number) => api!.discovery.exclude(id),
+    mutationFn: (id: number) => discovery.exclude(id),
     onSuccess: (file) => {
       if (file) {
         // Update detail cache directly
@@ -86,13 +86,13 @@ export function useExcludeFile() {
  * Filters client-side from the full list
  */
 export function useIncludedFiles(stepId: number) {
-  const { api, isElectron } = useElectron();
+  const { discovery, isElectron } = useElectronDb();
 
   return useQuery({
     ...discoveredFileKeys.included(stepId),
     enabled: isElectron && stepId > 0,
     queryFn: async () => {
-      const files = await api!.discovery.list(stepId);
+      const files = await discovery.list(stepId);
       return files.filter((file) => file.includedAt !== null);
     },
   });
@@ -103,10 +103,10 @@ export function useIncludedFiles(stepId: number) {
  */
 export function useIncludeFile() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { discovery } = useElectronDb();
 
   return useMutation({
-    mutationFn: (id: number) => api!.discovery.include(id),
+    mutationFn: (id: number) => discovery.include(id),
     onSuccess: (file) => {
       if (file) {
         // Update detail cache directly
@@ -129,10 +129,10 @@ export function useIncludeFile() {
  */
 export function useUpdateDiscoveredFile() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { discovery } = useElectronDb();
 
   return useMutation({
-    mutationFn: ({ data, id }: { data: Partial<NewDiscoveredFile>; id: number }) => api!.discovery.update(id, data),
+    mutationFn: ({ data, id }: { data: Partial<NewDiscoveredFile>; id: number }) => discovery.update(id, data),
     onSuccess: (file) => {
       if (file) {
         // Update detail cache directly

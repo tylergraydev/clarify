@@ -200,22 +200,6 @@ export interface ElectronAPI {
 
 Add to `hooks/useElectron.ts`:
 
-```typescript
-export function useElectronDomain() {
-  const { api, isElectron } = useElectron();
-
-  const action = useCallback(
-    async (arg: ArgType): Promise<ReturnType | null> => {
-      if (!api) return null;
-      return api.domain.action(arg);
-    },
-    [api]
-  );
-
-  return { action, isElectron };
-}
-```
-
 **For database entities with useElectronDb**:
 
 ```typescript

@@ -27,7 +27,7 @@ import { pauseBehaviors, workflowTypes } from '@/db/schema/workflows.schema';
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useActiveTemplates, useIncrementTemplateUsage } from '@/hooks/queries/use-templates';
 import { useCreateWorkflow } from '@/hooks/queries/use-workflows';
-import { useElectron } from '@/hooks/use-electron';
+import { useElectronDb } from '@/hooks/use-electron';
 import { useToast } from '@/hooks/use-toast';
 import { useAppForm } from '@/lib/forms/form-hook';
 import { createWorkflowSchema } from '@/lib/validations/workflow';
@@ -60,7 +60,7 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
   const [isOpen, setIsOpen] = useState(false);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
-  const { api } = useElectron();
+  const { workflowRepositories } = useElectronDb();
   const toast = useToast();
 
   const { data: repositories = [] } = useRepositoriesByProject(projectId);
@@ -106,11 +106,11 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
         });
 
         // Step 2: Associate repositories with the workflow
-        if (value.repositoryIds.length > 0 && api) {
+        if (value.repositoryIds.length > 0) {
           const repositoryIds = value.repositoryIds.map(Number);
           const primaryRepositoryId = value.primaryRepositoryId ? Number(value.primaryRepositoryId) : undefined;
 
-          await api.workflowRepository.addMultiple(workflow.id, repositoryIds, primaryRepositoryId);
+          await workflowRepositories.addMultiple(workflow.id, repositoryIds, primaryRepositoryId);
         }
 
         // Step 3: Increment template usage if a template was used

@@ -9,7 +9,7 @@ import type { ParsedAgentMarkdown } from '@/lib/utils/agent-markdown';
 import type { AgentImportValidationResult } from '@/lib/validations/agent-import';
 
 import { useExportAgent, useExportAgentsBatch, useImportAgent } from '@/hooks/queries/use-agents';
-import { useElectron } from '@/hooks/use-electron';
+import { useElectronDialog, useElectronFs } from '@/hooks/use-electron';
 import { useToast } from '@/hooks/use-toast';
 import { parseAgentMarkdown } from '@/lib/utils/agent-markdown';
 import { prepareAgentImportData, validateAgentImport } from '@/lib/validations/agent-import';
@@ -87,7 +87,8 @@ export const useAgentImportExport = ({
   setRowSelection,
 }: UseAgentImportExportOptions): UseAgentImportExportReturn => {
   // Hooks for API access
-  const { api } = useElectron();
+  const { isElectron, openDirectory, openFile, saveFile } = useElectronDialog();
+  const { readFile, writeFile } = useElectronFs();
   const toast = useToast();
 
   // Mutations
@@ -97,7 +98,7 @@ export const useAgentImportExport = ({
 
   // Import click handler - opens file dialog and parses markdown
   const handleImportClick = useCallback(async () => {
-    if (!api) {
+    if (!isElectron) {
       toast.error({
         description: 'Electron API not available',
         title: 'Import Failed',
@@ -106,14 +107,14 @@ export const useAgentImportExport = ({
     }
 
     // Open file dialog with markdown filter
-    const filePath = await api.dialog.openFile([{ extensions: ['md'], name: 'Markdown Files' }]);
+    const filePath = await openFile([{ extensions: ['md'], name: 'Markdown Files' }]);
 
     if (!filePath) {
       return; // User cancelled
     }
 
     // Read file content
-    const result = await api.fs.readFile(filePath);
+    const result = await readFile(filePath);
 
     if (!result.success || !result.content) {
       toast.error({
@@ -139,7 +140,7 @@ export const useAgentImportExport = ({
         title: 'Parse Failed',
       });
     }
-  }, [api, onOpenImportDialog, toast]);
+  }, [isElectron, onOpenImportDialog, openFile, readFile, toast]);
 
   // Import confirm handler
   const handleImportConfirm = useCallback(
@@ -164,7 +165,7 @@ export const useAgentImportExport = ({
   // Export single agent handler
   const handleExportSingle = useCallback(
     async (agent: AgentWithRelations) => {
-      if (!api) {
+      if (!isElectron) {
         toast.error({
           description: 'Electron API not available',
           title: 'Export Failed',
@@ -177,14 +178,14 @@ export const useAgentImportExport = ({
         onSuccess: async (markdown) => {
           // Open save dialog with default filename
           const defaultFilename = `${agent.name}.md`;
-          const savePath = await api.dialog.saveFile(defaultFilename, [{ extensions: ['md'], name: 'Markdown Files' }]);
+          const savePath = await saveFile(defaultFilename, [{ extensions: ['md'], name: 'Markdown Files' }]);
 
           if (!savePath) {
             return; // User cancelled
           }
 
           // Write content to file
-          const writeResult = await api.fs.writeFile(savePath, markdown);
+          const writeResult = await writeFile(savePath, markdown);
 
           if (!writeResult.success) {
             toast.error({
@@ -201,12 +202,12 @@ export const useAgentImportExport = ({
         },
       });
     },
-    [api, exportAgentMutation, toast]
+    [exportAgentMutation, isElectron, saveFile, toast, writeFile]
   );
 
   // Export selected agents handler (batch export)
   const handleExportSelected = useCallback(async () => {
-    if (!api) {
+    if (!isElectron) {
       toast.error({
         description: 'Electron API not available',
         title: 'Export Failed',
@@ -228,7 +229,7 @@ export const useAgentImportExport = ({
     }
 
     // Open directory dialog
-    const directoryPath = await api.dialog.openDirectory();
+    const directoryPath = await openDirectory();
 
     if (!directoryPath) {
       return; // User cancelled
@@ -243,7 +244,7 @@ export const useAgentImportExport = ({
           .map((item) => {
             const filename = `${item.agentName}.md`;
             const filePath = `${directoryPath}/${filename}`;
-            return api.fs.writeFile(filePath, item.markdown);
+            return writeFile(filePath, item.markdown);
           });
 
         // Count items that failed to export (no markdown)
@@ -285,7 +286,7 @@ export const useAgentImportExport = ({
         }
       },
     });
-  }, [api, exportAgentsBatchMutation, rowSelection, setRowSelection, toast]);
+  }, [exportAgentsBatchMutation, isElectron, openDirectory, rowSelection, setRowSelection, toast, writeFile]);
 
   return {
     isExporting: exportAgentMutation.isPending || exportAgentsBatchMutation.isPending,

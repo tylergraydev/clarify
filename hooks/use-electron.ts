@@ -80,13 +80,25 @@ export function useElectronDb() {
         const electronApi = throwIfNoApi('workflow.create');
         return electronApi.workflow.create(data);
       },
+      delete: async (id: number) => {
+        const electronApi = throwIfNoApi('workflow.delete');
+        return electronApi.workflow.delete(id);
+      },
       get: async (id: number) => {
         if (!api) return undefined;
         return api.workflow.get(id);
       },
+      getStatistics: async (filters?: Parameters<NonNullable<ElectronAPI>['workflow']['getStatistics']>[0]) => {
+        const electronApi = throwIfNoApi('workflow.getStatistics');
+        return electronApi.workflow.getStatistics(filters);
+      },
       list: async () => {
         if (!api) return [];
         return api.workflow.list();
+      },
+      listHistory: async (filters?: Parameters<NonNullable<ElectronAPI>['workflow']['listHistory']>[0]) => {
+        const electronApi = throwIfNoApi('workflow.listHistory');
+        return electronApi.workflow.listHistory(filters);
       },
       pause: async (id: number) => {
         const electronApi = throwIfNoApi('workflow.pause');
@@ -129,6 +141,10 @@ export function useElectronDb() {
       regenerate: async (id: number) => {
         const electronApi = throwIfNoApi('step.regenerate');
         return electronApi.step.regenerate(id);
+      },
+      skip: async (id: number) => {
+        const electronApi = throwIfNoApi('step.skip');
+        return electronApi.step.skip(id);
       },
     }),
     [api, throwIfNoApi]
@@ -322,17 +338,28 @@ export function useElectronDb() {
         if (!api) return undefined;
         return api.template.get(id);
       },
+      getPlaceholders: async (templateId: number) => {
+        if (!api) return [];
+        return api.template.getPlaceholders(templateId);
+      },
       incrementUsage: async (id: number) => {
         const electronApi = throwIfNoApi('template.incrementUsage');
         return electronApi.template.incrementUsage(id);
       },
-      list: async () => {
+      list: async (filters?: Parameters<NonNullable<ElectronAPI>['template']['list']>[0]) => {
         if (!api) return [];
-        return api.template.list();
+        return api.template.list(filters);
       },
       update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['template']['update']>[1]) => {
         const electronApi = throwIfNoApi('template.update');
         return electronApi.template.update(id, data);
+      },
+      updatePlaceholders: async (
+        templateId: number,
+        placeholders: Parameters<NonNullable<ElectronAPI>['template']['updatePlaceholders']>[1]
+      ) => {
+        const electronApi = throwIfNoApi('template.updatePlaceholders');
+        return electronApi.template.updatePlaceholders(templateId, placeholders);
       },
     }),
     [api, throwIfNoApi]
@@ -344,6 +371,10 @@ export function useElectronDb() {
         const electronApi = throwIfNoApi('project.addRepo');
         return electronApi.project.addRepo(projectId, repoData);
       },
+      archive: async (id: number) => {
+        const electronApi = throwIfNoApi('project.archive');
+        return electronApi.project.archive(id);
+      },
       create: async (data: Parameters<NonNullable<ElectronAPI>['project']['create']>[0]) => {
         const electronApi = throwIfNoApi('project.create');
         return electronApi.project.create(data);
@@ -352,13 +383,21 @@ export function useElectronDb() {
         const electronApi = throwIfNoApi('project.delete');
         return electronApi.project.delete(id);
       },
+      deleteHard: async (id: number) => {
+        const electronApi = throwIfNoApi('project.deleteHard');
+        return electronApi.project.deleteHard(id);
+      },
       get: async (id: number) => {
         if (!api) return undefined;
         return api.project.get(id);
       },
-      list: async () => {
+      list: async (options?: Parameters<NonNullable<ElectronAPI>['project']['list']>[0]) => {
         if (!api) return [];
-        return api.project.list();
+        return api.project.list(options);
+      },
+      unarchive: async (id: number) => {
+        const electronApi = throwIfNoApi('project.unarchive');
+        return electronApi.project.unarchive(id);
       },
       update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['project']['update']>[1]) => {
         const electronApi = throwIfNoApi('project.update');
@@ -370,6 +409,10 @@ export function useElectronDb() {
 
   const repositories = useMemo(
     () => ({
+      clearDefault: async (id: number) => {
+        const electronApi = throwIfNoApi('repository.clearDefault');
+        return electronApi.repository.clearDefault(id);
+      },
       create: async (data: Parameters<NonNullable<ElectronAPI>['repository']['create']>[0]) => {
         const electronApi = throwIfNoApi('repository.create');
         return electronApi.repository.create(data);
@@ -466,6 +509,34 @@ export function useElectronDb() {
     [api, throwIfNoApi]
   );
 
+  const workflowRepositories = useMemo(
+    () => ({
+      addMultiple: async (workflowId: number, repositoryIds: Array<number>, primaryRepositoryId?: number) => {
+        const electronApi = throwIfNoApi('workflowRepository.addMultiple');
+        return electronApi.workflowRepository.addMultiple(workflowId, repositoryIds, primaryRepositoryId);
+      },
+    }),
+    [throwIfNoApi]
+  );
+
+  const worktrees = useMemo(
+    () => ({
+      get: async (id: number) => {
+        if (!api) return undefined;
+        return api.worktree.get(id);
+      },
+      getByWorkflowId: async (workflowId: number) => {
+        if (!api) return undefined;
+        return api.worktree.getByWorkflowId(workflowId);
+      },
+      list: async (options?: { repositoryId?: number; status?: string }) => {
+        if (!api) return [];
+        return api.worktree.list(options);
+      },
+    }),
+    [api]
+  );
+
   return {
     agentHooks,
     agents,
@@ -479,7 +550,9 @@ export function useElectronDb() {
     settings,
     steps,
     templates,
+    workflowRepositories,
     workflows,
+    worktrees,
   };
 }
 

@@ -12,7 +12,7 @@ import type {
 
 import { templateKeys } from '@/lib/queries/templates';
 
-import { useElectron } from '../use-electron';
+import { useElectronDb } from '../use-electron';
 
 // ============================================================================
 // Types for Optimistic Update Contexts
@@ -40,12 +40,12 @@ interface UpdateTemplateMutationContext {
  * Fetch active templates using server-side filtering
  */
 export function useActiveTemplates() {
-  const { api, isElectron } = useElectron();
+  const { isElectron, templates } = useElectronDb();
 
   return useQuery({
     ...templateKeys.active,
     enabled: isElectron,
-    queryFn: () => api!.template.list({ includeDeactivated: false }),
+    queryFn: () => templates.list({ includeDeactivated: false }),
   });
 }
 
@@ -54,15 +54,15 @@ export function useActiveTemplates() {
  * Note: builtInAt filter is not supported server-side, so client-side filtering is required
  */
 export function useBuiltInTemplates() {
-  const { api, isElectron } = useElectron();
+  const { isElectron, templates } = useElectronDb();
 
   return useQuery({
     ...templateKeys.builtIn,
     enabled: isElectron,
     queryFn: async () => {
       // Fetch active templates (using server-side filter), then filter by builtInAt client-side
-      const templates = await api!.template.list({ includeDeactivated: false });
-      return templates.filter((template) => template.builtInAt !== null);
+      const templateList = await templates.list({ includeDeactivated: false });
+      return templateList.filter((template) => template.builtInAt !== null);
     },
   });
 }
@@ -73,10 +73,10 @@ export function useBuiltInTemplates() {
  */
 export function useCreateTemplate() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { templates } = useElectronDb();
 
   return useMutation<Template, Error, NewTemplate, CreateTemplateMutationContext>({
-    mutationFn: (data: NewTemplate) => api!.template.create(data),
+    mutationFn: (data: NewTemplate) => templates.create(data),
     onError: (_error, _variables, context) => {
       // Rollback optimistic updates on error
       if (context?.previousListQueries) {
@@ -155,10 +155,10 @@ export function useCreateTemplate() {
  */
 export function useDeleteTemplate() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { templates } = useElectronDb();
 
   return useMutation<boolean, Error, number, DeleteTemplateMutationContext>({
-    mutationFn: (id: number) => api!.template.delete(id),
+    mutationFn: (id: number) => templates.delete(id),
     onError: (_error, _id, context) => {
       // Rollback optimistic updates on error
       if (context?.previousQueries) {
@@ -227,10 +227,10 @@ export function useDeleteTemplate() {
  */
 export function useIncrementTemplateUsage() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { templates } = useElectronDb();
 
   return useMutation({
-    mutationFn: (id: number) => api!.template.incrementUsage(id),
+    mutationFn: (id: number) => templates.incrementUsage(id),
     onSuccess: (template) => {
       if (template) {
         // Update detail cache directly
@@ -252,12 +252,12 @@ export function useIncrementTemplateUsage() {
  * Fetch a single template by ID
  */
 export function useTemplate(id: number) {
-  const { api, isElectron } = useElectron();
+  const { isElectron, templates } = useElectronDb();
 
   return useQuery({
     ...templateKeys.detail(id),
     enabled: isElectron && id > 0,
-    queryFn: () => api!.template.get(id),
+    queryFn: () => templates.get(id),
   });
 }
 
@@ -265,12 +265,12 @@ export function useTemplate(id: number) {
  * Fetch placeholders for a specific template
  */
 export function useTemplatePlaceholders(templateId: number) {
-  const { api, isElectron } = useElectron();
+  const { isElectron, templates } = useElectronDb();
 
   return useQuery({
     ...templateKeys.placeholders(templateId),
     enabled: isElectron && templateId > 0,
-    queryFn: () => api!.template.getPlaceholders(templateId),
+    queryFn: () => templates.getPlaceholders(templateId),
   });
 }
 
@@ -278,12 +278,12 @@ export function useTemplatePlaceholders(templateId: number) {
  * Fetch all templates with server-side filtering
  */
 export function useTemplates(filters?: TemplateListFilters) {
-  const { api, isElectron } = useElectron();
+  const { isElectron, templates } = useElectronDb();
 
   return useQuery({
     ...templateKeys.list(filters),
     enabled: isElectron,
-    queryFn: () => api!.template.list(filters),
+    queryFn: () => templates.list(filters),
   });
 }
 
@@ -291,12 +291,12 @@ export function useTemplates(filters?: TemplateListFilters) {
  * Fetch templates filtered by category using server-side filtering
  */
 export function useTemplatesByCategory(category: TemplateListFilters['category']) {
-  const { api, isElectron } = useElectron();
+  const { isElectron, templates } = useElectronDb();
 
   return useQuery({
     ...templateKeys.byCategory(category),
     enabled: isElectron && Boolean(category),
-    queryFn: () => api!.template.list({ category, includeDeactivated: false }),
+    queryFn: () => templates.list({ category, includeDeactivated: false }),
   });
 }
 
@@ -310,7 +310,7 @@ export function useTemplatesByCategory(category: TemplateListFilters['category']
  */
 export function useUpdateTemplate() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { templates } = useElectronDb();
 
   interface UpdateVariables {
     data: Partial<NewTemplate>;
@@ -318,7 +318,7 @@ export function useUpdateTemplate() {
   }
 
   return useMutation<Template | undefined, Error, UpdateVariables, UpdateTemplateMutationContext>({
-    mutationFn: ({ data, id }: UpdateVariables) => api!.template.update(id, data),
+    mutationFn: ({ data, id }: UpdateVariables) => templates.update(id, data),
     onError: (_error, _variables, context) => {
       // Rollback optimistic updates on error
       if (context?.previousQueries) {
@@ -343,9 +343,9 @@ export function useUpdateTemplate() {
         const allLists = queryClient.getQueriesData<Array<Template>>({
           queryKey: templateKeys.list._def,
         });
-        for (const [, templates] of allLists) {
-          if (templates) {
-            const found = templates.find((t) => t.id === templateId);
+        for (const [, templateList] of allLists) {
+          if (templateList) {
+            const found = templateList.find((t) => t.id === templateId);
             if (found) {
               existingTemplate = found;
               break;
@@ -441,7 +441,7 @@ export function useUpdateTemplate() {
  */
 export function useUpdateTemplatePlaceholders() {
   const queryClient = useQueryClient();
-  const { api } = useElectron();
+  const { templates } = useElectronDb();
 
   interface UpdatePlaceholdersVariables {
     placeholders: Array<Omit<NewTemplatePlaceholder, 'templateId'>>;
@@ -450,7 +450,7 @@ export function useUpdateTemplatePlaceholders() {
 
   return useMutation<Array<TemplatePlaceholder>, Error, UpdatePlaceholdersVariables>({
     mutationFn: ({ placeholders, templateId }: UpdatePlaceholdersVariables) =>
-      api!.template.updatePlaceholders(templateId, placeholders),
+      templates.updatePlaceholders(templateId, placeholders),
     onSuccess: (_placeholders, { templateId }) => {
       // Invalidate the placeholders cache for this template
       void queryClient.invalidateQueries({
