@@ -311,7 +311,7 @@ pnpm lint && pnpm typecheck
 
 ---
 
-### Step 8: Add Statistics Summary Section (Optional Enhancement)
+### Step 8: Add Statistics Summary Section
 
 **What**: Add a statistics summary section above the table showing completion rate, average duration, and status counts
 **Why**: Provides quick insights into workflow history performance metrics
