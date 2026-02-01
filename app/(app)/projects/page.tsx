@@ -30,7 +30,7 @@ import { Route } from './route-type';
 const ARCHIVE_FILTER_VALUES = ['all', 'active', 'archived'] as const;
 
 // ============================================================================
-// Page Component
+// Component
 // ============================================================================
 
 /**
@@ -44,7 +44,7 @@ const ARCHIVE_FILTER_VALUES = ['all', 'active', 'archived'] as const;
  * - Archive/unarchive project actions via Status column toggle
  * - Empty state when no projects exist
  */
-function ProjectsPageContent() {
+const ProjectsPage = () => {
   const router = useRouter();
 
   // URL state management with nuqs
@@ -152,56 +152,75 @@ function ProjectsPageContent() {
   };
 
   // Check if there are no projects at all (not just filtered)
-  const hasNoProjects = !isLoading && projects && projects.length === 0;
+  const hasNoProjects = projects && projects.length === 0;
+
+  // Loading state - early return
+  if (isLoading) {
+    return (
+      <div aria-busy={'true'} aria-label={'Loading projects'} role={'status'}>
+        <DataTableSkeleton columnCount={6} rowCount={3} />
+      </div>
+    );
+  }
 
   return (
-    <div className={'space-y-6'} id={'project-content'}>
-      {/* Page heading with count badge */}
-      <ProjectsPageHeader filteredCount={filteredCount} isFiltered={isFiltered} totalCount={totalCount} />
+    <QueryErrorBoundary>
+      <main aria-label={'Project management'} className={'space-y-6'}>
+        {/* Skip link for keyboard navigation */}
+        <a
+          className={
+            'sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-background focus:p-2 focus:text-foreground'
+          }
+          href={'#project-content'}
+        >
+          {'Skip to project content'}
+        </a>
 
-      {/* Projects content */}
-      <QueryErrorBoundary>
-        {isLoading ? (
-          <DataTableSkeleton columnCount={6} rowCount={3} />
-        ) : hasNoProjects ? (
-          // Empty state when no projects exist
-          <EmptyState
-            action={
-              <CreateProjectDialog
-                trigger={
-                  <Button>
-                    <Plus aria-hidden={'true'} className={'size-4'} />
-                    {'Create your first project'}
-                  </Button>
-                }
-              />
-            }
-            description={'Get started by creating your first project to organize your workflows and repositories.'}
-            icon={<FolderOpen aria-hidden={'true'} className={'size-6'} />}
-            title={'No projects yet'}
-          />
-        ) : (
-          <ProjectTable
-            archivingIds={archivingIds}
-            deletingIds={deletingIds}
-            onArchive={handleArchive}
-            onDelete={handleDelete}
-            onGlobalFilterChange={setSearchFilter}
-            onUnarchive={handleUnarchive}
-            onViewDetails={handleViewDetails}
-            projects={filteredProjects}
-            toolbarContent={
-              <ProjectTableToolbar
-                archiveFilter={archiveFilter}
-                onArchiveFilterChange={handleArchiveFilterChange}
-                onResetFilters={handleResetFilters}
-              />
-            }
-          />
-        )}
-      </QueryErrorBoundary>
-    </div>
+        {/* Page heading with count badge */}
+        <ProjectsPageHeader filteredCount={filteredCount} isFiltered={isFiltered} totalCount={totalCount} />
+
+        {/* Projects content */}
+        <section aria-label={'Projects list'} aria-live={'polite'} id={'project-content'}>
+          {hasNoProjects ? (
+            // Empty state when no projects exist
+            <EmptyState
+              action={
+                <CreateProjectDialog
+                  trigger={
+                    <Button>
+                      <Plus aria-hidden={'true'} className={'size-4'} />
+                      {'Create your first project'}
+                    </Button>
+                  }
+                />
+              }
+              description={'Get started by creating your first project to organize your workflows and repositories.'}
+              icon={<FolderOpen aria-hidden={'true'} className={'size-6'} />}
+              title={'No projects yet'}
+            />
+          ) : (
+            <ProjectTable
+              archivingIds={archivingIds}
+              deletingIds={deletingIds}
+              onArchive={handleArchive}
+              onDelete={handleDelete}
+              onGlobalFilterChange={setSearchFilter}
+              onUnarchive={handleUnarchive}
+              onViewDetails={handleViewDetails}
+              projects={filteredProjects}
+              toolbarContent={
+                <ProjectTableToolbar
+                  archiveFilter={archiveFilter}
+                  onArchiveFilterChange={handleArchiveFilterChange}
+                  onResetFilters={handleResetFilters}
+                />
+              }
+            />
+          )}
+        </section>
+      </main>
+    </QueryErrorBoundary>
   );
-}
+};
 
-export default withParamValidation(ProjectsPageContent, Route);
+export default withParamValidation(ProjectsPage, Route);

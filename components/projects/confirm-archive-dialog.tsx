@@ -13,24 +13,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-interface ConfirmArchiveDialogBaseProps {
+interface ConfirmArchiveDialogProps {
   /** Whether the project is currently archived (determines action direction) */
   isArchived: boolean;
   /** Whether the mutation is in progress */
   isLoading?: boolean;
+  /** Whether the dialog is open (controlled) */
+  isOpen: boolean;
   /** Callback when the user confirms the action */
   onConfirm: () => void;
-  /** The project name to display in the dialog */
+  /** Callback when the dialog open state changes */
+  onOpenChange: (isOpen: boolean) => void;
+  /** The project display name to show in the dialog */
   projectName: string;
-}
-
-interface ConfirmArchiveDialogProps extends ConfirmArchiveDialogBaseProps {
-  /** Controlled open state */
-  isOpen: boolean;
-  /** Callback when open state changes */
-  onOpenChange: (open: boolean) => void;
-  /** Trigger - not used in controlled mode */
-  trigger?: never;
 }
 
 export const ConfirmArchiveDialog = ({
@@ -51,26 +46,36 @@ export const ConfirmArchiveDialog = ({
     onConfirm();
   };
 
-  // Controlled mode (no trigger)
+  const confirmButtonLabel = isArchived
+    ? `Unarchive ${projectName} project`
+    : `Archive ${projectName} project`;
+
   return (
     <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
+      {/* Portal */}
       <DialogPortal>
         <DialogBackdrop />
-        <DialogPopup>
+        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
           {/* Header */}
           <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
+            <DialogTitle id={'confirm-archive-project-title'}>{title}</DialogTitle>
+            <DialogDescription id={'confirm-archive-project-description'}>{description}</DialogDescription>
           </DialogHeader>
 
           {/* Actions */}
           <DialogFooter sticky={false}>
             <DialogClose>
               <Button disabled={isLoading} variant={'outline'}>
-                Cancel
+                {'Cancel'}
               </Button>
             </DialogClose>
-            <Button disabled={isLoading} onClick={handleConfirmClick} variant={'default'}>
+            <Button
+              aria-describedby={'confirm-archive-project-description'}
+              aria-label={confirmButtonLabel}
+              disabled={isLoading}
+              onClick={handleConfirmClick}
+              variant={'default'}
+            >
               {isLoading ? 'Processing...' : confirmButtonText}
             </Button>
           </DialogFooter>
