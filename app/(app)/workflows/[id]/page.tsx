@@ -4,7 +4,6 @@ import { formatDistanceToNow, parseISO } from 'date-fns';
 import { Calendar, ChevronRight, Clock, FolderOpen, Pause, Play, X } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { useRouteParams } from 'next-typesafe-url/app';
-import { withParamValidation } from 'next-typesafe-url/app/hoc';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Fragment } from 'react';
@@ -100,7 +99,7 @@ const formatRelativeTime = (dateString: null | string | undefined): string => {
 };
 
 // ============================================================================
-// Page Content
+// Component
 // ============================================================================
 
 /**
@@ -111,7 +110,7 @@ const formatRelativeTime = (dateString: null | string | undefined): string => {
  * - Placeholder heading displaying workflow name
  * - Handles loading and error states
  */
-function WorkflowDetailContent() {
+const WorkflowDetailPage = () => {
   // Type-safe route params validation
   const routeParams = useRouteParams(Route.routeParams);
 
@@ -160,6 +159,16 @@ function WorkflowDetailContent() {
   return (
     <QueryErrorBoundary>
       <main aria-label={'Workflow detail'} className={'space-y-6'}>
+        {/* Skip link for keyboard navigation */}
+        <a
+          className={
+            'sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-background focus:p-2 focus:text-foreground'
+          }
+          href={'#workflow-content'}
+        >
+          Skip to workflow content
+        </a>
+
         {/* Breadcrumb navigation */}
         <nav aria-label={'Breadcrumb'} className={'flex items-center gap-2'}>
           <Link
@@ -174,7 +183,7 @@ function WorkflowDetailContent() {
           {hasProject ? (
             <Link
               className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
-              href={$path({ route: '/projects/[id]', routeParams: { id: workflow.projectId as number } })}
+              href={$path({ route: '/projects/[id]', routeParams: { id: workflow.projectId } })}
             >
               {project.name}
             </Link>
@@ -186,7 +195,7 @@ function WorkflowDetailContent() {
           <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
 
           {/* Static "Workflows" text (no link) */}
-          <span className={'text-sm text-muted-foreground'}>Workflows</span>
+          <span className={'text-sm text-muted-foreground'}>{'Workflows'}</span>
           <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
 
           {/* Current workflow name (no link) */}
@@ -194,7 +203,7 @@ function WorkflowDetailContent() {
         </nav>
 
         {/* Page header */}
-        <section aria-label={'Workflow header'}>
+        <section aria-label={'Workflow header'} aria-live={'polite'} id={'workflow-content'}>
           <div className={'flex items-center gap-3'}>
             <h1 className={'text-3xl font-bold'}>{workflow.featureName}</h1>
             <Badge variant={getStatusVariant(workflow.status)}>{formatStatusLabel(workflow.status)}</Badge>
@@ -225,14 +234,16 @@ function WorkflowDetailContent() {
             <span aria-hidden={'true'}>·</span>
             <span className={'flex items-center gap-1'}>
               <Calendar className={'size-4'} />
-              Created {formatRelativeTime(workflow.createdAt)}
+              {'Created '}
+              {formatRelativeTime(workflow.createdAt)}
             </span>
             {workflow.startedAt && (
               <Fragment>
                 <span aria-hidden={'true'}>·</span>
                 <span className={'flex items-center gap-1'}>
                   <Clock className={'size-4'} />
-                  Started {formatRelativeTime(workflow.startedAt)}
+                  {'Started '}
+                  {formatRelativeTime(workflow.startedAt)}
                 </span>
               </Fragment>
             )}
@@ -263,10 +274,10 @@ function WorkflowDetailContent() {
       </main>
     </QueryErrorBoundary>
   );
-}
+};
 
 // ============================================================================
 // Export
 // ============================================================================
 
-export default withParamValidation(WorkflowDetailContent, Route);
+export default WorkflowDetailPage;

@@ -18,7 +18,12 @@ const DEFAULT_DEBOUNCE_DELAY = 500;
 const STORAGE_KEY_PREFIX = 'table-state-';
 
 /** Default keys to persist if none are specified */
-const DEFAULT_PERSISTED_KEYS: Array<PersistableStateKey> = ['columnOrder', 'columnVisibility', 'columnSizing', 'sorting'];
+const DEFAULT_PERSISTED_KEYS: Array<PersistableStateKey> = [
+  'columnOrder',
+  'columnVisibility',
+  'columnSizing',
+  'sorting',
+];
 
 // =============================================================================
 // Types
