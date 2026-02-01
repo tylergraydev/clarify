@@ -553,8 +553,9 @@ export const DataTable = <TData, TValue>({
           columnOrder: controlledState?.columnOrder ?? [],
           columnSizing: controlledState?.columnSizing ?? {},
           columnVisibility: controlledState?.columnVisibility ?? {},
+          sorting: controlledState?.sorting ?? [],
         },
-        persistedKeys: persistence?.persistedKeys ?? ['columnOrder', 'columnVisibility', 'columnSizing'],
+        persistedKeys: persistence?.persistedKeys ?? ['columnOrder', 'columnVisibility', 'columnSizing', 'sorting'],
         tableId: persistence!.tableId,
       }
     : null;
@@ -615,6 +616,18 @@ export const DataTable = <TData, TValue>({
     [isPersistenceEnabled, onColumnOrderChange, persistedState.columnOrder, setPersistenceState]
   );
 
+  const handleSortingChange = useCallback<OnChangeFn<SortingState>>(
+    (updaterOrValue) => {
+      if (isPersistenceEnabled) {
+        const newValue =
+          typeof updaterOrValue === 'function' ? updaterOrValue(persistedState.sorting ?? []) : updaterOrValue;
+        setPersistenceState({ sorting: newValue });
+      }
+      onSortingChange?.(updaterOrValue);
+    },
+    [isPersistenceEnabled, onSortingChange, persistedState.sorting, setPersistenceState]
+  );
+
   // Initialize TanStack Table
   const resolvedColumnOrder =
     isPersistenceEnabled && persistedState.columnOrder ? persistedState.columnOrder : controlledState?.columnOrder;
@@ -624,6 +637,8 @@ export const DataTable = <TData, TValue>({
     isPersistenceEnabled && persistedState.columnVisibility
       ? persistedState.columnVisibility
       : controlledState?.columnVisibility;
+  const resolvedSorting =
+    isPersistenceEnabled && persistedState.sorting ? persistedState.sorting : controlledState?.sorting;
 
   const tableState: {
     columnFilters?: ColumnFiltersState;
@@ -644,8 +659,8 @@ export const DataTable = <TData, TValue>({
     ...(controlledState?.pagination !== undefined && {
       pagination: controlledState.pagination,
     }),
-    ...(controlledState?.sorting !== undefined && {
-      sorting: controlledState.sorting,
+    ...(resolvedSorting !== undefined && {
+      sorting: resolvedSorting,
     }),
     ...(controlledState?.rowSelection !== undefined && {
       rowSelection: controlledState.rowSelection,
@@ -682,7 +697,7 @@ export const DataTable = <TData, TValue>({
     onGlobalFilterChange: onGlobalFilterChange as OnChangeFn<string>,
     onPaginationChange,
     onRowSelectionChange,
-    onSortingChange,
+    onSortingChange: handleSortingChange,
     state: tableState,
   });
 

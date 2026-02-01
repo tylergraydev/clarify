@@ -660,7 +660,7 @@ export const AgentTable = ({
         onRowClick={handleRowClick}
         onRowSelectionChange={onRowSelectionChange}
         persistence={{
-          persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing'],
+          persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing', 'sorting'],
           tableId: 'agents-table',
         }}
         ref={ref}

@@ -18,7 +18,7 @@ const DEFAULT_DEBOUNCE_DELAY = 500;
 const STORAGE_KEY_PREFIX = 'table-state-';
 
 /** Default keys to persist if none are specified */
-const DEFAULT_PERSISTED_KEYS: Array<PersistableStateKey> = ['columnOrder', 'columnVisibility', 'columnSizing'];
+const DEFAULT_PERSISTED_KEYS: Array<PersistableStateKey> = ['columnOrder', 'columnVisibility', 'columnSizing', 'sorting'];
 
 // =============================================================================
 // Types
@@ -43,7 +43,7 @@ export interface UseTablePersistenceOptions {
   /**
    * Array of state keys to persist.
    * Only these keys will be saved to and restored from storage.
-   * @default ['columnOrder', 'columnVisibility', 'columnSizing']
+   * @default ['columnOrder', 'columnVisibility', 'columnSizing', 'sorting']
    */
   persistedKeys?: Array<PersistableStateKey>;
 

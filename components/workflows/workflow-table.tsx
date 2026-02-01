@@ -355,7 +355,7 @@ export const WorkflowTable = ({
         onGlobalFilterChange={onGlobalFilterChange}
         onRowClick={handleRowClick}
         persistence={{
-          persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing'],
+          persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing', 'sorting'],
           tableId: 'project-workflows-table',
         }}
         ref={ref}

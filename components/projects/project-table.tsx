@@ -418,7 +418,7 @@ export const ProjectTable = ({
         onGlobalFilterChange={onGlobalFilterChange}
         onRowClick={handleRowClick}
         persistence={{
-          persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing'],
+          persistedKeys: ['columnOrder', 'columnVisibility', 'columnSizing', 'sorting'],
           tableId: 'projects-table',
         }}
         ref={ref}
