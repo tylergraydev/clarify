@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import {
-  SHELL_NAV_ITEMS_EXPANDED_STORAGE_KEY,
-  SHELL_SIDEBAR_COLLAPSED_STORAGE_KEY,
-} from '@/lib/layout/constants';
+import { SHELL_NAV_ITEMS_EXPANDED_STORAGE_KEY, SHELL_SIDEBAR_COLLAPSED_STORAGE_KEY } from '@/lib/layout/constants';
 import { useShellStore } from '@/lib/stores/shell-store';
 
 type ShellLayoutProviderProps = RequiredChildren;

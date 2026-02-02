@@ -114,22 +114,13 @@ const StatisticCardSkeleton = () => {
   );
 };
 
-const StatisticCard = ({
-  description,
-  icon,
-  isLoading = false,
-  title,
-  value,
-}: StatisticCardProps) => {
+const StatisticCard = ({ description, icon, isLoading = false, title, value }: StatisticCardProps) => {
   if (isLoading) {
     return <StatisticCardSkeleton />;
   }
 
   return (
-    <div
-      className={'flex items-center gap-3 rounded-lg border border-card-border bg-card p-3'}
-      role={'article'}
-    >
+    <div className={'flex items-center gap-3 rounded-lg border border-card-border bg-card p-3'} role={'article'}>
       {/* Icon */}
       <div
         className={`
@@ -143,7 +134,9 @@ const StatisticCard = ({
       {/* Content */}
       <div className={'min-w-0 flex-1'}>
         <p className={'text-xs text-muted-foreground'}>{title}</p>
-        <p className={'text-lg font-semibold tracking-tight'} title={description}>{value}</p>
+        <p className={'text-lg font-semibold tracking-tight'} title={description}>
+          {value}
+        </p>
       </div>
     </div>
   );
@@ -442,10 +435,15 @@ function WorkflowHistoryContent() {
   }, [refetchHistory, toast]);
 
   const handlePaginationChange = useCallback(
-    (updater: ((old: { pageIndex: number; pageSize: number }) => { pageIndex: number; pageSize: number }) | { pageIndex: number; pageSize: number }) => {
-      const newPagination = typeof updater === 'function'
-        ? updater({ pageIndex: queryState.page - 1, pageSize: queryState.pageSize })
-        : updater;
+    (
+      updater:
+        | ((old: { pageIndex: number; pageSize: number }) => { pageIndex: number; pageSize: number })
+        | { pageIndex: number; pageSize: number }
+    ) => {
+      const newPagination =
+        typeof updater === 'function'
+          ? updater({ pageIndex: queryState.page - 1, pageSize: queryState.pageSize })
+          : updater;
 
       void setQueryState({
         page: newPagination.pageIndex + 1,

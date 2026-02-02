@@ -15,9 +15,9 @@ import { useFilteredAgents } from '@/hooks/agents/use-filtered-agents';
 import { useAllAgents } from '@/hooks/queries/use-agents';
 import { useProjects } from '@/hooks/queries/use-projects';
 
-import { AgentsDialogs } from './_components/agents-dialogs';
-import { AgentsPageHeader } from './_components/agents-page-header';
-import { AgentsPageSkeleton } from './_components/agents-page-skeleton';
+import { AgentsDialogs } from '../../../components/agents/agents-dialogs';
+import { AgentsPageHeader } from '../../../components/agents/agents-page-header';
+import { AgentsPageSkeleton } from '../../../components/agents/agents-page-skeleton';
 
 // ============================================================================
 // Component

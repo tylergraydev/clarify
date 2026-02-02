@@ -13,9 +13,9 @@ import { useTemplateActions } from '@/hooks/templates/use-template-actions';
 import { useTemplateDialogs } from '@/hooks/templates/use-template-dialogs';
 import { useTemplateFilters } from '@/hooks/templates/use-template-filters';
 
-import { TemplatesDialogs } from './_components/templates-dialogs';
-import { TemplatesPageHeader } from './_components/templates-page-header';
-import { TemplatesPageSkeleton } from './_components/templates-page-skeleton';
+import { TemplatesDialogs } from '../../../components/templates/templates-dialogs';
+import { TemplatesPageHeader } from '../../../components/templates/templates-page-header';
+import { TemplatesPageSkeleton } from '../../../components/templates/templates-page-skeleton';
 
 // ============================================================================
 // Component

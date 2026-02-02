@@ -188,7 +188,10 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
               label={'Workflows'}
             />
           ) : (
-            <Collapsible onOpenChange={() => toggleNavItemExpanded(NAV_ITEM_KEYS.WORKFLOWS)} open={isWorkflowsOpen || isWorkflowsActive}>
+            <Collapsible
+              onOpenChange={() => toggleNavItemExpanded(NAV_ITEM_KEYS.WORKFLOWS)}
+              open={isWorkflowsOpen || isWorkflowsActive}
+            >
               <CollapsibleTrigger
                 className={cn(
                   `
