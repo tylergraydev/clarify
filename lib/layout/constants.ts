@@ -17,6 +17,10 @@ export const ACTIVE_WORKFLOWS_SORT_DIRECTION_STORAGE_KEY = 'app:active-workflows
 export const ACTIVE_WORKFLOWS_STATUS_FILTER_STORAGE_KEY = 'app:active-workflows-status-filter';
 export const ACTIVE_WORKFLOWS_TYPE_FILTER_STORAGE_KEY = 'app:active-workflows-type-filter';
 
+// Shell layout storage keys
+export const SHELL_SIDEBAR_COLLAPSED_STORAGE_KEY = 'app:shell-sidebar-collapsed';
+export const SHELL_NAV_ITEMS_EXPANDED_STORAGE_KEY = 'app:shell-nav-items-expanded';
+
 // Agent layout defaults
 export const DEFAULT_AGENT_SHOW_BUILTIN = true;
 export const DEFAULT_AGENT_SHOW_DEACTIVATED = false;
@@ -36,3 +40,7 @@ export const DEFAULT_ACTIVE_WORKFLOWS_SORT_COLUMN = 'updatedAt' as const;
 export const DEFAULT_ACTIVE_WORKFLOWS_SORT_DIRECTION = 'desc' as const;
 export const DEFAULT_ACTIVE_WORKFLOWS_STATUS_FILTER = 'all' as const;
 export const DEFAULT_ACTIVE_WORKFLOWS_TYPE_FILTER = 'all' as const;
+
+// Shell layout defaults
+export const DEFAULT_SHELL_SIDEBAR_COLLAPSED = false;
+export const DEFAULT_SHELL_NAV_ITEMS_EXPANDED: Array<string> = [];

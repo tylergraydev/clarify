@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 
+import {
+  DEFAULT_SHELL_NAV_ITEMS_EXPANDED,
+  DEFAULT_SHELL_SIDEBAR_COLLAPSED,
+  SHELL_NAV_ITEMS_EXPANDED_STORAGE_KEY,
+  SHELL_SIDEBAR_COLLAPSED_STORAGE_KEY,
+} from '../layout/constants';
+
 /**
  * Shell actions interface for modifying shell state.
  */
@@ -8,8 +15,12 @@ export interface ShellActions {
   setActiveNavItem: (item: null | string) => void;
   /** Set the mobile drawer open state */
   setMobileDrawerOpen: (open: boolean) => void;
+  /** Set whether a specific nav item is expanded */
+  setNavItemExpanded: (itemKey: string, expanded: boolean) => void;
   /** Explicitly set sidebar collapsed state */
   setSidebarCollapsed: (collapsed: boolean) => void;
+  /** Toggle the expanded state of a specific nav item */
+  toggleNavItemExpanded: (itemKey: string) => void;
   /** Toggle sidebar between collapsed and expanded states */
   toggleSidebar: () => void;
   /** Update the last sync timestamp */
@@ -22,6 +33,8 @@ export interface ShellActions {
 export interface ShellState {
   /** Currently active navigation item identifier */
   activeNavItem: null | string;
+  /** Array of nav item keys that are currently expanded */
+  expandedNavItems: Array<string>;
   /** Whether the mobile navigation drawer is open */
   isMobileDrawerOpen: boolean;
   /** Whether the sidebar is currently collapsed */
@@ -53,9 +66,11 @@ export type ShellStore = ShellActions & ShellState;
  */
 export const useShellStore = create<ShellStore>()((set) => ({
   activeNavItem: null,
-  // Initial state
+
+  // Initial state - will be hydrated from electron-store on mount
+  expandedNavItems: DEFAULT_SHELL_NAV_ITEMS_EXPANDED,
   isMobileDrawerOpen: false,
-  isSidebarCollapsed: false,
+  isSidebarCollapsed: DEFAULT_SHELL_SIDEBAR_COLLAPSED,
   lastSyncTimestamp: null,
 
   setActiveNavItem: (item: null | string) => {
@@ -66,13 +81,59 @@ export const useShellStore = create<ShellStore>()((set) => ({
     set({ isMobileDrawerOpen: open });
   },
 
-  setSidebarCollapsed: (collapsed: boolean) => {
-    set({ isSidebarCollapsed: collapsed });
+  setNavItemExpanded: (itemKey: string, expanded: boolean) => {
+    set((state) => {
+      const newExpandedNavItems = expanded
+        ? state.expandedNavItems.includes(itemKey)
+          ? state.expandedNavItems
+          : [...state.expandedNavItems, itemKey]
+        : state.expandedNavItems.filter((key) => key !== itemKey);
+
+      // Persist to electron-store via IPC
+      if (typeof window !== 'undefined' && window.electronAPI?.store) {
+        window.electronAPI.store.set(SHELL_NAV_ITEMS_EXPANDED_STORAGE_KEY, newExpandedNavItems);
+      }
+
+      return { expandedNavItems: newExpandedNavItems };
+    });
   },
 
-  // Actions
+  setSidebarCollapsed: (collapsed: boolean) => {
+    set({ isSidebarCollapsed: collapsed });
+
+    // Persist to electron-store via IPC
+    if (typeof window !== 'undefined' && window.electronAPI?.store) {
+      window.electronAPI.store.set(SHELL_SIDEBAR_COLLAPSED_STORAGE_KEY, collapsed);
+    }
+  },
+
+  toggleNavItemExpanded: (itemKey: string) => {
+    set((state) => {
+      const isExpanded = state.expandedNavItems.includes(itemKey);
+      const newExpandedNavItems = isExpanded
+        ? state.expandedNavItems.filter((key) => key !== itemKey)
+        : [...state.expandedNavItems, itemKey];
+
+      // Persist to electron-store via IPC
+      if (typeof window !== 'undefined' && window.electronAPI?.store) {
+        window.electronAPI.store.set(SHELL_NAV_ITEMS_EXPANDED_STORAGE_KEY, newExpandedNavItems);
+      }
+
+      return { expandedNavItems: newExpandedNavItems };
+    });
+  },
+
   toggleSidebar: () => {
-    set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed }));
+    set((state) => {
+      const newCollapsed = !state.isSidebarCollapsed;
+
+      // Persist to electron-store via IPC
+      if (typeof window !== 'undefined' && window.electronAPI?.store) {
+        window.electronAPI.store.set(SHELL_SIDEBAR_COLLAPSED_STORAGE_KEY, newCollapsed);
+      }
+
+      return { isSidebarCollapsed: newCollapsed };
+    });
   },
 
   updateLastSync: (timestamp: Date) => {

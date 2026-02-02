@@ -5,7 +5,6 @@ import type { ComponentPropsWithRef } from 'react';
 import { Bot, FolderKanban, History, LayoutDashboard, Play, Settings, Star, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
 
 const WORKFLOWS_BASE_PATH = $path({ route: '/workflows/active' }).replace('/active', '');
 
@@ -15,20 +14,26 @@ import { useFavoriteProjects } from '@/hooks/queries/use-projects';
 import { useShellStore } from '@/lib/stores/shell-store';
 import { cn } from '@/lib/utils';
 
+/** Nav item keys for persistence */
+const NAV_ITEM_KEYS = {
+  FAVORITES: 'favorites',
+  WORKFLOWS: 'workflows',
+} as const;
+
 import { CollapsedNavMenu } from './collapsed-nav-menu';
 import { NavItem } from './nav-item';
 
 type AppSidebarProps = ComponentPropsWithRef<'aside'>;
 
 export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
-  const { isSidebarCollapsed } = useShellStore();
+  const { expandedNavItems, isSidebarCollapsed, toggleNavItemExpanded } = useShellStore();
   const pathname = usePathname();
 
   const { data: favoriteProjects = [], isLoading: isFavoritesLoading } = useFavoriteProjects();
 
   const isWorkflowsActive = pathname.startsWith(WORKFLOWS_BASE_PATH);
-  const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
-  const [isWorkflowsOpen, setIsWorkflowsOpen] = useState(isWorkflowsActive);
+  const isFavoritesOpen = expandedNavItems.includes(NAV_ITEM_KEYS.FAVORITES);
+  const isWorkflowsOpen = expandedNavItems.includes(NAV_ITEM_KEYS.WORKFLOWS);
 
   const isPathActive = (href: string) => {
     if (href === $path({ route: '/dashboard' })) {
@@ -92,7 +97,7 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
               />
             )
           ) : (
-            <Collapsible onOpenChange={setIsFavoritesOpen} open={isFavoritesOpen}>
+            <Collapsible onOpenChange={() => toggleNavItemExpanded(NAV_ITEM_KEYS.FAVORITES)} open={isFavoritesOpen}>
               <CollapsibleTrigger
                 className={cn(
                   `
@@ -183,7 +188,7 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
               label={'Workflows'}
             />
           ) : (
-            <Collapsible onOpenChange={setIsWorkflowsOpen} open={isWorkflowsOpen || isWorkflowsActive}>
+            <Collapsible onOpenChange={() => toggleNavItemExpanded(NAV_ITEM_KEYS.WORKFLOWS)} open={isWorkflowsOpen || isWorkflowsActive}>
               <CollapsibleTrigger
                 className={cn(
                   `
