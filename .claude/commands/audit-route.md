@@ -1,5 +1,5 @@
 ---
-allowed-tools: Task(subagent_type:database-schema), Task(subagent_type:ipc-handler), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:frontend-component), Task(subagent_type:vercel-react-best-practices), Task(subagent_type:Explore), Task(subagent_type:general-purpose), AskUserQuestion(*), TodoWrite(*)
+allowed-tools: Task(subagent_type:claude-agent-sdk), Task(subagent_type:database-schema), Task(subagent_type:ipc-handler), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:frontend-component), Task(subagent_type:vercel-react-best-practices), Task(subagent_type:Explore), Task(subagent_type:general-purpose), AskUserQuestion(*), TodoWrite(*)
 argument-hint: "/route-path [--fix] [--domain=frontend|backend|ipc|hooks|all]"
 description: Audit a route/feature area for best practice violations across all layers (frontend through backend), optionally fix issues
 ---
@@ -53,6 +53,7 @@ or code analysis yourself - you delegate ALL work to specialized subagents.
 
 | Domain | File Patterns | Specialist Agent | Skills |
 |--------|---------------|------------------|--------|
+| `claude-sdk` | `.claude/agents/*.md`, `.claude/skills/**/*.md`, `.claude/commands/*.md` | `claude-agent-sdk` | claude-agent-sdk |
 | `frontend` | `app/**/*.tsx`, `components/**/*.tsx` | `frontend-component` | component-conventions, react-coding-conventions, nextjs-routing-conventions |
 | `backend` | `db/schema/*.ts`, `db/repositories/*.ts` | `database-schema` | database-schema-conventions |
 | `ipc` | `electron/ipc/*.ts`, `preload.ts`, `types/electron.d.ts` | `ipc-handler` | ipc-handler-conventions |

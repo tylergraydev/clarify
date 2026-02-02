@@ -237,6 +237,7 @@ clarify/
 
 | Agent                           | Domain              | When to Use                                                         |
 | ------------------------------- | ------------------- | ------------------------------------------------------------------- |
+| `claude-agent-sdk`              | Claude Agent SDK    | Creating/modifying subagents, skills, or commands in `.claude/`     |
 | `database-schema`               | Drizzle ORM schemas | Creating/modifying database tables, repositories, and migrations    |
 | `tanstack-query`                | Data fetching       | Creating query hooks, mutations, cache invalidation                 |
 | `tanstack-form`                 | Form implementation | Building forms with validation and field components                 |
@@ -255,6 +256,7 @@ clarify/
 
 | Skill                           | Purpose                                                    |
 | ------------------------------- | ---------------------------------------------------------- |
+| `claude-agent-sdk`              | Claude Agent SDK implementation patterns and conventions   |
 | `database-schema-conventions`   | Drizzle schema patterns, repository conventions            |
 | `tanstack-query-conventions`    | Query key factories, mutation patterns, cache invalidation |
 | `tanstack-form-conventions`     | Form structure, field components, validation patterns      |

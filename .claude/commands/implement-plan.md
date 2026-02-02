@@ -1,5 +1,5 @@
 ---
-allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Task(subagent_type:page-route), Task(subagent_type:zustand-store), Task(subagent_type:vercel-react-best-practices), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,pnpm:*,cd:*), TodoWrite(*), AskUserQuestion(*)
+allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:claude-agent-sdk), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Task(subagent_type:page-route), Task(subagent_type:zustand-store), Task(subagent_type:vercel-react-best-practices), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,pnpm:*,cd:*), TodoWrite(*), AskUserQuestion(*)
 argument-hint: "path/to/implementation-plan.md [--step-by-step|--dry-run|--resume-from=N|--worktree]"
 description: Execute implementation plan with structured tracking and validation using subagent architecture
 ---
@@ -91,6 +91,7 @@ You do NOT implement code. Subagents implement code.
 
 | Agent                           | Domain                       | When to Use                                                |
 | ------------------------------- | ---------------------------- | ---------------------------------------------------------- |
+| `claude-agent-sdk`              | Claude Agent SDK configs     | Files in `.claude/agents/`, `.claude/skills/`, `.claude/commands/` |
 | `database-schema`               | Database schemas & repos     | Files in `db/schema/` or `db/repositories/`                |
 | `ipc-handler`                   | Electron IPC communication   | Files in `electron/ipc/`, `electron/preload.ts`, IPC hooks |
 | `tanstack-query`                | Data fetching & server state | Query hooks, mutations, cache management                   |
@@ -106,18 +107,19 @@ You do NOT implement code. Subagents implement code.
 ## Step-Type Detection Rules
 
 ```
-1. IF files contain "db/schema/" AND end with ".schema.ts" → database-schema
-2. IF files contain "db/repositories/" → database-schema
-3. IF files contain "electron/ipc/" OR "electron/preload.ts" OR step involves IPC handlers → ipc-handler
-4. IF files involve TanStack Query hooks/mutations → tanstack-query
-5. IF step involves data tables with useReactTable, pagination, sorting, or filtering → tanstack-table
-6. IF files contain "components/ui/form/" (base field components) → tanstack-form-base-components
-7. IF step involves creating/modifying forms OR files contain "lib/validations/" → tanstack-form
-8. IF step involves performance optimization, bundle size, waterfall fixes, or re-render optimization → vercel-react-best-practices
-9. IF files contain "lib/stores/" OR step involves Zustand store creation → zustand-store
-10. IF files contain "app/(app)/" AND (end with "page.tsx" OR "layout.tsx" OR "loading.tsx" OR "error.tsx" OR "route-type.ts") → page-route
-11. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
-12. ELSE → general-purpose
+1. IF files contain ".claude/agents/" OR ".claude/skills/" OR ".claude/commands/" → claude-agent-sdk
+2. IF files contain "db/schema/" AND end with ".schema.ts" → database-schema
+3. IF files contain "db/repositories/" → database-schema
+4. IF files contain "electron/ipc/" OR "electron/preload.ts" OR step involves IPC handlers → ipc-handler
+5. IF files involve TanStack Query hooks/mutations → tanstack-query
+6. IF step involves data tables with useReactTable, pagination, sorting, or filtering → tanstack-table
+7. IF files contain "components/ui/form/" (base field components) → tanstack-form-base-components
+8. IF step involves creating/modifying forms OR files contain "lib/validations/" → tanstack-form
+9. IF step involves performance optimization, bundle size, waterfall fixes, or re-render optimization → vercel-react-best-practices
+10. IF files contain "lib/stores/" OR step involves Zustand store creation → zustand-store
+11. IF files contain "app/(app)/" AND (end with "page.tsx" OR "layout.tsx" OR "loading.tsx" OR "error.tsx" OR "route-type.ts") → page-route
+12. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
+13. ELSE → general-purpose
 ```
 
 ---

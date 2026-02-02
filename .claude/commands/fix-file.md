@@ -1,5 +1,5 @@
 ---
-allowed-tools: Task(subagent_type:*), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
+allowed-tools: Task(subagent_type:*), Task(subagent_type:claude-agent-sdk), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
 argument-hint: 'path/to/file.ts [--reference=path/to/reference.ts] [--dry-run]'
 description: Fix a file to follow project patterns using specialist agents with automatic review and iteration
 ---
@@ -42,6 +42,9 @@ Map the file path to the appropriate specialist agent:
 
 | File Pattern                               | Specialist Agent                  | Skills Loaded                                       |
 | ------------------------------------------ | --------------------------------- | --------------------------------------------------- |
+| `*.md` in `.claude/agents/`                | `claude-agent-sdk`                | claude-agent-sdk                                    |
+| `*.md` in `.claude/commands/`              | `claude-agent-sdk`                | claude-agent-sdk                                    |
+| `*.md` in `.claude/skills/`                | `claude-agent-sdk`                | claude-agent-sdk                                    |
 | `*.schema.ts` in `db/schema/`              | `database-schema`                 | database-schema-conventions                         |
 | `*.repository.ts` in `db/repositories/`    | `database-schema`                 | database-schema-conventions                         |
 | `use-*.ts` in `hooks/queries/`             | `tanstack-query`                  | tanstack-query-conventions                          |
