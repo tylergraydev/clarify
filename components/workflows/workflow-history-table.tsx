@@ -29,6 +29,8 @@ type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 interface WorkflowHistoryTableProps extends ComponentPropsWithRef<'div'> {
   /** Whether data is loading */
   isLoading?: boolean;
+  /** Callback fired when global filter (search) changes */
+  onGlobalFilterChange?: (value: string) => void;
   /** Callback fired when pagination changes (for server-side pagination) */
   onPaginationChange?: OnChangeFn<PaginationState>;
   /** Callback when the user clicks view details on a workflow */
@@ -164,6 +166,7 @@ const ActionsCell = memo(function ActionsCell({ onViewDetails, row }: ActionsCel
 export const WorkflowHistoryTable = ({
   className,
   isLoading = false,
+  onGlobalFilterChange,
   onPaginationChange,
   onViewDetails,
   pageCount,
@@ -336,6 +339,7 @@ export const WorkflowHistoryTable = ({
         isLoading={isLoading}
         isPaginationEnabled={!!onPaginationChange}
         isToolbarVisible={true}
+        onGlobalFilterChange={onGlobalFilterChange}
         onPaginationChange={onPaginationChange}
         onRowClick={handleRowClick}
         persistence={{

@@ -29,6 +29,7 @@ export interface WorkflowHistoryFilters {
   sortBy?: WorkflowHistorySortField;
   sortOrder?: WorkflowHistorySortOrder;
   statuses?: Array<TerminalStatus>;
+  type?: 'implementation' | 'planning';
 }
 
 /**
@@ -188,6 +189,11 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         conditions.push(
           sql`(${workflows.featureName} LIKE ${searchPattern} OR ${workflows.featureRequest} LIKE ${searchPattern})`
         );
+      }
+
+      // Type filter
+      if (filters?.type !== undefined) {
+        conditions.push(eq(workflows.type, filters.type));
       }
 
       // Determine sort column

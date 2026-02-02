@@ -403,6 +403,7 @@ export interface WorkflowHistoryFilters {
   sortBy?: WorkflowHistorySortField;
   sortOrder?: WorkflowHistorySortOrder;
   statuses?: Array<TerminalStatus>;
+  type?: 'implementation' | 'planning';
 }
 
 /**

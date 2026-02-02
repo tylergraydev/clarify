@@ -66,6 +66,9 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             label={'Dashboard'}
           />
 
+          {/* Separator */}
+          <Separator className={'my-2'} />
+
           {/* Favorites */}
           {isSidebarCollapsed ? (
             favoriteProjects.length > 0 ? (
@@ -125,6 +128,9 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             </Collapsible>
           )}
 
+          {/* Separator */}
+          <Separator className={'my-2'} />
+
           {/* Projects */}
           <NavItem
             href={$path({ route: '/projects' })}
@@ -133,6 +139,27 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             isCollapsed={isSidebarCollapsed}
             label={'Projects'}
           />
+
+          {/* Agents */}
+          <NavItem
+            href={$path({ route: '/agents' })}
+            icon={Bot}
+            isActive={isPathActive($path({ route: '/agents' }))}
+            isCollapsed={isSidebarCollapsed}
+            label={'Agents'}
+          />
+
+          {/* Templates */}
+          <NavItem
+            href={$path({ route: '/templates' })}
+            icon={Bot}
+            isActive={isPathActive($path({ route: '/templates' }))}
+            isCollapsed={isSidebarCollapsed}
+            label={'Templates'}
+          />
+
+          {/* Separator */}
+          <Separator className={'my-2'} />
 
           {/* Workflows */}
           {isSidebarCollapsed ? (
@@ -192,29 +219,8 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
           )}
         </div>
 
-        {/* Separator */}
-        <Separator className={'my-2'} />
-
         {/* Secondary Navigation */}
         <div className={'flex flex-col gap-1'}>
-          {/* Agents */}
-          <NavItem
-            href={$path({ route: '/agents' })}
-            icon={Bot}
-            isActive={isPathActive($path({ route: '/agents' }))}
-            isCollapsed={isSidebarCollapsed}
-            label={'Agents'}
-          />
-
-          {/* Templates */}
-          <NavItem
-            href={$path({ route: '/templates' })}
-            icon={Bot}
-            isActive={isPathActive($path({ route: '/templates' }))}
-            isCollapsed={isSidebarCollapsed}
-            label={'Templates'}
-          />
-
           {/* Separator */}
           <Separator className={'my-2'} />
 

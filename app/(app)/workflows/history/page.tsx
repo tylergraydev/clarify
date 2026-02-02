@@ -280,8 +280,7 @@ function WorkflowHistoryContent() {
       baseFilters.statuses = queryState.status as Array<'cancelled' | 'completed' | 'failed'>;
     }
     if (queryState.type && queryState.type !== 'all') {
-      // Note: The repository filters by type directly, but our filter includes 'all'
-      // We need to handle this specially - 'all' means no type filter
+      baseFilters.type = queryState.type;
     }
     if (queryState.project) {
       baseFilters.projectId = queryState.project;
@@ -412,6 +411,16 @@ function WorkflowHistoryContent() {
     [setQueryState]
   );
 
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      void setQueryState({
+        page: DEFAULT_PAGE, // Reset to first page on search change
+        search: value || null,
+      });
+    },
+    [setQueryState]
+  );
+
   const handleResetFilters = useCallback(() => {
     void setQueryState({
       dateFrom: null,
@@ -449,8 +458,21 @@ function WorkflowHistoryContent() {
   // Derived state
   const isLoading = isHistoryLoading || isProjectsLoading;
   const hasError = !isLoading && historyError;
-  const isHistoryEmpty = !isLoading && !hasError && workflows.length === 0 && totalWorkflows === 0;
-  const hasHistory = !isLoading && !hasError && (workflows.length > 0 || totalWorkflows > 0);
+
+  // Check if any filters are applied
+  const hasActiveFilters = Boolean(
+    (queryState.status && queryState.status.length > 0) ||
+    (queryState.type && queryState.type !== 'all') ||
+    queryState.project ||
+    queryState.dateFrom ||
+    queryState.dateTo ||
+    queryState.search
+  );
+
+  // Only show empty state when truly empty (no filters applied and no results)
+  const isHistoryEmpty = !isLoading && !hasError && workflows.length === 0 && totalWorkflows === 0 && !hasActiveFilters;
+  // Show table when we have results OR when filters are applied (even if no results)
+  const hasHistory = !isLoading && !hasError && (workflows.length > 0 || totalWorkflows > 0 || hasActiveFilters);
 
   // Loading State
   if (isLoading) {
@@ -551,6 +573,7 @@ function WorkflowHistoryContent() {
 
           {/* Workflow History Table */}
           <WorkflowHistoryTable
+            onGlobalFilterChange={handleSearchChange}
             onPaginationChange={handlePaginationChange}
             onViewDetails={handleViewDetails}
             pageCount={pageCount}
