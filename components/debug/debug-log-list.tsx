@@ -77,7 +77,7 @@ export const DebugLogList = ({
   const isShowingLoadingState = isEmpty && isLoading;
 
   return (
-    <div className={cn('flex flex-1 flex-col', className)} ref={ref} {...props}>
+    <div className={cn('flex min-h-0 flex-1 flex-col', className)} ref={ref} {...props}>
       {/* Loading State */}
       {isShowingLoadingState && (
         <div className={'flex flex-1 items-center justify-center'}>
