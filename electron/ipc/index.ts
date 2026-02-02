@@ -32,6 +32,7 @@ import {
 } from '../../db/repositories';
 import { registerAgentHookHandlers } from './agent-hook.handlers';
 import { registerAgentSkillHandlers } from './agent-skill.handlers';
+import { registerAgentStreamHandlers } from './agent-stream.handlers';
 import { registerAgentToolHandlers } from './agent-tool.handlers';
 // Handler registration imports (to be implemented in Steps 3-10)
 import { registerAgentHandlers } from './agent.handlers';
@@ -79,6 +80,9 @@ export function registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => Br
 
   // Dialog handlers (need window reference for modal dialogs)
   registerDialogHandlers(getMainWindow);
+
+  // Agent stream handlers (need window reference for MessagePort transfer)
+  registerAgentStreamHandlers(getMainWindow);
 
   // ============================================
   // Database handlers - Core entities

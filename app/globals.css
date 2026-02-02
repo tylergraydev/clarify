@@ -350,6 +350,23 @@
   background: var(--scrollbar-track);
 }
 
+.animate-shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.step-glow-pulse {
+  animation: step-glow 2s ease-in-out infinite;
+}
+
+/* Code block snippet highlighting for file source viewer */
+.highlighted-line {
+  display: block;
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-left: 2px solid var(--accent);
+  margin-left: -1rem;
+  padding-left: calc(1rem - 2px);
+}
+
 /* Pipeline step glow animation for active/running state */
 @keyframes step-glow {
   0%,
@@ -361,6 +378,12 @@
   }
 }
 
-.step-glow-pulse {
-  animation: step-glow 2s ease-in-out infinite;
+/* Shimmer animation for text */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 50%;
+  }
+  100% {
+    background-position: -200% 50%;
+  }
 }

@@ -46,6 +46,12 @@ export const IpcChannels = {
     setRequired: 'agentSkill:setRequired',
     update: 'agentSkill:update',
   },
+  agentStream: {
+    cancel: 'agentStream:cancel',
+    getSession: 'agentStream:getSession',
+    port: 'agentStream:port',
+    start: 'agentStream:start',
+  },
   agentTool: {
     allow: 'agentTool:allow',
     create: 'agentTool:create',

@@ -7,7 +7,7 @@
     "target": "ES2022",
     "module": "CommonJS",
     "moduleResolution": "node",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "outDir": "../electron-dist",
     "rootDir": "..",
     "strict": true,
