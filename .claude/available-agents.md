@@ -7,7 +7,7 @@ Reference this file with `@.claude/available-agents.md` in other documentation.
 
 | Agent                           | Domain              | When to Use                                                         |
 | ------------------------------- | ------------------- | ------------------------------------------------------------------- |
-| `claude-agent-sdk`              | Claude Agent SDK    | Creating/modifying subagents, skills, or commands in `.claude/`     |
+| `claude-agent-sdk`              | Claude Agent SDK    | Integrating Claude Agent SDK libraries - services, event handlers, hooks, types |
 | `database-schema`               | Drizzle ORM schemas | Creating/modifying database tables, repositories, and migrations    |
 | `tanstack-query`                | Data fetching       | Creating query hooks, mutations, cache invalidation                 |
 | `tanstack-form`                 | Form implementation | Building forms with validation and field components                 |
@@ -29,9 +29,9 @@ Use this matrix to route files to the correct specialist agent.
 
 | File Pattern                               | Specialist Agent                | Skills Loaded                                           |
 | ------------------------------------------ | ------------------------------- | ------------------------------------------------------- |
-| `*.md` in `.claude/agents/`                | `claude-agent-sdk`              | claude-agent-sdk                                        |
-| `*.md` in `.claude/commands/`              | `claude-agent-sdk`              | claude-agent-sdk                                        |
-| `*.md` in `.claude/skills/`                | `claude-agent-sdk`              | claude-agent-sdk                                        |
+| `*sdk*.ts` in `electron/services/`         | `claude-agent-sdk`              | claude-agent-sdk                                        |
+| `*agent*.ts` in `electron/services/`       | `claude-agent-sdk`              | claude-agent-sdk                                        |
+| `types/agent-sdk.d.ts`                     | `claude-agent-sdk`              | claude-agent-sdk                                        |
 | `*.schema.ts` in `db/schema/`              | `database-schema`               | database-schema-conventions                             |
 | `*.repository.ts` in `db/repositories/`    | `database-schema`               | database-schema-conventions                             |
 | `use-*.ts` in `hooks/queries/`             | `tanstack-query`                | tanstack-query-conventions                              |
@@ -50,7 +50,7 @@ Use this matrix to route files to the correct specialist agent.
 For automated routing in implementation plans:
 
 ```
-1. IF files contain ".claude/agents/" OR ".claude/skills/" OR ".claude/commands/" → claude-agent-sdk
+1. IF step involves Claude Agent SDK integration (services, event handlers, hooks, types) → claude-agent-sdk
 2. IF files contain "db/schema/" AND end with ".schema.ts" → database-schema
 3. IF files contain "db/repositories/" → database-schema
 4. IF files contain "electron/ipc/" OR "electron/preload.ts" OR step involves IPC handlers → ipc-handler
@@ -71,7 +71,7 @@ For route/feature audits:
 
 | Domain       | File Patterns                                                                   | Specialist Agent   | Skills                                                                |
 | ------------ | ------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------- |
-| `claude-sdk` | `.claude/agents/*.md`, `.claude/skills/**/*.md`, `.claude/commands/*.md`        | `claude-agent-sdk` | claude-agent-sdk                                                      |
+| `claude-sdk` | `electron/services/*sdk*.ts`, `electron/services/*agent*.ts`, `types/agent-sdk.d.ts` | `claude-agent-sdk` | claude-agent-sdk                                                      |
 | `frontend`   | `app/**/*.tsx`, `components/**/*.tsx`                                           | `frontend-component` | component-conventions, react-coding-conventions, nextjs-routing-conventions |
 | `backend`    | `db/schema/*.ts`, `db/repositories/*.ts`                                        | `database-schema`  | database-schema-conventions                                           |
 | `ipc`        | `electron/ipc/*.ts`, `preload.ts`, `types/electron.d.ts`                        | `ipc-handler`      | ipc-handler-conventions                                               |
