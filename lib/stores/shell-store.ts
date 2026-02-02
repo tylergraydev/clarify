@@ -23,8 +23,6 @@ export interface ShellActions {
   toggleNavItemExpanded: (itemKey: string) => void;
   /** Toggle sidebar between collapsed and expanded states */
   toggleSidebar: () => void;
-  /** Update the last sync timestamp */
-  updateLastSync: (timestamp: Date) => void;
 }
 
 /**
@@ -39,8 +37,6 @@ export interface ShellState {
   isMobileDrawerOpen: boolean;
   /** Whether the sidebar is currently collapsed */
   isSidebarCollapsed: boolean;
-  /** Timestamp of the last data sync operation */
-  lastSyncTimestamp: Date | null;
 }
 
 /**
@@ -71,7 +67,6 @@ export const useShellStore = create<ShellStore>()((set) => ({
   expandedNavItems: DEFAULT_SHELL_NAV_ITEMS_EXPANDED,
   isMobileDrawerOpen: false,
   isSidebarCollapsed: DEFAULT_SHELL_SIDEBAR_COLLAPSED,
-  lastSyncTimestamp: null,
 
   setActiveNavItem: (item: null | string) => {
     set({ activeNavItem: item });
@@ -134,9 +129,5 @@ export const useShellStore = create<ShellStore>()((set) => ({
 
       return { isSidebarCollapsed: newCollapsed };
     });
-  },
-
-  updateLastSync: (timestamp: Date) => {
-    set({ lastSyncTimestamp: timestamp });
   },
 }));
