@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/dialog';
 import { RepositorySelectionField } from '@/components/workflows/repository-selection-field';
 import { pauseBehaviors, workflowTypes } from '@/db/schema/workflows.schema';
+import { useAgentsByType } from '@/hooks/queries/use-agents';
+import { useDefaultClarificationAgent } from '@/hooks/queries/use-default-clarification-agent';
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useActiveTemplates, useIncrementTemplateUsage } from '@/hooks/queries/use-templates';
 import { useCreateWorkflow } from '@/hooks/queries/use-workflows';
@@ -65,6 +67,8 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
 
   const { data: repositories = [] } = useRepositoriesByProject(projectId);
   const { data: templates = [] } = useActiveTemplates();
+  const { data: planningAgents = [] } = useAgentsByType('planning');
+  const { agentId: defaultClarificationAgentId } = useDefaultClarificationAgent();
 
   const createWorkflowMutation = useCreateWorkflow();
   const incrementTemplateUsageMutation = useIncrementTemplateUsage();
@@ -79,7 +83,13 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
     })),
   ];
 
+  const planningAgentOptions = planningAgents.map((agent) => ({
+    label: agent.name,
+    value: String(agent.id),
+  }));
+
   const defaultValues: CreateWorkflowFormValues = {
+    clarificationAgentId: defaultClarificationAgentId ? String(defaultClarificationAgentId) : '',
     featureName: '',
     featureRequest: '',
     pauseBehavior: 'auto_pause',
@@ -97,6 +107,7 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
       try {
         // Step 1: Create the workflow
         const workflow = await createWorkflowMutation.mutateAsync({
+          clarificationAgentId: value.clarificationAgentId ? Number(value.clarificationAgentId) : null,
           featureName: value.featureName,
           featureRequest: value.featureRequest,
           pauseBehavior: value.pauseBehavior,
@@ -137,6 +148,7 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
 
   const selectedTemplateId = useStore(form.store, (state) => state.values.templateId);
   const selectedType = useStore(form.store, (state) => state.values.type);
+  const selectedSkipClarification = useStore(form.store, (state) => state.values.skipClarification);
 
   // Template auto-populate effect
   useEffect(() => {
@@ -172,6 +184,7 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
   };
 
   const isPlanning = selectedType === 'planning';
+  const isShowClarificationAgent = !selectedSkipClarification && planningAgentOptions.length > 0;
 
   return (
     <DialogRoot onOpenChange={handleOpenChangeInternal} open={isOpen}>
@@ -284,6 +297,20 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
                         />
                       )}
                     </form.AppField>
+
+                    {/* Clarification Agent Field - Hidden when skipClarification is true */}
+                    {isShowClarificationAgent && (
+                      <form.AppField name={'clarificationAgentId'}>
+                        {(field) => (
+                          <field.SelectField
+                            description={'Select which planning agent analyzes your feature request'}
+                            label={'Clarification Agent'}
+                            options={planningAgentOptions}
+                            placeholder={'Select agent...'}
+                          />
+                        )}
+                      </form.AppField>
+                    )}
                   </Fragment>
                 )}
               </div>

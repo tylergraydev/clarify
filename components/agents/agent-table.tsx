@@ -4,7 +4,7 @@ import type { OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 import { format } from 'date-fns';
-import { Copy, Download, Eye, FolderInput, FolderOutput, FolderPlus, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { Check, Copy, Download, Eye, FolderInput, FolderOutput, FolderPlus, Pencil, RotateCcw, Star, Trash2 } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
 import type { Agent, AgentHook, AgentSkill, AgentTool, Project } from '@/db/schema';
@@ -21,6 +21,8 @@ import {
   type DataTableRowStyleCallback,
 } from '@/components/ui/table';
 import { Tooltip } from '@/components/ui/tooltip';
+import { useDefaultClarificationAgent, useSetDefaultClarificationAgent } from '@/hooks/queries/use-default-clarification-agent';
+import { useToast } from '@/hooks/use-toast';
 import { getAgentColorClass } from '@/lib/colors/agent-colors';
 import { cn } from '@/lib/utils';
 
@@ -126,13 +128,16 @@ const columnHelper = createColumnHelper<AgentWithRelations>();
 // ============================================================================
 
 interface ActionsCellProps {
+  defaultClarificationAgentId: null | number;
   isActionDisabled: boolean;
+  isSettingDefault: boolean;
   onCopyToProject?: (agent: AgentWithRelations, projectId: number) => void;
   onCreateOverride?: (agent: AgentWithRelations) => void;
   onDelete?: (agentId: number) => void;
   onDuplicate?: (agent: AgentWithRelations) => void;
   onEditClick: (agent: AgentWithRelations) => void;
   onExport?: (agent: AgentWithRelations) => void;
+  onMakeDefault: (agentId: number) => void;
   onMoveToProject?: (agent: AgentWithRelations, projectId: null | number) => void;
   onReset?: (agentId: number) => void;
   row: Row<AgentWithRelations>;
@@ -143,13 +148,16 @@ interface ActionsCellProps {
  * on every table render.
  */
 const ActionsCell = memo(function ActionsCell({
+  defaultClarificationAgentId,
   isActionDisabled,
+  isSettingDefault,
   onCopyToProject,
   onCreateOverride,
   onDelete,
   onDuplicate,
   onEditClick,
   onExport,
+  onMakeDefault,
   onMoveToProject,
   onReset,
   row,
@@ -158,6 +166,8 @@ const ActionsCell = memo(function ActionsCell({
   const isCustomAgent = agent.builtInAt === null;
   const isCustomized = agent.parentAgentId !== null;
   const isGlobalAgent = agent.projectId === null;
+  const isPlanningAgent = agent.type === 'planning';
+  const isCurrentDefault = defaultClarificationAgentId === agent.id;
   const isProjectAgent = agent.projectId !== null;
 
   const actions: Array<DataTableRowAction<AgentWithRelations>> = [];
@@ -199,6 +209,21 @@ const ActionsCell = memo(function ActionsCell({
       icon: <Download aria-hidden={'true'} className={'size-4'} />,
       label: 'Export',
       onAction: (r) => onExport(r.original),
+      type: 'button',
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Default Agent Actions - Set as default for clarification
+  // -------------------------------------------------------------------------
+
+  // Make Default for Clarification action (only for planning agents that are not already default)
+  if (isPlanningAgent && !isCurrentDefault) {
+    actions.push({
+      disabled: isActionDisabled || isSettingDefault,
+      icon: <Star aria-hidden={'true'} className={'size-4'} />,
+      label: 'Make Default for Clarification',
+      onAction: (r) => onMakeDefault(r.original.id),
       type: 'button',
     });
   }
@@ -359,6 +384,27 @@ export const AgentTable = ({
   const [editDialogAgent, setEditDialogAgent] = useState<AgentWithRelations | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  const toast = useToast();
+  const { agentId: defaultClarificationAgentId } = useDefaultClarificationAgent();
+  const setDefaultMutation = useSetDefaultClarificationAgent();
+
+  const isSettingDefault = setDefaultMutation.isPending;
+
+  const handleMakeDefault = useCallback(
+    (agentId: number) => {
+      const agent = agents.find((a) => a.id === agentId);
+      setDefaultMutation.mutate(agentId, {
+        onSuccess: () => {
+          toast.success({
+            description: `${agent?.displayName ?? 'Agent'} is now the default clarification agent.`,
+            title: 'Default Agent Set',
+          });
+        },
+      });
+    },
+    [agents, setDefaultMutation, toast]
+  );
+
   const isActionDisabled = useMemo(
     () =>
       isCreatingOverride ||
@@ -421,13 +467,16 @@ export const AgentTable = ({
       columnHelper.display({
         cell: ({ row }) => (
           <ActionsCell
+            defaultClarificationAgentId={defaultClarificationAgentId}
             isActionDisabled={isActionDisabled}
+            isSettingDefault={isSettingDefault}
             onCopyToProject={onCopyToProject}
             onCreateOverride={onCreateOverride}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
             onEditClick={handleEditClick}
             onExport={onExport}
+            onMakeDefault={handleMakeDefault}
             onMoveToProject={onMoveToProject}
             onReset={onReset}
             row={row}
@@ -451,6 +500,7 @@ export const AgentTable = ({
           const agent = row.original;
           const isCustomAgent = agent.builtInAt === null;
           const isCustomized = agent.parentAgentId !== null;
+          const isDefaultClarificationAgent = defaultClarificationAgentId === agent.id;
 
           return (
             <div className={'flex items-center gap-2'}>
@@ -497,6 +547,18 @@ export const AgentTable = ({
 
               {/* Origin Badges */}
               <div className={'flex items-center gap-1'}>
+                {/* Default Clarification Agent Indicator */}
+                {isDefaultClarificationAgent && (
+                  <Tooltip content={'Default clarification agent'} side={'top'}>
+                    <span
+                      aria-label={'Default clarification agent'}
+                      className={'inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/60 dark:text-green-100'}
+                    >
+                      <Check aria-hidden={'true'} className={'size-3'} />
+                      {'Default'}
+                    </span>
+                  </Tooltip>
+                )}
                 {!isCustomAgent && (
                   <Badge size={'sm'} variant={'category-builtin'}>
                     {'Built-in'}
@@ -623,8 +685,11 @@ export const AgentTable = ({
       }),
     ],
     [
+      defaultClarificationAgentId,
       handleEditClick,
+      handleMakeDefault,
       isActionDisabled,
+      isSettingDefault,
       isToggling,
       onCopyToProject,
       onCreateOverride,

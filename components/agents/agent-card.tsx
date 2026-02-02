@@ -2,7 +2,7 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { Copy, Eye, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { Check, Copy, Eye, Pencil, RotateCcw, Star, Trash2 } from 'lucide-react';
 import { Fragment } from 'react';
 
 import type { Agent } from '@/db/schema';
@@ -11,6 +11,7 @@ import { Badge, type badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip } from '@/components/ui/tooltip';
 import { getAgentColorClass } from '@/lib/colors/agent-colors';
 import { cn } from '@/lib/utils';
 
@@ -35,13 +36,16 @@ const formatTypeLabel = (type: AgentType): string => {
 
 interface AgentCardProps extends Omit<ComponentPropsWithRef<'div'>, 'onClick' | 'onReset'> {
   agent: Agent;
+  isCurrentDefault?: boolean;
   isDeleting?: boolean;
   isDuplicating?: boolean;
   isResetting?: boolean;
+  isSettingDefault?: boolean;
   isToggling?: boolean;
   onDelete?: (agentId: number) => void;
   onDuplicate?: (agent: Agent) => void;
   onEdit?: (agentId: number) => void;
+  onMakeDefault?: (agentId: number) => void;
   onReset?: (agentId: number) => void;
   onToggleActive?: (agentId: number, isActive: boolean) => void;
 }
@@ -49,13 +53,16 @@ interface AgentCardProps extends Omit<ComponentPropsWithRef<'div'>, 'onClick' | 
 export const AgentCard = ({
   agent,
   className,
+  isCurrentDefault = false,
   isDeleting = false,
   isDuplicating = false,
   isResetting = false,
+  isSettingDefault = false,
   isToggling = false,
   onDelete,
   onDuplicate,
   onEdit,
+  onMakeDefault,
   onReset,
   onToggleActive,
   ref,
@@ -64,6 +71,7 @@ export const AgentCard = ({
   const isActive = agent.deactivatedAt === null;
   const isCustomAgent = agent.builtInAt === null;
   const isCustomized = agent.parentAgentId !== null;
+  const isPlanningAgent = agent.type === 'planning';
   const isProjectScoped = agent.projectId !== null;
 
   const handleDeleteClick = () => {
@@ -78,6 +86,10 @@ export const AgentCard = ({
     onEdit?.(agent.id);
   };
 
+  const handleMakeDefaultClick = () => {
+    onMakeDefault?.(agent.id);
+  };
+
   const handleResetClick = () => {
     onReset?.(agent.id);
   };
@@ -86,7 +98,7 @@ export const AgentCard = ({
     onToggleActive?.(agent.id, checked);
   };
 
-  const isActionDisabled = isDeleting || isDuplicating || isResetting || isToggling;
+  const isActionDisabled = isDeleting || isDuplicating || isResetting || isSettingDefault || isToggling;
 
   const titleId = `agent-title-${agent.id}`;
 
@@ -107,6 +119,18 @@ export const AgentCard = ({
             <CardTitle className={'line-clamp-1'} id={titleId}>
               {agent.displayName}
             </CardTitle>
+            {/* Default Clarification Agent Indicator */}
+            {isCurrentDefault && (
+              <Tooltip content={'Default clarification agent'} side={'top'}>
+                <span
+                  aria-label={'Default clarification agent'}
+                  className={'inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/60 dark:text-green-100'}
+                >
+                  <Check aria-hidden={'true'} className={'size-3'} />
+                  {'Default'}
+                </span>
+              </Tooltip>
+            )}
           </div>
           <Badge
             aria-label={`Type: ${formatTypeLabel(agent.type)}`}
@@ -196,6 +220,19 @@ export const AgentCard = ({
           <Copy aria-hidden={'true'} className={'size-4'} />
           {'Duplicate'}
         </Button>
+        {isPlanningAgent && !isCurrentDefault && (
+          <Button
+            aria-describedby={titleId}
+            aria-label={`Make ${agent.displayName} default clarification agent`}
+            disabled={isActionDisabled}
+            onClick={handleMakeDefaultClick}
+            size={'sm'}
+            variant={'ghost'}
+          >
+            <Star aria-hidden={'true'} className={'size-4'} />
+            {'Make Default'}
+          </Button>
+        )}
         {isCustomized && (
           <Button
             aria-describedby={titleId}
