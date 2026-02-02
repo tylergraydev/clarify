@@ -147,6 +147,12 @@ export interface AgentOperationResult {
 }
 
 /**
+ * Re-export AgentStreamAPI from agent-stream.d.ts for consistency.
+ * The canonical definition is in types/agent-stream.d.ts.
+ */
+export type { AgentStreamAPI } from './agent-stream';
+
+/**
  * Extended Agent type that includes optional tools, skills, and hooks arrays
  * for list responses when includeTools/includeSkills filters are used.
  */
@@ -193,6 +199,7 @@ export interface ElectronAPI {
       data: Partial<import('../db/schema').NewAgentSkill>
     ): Promise<import('../db/schema').AgentSkill | undefined>;
   };
+  agentStream?: AgentStreamAPI;
   agentTool: {
     allow(id: number): Promise<import('../db/schema').AgentTool | undefined>;
     create(data: import('../db/schema').NewAgentTool): Promise<import('../db/schema').AgentTool>;
