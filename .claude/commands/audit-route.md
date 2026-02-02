@@ -51,15 +51,7 @@ or code analysis yourself - you delegate ALL work to specialized subagents.
 
 ## Domain Classification Reference
 
-| Domain | File Patterns | Specialist Agent | Skills |
-|--------|---------------|------------------|--------|
-| `claude-sdk` | `.claude/agents/*.md`, `.claude/skills/**/*.md`, `.claude/commands/*.md` | `claude-agent-sdk` | claude-agent-sdk |
-| `frontend` | `app/**/*.tsx`, `components/**/*.tsx` | `frontend-component` | component-conventions, react-coding-conventions, nextjs-routing-conventions |
-| `backend` | `db/schema/*.ts`, `db/repositories/*.ts` | `database-schema` | database-schema-conventions |
-| `ipc` | `electron/ipc/*.ts`, `preload.ts`, `types/electron.d.ts` | `ipc-handler` | ipc-handler-conventions |
-| `hooks` | `hooks/**/*.ts`, `lib/queries/*.ts` | `tanstack-query` | tanstack-query-conventions |
-| `forms` | `lib/validations/*.ts` | `tanstack-form` | tanstack-form-conventions |
-| `stores` | `lib/stores/*.ts` | Uses `zustand-state-management` skill | zustand-state-management |
+See the "Domain Classification" section in @.claude/available-agents.md for the complete mapping of domains to file patterns, specialist agents, and skills.
 
 ## Orchestration Workflow
 

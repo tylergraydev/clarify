@@ -38,25 +38,7 @@ follow project patterns, then review the changes and iterate if issues are found
 
 ## Specialist Selection Matrix
 
-Map the file path to the appropriate specialist agent:
-
-| File Pattern                               | Specialist Agent                  | Skills Loaded                                       |
-| ------------------------------------------ | --------------------------------- | --------------------------------------------------- |
-| `*.md` in `.claude/agents/`                | `claude-agent-sdk`                | claude-agent-sdk                                    |
-| `*.md` in `.claude/commands/`              | `claude-agent-sdk`                | claude-agent-sdk                                    |
-| `*.md` in `.claude/skills/`                | `claude-agent-sdk`                | claude-agent-sdk                                    |
-| `*.schema.ts` in `db/schema/`              | `database-schema`                 | database-schema-conventions                         |
-| `*.repository.ts` in `db/repositories/`    | `database-schema`                 | database-schema-conventions                         |
-| `use-*.ts` in `hooks/queries/`             | `tanstack-query`                  | tanstack-query-conventions                          |
-| `*.ts` in `lib/queries/`                   | `tanstack-query`                  | tanstack-query-conventions                          |
-| `*.ts` in `lib/validations/`               | `tanstack-form`                   | tanstack-form-conventions                           |
-| `*-field.tsx` in `components/ui/form/`     | `tanstack-form-base-components`   | tanstack-form-base-components, react-coding-conventions |
-| `*.tsx` in `components/ui/`                | `frontend-component`              | component-conventions, react-coding-conventions     |
-| `*.tsx` in `components/*/`                 | `frontend-component`              | component-conventions, react-coding-conventions     |
-| `page.tsx`, `layout.tsx` in `app/`         | `page-route`                      | nextjs-routing-conventions, react-coding-conventions |
-| `*.ipc.ts` in `electron/ipc/`              | `ipc-handler`                     | ipc-handler-conventions                             |
-| `*-store.ts` in `lib/stores/`              | `zustand-store`                   | zustand-state-management                            |
-| `*-table.tsx` or table components          | `tanstack-table`                  | tanstack-table, component-conventions               |
+See the "File Pattern Routing" section in @.claude/available-agents.md for the complete mapping of file patterns to specialist agents and their skills.
 
 ## Orchestration Workflow
 

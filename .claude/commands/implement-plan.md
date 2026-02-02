@@ -89,38 +89,11 @@ You do NOT implement code. Subagents implement code.
 
 ## Available Specialist Agents
 
-| Agent                           | Domain                       | When to Use                                                |
-| ------------------------------- | ---------------------------- | ---------------------------------------------------------- |
-| `claude-agent-sdk`              | Claude Agent SDK configs     | Files in `.claude/agents/`, `.claude/skills/`, `.claude/commands/` |
-| `database-schema`               | Database schemas & repos     | Files in `db/schema/` or `db/repositories/`                |
-| `ipc-handler`                   | Electron IPC communication   | Files in `electron/ipc/`, `electron/preload.ts`, IPC hooks |
-| `tanstack-query`                | Data fetching & server state | Query hooks, mutations, cache management                   |
-| `tanstack-table`                | Data table components        | Table components with pagination, sorting, filtering       |
-| `tanstack-form`                 | Form implementations         | Forms in dialogs, pages, features + validation schemas     |
-| `tanstack-form-base-components` | Base form components         | Field components in `components/ui/form/`                  |
-| `frontend-component`            | UI & feature components      | UI primitives in `components/ui/`, feature components      |
-| `page-route`                    | Pages & routes               | Pages, layouts, loading/error in `app/(app)/`              |
-| `zustand-store`                 | Client state management      | Zustand stores in `lib/stores/`                            |
-| `vercel-react-best-practices`   | Performance optimization     | Performance audits, bundle optimization, waterfall fixes   |
-| `general-purpose`               | Everything else              | Utilities, non-component code, misc files                  |
+See the "Specialist Subagents" table in @.claude/available-agents.md for the complete list of available agents.
 
 ## Step-Type Detection Rules
 
-```
-1. IF files contain ".claude/agents/" OR ".claude/skills/" OR ".claude/commands/" → claude-agent-sdk
-2. IF files contain "db/schema/" AND end with ".schema.ts" → database-schema
-3. IF files contain "db/repositories/" → database-schema
-4. IF files contain "electron/ipc/" OR "electron/preload.ts" OR step involves IPC handlers → ipc-handler
-5. IF files involve TanStack Query hooks/mutations → tanstack-query
-6. IF step involves data tables with useReactTable, pagination, sorting, or filtering → tanstack-table
-7. IF files contain "components/ui/form/" (base field components) → tanstack-form-base-components
-8. IF step involves creating/modifying forms OR files contain "lib/validations/" → tanstack-form
-9. IF step involves performance optimization, bundle size, waterfall fixes, or re-render optimization → vercel-react-best-practices
-10. IF files contain "lib/stores/" OR step involves Zustand store creation → zustand-store
-11. IF files contain "app/(app)/" AND (end with "page.tsx" OR "layout.tsx" OR "loading.tsx" OR "error.tsx" OR "route-type.ts") → page-route
-12. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
-13. ELSE → general-purpose
-```
+See the "Step-Type Detection Rules" section in @.claude/available-agents.md for the routing logic.
 
 ---
 
