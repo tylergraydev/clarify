@@ -30,6 +30,7 @@ import type {
   Worktree,
 } from '../db/schema';
 import type { UpdateWorkflowInput } from '../lib/validations/workflow';
+import type { DebugLogFilters } from '../types/debug-log';
 
 /**
  * IPC Channel Constants (Duplicate - Required for Preload)
@@ -95,6 +96,14 @@ const IpcChannels = {
     findByStep: 'audit:findByStep',
     findByWorkflow: 'audit:findByWorkflow',
     list: 'audit:list',
+  },
+  debugLog: {
+    clearLogs: 'debugLog:clearLogs',
+    getLogPath: 'debugLog:getLogPath',
+    getLogs: 'debugLog:getLogs',
+    getSessionIds: 'debugLog:getSessionIds',
+    openDebugWindow: 'debugLog:openDebugWindow',
+    openLogFile: 'debugLog:openLogFile',
   },
   dialog: {
     openDirectory: 'dialog:openDirectory',
@@ -481,6 +490,14 @@ export interface ElectronAPI {
     findByWorkflow(workflowId: number): Promise<Array<AuditLog>>;
     list(): Promise<Array<AuditLog>>;
   };
+  debugLog: {
+    clearLogs(): Promise<{ error?: string; success: boolean }>;
+    getLogPath(): Promise<string>;
+    getLogs(filters?: DebugLogFilters): Promise<Array<import('../types/debug-log').DebugLogEntry>>;
+    getSessionIds(): Promise<Array<string>>;
+    openDebugWindow(): Promise<void>;
+    openLogFile(): Promise<{ error?: string; success: boolean }>;
+  };
   dialog: {
     openDirectory(): Promise<null | string>;
     openFile(filters?: Array<{ extensions: Array<string>; name: string }>): Promise<null | string>;
@@ -830,6 +847,14 @@ const electronAPI: ElectronAPI = {
     findByStep: (stepId) => ipcRenderer.invoke(IpcChannels.audit.findByStep, stepId),
     findByWorkflow: (workflowId) => ipcRenderer.invoke(IpcChannels.audit.findByWorkflow, workflowId),
     list: () => ipcRenderer.invoke(IpcChannels.audit.list),
+  },
+  debugLog: {
+    clearLogs: () => ipcRenderer.invoke(IpcChannels.debugLog.clearLogs),
+    getLogPath: () => ipcRenderer.invoke(IpcChannels.debugLog.getLogPath),
+    getLogs: (filters?: DebugLogFilters) => ipcRenderer.invoke(IpcChannels.debugLog.getLogs, filters),
+    getSessionIds: () => ipcRenderer.invoke(IpcChannels.debugLog.getSessionIds),
+    openDebugWindow: () => ipcRenderer.invoke(IpcChannels.debugLog.openDebugWindow),
+    openLogFile: () => ipcRenderer.invoke(IpcChannels.debugLog.openLogFile),
   },
   dialog: {
     openDirectory: () => ipcRenderer.invoke(IpcChannels.dialog.openDirectory),

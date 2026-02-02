@@ -71,6 +71,14 @@ export const IpcChannels = {
     findByWorkflow: 'audit:findByWorkflow',
     list: 'audit:list',
   },
+  debugLog: {
+    clearLogs: 'debugLog:clearLogs',
+    getLogPath: 'debugLog:getLogPath',
+    getLogs: 'debugLog:getLogs',
+    getSessionIds: 'debugLog:getSessionIds',
+    openDebugWindow: 'debugLog:openDebugWindow',
+    openLogFile: 'debugLog:openLogFile',
+  },
   dialog: {
     openDirectory: 'dialog:openDirectory',
     openFile: 'dialog:openFile',

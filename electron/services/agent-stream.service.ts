@@ -47,6 +47,8 @@ import type {
   AgentStreamSession,
 } from '../../types/agent-stream';
 
+import { debugLoggerService } from './debug-logger.service';
+
 /**
  * Delay in milliseconds before cleaning up a completed session.
  * Allows time for final messages to be delivered to the renderer.
@@ -125,6 +127,11 @@ class AgentStreamService {
     const activeSession = this.activeSessions.get(sessionId);
     if (!activeSession) return;
 
+    debugLoggerService.logSession(sessionId, 'cancel', {
+      pendingPermissionCount: activeSession.pendingPermissions.size,
+      previousStatus: activeSession.session.status,
+    });
+
     activeSession.abortController.abort();
     activeSession.session.status = 'cancelled';
 
@@ -194,6 +201,15 @@ class AgentStreamService {
     };
 
     this.activeSessions.set(sessionId, activeSession);
+
+    debugLoggerService.logSession(sessionId, 'start', {
+      allowedTools: options.allowedTools,
+      cwd: options.cwd,
+      maxBudgetUsd: options.maxBudgetUsd,
+      maxTurns: options.maxTurns,
+      permissionMode: options.permissionMode,
+      prompt: options.prompt.slice(0, 500) + (options.prompt.length > 500 ? '...' : ''),
+    });
 
     // Listen for messages from renderer
     port1.on('message', (event) => {
@@ -380,6 +396,12 @@ class AgentStreamService {
     switch (sdkMessage.type) {
       case 'assistant':
         // Process each content block in the assistant message
+        debugLoggerService.logSdkEvent(sessionId, 'Assistant message received', {
+          contentBlockCount: Array.isArray((sdkMessage as SDKAssistantMessage).message.content)
+            ? (sdkMessage as SDKAssistantMessage).message.content.length
+            : 0,
+          messageType: 'assistant',
+        });
         this.processAssistantMessage(sessionId, sdkMessage as SDKAssistantMessage, baseMessage);
         break;
 
@@ -390,18 +412,29 @@ class AgentStreamService {
 
       case 'tool_use_summary':
         // These can be extended later if needed
+        debugLoggerService.logSdkEvent(sessionId, `SDK message: ${sdkMessage.type}`, {
+          messageType: sdkMessage.type,
+        });
         break;
 
       case 'result':
+        debugLoggerService.logSdkEvent(sessionId, 'Result message received', {
+          messageType: 'result',
+          subtype: (sdkMessage as SDKResultMessage).subtype,
+        });
         this.processResultMessage(sessionId, sdkMessage as SDKResultMessage, baseMessage);
         break;
 
       case 'stream_event':
-        // Handle streaming partial updates
+        // Handle streaming partial updates (logged in processStreamEvent for detail)
         this.processStreamEvent(sessionId, sdkMessage as SDKPartialAssistantMessage, baseMessage);
         break;
       case 'system':
         // Handle system messages (init, compact_boundary, etc.)
+        debugLoggerService.logSdkEvent(sessionId, 'System message received', {
+          messageType: 'system',
+          subtype: (sdkMessage as SDKSystemMessage).subtype,
+        });
         if ((sdkMessage as SDKSystemMessage).subtype === 'init') {
           const sysMessage = sdkMessage as SDKSystemMessage;
           this.sendMessage(sessionId, {
@@ -417,6 +450,9 @@ class AgentStreamService {
       case 'user':
         // User messages are typically echoed back during multi-turn
         // We don't need to forward these to the renderer
+        debugLoggerService.logSdkEvent(sessionId, 'User message echoed', {
+          messageType: 'user',
+        });
         break;
     }
   }
@@ -505,6 +541,7 @@ class AgentStreamService {
           // Complete text block - skip if we've already streamed via deltas
           // to avoid duplicating content that was sent incrementally
           if ('text' in block && block.text && !activeSession.isPartialStreaming) {
+            debugLoggerService.logText(sessionId, block.text);
             activeSession.session.text += block.text;
             this.sendMessage(sessionId, {
               ...baseMessage,
@@ -519,6 +556,7 @@ class AgentStreamService {
           // Thinking/reasoning block - skip if we've already streamed via deltas
           // to avoid duplicating content that was sent incrementally
           if ('thinking' in block && block.thinking && !activeSession.isPartialStreaming) {
+            debugLoggerService.logThinking(sessionId, block.thinking);
             activeSession.session.thinking.push(block.thinking);
             this.sendMessage(sessionId, {
               ...baseMessage,
@@ -534,6 +572,9 @@ class AgentStreamService {
           // Tool execution result
           if ('tool_use_id' in block && block.tool_use_id) {
             // Remove tool from active tools
+            const toolForResult = activeSession.session.activeTools.find(
+              (t) => t.toolUseId === block.tool_use_id
+            );
             activeSession.session.activeTools = activeSession.session.activeTools.filter(
               (t) => t.toolUseId !== block.tool_use_id
             );
@@ -543,6 +584,16 @@ class AgentStreamService {
             if (Array.isArray(output)) {
               output = output.map((c) => (typeof c === 'string' ? c : 'text' in c ? (c.text ?? '') : '')).join('');
             }
+
+            debugLoggerService.logToolResult(
+              sessionId,
+              toolForResult?.toolName ?? 'unknown',
+              {
+                isError: 'is_error' in block ? block.is_error : undefined,
+                output,
+                toolUseId: block.tool_use_id,
+              }
+            );
 
             this.sendMessage(sessionId, {
               ...baseMessage,
@@ -564,6 +615,7 @@ class AgentStreamService {
               toolUseId: block.id,
             };
 
+            debugLoggerService.logToolUse(sessionId, toolInfo.toolName, toolInfo.toolInput);
             activeSession.session.activeTools.push(toolInfo);
 
             this.sendMessage(sessionId, {
@@ -590,6 +642,10 @@ class AgentStreamService {
     if (!activeSession) return;
 
     if (message.subtype === 'success') {
+      debugLoggerService.logSession(sessionId, 'end', {
+        outcome: 'success',
+        resultLength: typeof message.result === 'string' ? message.result.length : 0,
+      });
       activeSession.session.status = 'completed';
       activeSession.session.result = message.result;
 
@@ -612,6 +668,12 @@ class AgentStreamService {
 
       const errorMessage = message.errors?.join('\n') ?? 'Unknown error occurred';
       activeSession.session.error = errorMessage;
+
+      debugLoggerService.logSession(sessionId, 'end', {
+        errorMessage,
+        errorSubtype,
+        outcome: 'error',
+      });
 
       this.sendMessage(sessionId, {
         ...baseMessage,
@@ -646,8 +708,17 @@ class AgentStreamService {
     if (event.type === 'content_block_delta' && 'delta' in event) {
       const delta = event.delta as { text?: string; thinking?: string; type?: string };
       if (delta.type === 'text_delta' && delta.text) {
-        // Stream text delta
+        // Stream text delta - log periodically to avoid log spam
+        // Only log when accumulated text crosses 500 char thresholds
+        const prevLength = activeSession.session.text.length;
         activeSession.session.text += delta.text;
+        const newLength = activeSession.session.text.length;
+        if (Math.floor(newLength / 500) > Math.floor(prevLength / 500)) {
+          debugLoggerService.logSdkEvent(sessionId, 'Text delta streaming', {
+            accumulatedLength: newLength,
+            eventType: 'text_delta',
+          });
+        }
         this.sendMessage(sessionId, {
           ...baseMessage,
           delta: delta.text,
@@ -660,6 +731,15 @@ class AgentStreamService {
           activeSession.session.thinking[activeSession.session.thinking.length - 1] += thinkingContent;
         } else {
           activeSession.session.thinking.push(thinkingContent);
+        }
+
+        // Log periodically to avoid log spam (every 500 chars threshold)
+        const totalThinking = activeSession.session.thinking.join('').length;
+        if (totalThinking % 500 < thinkingContent.length) {
+          debugLoggerService.logSdkEvent(sessionId, 'Thinking delta streaming', {
+            accumulatedLength: totalThinking,
+            eventType: 'thinking_delta',
+          });
         }
 
         this.sendMessage(sessionId, {
@@ -773,14 +853,22 @@ class AgentStreamService {
         toolInput: Record<string, unknown>,
         callbackOptions: { signal: AbortSignal; suggestions?: Array<PermissionUpdate>; toolUseID: string }
       ): Promise<PermissionResult> => {
+        debugLoggerService.logSdkEvent(sessionId, 'Permission request initiated', {
+          toolInput,
+          toolName,
+          toolUseId: callbackOptions.toolUseID,
+        });
+
         // Check if session is still active
         const session = this.activeSessions.get(sessionId);
         if (!session) {
+          debugLoggerService.logPermission(sessionId, `${toolName} (session inactive)`, false);
           return { behavior: 'deny', message: 'Session no longer active' };
         }
 
         // Check if cancelled (use either the callback signal or our abort controller)
         if (signal.aborted || callbackOptions.signal.aborted) {
+          debugLoggerService.logPermission(sessionId, `${toolName} (session cancelled)`, false);
           return { behavior: 'deny', message: 'Session cancelled' };
         }
 
@@ -835,6 +923,8 @@ class AgentStreamService {
             resolve: (approved: boolean) => {
               signal.removeEventListener('abort', handleAbort);
               callbackOptions.signal.removeEventListener('abort', handleAbort);
+
+              debugLoggerService.logPermission(sessionId, toolName, approved);
 
               if (approved) {
                 // Allow with the original input
@@ -902,6 +992,14 @@ class AgentStreamService {
         }
       }.bind(this);
 
+      debugLoggerService.logSdkEvent(sessionId, 'SDK query starting', {
+        allowedTools: sdkOptions.allowedTools,
+        cwd: sdkOptions.cwd,
+        includePartialMessages: sdkOptions.includePartialMessages,
+        maxTurns: sdkOptions.maxTurns,
+        permissionMode: sdkOptions.permissionMode,
+      });
+
       // Execute the SDK query with streaming input mode
       for await (const message of query({
         options: sdkOptions,
@@ -918,6 +1016,14 @@ class AgentStreamService {
 
       // If we reach here without a result message, send a success result
       if (activeSession.session.status === 'running') {
+        debugLoggerService.logSdkEvent(sessionId, 'SDK query completed without explicit result', {
+          textLength: activeSession.session.text.length,
+          thinkingBlocks: activeSession.session.thinking.length,
+        });
+        debugLoggerService.logSession(sessionId, 'end', {
+          implicit: true,
+          outcome: 'success',
+        });
         activeSession.session.status = 'completed';
         this.sendMessage(sessionId, {
           id: randomUUID(),
@@ -935,6 +1041,15 @@ class AgentStreamService {
       if (signal.aborted) return;
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+      debugLoggerService.logSdkEvent(sessionId, 'SDK query error', {
+        errorMessage,
+        errorType: error instanceof Error ? error.name : 'Unknown',
+      });
+      debugLoggerService.logSession(sessionId, 'end', {
+        errorMessage,
+        outcome: 'error',
+      });
 
       activeSession.session.status = 'error';
       activeSession.session.error = errorMessage;

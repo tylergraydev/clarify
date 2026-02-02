@@ -73,6 +73,19 @@ export {
 } from './use-audit-logs';
 
 // ============================================================================
+// Debug Log Hooks
+// ============================================================================
+export {
+  useClearDebugLogs,
+  useDebugLogPath,
+  useDebugLogs,
+  useDebugLogSessionIds,
+  useOpenDebugLogFile,
+} from './use-debug-logs';
+
+export type { UseDebugLogsOptions } from './use-debug-logs';
+
+// ============================================================================
 // Discovered File Hooks
 // ============================================================================
 export {
@@ -169,6 +182,7 @@ export {
   agentSkillKeys,
   agentToolKeys,
   auditLogKeys,
+  debugLogKeys,
   discoveredFileKeys,
   projectKeys,
   queries,

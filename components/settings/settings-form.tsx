@@ -15,6 +15,7 @@ import type { SettingsFormApi as WorkflowFormApi } from './workflow-settings-sec
 import type { SettingsFormApi as WorktreeFormApi } from './worktree-settings-section';
 
 import { type AutoSaveState, AutoSaveStatus } from './auto-save-status';
+import { DebugSettingsSection } from './debug-settings-section';
 import { LoggingSettingsSection } from './logging-settings-section';
 import { UISettingsSection } from './ui-settings-section';
 import { WorkflowSettingsSection } from './workflow-settings-section';
@@ -195,6 +196,9 @@ export const SettingsForm = ({ initialValues, onSuccess }: SettingsFormProps): R
 
         {/* Logging Settings Section */}
         <LoggingSettingsSection form={form as unknown as LoggingFormApi} />
+
+        {/* Debug Settings Section */}
+        <DebugSettingsSection />
       </div>
     </div>
   );

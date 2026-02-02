@@ -38,6 +38,7 @@ import { registerAgentToolHandlers } from './agent-tool.handlers';
 import { registerAgentHandlers } from './agent.handlers';
 import { registerAppHandlers } from './app.handlers';
 import { registerAuditHandlers } from './audit.handlers';
+import { registerDebugLogHandlers } from './debug-log.handlers';
 import { registerDialogHandlers } from './dialog.handlers';
 import { registerDiscoveryHandlers } from './discovery.handlers';
 import { registerFsHandlers } from './fs.handlers';
@@ -59,8 +60,13 @@ export { IpcChannels } from './channels';
  *
  * @param db - The Drizzle database instance for repository creation
  * @param getMainWindow - Function to get the main BrowserWindow (may be null during startup)
+ * @param createDebugWindow - Function to create/focus the debug window
  */
-export function registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => BrowserWindow | null): void {
+export function registerAllHandlers(
+  db: DrizzleDatabase,
+  getMainWindow: () => BrowserWindow | null,
+  createDebugWindow: () => Promise<BrowserWindow>
+): void {
   // ============================================
   // Stateless handlers (no dependencies)
   // ============================================
@@ -73,6 +79,9 @@ export function registerAllHandlers(db: DrizzleDatabase, getMainWindow: () => Br
 
   // App info handlers
   registerAppHandlers();
+
+  // Debug log handlers (with debug window creation function)
+  registerDebugLogHandlers(createDebugWindow);
 
   // ============================================
   // Window-dependent handlers

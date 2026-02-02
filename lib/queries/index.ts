@@ -5,6 +5,7 @@ import { agentSkillKeys } from './agent-skills';
 import { agentToolKeys } from './agent-tools';
 import { agentKeys } from './agents';
 import { auditLogKeys } from './audit-logs';
+import { debugLogKeys } from './debug-logs';
 import { discoveredFileKeys } from './discovered-files';
 import { projectKeys } from './projects';
 import { repositoryKeys } from './repositories';
@@ -19,6 +20,7 @@ export const queries = mergeQueryKeys(
   agentSkillKeys,
   agentToolKeys,
   auditLogKeys,
+  debugLogKeys,
   discoveredFileKeys,
   projectKeys,
   repositoryKeys,
@@ -36,6 +38,7 @@ export { agentToolKeys } from './agent-tools';
 // Re-export individual keys for direct access
 export { agentKeys } from './agents';
 export { auditLogKeys } from './audit-logs';
+export { debugLogKeys } from './debug-logs';
 export { discoveredFileKeys } from './discovered-files';
 export { projectKeys } from './projects';
 export { repositoryKeys } from './repositories';

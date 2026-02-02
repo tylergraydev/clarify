@@ -31,6 +31,12 @@ export type {
 } from '../db/schema';
 
 /**
+ * Re-export AgentStreamAPI from agent-stream.d.ts for consistency.
+ * The canonical definition is in types/agent-stream.d.ts.
+ */
+export type { AgentStreamAPI } from './agent-stream';
+
+/**
  * Item in batch export result
  */
 export interface AgentExportBatchItem {
@@ -146,11 +152,8 @@ export interface AgentOperationResult {
   success: boolean;
 }
 
-/**
- * Re-export AgentStreamAPI from agent-stream.d.ts for consistency.
- * The canonical definition is in types/agent-stream.d.ts.
- */
-export type { AgentStreamAPI } from './agent-stream';
+// Re-export debug log types for renderer use
+export type { DebugLogAPI, DebugLogEntry, DebugLogFilters } from './debug-log';
 
 /**
  * Extended Agent type that includes optional tools, skills, and hooks arrays
@@ -221,6 +224,14 @@ export interface ElectronAPI {
     findByStep(stepId: number): Promise<Array<import('../db/schema').AuditLog>>;
     findByWorkflow(workflowId: number): Promise<Array<import('../db/schema').AuditLog>>;
     list(): Promise<Array<import('../db/schema').AuditLog>>;
+  };
+  debugLog: {
+    clearLogs(): Promise<{ error?: string; success: boolean }>;
+    getLogPath(): Promise<string>;
+    getLogs(filters?: import('./debug-log').DebugLogFilters): Promise<Array<import('./debug-log').DebugLogEntry>>;
+    getSessionIds(): Promise<Array<string>>;
+    openDebugWindow(): Promise<void>;
+    openLogFile(): Promise<{ error?: string; success: boolean }>;
   };
   dialog: {
     openDirectory(): Promise<null | string>;
