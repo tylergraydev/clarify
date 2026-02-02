@@ -71,6 +71,12 @@ const IpcChannels = {
     setRequired: 'agentSkill:setRequired',
     update: 'agentSkill:update',
   },
+  agentStream: {
+    cancel: 'agentStream:cancel',
+    getSession: 'agentStream:getSession',
+    port: 'agentStream:port',
+    start: 'agentStream:start',
+  },
   agentTool: {
     allow: 'agentTool:allow',
     create: 'agentTool:create',
@@ -313,6 +319,89 @@ export interface AgentOperationResult {
 }
 
 /**
+ * Hook matcher configuration for filtering which events trigger callbacks.
+ * Simplified version for preload - full type is `AgentStreamHookMatcher` in `types/agent-stream.d.ts`.
+ */
+export interface AgentStreamHookMatcher {
+  /** Regex pattern to match tool names (e.g., 'Write|Edit') */
+  matcher?: string;
+}
+
+/**
+ * Hooks configuration for intercepting agent execution.
+ * Simplified version for preload - full type is `AgentStreamHooks` in `types/agent-stream.d.ts`.
+ */
+export interface AgentStreamHooks {
+  Notification?: Array<AgentStreamHookMatcher>;
+  PermissionRequest?: Array<AgentStreamHookMatcher>;
+  PostToolUse?: Array<AgentStreamHookMatcher>;
+  PostToolUseFailure?: Array<AgentStreamHookMatcher>;
+  PreCompact?: Array<AgentStreamHookMatcher>;
+  PreToolUse?: Array<AgentStreamHookMatcher>;
+  SessionEnd?: Array<AgentStreamHookMatcher>;
+  SessionStart?: Array<AgentStreamHookMatcher>;
+  Setup?: Array<AgentStreamHookMatcher>;
+  Stop?: Array<AgentStreamHookMatcher>;
+  SubagentStart?: Array<AgentStreamHookMatcher>;
+  SubagentStop?: Array<AgentStreamHookMatcher>;
+  UserPromptSubmit?: Array<AgentStreamHookMatcher>;
+}
+
+/**
+ * Callback type for receiving stream messages.
+ *
+ * The actual message types are defined in `types/agent-stream.d.ts`:
+ * - `AgentStreamMessage` - Union of all stream message types from SDK
+ * - `AgentStreamPortReadyMessage` - Local message indicating port is ready
+ *
+ * Using `unknown` here because preload cannot import types from the renderer.
+ */
+export type AgentStreamMessageCallback = (message: unknown) => void;
+
+/**
+ * Options for starting an agent stream.
+ *
+ * This interface must stay synchronized with `AgentStreamOptions` in `types/agent-stream.d.ts`.
+ * The canonical type definition is in that file.
+ */
+export interface AgentStreamOptions {
+  /** Allowed tools (empty = all tools) */
+  allowedTools?: Array<string>;
+  /** Working directory for the agent */
+  cwd?: string;
+  /**
+   * Hooks for intercepting agent execution.
+   * Enables validation, logging, security controls, and pause points.
+   */
+  hooks?: AgentStreamHooks;
+  /** Maximum API spend in USD before stopping */
+  maxBudgetUsd?: number;
+  /** Maximum turns before stopping */
+  maxTurns?: number;
+  /**
+   * Permission mode controlling tool execution behavior.
+   * @default 'default'
+   */
+  permissionMode?: AgentStreamPermissionMode;
+  /** The prompt/task for the agent */
+  prompt: string;
+  /** System prompt override */
+  systemPrompt?: string;
+}
+
+/**
+ * Permission mode for controlling tool execution behavior.
+ * Must match `AgentStreamPermissionMode` in `types/agent-stream.d.ts`.
+ */
+export type AgentStreamPermissionMode =
+  | 'acceptEdits'
+  | 'bypassPermissions'
+  | 'default'
+  | 'delegate'
+  | 'dontAsk'
+  | 'plan';
+
+/**
  * Extended Agent type that includes optional tools, skills, and hooks arrays
  * for list responses when includeTools/includeSkills filters are used.
  */
@@ -352,6 +441,26 @@ export interface ElectronAPI {
     list(agentId: number): Promise<Array<AgentSkill>>;
     setRequired(id: number, required: boolean): Promise<AgentSkill | undefined>;
     update(id: number, data: Partial<NewAgentSkill>): Promise<AgentSkill | undefined>;
+  };
+  agentStream: {
+    /**
+     * Cancel an active stream session
+     */
+    cancel(sessionId: string): Promise<boolean>;
+    /**
+     * Register a callback to receive stream messages
+     * Returns an unsubscribe function
+     */
+    onMessage(callback: AgentStreamMessageCallback): () => void;
+    /**
+     * Send a message to the stream (e.g., tool response, cancel)
+     */
+    sendMessage(sessionId: string, message: unknown): void;
+    /**
+     * Start a new agent stream session
+     * The onMessage callback will receive the port for this session
+     */
+    start(options: AgentStreamOptions): Promise<{ sessionId: string }>;
   };
   agentTool: {
     allow(id: number): Promise<AgentTool | undefined>;
@@ -593,6 +702,116 @@ const electronAPI: ElectronAPI = {
     setRequired: (id, required) => ipcRenderer.invoke(IpcChannels.agentSkill.setRequired, id, required),
     update: (id, data) => ipcRenderer.invoke(IpcChannels.agentSkill.update, id, data),
   },
+  /**
+   * Agent Stream API for bidirectional streaming communication.
+   *
+   * Uses an Immediately Invoked Function Expression (IIFE) pattern to:
+   * 1. Create private state (activePorts, messageCallbacks) that persists
+   *    across API method calls but isn't exposed to the renderer.
+   * 2. Set up the port transfer listener once during initialization.
+   * 3. Return a clean public API object.
+   *
+   * This pattern is necessary because the preload script runs once and
+   * we need to maintain state for multiple streaming sessions.
+   */
+  agentStream: (() => {
+    // Private state - ports keyed by session ID for message routing
+    const activePorts = new Map<string, MessagePort>();
+    // Private state - callbacks registered via onMessage() to receive stream events
+    const messageCallbacks = new Set<(message: unknown) => void>();
+
+    /**
+     * Clean up a port when a session ends.
+     * Called when receiving 'result' messages to prevent memory leaks.
+     */
+    const cleanupPort = (sessionId: string) => {
+      const port = activePorts.get(sessionId);
+      if (port) {
+        port.close();
+        activePorts.delete(sessionId);
+        console.log('[AgentStream] Port cleaned up for session:', sessionId);
+      }
+    };
+
+    // Listen for port transfers from main process.
+    // This runs once when the preload script loads, setting up a persistent listener.
+    ipcRenderer.on(IpcChannels.agentStream.port, (event, data: { sessionId: string }) => {
+      // Get the transferred port from the event
+      const port = event.ports[0];
+      if (!port) {
+        console.error('[AgentStream] No port received for session:', data.sessionId);
+        return;
+      }
+
+      // Store the port for later message sending
+      activePorts.set(data.sessionId, port);
+
+      // Set up message handler for this port
+      port.onmessage = (messageEvent) => {
+        // Attach session ID to the message (may already be present, but ensures it's there)
+        const messageWithSession = {
+          ...messageEvent.data,
+          sessionId: data.sessionId,
+        };
+
+        // Notify all registered callbacks
+        messageCallbacks.forEach((callback) => {
+          try {
+            callback(messageWithSession);
+          } catch (error) {
+            console.error('[AgentStream] Error in message callback:', error);
+          }
+        });
+
+        // Clean up port when session ends (result message received)
+        // This prevents memory leaks from accumulating ports over time
+        if (messageEvent.data.type === 'result') {
+          cleanupPort(data.sessionId);
+        }
+      };
+
+      port.onmessageerror = (errorEvent) => {
+        console.error('[AgentStream] Port message error:', errorEvent);
+      };
+
+      // Start the port to begin receiving messages
+      port.start();
+
+      // Notify callbacks that port is ready (allows UI to show session started)
+      messageCallbacks.forEach((callback) => {
+        try {
+          callback({
+            sessionId: data.sessionId,
+            timestamp: Date.now(),
+            type: 'port_ready',
+          });
+        } catch (error) {
+          console.error('[AgentStream] Error in port ready callback:', error);
+        }
+      });
+    });
+
+    // Return the public API
+    return {
+      cancel: (sessionId: string) => ipcRenderer.invoke(IpcChannels.agentStream.cancel, sessionId),
+      onMessage: (callback: (message: unknown) => void) => {
+        messageCallbacks.add(callback);
+        // Return unsubscribe function
+        return () => {
+          messageCallbacks.delete(callback);
+        };
+      },
+      sendMessage: (sessionId: string, message: unknown) => {
+        const port = activePorts.get(sessionId);
+        if (!port) {
+          console.error('[AgentStream] No active port for session:', sessionId);
+          return;
+        }
+        port.postMessage(message);
+      },
+      start: (options: AgentStreamOptions) => ipcRenderer.invoke(IpcChannels.agentStream.start, options),
+    };
+  })(),
   agentTool: {
     allow: (id) => ipcRenderer.invoke(IpcChannels.agentTool.allow, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.agentTool.create, data),
