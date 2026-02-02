@@ -19,10 +19,10 @@ This orchestration implements the clarification step service that connects the C
 
 ## Step Logs
 
-- [00a-clarification.md](./00a-clarification.md) - Clarification skipped (high clarity score)
-- [01-feature-refinement.md](./01-feature-refinement.md) - Feature refinement completed
-- [02-file-discovery.md](./02-file-discovery.md) - 28 files discovered
-- [03-implementation-planning.md](./03-implementation-planning.md) - 12-step plan generated
+- [00a-clarification.md](00a-clarification.md) - Clarification skipped (high clarity score)
+- [01-feature-refinement.md](01-feature-refinement.md) - Feature refinement completed
+- [02-file-discovery.md](02-file-discovery.md) - 28 files discovered
+- [03-implementation-planning.md](03-implementation-planning.md) - 12-step plan generated
 
 ## Output
 
