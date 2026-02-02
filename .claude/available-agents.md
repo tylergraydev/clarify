@@ -17,6 +17,7 @@ Reference this file with `@.claude/available-agents.md` in other documentation.
 | `page-route`                    | Next.js routing     | Creating pages, layouts, loading states, error boundaries           |
 | `zustand-store`                 | Client state        | Creating Zustand stores with TypeScript, persist, devtools          |
 | `vercel-react-best-practices`   | Performance         | Optimizing React/Next.js code for performance                       |
+| `claude-agent-sdk`              | Agent SDK           | Implementing Claude Agent SDK streaming, hooks, permissions, sessions |
 | `clarification-agent`           | Feature clarity     | Assessing and clarifying ambiguous feature requests                 |
 | `file-discovery-agent`          | Codebase analysis   | Identifying all files relevant to a feature                         |
 | `implementation-planner`        | Plan generation     | Creating detailed implementation plans with quality gates           |
@@ -40,6 +41,9 @@ Use this matrix to route files to the correct specialist agent.
 | `*.ipc.ts` in `electron/ipc/`              | `ipc-handler`                   | ipc-handler-conventions                                 |
 | `*-store.ts` in `lib/stores/`              | `zustand-store`                 | zustand-state-management                                |
 | `*-table.tsx` or table components          | `tanstack-table`                | tanstack-table, component-conventions                   |
+| `*.ts` in `electron/services/`             | `claude-agent-sdk`              | claude-agent-sdk                                        |
+| `agent-stream.d.ts` in `types/`            | `claude-agent-sdk`              | claude-agent-sdk                                        |
+| `use-agent-stream.ts` in `hooks/`          | `claude-agent-sdk`              | claude-agent-sdk                                        |
 
 ## Step-Type Detection Rules
 
@@ -49,15 +53,16 @@ For automated routing in implementation plans:
 1. IF files contain "db/schema/" AND end with ".schema.ts" → database-schema
 2. IF files contain "db/repositories/" → database-schema
 3. IF files contain "electron/ipc/" OR "electron/preload.ts" OR step involves IPC handlers → ipc-handler
-4. IF files involve TanStack Query hooks/mutations → tanstack-query
-5. IF step involves data tables with useReactTable, pagination, sorting, or filtering → tanstack-table
-6. IF files contain "components/ui/form/" (base field components) → tanstack-form-base-components
-7. IF step involves creating/modifying forms OR files contain "lib/validations/" → tanstack-form
-8. IF step involves performance optimization, bundle size, waterfall fixes, or re-render optimization → vercel-react-best-practices
-9. IF files contain "lib/stores/" OR step involves Zustand store creation → zustand-store
-10. IF files contain "app/(app)/" AND (end with "page.tsx" OR "layout.tsx" OR "loading.tsx" OR "error.tsx" OR "route-type.ts") → page-route
-11. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
-12. ELSE → general-purpose
+4. IF files contain "electron/services/" OR "types/agent-stream" OR "hooks/use-agent-stream" OR step involves Claude Agent SDK → claude-agent-sdk
+5. IF files involve TanStack Query hooks/mutations → tanstack-query
+6. IF step involves data tables with useReactTable, pagination, sorting, or filtering → tanstack-table
+7. IF files contain "components/ui/form/" (base field components) → tanstack-form-base-components
+8. IF step involves creating/modifying forms OR files contain "lib/validations/" → tanstack-form
+9. IF step involves performance optimization, bundle size, waterfall fixes, or re-render optimization → vercel-react-best-practices
+10. IF files contain "lib/stores/" OR step involves Zustand store creation → zustand-store
+11. IF files contain "app/(app)/" AND (end with "page.tsx" OR "layout.tsx" OR "loading.tsx" OR "error.tsx" OR "route-type.ts") → page-route
+12. IF files contain "components/ui/" (non-form) OR "components/features/" → frontend-component
+13. ELSE → general-purpose
 ```
 
 ## Domain Classification
@@ -69,6 +74,7 @@ For route/feature audits:
 | `frontend`   | `app/**/*.tsx`, `components/**/*.tsx`                                           | `frontend-component` | component-conventions, react-coding-conventions, nextjs-routing-conventions |
 | `backend`    | `db/schema/*.ts`, `db/repositories/*.ts`                                        | `database-schema`  | database-schema-conventions                                           |
 | `ipc`        | `electron/ipc/*.ts`, `preload.ts`, `types/electron.d.ts`                        | `ipc-handler`      | ipc-handler-conventions                                               |
+| `agent-sdk`  | `electron/services/*.ts`, `types/agent-stream.d.ts`, `hooks/use-agent-stream.ts` | `claude-agent-sdk` | claude-agent-sdk                                                      |
 | `hooks`      | `hooks/**/*.ts`, `lib/queries/*.ts`                                             | `tanstack-query`   | tanstack-query-conventions                                            |
 | `forms`      | `lib/validations/*.ts`                                                          | `tanstack-form`    | tanstack-form-conventions                                             |
 | `stores`     | `lib/stores/*.ts`                                                               | `zustand-store`    | zustand-state-management                                              |
@@ -84,6 +90,7 @@ For route/feature audits:
 | `tanstack-table`                | Table implementation with server-side patterns             |
 | `component-conventions`         | Base UI + CVA component patterns                           |
 | `ipc-handler-conventions`       | Electron IPC channel and handler patterns                  |
+| `claude-agent-sdk`              | Claude Agent SDK streaming, hooks, permissions, sessions   |
 | `nextjs-routing-conventions`    | App Router page and layout patterns                        |
 | `react-coding-conventions`      | React component and TypeScript patterns                    |
 | `zustand-state-management`      | Zustand store patterns with middleware                     |
