@@ -16,7 +16,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PipelineView, WorkflowDetailSkeleton } from '@/components/workflows';
 import { useProject } from '@/hooks/queries/use-projects';
-import { useStartWorkflow, useWorkflow } from '@/hooks/queries/use-workflows';
+import {
+  useCancelWorkflow,
+  usePauseWorkflow,
+  useResumeWorkflow,
+  useStartWorkflow,
+  useWorkflow,
+} from '@/hooks/queries/use-workflows';
 
 import { Route } from './route-type';
 
@@ -133,6 +139,9 @@ const WorkflowDetailPage = () => {
 
   // Workflow action mutations
   const startWorkflow = useStartWorkflow();
+  const pauseWorkflow = usePauseWorkflow();
+  const resumeWorkflow = useResumeWorkflow();
+  const cancelWorkflow = useCancelWorkflow();
 
   // Handle route params loading state
   if (routeParams.isLoading) {
@@ -167,10 +176,25 @@ const WorkflowDetailPage = () => {
   const isProjectDataLoading = workflow.projectId !== null && isProjectLoading;
   const isStarting = startWorkflow.isPending;
   const isStartable = STARTABLE_STATUSES.includes(workflow.status);
+  const isPausing = pauseWorkflow.isPending;
+  const isResuming = resumeWorkflow.isPending;
+  const isCancelling = cancelWorkflow.isPending;
 
   // Event handlers
   const handleStartWorkflow = () => {
     startWorkflow.mutate(workflowId);
+  };
+
+  const handlePauseWorkflow = () => {
+    pauseWorkflow.mutate(workflowId);
+  };
+
+  const handleResumeWorkflow = () => {
+    resumeWorkflow.mutate(workflowId);
+  };
+
+  const handleCancelWorkflow = () => {
+    cancelWorkflow.mutate(workflowId);
   };
 
   return (
@@ -279,21 +303,36 @@ const WorkflowDetailPage = () => {
               </Button>
             )}
             {PAUSABLE_STATUSES.includes(workflow.status) && (
-              <Button aria-disabled={'true'} aria-label={'Pause workflow'} disabled variant={'outline'}>
+              <Button
+                aria-label={isPausing ? 'Pausing workflow' : 'Pause workflow'}
+                disabled={isPausing}
+                onClick={handlePauseWorkflow}
+                variant={'outline'}
+              >
                 <Pause className={'mr-2 size-4'} />
-                Pause
+                {isPausing ? 'Pausing...' : 'Pause'}
               </Button>
             )}
             {RESUMABLE_STATUSES.includes(workflow.status) && (
-              <Button aria-disabled={'true'} aria-label={'Resume workflow'} disabled variant={'outline'}>
+              <Button
+                aria-label={isResuming ? 'Resuming workflow' : 'Resume workflow'}
+                disabled={isResuming}
+                onClick={handleResumeWorkflow}
+                variant={'outline'}
+              >
                 <Play className={'mr-2 size-4'} />
-                Resume
+                {isResuming ? 'Resuming...' : 'Resume'}
               </Button>
             )}
             {CANCELLABLE_STATUSES.includes(workflow.status) && (
-              <Button aria-disabled={'true'} aria-label={'Cancel workflow'} disabled variant={'destructive'}>
+              <Button
+                aria-label={isCancelling ? 'Cancelling workflow' : 'Cancel workflow'}
+                disabled={isCancelling}
+                onClick={handleCancelWorkflow}
+                variant={'destructive'}
+              >
                 <X className={'mr-2 size-4'} />
-                Cancel
+                {isCancelling ? 'Cancelling...' : 'Cancel'}
               </Button>
             )}
           </div>
