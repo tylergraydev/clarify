@@ -72,7 +72,7 @@ const BASE_RETRY_DELAY_MS = 1000;
 /**
  * Cached SDK query function to avoid repeated dynamic imports.
  */
-let cachedQueryFn: null | (typeof import('@anthropic-ai/claude-agent-sdk'))['query'] = null;
+let cachedQueryFn: (typeof import('@anthropic-ai/claude-agent-sdk'))['query'] | null = null;
 
 /**
  * Extended outcome fields for pause and retry information.
@@ -317,7 +317,7 @@ class ClarificationStepService {
           toolName: t.toolName,
           toolPattern: t.toolPattern ?? '',
         })),
-    };
+    } satisfies ClarificationAgentConfig;
   }
 
   /**

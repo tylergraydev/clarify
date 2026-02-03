@@ -35,12 +35,12 @@ Use this table of contents to find the documentation you need for the Claude Age
 
 ### Input/Output & Streaming
 
-| Reference File | Purpose | Key Contents |
-|:---------------|:--------|:-------------|
-| **streaming-input.md** | Input modes | Streaming input mode vs single message input, `AsyncGenerator` patterns, image uploads |
-| **streaming-responses.md** | Response streaming | `includePartialMessages`, `StreamEvent`, streaming text and tool calls |
+| Reference File                  | Purpose | Key Contents |
+|:--------------------------------|:--------|:-------------|
+| **streaming-input.md**          | Input modes | Streaming input mode vs single message input, `AsyncGenerator` patterns, image uploads |
+| **streaming-responses.md**      | Response streaming | `includePartialMessages`, `StreamEvent`, streaming text and tool calls |
 | **user-input-and-approvals.md** | User input handling | Surfacing approval requests, clarifying questions, `AskUserQuestion` tool, `canUseTool` callback |
-| **structure-output.md** | Structured outputs | JSON Schema validation, Zod/Pydantic integration, type-safe output |
+| **structured-output.md**        | Structured outputs | JSON Schema validation, Zod/Pydantic integration, type-safe output |
 
 ### Configuration
 
