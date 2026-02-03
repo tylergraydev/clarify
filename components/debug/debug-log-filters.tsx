@@ -142,7 +142,11 @@ export const DebugLogFilters = ({
   }, [sessionIds]);
 
   return (
-    <div className={cn('flex flex-col gap-4 rounded-md border border-border bg-card p-4', className)} ref={ref} {...props}>
+    <div
+      className={cn('flex flex-col gap-4 rounded-md border border-border bg-card p-4', className)}
+      ref={ref}
+      {...props}
+    >
       {/* Search Input */}
       <div>
         <label className={'mb-2 block text-xs font-medium text-muted-foreground'}>Search</label>

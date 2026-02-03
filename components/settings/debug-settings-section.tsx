@@ -75,16 +75,9 @@ export const DebugSettingsSection = (): ReactElement => {
         <div className={'flex items-center justify-between'}>
           <div className={'flex flex-col gap-1'}>
             <span className={'text-sm font-medium'}>Log File</span>
-            <span className={'text-xs text-muted-foreground'}>
-              Open the debug log file in your default text editor
-            </span>
+            <span className={'text-xs text-muted-foreground'}>Open the debug log file in your default text editor</span>
           </div>
-          <Button
-            disabled={openLogFileMutation.isPending}
-            onClick={handleOpenLogFile}
-            size={'sm'}
-            variant={'outline'}
-          >
+          <Button disabled={openLogFileMutation.isPending} onClick={handleOpenLogFile} size={'sm'} variant={'outline'}>
             <FolderOpen className={'size-4'} />
             {openLogFileMutation.isPending ? 'Opening...' : 'Open Log File'}
           </Button>

@@ -51,26 +51,23 @@ export function registerAgentStreamHandlers(getMainWindow: () => BrowserWindow |
   );
 
   // Cancel an active stream session
-  ipcMain.handle(
-    IpcChannels.agentStream.cancel,
-    (_event: IpcMainInvokeEvent, sessionId: unknown): boolean => {
-      try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
-
-        if (!agentStreamService.isSessionActive(sessionId)) {
-          throw new Error(`Session not active: ${sessionId}`);
-        }
-
-        agentStreamService.cancelSession(sessionId);
-        return true;
-      } catch (error) {
-        console.error('[IPC Error] agentStream:cancel:', error);
-        throw error;
+  ipcMain.handle(IpcChannels.agentStream.cancel, (_event: IpcMainInvokeEvent, sessionId: unknown): boolean => {
+    try {
+      if (!isValidSessionId(sessionId)) {
+        throw new Error(`Invalid session ID: ${String(sessionId)}`);
       }
+
+      if (!agentStreamService.isSessionActive(sessionId)) {
+        throw new Error(`Session not active: ${sessionId}`);
+      }
+
+      agentStreamService.cancelSession(sessionId);
+      return true;
+    } catch (error) {
+      console.error('[IPC Error] agentStream:cancel:', error);
+      throw error;
     }
-  );
+  });
 
   // Get session state (for debugging/status checks)
   ipcMain.handle(

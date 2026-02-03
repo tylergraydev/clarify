@@ -35,12 +35,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 
-import type {
-  DebugLogCategory,
-  DebugLogEntry,
-  DebugLogFilters,
-  DebugLogLevel,
-} from '../../types/debug-log';
+import type { DebugLogCategory, DebugLogEntry, DebugLogFilters, DebugLogLevel } from '../../types/debug-log';
 
 /**
  * Default maximum log file size in bytes (5MB).
@@ -197,11 +192,7 @@ class DebugLoggerService {
    * @param permission - Description of the permission
    * @param granted - Whether the permission was granted
    */
-  logPermission(
-    sessionId: string,
-    permission: string,
-    granted: boolean
-  ): void {
+  logPermission(sessionId: string, permission: string, granted: boolean): void {
     this.writeLog(
       granted ? 'info' : 'warn',
       'permission',
@@ -218,11 +209,7 @@ class DebugLoggerService {
    * @param message - Human-readable event message
    * @param metadata - Optional structured data
    */
-  logSdkEvent(
-    sessionId: string,
-    message: string,
-    metadata?: Record<string, unknown>
-  ): void {
+  logSdkEvent(sessionId: string, message: string, metadata?: Record<string, unknown>): void {
     this.writeLog('info', 'sdk_event', sessionId, message, metadata);
   }
 
@@ -233,24 +220,14 @@ class DebugLoggerService {
    * @param event - The session event type
    * @param metadata - Optional additional data
    */
-  logSession(
-    sessionId: string,
-    event: 'cancel' | 'end' | 'start',
-    metadata?: Record<string, unknown>
-  ): void {
+  logSession(sessionId: string, event: 'cancel' | 'end' | 'start', metadata?: Record<string, unknown>): void {
     const levelMap: Record<string, DebugLogLevel> = {
       cancel: 'warn',
       end: 'info',
       start: 'info',
     };
 
-    this.writeLog(
-      levelMap[event] ?? 'info',
-      'session',
-      sessionId,
-      `Session ${event}`,
-      metadata
-    );
+    this.writeLog(levelMap[event] ?? 'info', 'session', sessionId, `Session ${event}`, metadata);
   }
 
   /**
@@ -271,9 +248,7 @@ class DebugLoggerService {
    */
   logText(sessionId: string, content: string): void {
     // Truncate long text content
-    const truncatedContent = content.length > 2000
-      ? content.slice(0, 2000) + '... [truncated]'
-      : content;
+    const truncatedContent = content.length > 2000 ? content.slice(0, 2000) + '... [truncated]' : content;
 
     this.writeLog('info', 'text', sessionId, 'Text output', {
       content: truncatedContent,
@@ -288,9 +263,7 @@ class DebugLoggerService {
    */
   logThinking(sessionId: string, content: string): void {
     // Truncate long thinking content
-    const truncatedContent = content.length > 2000
-      ? content.slice(0, 2000) + '... [truncated]'
-      : content;
+    const truncatedContent = content.length > 2000 ? content.slice(0, 2000) + '... [truncated]' : content;
 
     this.writeLog('debug', 'thinking', sessionId, 'Thinking block', {
       content: truncatedContent,
@@ -304,11 +277,7 @@ class DebugLoggerService {
    * @param toolName - Name of the tool that produced the result
    * @param result - The tool's output/result
    */
-  logToolResult(
-    sessionId: string,
-    toolName: string,
-    result: unknown
-  ): void {
+  logToolResult(sessionId: string, toolName: string, result: unknown): void {
     // Truncate large results to avoid bloating logs
     let resultSummary: unknown = result;
     if (typeof result === 'string' && result.length > 1000) {
@@ -328,11 +297,7 @@ class DebugLoggerService {
    * @param toolName - Name of the tool being used
    * @param toolInput - Input parameters for the tool
    */
-  logToolUse(
-    sessionId: string,
-    toolName: string,
-    toolInput: Record<string, unknown>
-  ): void {
+  logToolUse(sessionId: string, toolName: string, toolInput: Record<string, unknown>): void {
     this.writeLog('info', 'tool_use', sessionId, `Tool invoked: ${toolName}`, {
       toolInput,
       toolName,
@@ -455,9 +420,7 @@ class DebugLoggerService {
     if (filters.text) {
       const searchText = filters.text.toLowerCase();
       const messageMatch = entry.message.toLowerCase().includes(searchText);
-      const metadataMatch = entry.metadata
-        ? JSON.stringify(entry.metadata).toLowerCase().includes(searchText)
-        : false;
+      const metadataMatch = entry.metadata ? JSON.stringify(entry.metadata).toLowerCase().includes(searchText) : false;
 
       if (!messageMatch && !metadataMatch) {
         return false;

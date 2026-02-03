@@ -129,10 +129,7 @@ export const useDebugLogStore = create<DebugLogStore>()((set) => ({
 
     // Clear persisted values
     persistToElectronStore(DEBUG_LOG_AUTO_REFRESH_STORAGE_KEY, initialState.isAutoRefresh);
-    persistToElectronStore(
-      DEBUG_LOG_AUTO_REFRESH_INTERVAL_STORAGE_KEY,
-      initialState.autoRefreshInterval
-    );
+    persistToElectronStore(DEBUG_LOG_AUTO_REFRESH_INTERVAL_STORAGE_KEY, initialState.autoRefreshInterval);
     persistToElectronStore(DEBUG_LOG_FILTERS_STORAGE_KEY, initialState.filters);
   },
 

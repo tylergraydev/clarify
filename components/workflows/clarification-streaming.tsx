@@ -90,8 +90,7 @@ interface ClarificationOutcomePauseInfo {
 }
 
 interface ClarificationStreamingProps
-  extends Omit<ComponentProps<'div'>, 'onError'>,
-    VariantProps<typeof clarificationStreamingVariants> {
+  extends Omit<ComponentProps<'div'>, 'onError'>, VariantProps<typeof clarificationStreamingVariants> {
   /** Active tool calls in progress */
   activeTools?: Array<ActiveTool>;
   /** Name of the agent being used */
@@ -169,7 +168,7 @@ export const ClarificationStreaming = memo(
     const effectiveRetryCount = outcome?.retryCount ?? retryCount;
     const isRetryLimitReached = effectiveRetryCount >= maxRetries;
     const canRetry = onRetry && !isRetryLimitReached && !isRetrying;
-    const canSkip = onSkipClarification && (outcome?.skipFallbackAvailable !== false);
+    const canSkip = onSkipClarification && outcome?.skipFallbackAvailable !== false;
 
     // Determine visual status based on state
     const resolvedStatus = useMemo(() => {
@@ -388,9 +387,7 @@ export const ClarificationStreaming = memo(
                         </Button>
                       )}
                       {isRetryLimitReached && (
-                        <span className={'text-xs text-muted-foreground'}>
-                          Maximum retry attempts reached
-                        </span>
+                        <span className={'text-xs text-muted-foreground'}>Maximum retry attempts reached</span>
                       )}
                     </div>
                   )}
@@ -398,9 +395,7 @@ export const ClarificationStreaming = memo(
               )}
 
               {/* Empty State */}
-              {isEmptyState && (
-                <div className={'text-sm text-muted-foreground'}>Ready to start analysis...</div>
-              )}
+              {isEmptyState && <div className={'text-sm text-muted-foreground'}>Ready to start analysis...</div>}
             </StickToBottom.Content>
             <StreamingScrollButton />
           </StickToBottom>

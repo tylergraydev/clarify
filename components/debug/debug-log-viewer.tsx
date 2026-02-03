@@ -9,7 +9,12 @@ import type { DebugLogEntry, DebugLogFilters as DebugLogFiltersType } from '@/ty
 import { DebugLogFilters } from '@/components/debug/debug-log-filters';
 import { DebugLogList } from '@/components/debug/debug-log-list';
 import { DebugLogToolbar } from '@/components/debug/debug-log-toolbar';
-import { useClearDebugLogs, useDebugLogs, useDebugLogSessionIds, useOpenDebugLogFile } from '@/hooks/queries/use-debug-logs';
+import {
+  useClearDebugLogs,
+  useDebugLogs,
+  useDebugLogSessionIds,
+  useOpenDebugLogFile,
+} from '@/hooks/queries/use-debug-logs';
 import { useDebugLogStore } from '@/lib/stores/debug-log-store';
 import { cn } from '@/lib/utils';
 

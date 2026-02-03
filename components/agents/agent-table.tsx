@@ -4,7 +4,19 @@ import type { OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 import { format } from 'date-fns';
-import { Check, Copy, Download, Eye, FolderInput, FolderOutput, FolderPlus, Pencil, RotateCcw, Star, Trash2 } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  Download,
+  Eye,
+  FolderInput,
+  FolderOutput,
+  FolderPlus,
+  Pencil,
+  RotateCcw,
+  Star,
+  Trash2,
+} from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
 import type { Agent, AgentHook, AgentSkill, AgentTool, Project } from '@/db/schema';
@@ -21,7 +33,10 @@ import {
   type DataTableRowStyleCallback,
 } from '@/components/ui/table';
 import { Tooltip } from '@/components/ui/tooltip';
-import { useDefaultClarificationAgent, useSetDefaultClarificationAgent } from '@/hooks/queries/use-default-clarification-agent';
+import {
+  useDefaultClarificationAgent,
+  useSetDefaultClarificationAgent,
+} from '@/hooks/queries/use-default-clarification-agent';
 import { useToast } from '@/hooks/use-toast';
 import { getAgentColorClass } from '@/lib/colors/agent-colors';
 import { cn } from '@/lib/utils';
@@ -552,7 +567,9 @@ export const AgentTable = ({
                   <Tooltip content={'Default clarification agent'} side={'top'}>
                     <span
                       aria-label={'Default clarification agent'}
-                      className={'inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/60 dark:text-green-100'}
+                      className={
+                        'inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/60 dark:text-green-100'
+                      }
                     >
                       <Check aria-hidden={'true'} className={'size-3'} />
                       {'Default'}

@@ -572,9 +572,7 @@ class AgentStreamService {
           // Tool execution result
           if ('tool_use_id' in block && block.tool_use_id) {
             // Remove tool from active tools
-            const toolForResult = activeSession.session.activeTools.find(
-              (t) => t.toolUseId === block.tool_use_id
-            );
+            const toolForResult = activeSession.session.activeTools.find((t) => t.toolUseId === block.tool_use_id);
             activeSession.session.activeTools = activeSession.session.activeTools.filter(
               (t) => t.toolUseId !== block.tool_use_id
             );
@@ -585,15 +583,11 @@ class AgentStreamService {
               output = output.map((c) => (typeof c === 'string' ? c : 'text' in c ? (c.text ?? '') : '')).join('');
             }
 
-            debugLoggerService.logToolResult(
-              sessionId,
-              toolForResult?.toolName ?? 'unknown',
-              {
-                isError: 'is_error' in block ? block.is_error : undefined,
-                output,
-                toolUseId: block.tool_use_id,
-              }
-            );
+            debugLoggerService.logToolResult(sessionId, toolForResult?.toolName ?? 'unknown', {
+              isError: 'is_error' in block ? block.is_error : undefined,
+              output,
+              toolUseId: block.tool_use_id,
+            });
 
             this.sendMessage(sessionId, {
               ...baseMessage,

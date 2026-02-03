@@ -113,7 +113,11 @@ export function registerWorkflowHandlers(
         // If step creation fails, we attempt to rollback the workflow status
         let createdSteps: Array<import('../../db/schema').WorkflowStep>;
         try {
-          createdSteps = workflowStepsRepository.createPlanningSteps(id, workflow.skipClarification, clarificationAgentId);
+          createdSteps = workflowStepsRepository.createPlanningSteps(
+            id,
+            workflow.skipClarification,
+            clarificationAgentId
+          );
         } catch (stepError) {
           // Attempt to rollback workflow status to 'created'
           console.error('[IPC Error] workflow:start - step creation failed, rolling back:', stepError);
@@ -130,7 +134,9 @@ export function registerWorkflowHandlers(
         const firstPendingStep = createdSteps.find((step) => step.status === 'pending');
         if (firstPendingStep) {
           workflowStepsRepository.start(firstPendingStep.id);
-          console.log(`[IPC] workflow:start - started first step: ${firstPendingStep.stepType} (id: ${firstPendingStep.id})`);
+          console.log(
+            `[IPC] workflow:start - started first step: ${firstPendingStep.stepType} (id: ${firstPendingStep.id})`
+          );
         }
 
         return startedWorkflow;

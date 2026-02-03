@@ -124,7 +124,9 @@ export const AgentCard = ({
               <Tooltip content={'Default clarification agent'} side={'top'}>
                 <span
                   aria-label={'Default clarification agent'}
-                  className={'inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/60 dark:text-green-100'}
+                  className={
+                    'inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/60 dark:text-green-100'
+                  }
                 >
                   <Check aria-hidden={'true'} className={'size-3'} />
                   {'Default'}

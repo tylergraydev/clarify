@@ -20,72 +20,54 @@ import { IpcChannels } from './channels';
 export function registerDebugLogHandlers(createDebugWindow?: () => Promise<BrowserWindow>): void {
   ipcMain.handle(
     IpcChannels.debugLog.getLogs,
-    async (
-      _event: IpcMainInvokeEvent,
-      filters?: DebugLogFilters
-    ): Promise<Array<DebugLogEntry>> => {
+    async (_event: IpcMainInvokeEvent, filters?: DebugLogFilters): Promise<Array<DebugLogEntry>> => {
       return debugLoggerService.readLogs(filters);
     }
   );
 
-  ipcMain.handle(
-    IpcChannels.debugLog.getLogPath,
-    (): string => {
-      return debugLoggerService.getLogFilePath();
-    }
-  );
+  ipcMain.handle(IpcChannels.debugLog.getLogPath, (): string => {
+    return debugLoggerService.getLogFilePath();
+  });
 
-  ipcMain.handle(
-    IpcChannels.debugLog.clearLogs,
-    async (): Promise<{ error?: string; success: boolean }> => {
-      return debugLoggerService.clearLogs();
-    }
-  );
+  ipcMain.handle(IpcChannels.debugLog.clearLogs, async (): Promise<{ error?: string; success: boolean }> => {
+    return debugLoggerService.clearLogs();
+  });
 
-  ipcMain.handle(
-    IpcChannels.debugLog.openLogFile,
-    async (): Promise<{ error?: string; success: boolean }> => {
-      try {
-        const logPath = debugLoggerService.getLogFilePath();
-        const errorMessage = await shell.openPath(logPath);
+  ipcMain.handle(IpcChannels.debugLog.openLogFile, async (): Promise<{ error?: string; success: boolean }> => {
+    try {
+      const logPath = debugLoggerService.getLogFilePath();
+      const errorMessage = await shell.openPath(logPath);
 
-        if (errorMessage) {
-          return { error: errorMessage, success: false };
-        }
-
-        return { success: true };
-      } catch (error) {
-        return {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          success: false,
-        };
-      }
-    }
-  );
-
-  ipcMain.handle(
-    IpcChannels.debugLog.getSessionIds,
-    async (): Promise<Array<string>> => {
-      return debugLoggerService.getSessionIds();
-    }
-  );
-
-  ipcMain.handle(
-    IpcChannels.debugLog.openDebugWindow,
-    async (): Promise<{ error?: string; success: boolean }> => {
-      if (!createDebugWindow) {
-        return { error: 'Debug window creation not available', success: false };
+      if (errorMessage) {
+        return { error: errorMessage, success: false };
       }
 
-      try {
-        await createDebugWindow();
-        return { success: true };
-      } catch (error) {
-        return {
-          error: error instanceof Error ? error.message : 'Failed to open debug window',
-          success: false,
-        };
-      }
+      return { success: true };
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        success: false,
+      };
     }
-  );
+  });
+
+  ipcMain.handle(IpcChannels.debugLog.getSessionIds, async (): Promise<Array<string>> => {
+    return debugLoggerService.getSessionIds();
+  });
+
+  ipcMain.handle(IpcChannels.debugLog.openDebugWindow, async (): Promise<{ error?: string; success: boolean }> => {
+    if (!createDebugWindow) {
+      return { error: 'Debug window creation not available', success: false };
+    }
+
+    try {
+      await createDebugWindow();
+      return { success: true };
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : 'Failed to open debug window',
+        success: false,
+      };
+    }
+  });
 }

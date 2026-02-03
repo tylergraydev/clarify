@@ -72,7 +72,7 @@ const BASE_RETRY_DELAY_MS = 1000;
 /**
  * Cached SDK query function to avoid repeated dynamic imports.
  */
-let cachedQueryFn: null | typeof import('@anthropic-ai/claude-agent-sdk')['query'] = null;
+let cachedQueryFn: null | (typeof import('@anthropic-ai/claude-agent-sdk'))['query'] = null;
 
 /**
  * Extended outcome fields for pause and retry information.
@@ -371,16 +371,20 @@ class ClarificationStepService {
     });
 
     // Audit log: retrying clarification
-    this.logAuditEntry('clarification_retry_started', `Retrying clarification (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS})`, {
-      eventData: {
-        backoffDelayMs: backoffDelay,
-        retryCount: newRetryCount,
-        sessionId: previousSessionId,
-      },
-      severity: 'info',
-      workflowId: options.workflowId,
-      workflowStepId: options.stepId,
-    });
+    this.logAuditEntry(
+      'clarification_retry_started',
+      `Retrying clarification (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS})`,
+      {
+        eventData: {
+          backoffDelayMs: backoffDelay,
+          retryCount: newRetryCount,
+          sessionId: previousSessionId,
+        },
+        severity: 'info',
+        workflowId: options.workflowId,
+        workflowStepId: options.stepId,
+      }
+    );
 
     // Wait for backoff delay
     await new Promise((resolve) => setTimeout(resolve, backoffDelay));
@@ -925,9 +929,7 @@ Focus on understanding what the user wants to build and gathering just enough in
       ];
 
       // Explicitly disallow tools NOT in the allowed list
-      sdkOptions.disallowedTools = allBuiltInTools.filter(
-        (tool) => !allowedToolNames.includes(tool)
-      );
+      sdkOptions.disallowedTools = allBuiltInTools.filter((tool) => !allowedToolNames.includes(tool));
     }
 
     // Configure permission mode
@@ -1016,8 +1018,7 @@ Focus on understanding what the user wants to build and gathering just enough in
       }
 
       debugLoggerService.logSdkEvent(session.sessionId, 'Processing structured output', {
-        hasStructuredOutput:
-          resultMessage.subtype === 'success' ? !!resultMessage.structured_output : false,
+        hasStructuredOutput: resultMessage.subtype === 'success' ? !!resultMessage.structured_output : false,
         resultSubtype: resultMessage.subtype,
       });
 
@@ -1507,7 +1508,7 @@ Focus on understanding what the user wants to build and gathering just enough in
  * @returns The SDK query function
  * @throws Error if the SDK is not available
  */
-async function getQueryFunction(): Promise<typeof import('@anthropic-ai/claude-agent-sdk')['query']> {
+async function getQueryFunction(): Promise<(typeof import('@anthropic-ai/claude-agent-sdk'))['query']> {
   if (!cachedQueryFn) {
     try {
       const sdk = await import('@anthropic-ai/claude-agent-sdk');

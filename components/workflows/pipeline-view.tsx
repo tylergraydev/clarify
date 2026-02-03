@@ -227,9 +227,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
   // Find the active clarification step to get its agentId
   const activeClarificationStep = useMemo(() => {
     if (!steps) return null;
-    return steps.find(
-      (step) => step.stepType === 'clarification' && deriveStepState(step.status) === 'running'
-    );
+    return steps.find((step) => step.stepType === 'clarification' && deriveStepState(step.status) === 'running');
   }, [steps]);
 
   // Get agent details for the clarification step (either from step.agentId or default)
@@ -388,9 +386,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
   // Effect to start clarification when a clarification step becomes active
   useEffect(() => {
-    const isStepRunning =
-      activeClarificationStep &&
-      deriveStepState(activeClarificationStep.status) === 'running';
+    const isStepRunning = activeClarificationStep && deriveStepState(activeClarificationStep.status) === 'running';
 
     const isAlreadyStarted = clarificationStartedRef.current === activeClarificationStep?.id;
     const hasQuestions =
@@ -637,8 +633,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
             const metrics = computeStepMetrics(step);
 
             // Determine clarification streaming props for this step
-            const isActiveClarification =
-              isClarificationStep && clarificationState.stepId === step.id;
+            const isActiveClarification = isClarificationStep && clarificationState.stepId === step.id;
             const clarificationStreamingProps = isActiveClarification
               ? {
                   clarificationActiveTools: clarificationState.activeTools,

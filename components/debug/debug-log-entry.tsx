@@ -151,7 +151,10 @@ export const DebugLogEntry = ({ className, entry, isSelected = false, onClick, r
         {hasMetadata && (
           <ChevronRight
             aria-hidden={'true'}
-            className={cn('mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')}
+            className={cn(
+              'mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform',
+              isExpanded && 'rotate-90'
+            )}
           />
         )}
         {!hasMetadata && <div className={'w-4'} />}

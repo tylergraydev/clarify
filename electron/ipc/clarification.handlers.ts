@@ -24,10 +24,7 @@ import type {
   ClarificationStreamMessage,
 } from '../../lib/validations/clarification';
 
-import {
-  type ClarificationOutcomeWithPause,
-  clarificationStepService,
-} from '../services/clarification-step.service';
+import { type ClarificationOutcomeWithPause, clarificationStepService } from '../services/clarification-step.service';
 import { IpcChannels } from './channels';
 
 /**
