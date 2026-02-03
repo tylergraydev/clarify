@@ -363,7 +363,8 @@ export type ClarificationStreamMessage =
   | ClarificationStreamThinkingDelta
   | ClarificationStreamThinkingStart
   | ClarificationStreamToolStart
-  | ClarificationStreamToolStop;
+  | ClarificationStreamToolStop
+  | ClarificationStreamToolUpdate;
 
 /**
  * Base interface for all clarification stream messages.
@@ -388,7 +389,8 @@ export type ClarificationStreamMessageType =
   | 'thinking_delta'
   | 'thinking_start'
   | 'tool_start'
-  | 'tool_stop';
+  | 'tool_stop'
+  | 'tool_update';
 
 /**
  * Stream message for phase transitions during clarification.
@@ -448,6 +450,19 @@ export interface ClarificationStreamToolStop extends ClarificationStreamMessageB
   /** Unique identifier of the tool invocation that completed */
   toolUseId: string;
   type: 'tool_stop';
+}
+
+/**
+ * Stream message indicating a tool input payload has been updated.
+ */
+export interface ClarificationStreamToolUpdate extends ClarificationStreamMessageBase {
+  /** Input parameters passed to the tool */
+  toolInput: Record<string, unknown>;
+  /** Name of the tool being executed */
+  toolName: string;
+  /** Unique identifier for this tool invocation */
+  toolUseId: string;
+  type: 'tool_update';
 }
 
 /**

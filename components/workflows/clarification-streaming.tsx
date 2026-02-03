@@ -5,14 +5,17 @@ import type { ComponentProps, ReactElement } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
   AlertCircle,
+  Bot,
   BrainIcon,
   ChevronDownIcon,
   File,
+  Globe,
   Loader2,
   RefreshCw,
   Search,
   SkipForward,
   StopCircle,
+  Terminal,
   XCircle,
 } from 'lucide-react';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,10 +32,15 @@ import { cn } from '@/lib/utils';
  * Tool use indicator display names and icons.
  */
 const TOOL_CONFIG: Record<string, { icon: typeof File; label: string }> = {
+  Bash: { icon: Terminal, label: 'Running command' },
   Edit: { icon: File, label: 'Editing' },
   Glob: { icon: Search, label: 'Finding files' },
   Grep: { icon: Search, label: 'Searching' },
   Read: { icon: File, label: 'Reading' },
+  StructuredOutput: { icon: File, label: 'Structuring output' },
+  Task: { icon: Bot, label: 'Delegating' },
+  WebFetch: { icon: Globe, label: 'Fetching web' },
+  WebSearch: { icon: Globe, label: 'Searching web' },
   Write: { icon: File, label: 'Writing' },
 };
 
@@ -54,16 +62,21 @@ const PHASE_LABELS: Record<string, string> = {
 
 export const clarificationStreamingVariants = cva(
   `
-    relative flex flex-col rounded-lg border transition-all
+    relative flex min-h-0 flex-col overflow-hidden rounded-2xl border transition-all
     duration-200
   `,
   {
     defaultVariants: {
+      layout: 'primary',
       status: 'default',
     },
     variants: {
+      layout: {
+        primary: 'bg-background/80 shadow-sm',
+        summary: 'bg-muted/30',
+      },
       status: {
-        default: 'border-border bg-muted/30',
+        default: 'border-border/60',
         error: 'border-destructive/50 bg-destructive/5',
         running: 'border-accent/50 bg-accent/5',
         success: 'border-green-500/50 bg-green-500/5',
@@ -168,6 +181,7 @@ export const ClarificationStreaming = memo(
     extendedThinkingElapsedMs,
     isRetrying = false,
     isStreaming = false,
+    layout = 'primary',
     maxRetries = 3,
     maxThinkingTokens,
     onCancel,
@@ -185,7 +199,8 @@ export const ClarificationStreaming = memo(
     thinking = [],
     ...props
   }: ClarificationStreamingProps): ReactElement => {
-    const [isThinkingOpen, setIsThinkingOpen] = useState(true);
+    const [isThinkingOpen, setIsThinkingOpen] = useState(layout !== 'summary');
+    const handledOutcomeRef = useRef<null | string>(null);
 
     // Compute retry-related state from outcome or props
     const effectiveRetryCount = outcome?.retryCount ?? retryCount;
@@ -213,10 +228,21 @@ export const ClarificationStreaming = memo(
     const isExtendedThinking =
       maxThinkingTokens && maxThinkingTokens > 0 && (phase === 'executing' || phase === 'executing_extended_thinking');
     const shouldShowElapsedTime = isExtendedThinking && extendedThinkingElapsedMs !== undefined;
+    const streamHeightClass = layout === 'summary' ? 'min-h-0' : 'min-h-[16rem]';
+    const headerTitle = !isRunning && layout === 'summary' ? `${agentName} · Summary` : agentName;
 
     // Handle outcome callbacks
     useEffect(() => {
-      if (!outcome) return;
+      if (!outcome) {
+        handledOutcomeRef.current = null;
+        return;
+      }
+
+      if (handledOutcomeRef.current === outcome.type) {
+        return;
+      }
+
+      handledOutcomeRef.current = outcome.type;
 
       if (outcome.type === 'QUESTIONS_FOR_USER' && onQuestionsReady) {
         onQuestionsReady(outcome.questions);
@@ -245,7 +271,7 @@ export const ClarificationStreaming = memo(
     }, []);
 
     return (
-      <div className={cn(clarificationStreamingVariants({ status: resolvedStatus }), className)} {...props}>
+      <div className={cn(clarificationStreamingVariants({ layout, status: resolvedStatus }), className)} {...props}>
         {/* Header Section */}
         <div className={'flex items-center justify-between border-b border-border/50 px-4 py-3'}>
           {/* Agent Name and Status */}
@@ -264,7 +290,7 @@ export const ClarificationStreaming = memo(
                   </Shimmer>
                 ) : (
                   <Fragment>
-                    {agentName}
+                    {headerTitle}
                     {isComplete && ' - Complete'}
                     {isError && ' - Error'}
                   </Fragment>
@@ -370,7 +396,11 @@ export const ClarificationStreaming = memo(
 
         {/* Main Streaming Content */}
         <div className={'flex-1'}>
-          <StickToBottom className={'relative h-64 overflow-y-hidden'} initial={'smooth'} resize={'smooth'}>
+          <StickToBottom
+            className={cn('relative min-h-0 flex-1 overflow-y-hidden', streamHeightClass)}
+            initial={'smooth'}
+            resize={'smooth'}
+          >
             <StickToBottom.Content className={'flex flex-col p-4'}>
               {/* Loading State */}
               {isRunning && !text && (
@@ -474,8 +504,13 @@ export const ClarificationStreaming = memo(
 
 ClarificationStreaming.displayName = 'ClarificationStreaming';
 
+interface ToolDetail {
+  label: string;
+  value: string;
+}
+
 /**
- * ToolIndicator displays an active tool operation with its file path or search pattern.
+ * ToolIndicator displays an active tool operation with detailed input context.
  */
 interface ToolIndicatorProps {
   tool: ActiveTool;
@@ -484,36 +519,47 @@ interface ToolIndicatorProps {
 const ToolIndicator = memo(({ tool }: ToolIndicatorProps): ReactElement => {
   const config = TOOL_CONFIG[tool.toolName] ?? { icon: File, label: tool.toolName };
   const Icon = config.icon;
-
-  // Extract relevant info from tool input
-  const displayPath = useMemo(() => {
-    const input = tool.toolInput;
-    if (typeof input.file_path === 'string') {
-      return formatPath(input.file_path);
-    }
-    if (typeof input.path === 'string') {
-      return formatPath(input.path);
-    }
-    if (typeof input.pattern === 'string') {
-      return input.pattern;
-    }
-    return null;
-  }, [tool.toolInput]);
+  const { details, label, rawPreview, summary } = useMemo(() => buildToolDisplay(tool), [tool]);
 
   return (
     <div
       className={cn(
-        'flex items-center gap-1.5 rounded-md bg-accent/10 px-2 py-1',
+        'flex min-w-[220px] flex-1 flex-col gap-1 rounded-lg border border-accent/30 bg-accent/5 px-3 py-2',
         'animate-in text-xs text-accent fade-in-0 slide-in-from-left-2'
       )}
     >
-      <Icon className={'size-3'} />
-      <span className={'font-medium'}>{config.label}</span>
-      {displayPath && (
-        <Fragment>
-          <span className={'text-muted-foreground'}>-</span>
-          <span className={'max-w-48 truncate text-muted-foreground'}>{displayPath}</span>
-        </Fragment>
+      <div className={'flex items-center gap-2'}>
+        <Icon className={'size-3.5'} />
+        <span className={'font-medium text-foreground'}>{label}</span>
+        <span className={'rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] tracking-wide text-accent uppercase'}>
+          Tool
+        </span>
+        <span className={'font-mono text-[11px] text-muted-foreground'}>{tool.toolName}</span>
+      </div>
+
+      {summary && <div className={'text-xs text-foreground'}>{summary}</div>}
+
+      {details.length > 0 && (
+        <div className={'flex flex-wrap gap-1'}>
+          {details.map((detail, index) => (
+            <span
+              className={'rounded-md bg-muted/40 px-1.5 py-0.5 text-[11px] text-muted-foreground'}
+              key={`${detail.label}-${index}`}
+            >
+              <span className={'font-medium text-foreground/70'}>{detail.label}:</span> {detail.value}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {!summary && details.length === 0 && rawPreview && (
+        <div className={'rounded-md bg-muted/40 px-2 py-1 font-mono text-[11px] text-muted-foreground'}>
+          {rawPreview}
+        </div>
+      )}
+
+      {!summary && details.length === 0 && !rawPreview && (
+        <div className={'text-[11px] text-muted-foreground'}>Preparing tool input...</div>
       )}
     </div>
   );
@@ -559,4 +605,344 @@ function formatPath(path: string): string {
   const segments = path.split(/[/\\]/);
   const lastSegments = segments.slice(-3);
   return lastSegments.join('/');
+}
+
+const TOOL_DETAIL_LIMIT = 8;
+const TOOL_PREVIEW_LIMIT = 180;
+const TOOL_TEXT_LIMIT = 90;
+
+function buildToolDetails(input: Record<string, unknown>): {
+  details: Array<ToolDetail>;
+  rawPreview: null | string;
+} {
+  const details: Array<ToolDetail> = [];
+  const usedKeys = new Set<string>();
+
+  const addDetail = (label: string, value: null | string, keys: Array<string> = []): void => {
+    if (!value) return;
+    details.push({ label, value });
+    keys.forEach((key) => usedKeys.add(key));
+  };
+
+  const addKey = (key: string): void => {
+    usedKeys.add(key);
+  };
+
+  const filePath = getString(input, 'file_path');
+  if (filePath) {
+    addDetail('file', formatPath(filePath), ['file_path']);
+  } else {
+    const pathValue = getString(input, 'path') ?? getString(input, 'file');
+    if (pathValue) {
+      addDetail('file', formatPath(pathValue), ['path', 'file']);
+    }
+  }
+
+  const directory = getString(input, 'directory') ?? getString(input, 'cwd');
+  if (directory) {
+    addDetail('dir', formatPath(directory), ['directory', 'cwd']);
+  }
+
+  const pattern = getString(input, 'pattern') ?? getString(input, 'glob') ?? getString(input, 'regex');
+  if (pattern) {
+    addDetail('pattern', truncateText(pattern, TOOL_TEXT_LIMIT), ['pattern', 'glob', 'regex']);
+  }
+
+  const query = getString(input, 'query') ?? getString(input, 'search') ?? getString(input, 'q');
+  if (query) {
+    addDetail('query', truncateText(query, TOOL_TEXT_LIMIT), ['query', 'search', 'q']);
+  }
+
+  const url = getString(input, 'url');
+  if (url) {
+    addDetail('url', truncateText(url, TOOL_TEXT_LIMIT), ['url']);
+  }
+
+  const command = getString(input, 'command') ?? getString(input, 'cmd');
+  if (command) {
+    addDetail('command', truncateText(command, TOOL_TEXT_LIMIT), ['command', 'cmd']);
+  }
+
+  const offset = getNumber(input, 'offset');
+  if (offset !== null) {
+    addDetail('offset', String(offset), ['offset']);
+  }
+
+  const limit = getNumber(input, 'limit');
+  if (limit !== null) {
+    addDetail('limit', String(limit), ['limit']);
+  }
+
+  const startLine = getNumber(input, 'start_line') ?? getNumber(input, 'start');
+  if (startLine !== null) {
+    addDetail('start', String(startLine), ['start_line', 'start']);
+  }
+
+  const endLine = getNumber(input, 'end_line') ?? getNumber(input, 'end');
+  if (endLine !== null) {
+    addDetail('end', String(endLine), ['end_line', 'end']);
+  }
+
+  const line = getNumber(input, 'line');
+  if (line !== null) {
+    addDetail('line', String(line), ['line']);
+  }
+
+  const replaceAll = getBoolean(input, 'replace_all');
+  if (replaceAll !== null) {
+    addDetail('replace', replaceAll ? 'all' : 'first', ['replace_all']);
+  }
+
+  const caseSensitive = getBoolean(input, 'case_sensitive');
+  if (caseSensitive !== null) {
+    addDetail('case', caseSensitive ? 'sensitive' : 'insensitive', ['case_sensitive']);
+  }
+
+  const edits = input.edits;
+  if (Array.isArray(edits)) {
+    addDetail('edits', `${edits.length}`, ['edits']);
+  }
+
+  const fileCount = input.files;
+  if (Array.isArray(fileCount)) {
+    addDetail('files', `${fileCount.length}`, ['files']);
+  }
+
+  const pathList = input.paths;
+  if (Array.isArray(pathList)) {
+    addDetail('paths', `${pathList.length}`, ['paths']);
+  }
+
+  const longTextFields: Array<{ key: string; label: string }> = [
+    { key: 'content', label: 'content' },
+    { key: 'old_string', label: 'old' },
+    { key: 'new_string', label: 'new' },
+    { key: 'text', label: 'text' },
+    { key: 'prompt', label: 'prompt' },
+    { key: 'instructions', label: 'instructions' },
+    { key: 'schema', label: 'schema' },
+    { key: 'code', label: 'code' },
+  ];
+
+  longTextFields.forEach(({ key, label }) => {
+    const value = getString(input, key);
+    if (value) {
+      addDetail(label, formatCharCount(value), [key]);
+    }
+  });
+
+  Object.entries(input).forEach(([key, value]) => {
+    if (details.length >= TOOL_DETAIL_LIMIT) return;
+    if (usedKeys.has(key)) return;
+    if (key === '_partialJson') return;
+    const formatted = formatToolValue(value);
+    if (formatted) {
+      addDetail(formatToolName(key), formatted, [key]);
+    } else {
+      addKey(key);
+    }
+  });
+
+  const rawPreview = buildToolInputPreview(input, details.length);
+  return { details, rawPreview };
+}
+
+function buildToolDisplay(tool: ActiveTool): {
+  details: Array<ToolDetail>;
+  label: string;
+  rawPreview: null | string;
+  summary: null | string;
+} {
+  const config = TOOL_CONFIG[tool.toolName];
+  const label = config?.label ?? formatToolName(tool.toolName);
+  const normalizedInput = normalizeToolInput(tool.toolInput);
+  const summary = buildToolSummary(tool.toolName, normalizedInput);
+  const { details, rawPreview } = buildToolDetails(normalizedInput);
+
+  return { details, label, rawPreview, summary };
+}
+
+function buildToolInputPreview(input: Record<string, unknown>, detailCount: number): null | string {
+  const partialJson = typeof input._partialJson === 'string' ? input._partialJson : null;
+  if (detailCount === 0 && partialJson) {
+    return `input (partial): ${truncateText(partialJson, TOOL_PREVIEW_LIMIT)}`;
+  }
+
+  if (detailCount >= 3) {
+    return null;
+  }
+
+  const previewSource = Object.fromEntries(Object.entries(input).filter(([key]) => key !== '_partialJson'));
+  const preview = safeStringify(previewSource);
+  if (!preview || preview === '{}') return null;
+  return `input: ${truncateText(preview, TOOL_PREVIEW_LIMIT)}`;
+}
+
+function buildToolSummary(toolName: string, input: Record<string, unknown>): null | string {
+  const filePath = getString(input, 'file_path') ?? getString(input, 'path') ?? getString(input, 'file');
+  const pattern = getString(input, 'pattern') ?? getString(input, 'glob') ?? getString(input, 'regex');
+  const query = getString(input, 'query') ?? getString(input, 'search') ?? getString(input, 'q');
+  const url = getString(input, 'url');
+  const command = getString(input, 'command') ?? getString(input, 'cmd');
+  const offset = getNumber(input, 'offset');
+  const limit = getNumber(input, 'limit');
+
+  switch (toolName) {
+    case 'Bash': {
+      return command ? `Running "${truncateText(command, TOOL_TEXT_LIMIT)}"` : 'Running command';
+    }
+    case 'Edit': {
+      if (!filePath) return null;
+      const edits = Array.isArray(input.edits) ? input.edits.length : null;
+      const replaceAll = getBoolean(input, 'replace_all');
+      const editHint = edits ? `${edits} edits` : replaceAll ? 'replace all' : null;
+      return editHint ? `Editing ${formatPath(filePath)} (${editHint})` : `Editing ${formatPath(filePath)}`;
+    }
+    case 'Glob': {
+      if (!pattern) return null;
+      return `Finding files matching "${truncateText(pattern, TOOL_TEXT_LIMIT)}"`;
+    }
+    case 'Grep': {
+      if (!pattern) return null;
+      return `Searching for "${truncateText(pattern, TOOL_TEXT_LIMIT)}"`;
+    }
+    case 'Read': {
+      if (!filePath) return null;
+      const range =
+        offset !== null || limit !== null
+          ? ` (offset ${offset ?? 0}, limit ${limit ?? 'auto'})`
+          : '';
+      return `Reading ${formatPath(filePath)}${range}`;
+    }
+    case 'StructuredOutput': {
+      return 'Generating structured output';
+    }
+    case 'Task': {
+      const description =
+        getString(input, 'description') ?? getString(input, 'task') ?? getString(input, 'prompt');
+      return description ? `Delegating "${truncateText(description, TOOL_TEXT_LIMIT)}"` : 'Delegating to sub-agent';
+    }
+    case 'WebFetch': {
+      return url ? `Fetching ${truncateText(url, TOOL_TEXT_LIMIT)}` : 'Fetching from the web';
+    }
+    case 'WebSearch': {
+      return query ? `Searching the web for "${truncateText(query, TOOL_TEXT_LIMIT)}"` : 'Searching the web';
+    }
+    case 'Write': {
+      if (!filePath) return null;
+      const content = getString(input, 'content');
+      return content
+        ? `Writing ${formatCharCount(content)} to ${formatPath(filePath)}`
+        : `Writing to ${formatPath(filePath)}`;
+    }
+    default: {
+      if (filePath) {
+        return `Using ${formatToolName(toolName)} on ${formatPath(filePath)}`;
+      }
+      return null;
+    }
+  }
+}
+
+function formatCharCount(value: string): string {
+  return `${value.length} chars`;
+}
+
+function formatToolName(name: string): string {
+  if (!name) return 'Tool';
+  return name
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^./, (match) => match.toUpperCase());
+}
+
+function formatToolValue(value: unknown): null | string {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === 'string') {
+    return truncateText(value, TOOL_TEXT_LIMIT);
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return '0';
+    }
+    if (value.length <= 3 && value.every((entry) => typeof entry === 'string')) {
+      return truncateText(value.join(', '), TOOL_TEXT_LIMIT);
+    }
+    return `${value.length} items`;
+  }
+  if (typeof value === 'object') {
+    const preview = safeStringify(value);
+    return preview ? truncateText(preview, TOOL_TEXT_LIMIT) : null;
+  }
+  return null;
+}
+
+function getBoolean(input: Record<string, unknown>, key: string): boolean | null {
+  const value = input[key];
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  return null;
+}
+
+function getNumber(input: Record<string, unknown>, key: string): null | number {
+  const value = input[key];
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return value;
+  }
+  return null;
+}
+
+function getString(input: Record<string, unknown>, key: string): null | string {
+  const value = input[key];
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value;
+  }
+  return null;
+}
+
+function normalizeToolInput(toolInput: Record<string, unknown>): Record<string, unknown> {
+  const input = toolInput ?? {};
+  const partialJson = typeof input._partialJson === 'string' ? input._partialJson : null;
+  if (partialJson) {
+    const parsed = safeParseJson(partialJson);
+    if (parsed) {
+      return { ...parsed, _partialJson: partialJson };
+    }
+  }
+  return input;
+}
+
+function safeParseJson(value: string): null | Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function safeStringify(value: unknown): null | string {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return null;
+  }
+}
+
+function truncateText(value: string, maxLength: number): string {
+  if (value.length <= maxLength) {
+    return value;
+  }
+  return `${value.slice(0, Math.max(0, maxLength - 3))}...`;
 }

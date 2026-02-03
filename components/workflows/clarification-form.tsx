@@ -2,7 +2,8 @@
 
 import type { ReactElement } from 'react';
 
-import { useMemo } from 'react';
+import { useStore } from '@tanstack/react-form';
+import { useEffect, useMemo } from 'react';
 
 import type { ClarificationAnswers, ClarificationQuestion } from '@/lib/validations/clarification';
 
@@ -17,6 +18,8 @@ interface ClarificationFormProps {
   existingAnswers?: ClarificationAnswers;
   /** Loading state during submission */
   isSubmitting?: boolean;
+  /** Callback when progress changes */
+  onProgressChange?: (answeredCount: number, totalCount: number) => void;
   /** Callback when user clicks Skip */
   onSkip: () => void;
   /** Callback when user submits answers */
@@ -34,6 +37,7 @@ export const ClarificationForm = ({
   className,
   existingAnswers,
   isSubmitting = false,
+  onProgressChange,
   onSkip,
   onSubmit,
   questions,
@@ -64,25 +68,48 @@ export const ClarificationForm = ({
 
   const questionCount = questions.length;
   const questionLabel = questionCount === 1 ? 'question' : 'questions';
+  const formValues = useStore(form.store, (state) => state.values);
+  const answeredCount = useMemo(
+    () => Object.values(formValues).filter((value) => Boolean(value)).length,
+    [formValues]
+  );
+  const progressPercent = questionCount > 0 ? Math.round((answeredCount / questionCount) * 100) : 0;
+
+  useEffect(() => {
+    onProgressChange?.(answeredCount, questionCount);
+  }, [answeredCount, questionCount, onProgressChange]);
 
   return (
-    <div className={cn('flex flex-col gap-6', className)}>
-      {/* Question Count Header */}
-      <div className={'text-sm text-muted-foreground'}>
-        {questionCount} {questionLabel} to answer
+    <div className={cn('flex h-full flex-col', className)}>
+      <div className={'border-b border-border/60 px-6 pt-6 pb-4'}>
+        <div className={'flex flex-wrap items-center justify-between gap-3'}>
+          <div>
+            <div className={'text-xs tracking-[0.2em] text-muted-foreground uppercase'}>Questions</div>
+            <div className={'mt-1 text-lg font-semibold text-foreground'}>
+              Answer {questionCount} {questionLabel}
+            </div>
+          </div>
+          <div className={'text-sm text-muted-foreground'}>
+            {answeredCount} of {questionCount} answered
+          </div>
+        </div>
+        <div className={'mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted'}>
+          <div
+            className={'h-full rounded-full bg-accent transition-all duration-300'}
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
       </div>
 
-      {/* Form */}
       <form
-        className={'flex flex-col gap-6'}
+        className={'flex min-h-0 flex-1 flex-col'}
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
           void form.handleSubmit();
         }}
       >
-        {/* Questions */}
-        <div className={'flex flex-col gap-6'}>
+        <div className={'min-h-0 flex-1 divide-y divide-border/60 overflow-y-auto'}>
           {questions.map((question, index) => {
             const fieldName = String(index);
             const options = question.options.map((option) => ({
@@ -92,33 +119,40 @@ export const ClarificationForm = ({
             }));
 
             return (
-              <div className={'rounded-lg border border-border bg-card/50 p-4'} key={fieldName}>
-                {/* Question Header */}
-                <div className={'mb-1 text-sm font-medium text-foreground'}>{question.header}</div>
-
-                {/* Question Text */}
-                <div className={'mb-4 text-sm text-muted-foreground'}>{question.question}</div>
-
-                {/* Radio Field - Shows options with descriptions */}
-                <form.AppField name={fieldName}>
-                  {(field) => <field.RadioField isDisabled={isSubmitting} label={''} options={options} />}
-                </form.AppField>
+              <div className={'px-6 py-5'} key={fieldName}>
+                <div className={'flex items-start gap-3'}>
+                  <div className={'mt-0.5 flex size-7 items-center justify-center rounded-full bg-muted text-xs font-semibold'}>
+                    {index + 1}
+                  </div>
+                  <div className={'flex-1'}>
+                    <div className={'text-sm font-medium text-foreground'}>{question.header}</div>
+                    <div className={'mt-1 text-sm text-muted-foreground'}>{question.question}</div>
+                  </div>
+                </div>
+                <div className={'mt-4'}>
+                  <form.AppField name={fieldName}>
+                    {(field) => <field.RadioField isDisabled={isSubmitting} label={''} options={options} />}
+                  </form.AppField>
+                </div>
               </div>
             );
           })}
         </div>
 
-        {/* Action Bar */}
-        <div className={'flex items-center justify-end gap-3'}>
-          {/* Skip Button */}
-          <Button disabled={isSubmitting} onClick={onSkip} type={'button'} variant={'ghost'}>
-            Skip
-          </Button>
-
-          {/* Submit Button */}
-          <form.AppForm>
-            <form.SubmitButton>{isSubmitting ? 'Submitting...' : 'Submit Answers'}</form.SubmitButton>
-          </form.AppForm>
+        <div className={'sticky bottom-0 border-t border-border/60 bg-background/95 px-6 py-4 backdrop-blur-sm'}>
+          <div className={'flex flex-wrap items-center justify-between gap-3'}>
+            <div className={'text-xs text-muted-foreground'}>
+              You can skip clarification to continue without answering.
+            </div>
+            <div className={'flex items-center gap-3'}>
+              <Button disabled={isSubmitting} onClick={onSkip} type={'button'} variant={'ghost'}>
+                Skip
+              </Button>
+              <form.AppForm>
+                <form.SubmitButton>{isSubmitting ? 'Submitting...' : 'Submit Answers'}</form.SubmitButton>
+              </form.AppForm>
+            </div>
+          </div>
         </div>
       </form>
     </div>

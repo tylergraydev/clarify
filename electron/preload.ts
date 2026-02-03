@@ -575,7 +575,8 @@ export type ClarificationStreamMessage =
   | ClarificationStreamThinkingDelta
   | ClarificationStreamThinkingStart
   | ClarificationStreamToolStart
-  | ClarificationStreamToolStop;
+  | ClarificationStreamToolStop
+  | ClarificationStreamToolUpdate;
 
 /**
  * Result of submitting clarification answers.
@@ -870,7 +871,7 @@ export interface WorkflowStatistics {
 interface ClarificationStreamMessageBase {
   sessionId: string;
   timestamp: number;
-  type: 'phase_change' | 'text_delta' | 'thinking_delta' | 'thinking_start' | 'tool_start' | 'tool_stop';
+  type: 'phase_change' | 'text_delta' | 'thinking_delta' | 'thinking_start' | 'tool_start' | 'tool_stop' | 'tool_update';
 }
 
 /**
@@ -922,6 +923,16 @@ interface ClarificationStreamToolStart extends ClarificationStreamMessageBase {
 interface ClarificationStreamToolStop extends ClarificationStreamMessageBase {
   toolUseId: string;
   type: 'tool_stop';
+}
+
+/**
+ * Stream message for tool input updates.
+ */
+interface ClarificationStreamToolUpdate extends ClarificationStreamMessageBase {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
 }
 
 /**

@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 
 import type { StepMetrics } from './pipeline-step-metrics';
 
+import { ClarificationWorkspace } from './clarification-workspace';
 import { PipelineProgressBar } from './pipeline-progress-bar';
 import { PipelineStep, type PipelineStepStatus, type PipelineStepType } from './pipeline-step';
 import { VerticalConnector, type VerticalConnectorState } from './vertical-connector';
@@ -209,6 +210,9 @@ function sortStepsByNumber(steps: Array<WorkflowStep>): Array<WorkflowStep> {
 export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineViewProps) => {
   const [submittingStepId, setSubmittingStepId] = useState<null | number>(null);
   const [clarificationState, setClarificationState] = useState<ClarificationSessionState>(INITIAL_CLARIFICATION_STATE);
+  const [clarificationAction, setClarificationAction] = useState<null | { stepId: number; type: 'more' | 'rerun' }>(
+    null
+  );
   const clarificationStartedRef = useRef<null | number>(null);
 
   const { data: steps, isLoading: isLoadingSteps } = useStepsByWorkflow(workflowId);
@@ -239,6 +243,16 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
   const { data: clarificationAgent } = useAgent(clarificationAgentId ?? 0);
 
   const sortedSteps = useMemo(() => (steps ? sortStepsByNumber(steps) : []), [steps]);
+  const activeClarificationStepId = activeClarificationStep?.id ?? null;
+  const activeClarificationOutput = useMemo(() => {
+    if (!activeClarificationStep) return null;
+    return activeClarificationStep.outputStructured as ClarificationStepOutput | null;
+  }, [activeClarificationStep]);
+  const isClarificationWorkspaceActive = Boolean(activeClarificationStepId);
+  const visibleSteps = useMemo(() => {
+    if (!isClarificationWorkspaceActive) return sortedSteps;
+    return sortedSteps.filter((step) => step.id !== activeClarificationStepId);
+  }, [sortedSteps, isClarificationWorkspaceActive, activeClarificationStepId]);
 
   // Calculate progress metrics
   const completedCount = useMemo(
@@ -257,6 +271,74 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
       toggleStep(stepId);
     },
     [toggleStep]
+  );
+
+  const formatClarificationContext = useCallback((output: ClarificationStepOutput | null): null | string => {
+    if (!output?.questions?.length || !output.answers) {
+      return null;
+    }
+
+    const lines: Array<string> = [];
+
+    output.questions.forEach((question, index) => {
+      const answer = output.answers?.[String(index)];
+      if (!answer) {
+        return;
+      }
+      const selectedOption = question.options.find((option) => option.label === answer);
+      lines.push(`${index + 1}. ${question.header}`);
+      lines.push(`Question: ${question.question}`);
+      if (selectedOption?.description) {
+        lines.push(`Answer: ${answer} - ${selectedOption.description}`);
+      } else {
+        lines.push(`Answer: ${answer}`);
+      }
+      lines.push('');
+    });
+
+    const trimmed = lines.join('\n').trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }, []);
+
+  const resetClarificationStep = useCallback(
+    async (step: WorkflowStep, action: 'more' | 'rerun', inputText: null | string) => {
+      setClarificationAction({ stepId: step.id, type: action });
+      setClarificationState(INITIAL_CLARIFICATION_STATE);
+      clarificationStartedRef.current = null;
+
+      try {
+        await updateStep.mutateAsync({
+          data: {
+            completedAt: null,
+            errorMessage: null,
+            inputText,
+            outputStructured: null,
+            outputText: null,
+            startedAt: new Date().toISOString(),
+            status: 'running',
+          },
+          id: step.id,
+        });
+      } finally {
+        setClarificationAction(null);
+      }
+    },
+    [updateStep]
+  );
+
+  const handleRerunClarification = useCallback(
+    async (step: WorkflowStep) => {
+      await resetClarificationStep(step, 'rerun', null);
+    },
+    [resetClarificationStep]
+  );
+
+  const handleGenerateClarifications = useCallback(
+    async (step: WorkflowStep, output: ClarificationStepOutput | null) => {
+      const context = formatClarificationContext(output);
+      await resetClarificationStep(step, 'more', context);
+    },
+    [formatClarificationContext, resetClarificationStep]
   );
 
   /**
@@ -295,12 +377,23 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
     async (stepId: number) => {
       setSubmittingStepId(stepId);
       try {
+        const stepOutput: ClarificationStepOutput = {
+          questions: [],
+          skipped: true,
+          skipReason: 'User skipped clarification',
+        };
+
+        await updateStep.mutateAsync({
+          data: { outputStructured: stepOutput },
+          id: stepId,
+        });
+
         await skipStep.mutateAsync(stepId);
       } finally {
         setSubmittingStepId(null);
       }
     },
-    [skipStep]
+    [skipStep, updateStep]
   );
 
   /**
@@ -308,7 +401,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
    */
   const handleQuestionsReady = useCallback(
     async (questions: Array<ClarificationQuestion>) => {
-      if (!activeClarificationStep) return;
+      if (!activeClarificationStepId) return;
 
       // Update the step's outputStructured with the questions
       const stepOutput: ClarificationStepOutput = {
@@ -317,7 +410,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
       await updateStep.mutateAsync({
         data: { outputStructured: stepOutput },
-        id: activeClarificationStep.id,
+        id: activeClarificationStepId,
       });
 
       // Update local state to stop streaming phase
@@ -327,7 +420,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         phase: 'waiting_for_user',
       }));
     },
-    [activeClarificationStep, updateStep]
+    [activeClarificationStepId, updateStep]
   );
 
   /**
@@ -335,7 +428,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
    */
   const handleSkipReady = useCallback(
     async (reason: string) => {
-      if (!activeClarificationStep) return;
+      if (!activeClarificationStepId) return;
 
       // Update the step's outputStructured with skip info
       const stepOutput: ClarificationStepOutput = {
@@ -346,17 +439,17 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
       await updateStep.mutateAsync({
         data: { outputStructured: stepOutput },
-        id: activeClarificationStep.id,
+        id: activeClarificationStepId,
       });
 
       // Mark step as skipped
-      await skipStep.mutateAsync(activeClarificationStep.id);
+      await skipStep.mutateAsync(activeClarificationStepId);
 
       // Reset clarification state
       setClarificationState(INITIAL_CLARIFICATION_STATE);
       clarificationStartedRef.current = null;
     },
-    [activeClarificationStep, updateStep, skipStep]
+    [activeClarificationStepId, updateStep, skipStep]
   );
 
   /**
@@ -486,20 +579,54 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
               ],
             }));
             break;
-
           case 'tool_stop':
             setClarificationState((prev) => ({
               ...prev,
               activeTools: prev.activeTools.filter((t) => t.toolUseId !== message.toolUseId),
             }));
             break;
+
+          case 'tool_update':
+            setClarificationState((prev) => {
+              const existingIndex = prev.activeTools.findIndex((tool) => tool.toolUseId === message.toolUseId);
+              if (existingIndex === -1) {
+                return {
+                  ...prev,
+                  activeTools: [
+                    ...prev.activeTools,
+                    {
+                      toolInput: message.toolInput,
+                      toolName: message.toolName,
+                      toolUseId: message.toolUseId,
+                    },
+                  ],
+                };
+              }
+
+              const updatedTools = [...prev.activeTools];
+              updatedTools[existingIndex] = {
+                ...updatedTools[existingIndex],
+                toolInput: message.toolInput,
+                toolName: message.toolName,
+              };
+              return {
+                ...prev,
+                activeTools: updatedTools,
+              };
+            });
+            break;
         }
       });
 
       try {
+        const clarificationContext = activeClarificationStep.inputText?.trim();
+        const featureRequest = clarificationContext
+          ? `${workflow.featureRequest}\n\nPrevious clarification answers:\n${clarificationContext}`
+          : workflow.featureRequest;
+
         // Start the clarification session
         const outcome = await window.electronAPI.clarification.start({
-          featureRequest: workflow.featureRequest,
+          featureRequest,
           repositoryPath: primaryRepository.path,
           stepId: activeClarificationStep.id,
           timeoutSeconds: 120,
@@ -589,7 +716,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
   const isLoading = isLoadingSteps || isLoadingWorkflow;
   const isWorkflowCreated = workflow?.status === 'created';
-  const isStepsEmpty = sortedSteps.length === 0;
+  const isStepsEmpty = visibleSteps.length === 0;
 
   return (
     <div className={cn('flex h-full flex-col', className)} ref={ref} {...props}>
@@ -607,14 +734,51 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
       )}
 
       {/* Vertical Pipeline Container */}
-      <div
-        aria-label={'Workflow pipeline'}
-        className={'flex flex-1 flex-col items-center overflow-y-auto py-6'}
-        role={'list'}
-      >
-        <div className={'w-full max-w-4xl px-4'}>
+      <div className={'flex flex-1 flex-col items-center overflow-y-auto py-6'}>
+        {isClarificationWorkspaceActive && activeClarificationStep && (
+          <div className={'w-full max-w-6xl px-4'}>
+            <ClarificationWorkspace
+              existingAnswers={activeClarificationOutput?.answers}
+              extendedThinkingElapsedMs={clarificationState.extendedThinkingElapsedMs}
+              featureRequest={workflow?.featureRequest}
+              isStreaming={clarificationState.isStreaming}
+              isSubmitting={submittingStepId === activeClarificationStep.id}
+              onSkip={() => handleSkipClarification(activeClarificationStep.id)}
+              onSubmit={
+                activeClarificationOutput && activeClarificationOutput.questions?.length
+                  ? (answers) => handleSubmitClarification(activeClarificationStep.id, activeClarificationOutput, answers)
+                  : undefined
+              }
+              phase={clarificationState.phase}
+              questions={activeClarificationOutput?.questions ?? []}
+              streamingProps={{
+                activeTools: clarificationState.activeTools,
+                agentName: clarificationState.agentName,
+                error: clarificationState.error,
+                extendedThinkingElapsedMs: clarificationState.extendedThinkingElapsedMs,
+                isStreaming: clarificationState.isStreaming,
+                maxThinkingTokens: clarificationState.maxThinkingTokens,
+                onCancel: handleClarificationCancel,
+                onClarificationError: handleClarificationError,
+                onQuestionsReady: handleQuestionsReady,
+                onSkipReady: handleSkipReady,
+                outcome: clarificationState.outcome,
+                phase: clarificationState.phase,
+                sessionId: clarificationState.sessionId,
+                text: clarificationState.text,
+                thinking: clarificationState.thinking,
+              }}
+            />
+          </div>
+        )}
+
+        <div
+          aria-label={'Workflow pipeline'}
+          className={cn('w-full px-4', isClarificationWorkspaceActive ? 'mt-10 max-w-4xl' : 'max-w-4xl')}
+          role={'list'}
+        >
           {/* Empty State - Workflow created but no steps yet */}
-          {isStepsEmpty && !isLoading && (
+          {isStepsEmpty && !isLoading && !isClarificationWorkspaceActive && (
             <div className={'flex min-h-24 w-full items-center justify-center text-muted-foreground'} role={'listitem'}>
               {isWorkflowCreated ? (
                 <p className={'text-sm'}>Workflow is ready. Start the workflow to create pipeline steps.</p>
@@ -625,12 +789,12 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
           )}
 
           {/* Pipeline Steps */}
-          {sortedSteps.map((step, index) => {
+          {visibleSteps.map((step, index) => {
             const stepState = deriveStepState(step.status);
             const connectorState = deriveConnectorState(stepState);
             const isExpanded = expandedStepId === step.id;
             const isFirstStep = index === 0;
-            const isLastStep = index === sortedSteps.length - 1;
+            const isLastStep = index === visibleSteps.length - 1;
 
             // Get the step type safely, defaulting to DEFAULT_STEP_TYPE if not a valid PipelineStepType
             const stepType = (step.stepType as PipelineStepType) || DEFAULT_STEP_TYPE;
@@ -669,6 +833,11 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
                 }
               : {};
 
+            const isGeneratingClarification =
+              clarificationAction?.stepId === step.id && clarificationAction?.type === 'more';
+            const isRerunningClarification =
+              clarificationAction?.stepId === step.id && clarificationAction?.type === 'rerun';
+
             return (
               <div className={'relative mb-4 last:mb-0'} key={step.id} role={'listitem'}>
                 {/* Vertical Connector */}
@@ -682,10 +851,16 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
                 {/* Step Card */}
                 <PipelineStep
                   aria-posinset={index + 1}
-                  aria-setsize={sortedSteps.length}
+                  aria-setsize={visibleSteps.length}
                   isExpanded={isExpanded}
+                  isGeneratingClarification={isGeneratingClarification}
+                  isRerunningClarification={isRerunningClarification}
                   isSubmitting={submittingStepId === step.id}
                   metrics={metrics}
+                  onGenerateClarifications={
+                    isClarificationStep ? () => handleGenerateClarifications(step, outputStructured) : undefined
+                  }
+                  onRerunClarification={isClarificationStep ? () => handleRerunClarification(step) : undefined}
                   onSkipStep={isClarificationStep ? () => handleSkipClarification(step.id) : undefined}
                   onSubmitClarification={
                     isSubmittable

@@ -4,7 +4,17 @@ import type { ComponentPropsWithRef, KeyboardEvent } from 'react';
 
 import { Collapsible as BaseCollapsible } from '@base-ui/react/collapsible';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { CircleCheck, CircleDashed, FileText, Lightbulb, Loader2, MessageSquare, Search } from 'lucide-react';
+import {
+  CircleCheck,
+  CircleDashed,
+  FileText,
+  Lightbulb,
+  Loader2,
+  MessageSquare,
+  RotateCcw,
+  Search,
+  Sparkles,
+} from 'lucide-react';
 
 import type {
   ClarificationAnswers,
@@ -15,6 +25,7 @@ import type {
 } from '@/lib/validations/clarification';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ClarificationForm } from '@/components/workflows/clarification-form';
 import { ClarificationStreaming } from '@/components/workflows/clarification-streaming';
 import { PipelineStepMetrics, type StepMetrics } from '@/components/workflows/pipeline-step-metrics';
@@ -108,20 +119,32 @@ interface PipelineStepProps
   clarificationText?: string;
   /** Thinking blocks from clarification streaming */
   clarificationThinking?: Array<string>;
+  /** Elapsed time in ms for extended thinking */
+  extendedThinkingElapsedMs?: number;
   /** Whether clarification streaming is active */
   isClarificationStreaming?: boolean;
   /** Whether the step is currently expanded */
   isExpanded: boolean;
+  /** Whether additional clarification generation is in progress */
+  isGeneratingClarification?: boolean;
+  /** Whether clarification rerun is in progress */
+  isRerunningClarification?: boolean;
   /** Whether form submission is in progress */
   isSubmitting?: boolean;
+  /** Maximum thinking tokens budget */
+  maxThinkingTokens?: null | number;
   /** Metrics data for collapsed state display */
   metrics?: StepMetrics;
   /** Callback when clarification is cancelled */
   onClarificationCancel?: () => void;
   /** Callback when clarification error occurs */
   onClarificationError?: (error: string) => void;
+  /** Callback to request additional clarification questions */
+  onGenerateClarifications?: () => void;
   /** Callback when clarification questions are ready */
   onQuestionsReady?: (questions: Array<ClarificationQuestion>) => void;
+  /** Callback to rerun clarification from scratch */
+  onRerunClarification?: () => void;
   /** Callback when clarification skip is ready */
   onSkipReady?: (reason: string) => void;
   /** Callback when user skips clarification */
@@ -150,13 +173,19 @@ export const PipelineStep = ({
   clarificationText,
   clarificationThinking,
   className,
+  extendedThinkingElapsedMs,
   isClarificationStreaming = false,
   isExpanded,
+  isGeneratingClarification = false,
+  isRerunningClarification = false,
   isSubmitting = false,
+  maxThinkingTokens,
   metrics,
   onClarificationCancel,
   onClarificationError,
+  onGenerateClarifications,
   onQuestionsReady,
+  onRerunClarification,
   onSkipReady,
   onSkipStep,
   onSubmitClarification,
@@ -174,6 +203,13 @@ export const PipelineStep = ({
   const isCompleted = status === 'completed';
   const isPending = status === 'pending';
   const isClarificationStep = stepType === 'clarification';
+  const clarificationQuestions = outputStructured?.questions ?? [];
+  const clarificationAnswers = outputStructured?.answers ?? {};
+  const answeredCount = clarificationQuestions.reduce((count, _, index) => {
+    return clarificationAnswers[String(index)] ? count + 1 : count;
+  }, 0);
+  const totalCount = clarificationQuestions.length;
+  const isClarificationSkipped = Boolean(outputStructured?.skipped);
 
   // Determine if clarification streaming should be shown
   const isStreamingActive = isClarificationStep && isClarificationStreaming;
@@ -193,6 +229,129 @@ export const PipelineStep = ({
       event.preventDefault();
       onToggle();
     }
+  };
+
+  const showClarificationSummary =
+    isClarificationStep && !isFormReady && !isStreamingActive && (isClarificationSkipped || totalCount > 0);
+
+  const canGenerateMore = Boolean(onGenerateClarifications && answeredCount > 0);
+  const canRerun = Boolean(onRerunClarification);
+  const isClarificationActionPending = isGeneratingClarification || isRerunningClarification;
+
+  const renderClarificationSummary = () => {
+    if (!showClarificationSummary || !outputStructured) {
+      return null;
+    }
+
+    if (isClarificationSkipped) {
+      return (
+        <div className={'rounded-md border border-border/50 bg-background p-4'}>
+          <div className={'flex flex-wrap items-center justify-between gap-3'}>
+            <div>
+              <div className={'text-xs tracking-[0.2em] text-muted-foreground uppercase'}>Clarification</div>
+              <div className={'mt-1 text-sm font-semibold text-foreground'}>Skipped</div>
+            </div>
+            <Badge size={'sm'} variant={'default'}>
+              Skipped
+            </Badge>
+          </div>
+          <p className={'mt-3 text-sm text-muted-foreground'}>
+            {outputStructured.skipReason ?? 'Clarification was skipped for this request.'}
+          </p>
+          {canRerun && (
+            <div className={'mt-4 flex flex-wrap items-center gap-2'}>
+              <Button disabled={isClarificationActionPending} onClick={onRerunClarification} size={'sm'}>
+                {isRerunningClarification ? (
+                  <Loader2 aria-hidden={'true'} className={'size-4 animate-spin'} />
+                ) : (
+                  <RotateCcw aria-hidden={'true'} className={'size-4'} />
+                )}
+                {isRerunningClarification ? 'Rerunning...' : 'Run clarification'}
+              </Button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className={'rounded-md border border-border/50 bg-background p-4'}>
+        <div className={'flex flex-wrap items-center justify-between gap-3'}>
+          <div>
+            <div className={'text-xs tracking-[0.2em] text-muted-foreground uppercase'}>Clarification Summary</div>
+            <div className={'mt-1 text-sm font-semibold text-foreground'}>
+              Answered {answeredCount} of {totalCount}
+            </div>
+          </div>
+          <Badge size={'sm'} variant={'completed'}>
+            {answeredCount}/{totalCount} answered
+          </Badge>
+        </div>
+        <div className={'mt-4 space-y-3'}>
+          {clarificationQuestions.map((question, index) => {
+            const answerKey = String(index);
+            const selectedLabel = clarificationAnswers[answerKey];
+            const selectedOption = question.options.find((option) => option.label === selectedLabel);
+
+            return (
+              <div className={'rounded-md border border-border/40 bg-muted/30 p-3'} key={answerKey}>
+                <div className={'flex items-start gap-3'}>
+                  <div
+                    className={
+                      'mt-0.5 flex size-7 items-center justify-center rounded-full bg-background text-xs font-semibold'
+                    }
+                  >
+                    {index + 1}
+                  </div>
+                  <div className={'flex-1'}>
+                    <div className={'text-sm font-medium text-foreground'}>{question.header}</div>
+                    <div className={'mt-1 text-sm text-muted-foreground'}>{question.question}</div>
+                  </div>
+                </div>
+                <div className={'mt-3 rounded-md border border-border/50 bg-background/80 p-3'}>
+                  <div className={'text-xs tracking-[0.2em] text-muted-foreground uppercase'}>Answer</div>
+                  <div className={'mt-1 text-sm font-semibold text-foreground'}>
+                    {selectedLabel ?? 'Unanswered'}
+                  </div>
+                  {selectedOption?.description && (
+                    <div className={'mt-1 text-xs text-muted-foreground'}>{selectedOption.description}</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {(canRerun || canGenerateMore) && (
+          <div className={'mt-4 flex flex-wrap items-center gap-2 border-t border-border/60 pt-4'}>
+            {canRerun && (
+              <Button disabled={isClarificationActionPending} onClick={onRerunClarification} size={'sm'}>
+                {isRerunningClarification ? (
+                  <Loader2 aria-hidden={'true'} className={'size-4 animate-spin'} />
+                ) : (
+                  <RotateCcw aria-hidden={'true'} className={'size-4'} />
+                )}
+                {isRerunningClarification ? 'Rerunning...' : 'Rerun clarification'}
+              </Button>
+            )}
+            {canGenerateMore && (
+              <Button
+                disabled={isClarificationActionPending}
+                onClick={onGenerateClarifications}
+                size={'sm'}
+                variant={'outline'}
+              >
+                {isGeneratingClarification ? (
+                  <Loader2 aria-hidden={'true'} className={'size-4 animate-spin'} />
+                ) : (
+                  <Sparkles aria-hidden={'true'} className={'size-4'} />
+                )}
+                {isGeneratingClarification ? 'Generating...' : 'Generate more questions'}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -264,7 +423,9 @@ export const PipelineStep = ({
                 activeTools={clarificationActiveTools}
                 agentName={clarificationAgentName}
                 error={clarificationError}
+                extendedThinkingElapsedMs={extendedThinkingElapsedMs}
                 isStreaming={isClarificationStreaming}
+                maxThinkingTokens={maxThinkingTokens}
                 onCancel={onClarificationCancel}
                 onClarificationError={onClarificationError}
                 onQuestionsReady={onQuestionsReady}
@@ -290,13 +451,19 @@ export const PipelineStep = ({
 
             {/* Output Container (for non-clarification steps or completed clarification) */}
             {!isFormReady && !isStreamingActive && (
-              <div className={cn('rounded-md border border-border/50 bg-background p-3', 'min-h-20 text-sm')}>
-                {output ? (
-                  <p className={'whitespace-pre-wrap text-foreground'}>{output}</p>
+              <>
+                {showClarificationSummary ? (
+                  renderClarificationSummary()
                 ) : (
-                  <p className={'text-muted-foreground'}>Output will appear here</p>
+                  <div className={cn('rounded-md border border-border/50 bg-background p-3', 'min-h-20 text-sm')}>
+                    {output ? (
+                      <p className={'whitespace-pre-wrap text-foreground'}>{output}</p>
+                    ) : (
+                      <p className={'text-muted-foreground'}>Output will appear here</p>
+                    )}
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         </BaseCollapsible.Panel>

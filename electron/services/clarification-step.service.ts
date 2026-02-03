@@ -1369,12 +1369,32 @@ Focus on understanding what the user wants to build and gathering just enough in
         }
       } else if (deltaType === 'input_json_delta') {
         // Accumulate tool input JSON
-        const partialJson = delta.partial_json as string;
+        const partialJson = typeof delta.partial_json === 'string' ? delta.partial_json : '';
+        if (!partialJson) {
+          return;
+        }
         const lastTool = session.activeTools[session.activeTools.length - 1];
         if (lastTool) {
           // Store partial JSON in a special field for accumulation
-          const existing = (lastTool.toolInput._partialJson as string) ?? '';
-          lastTool.toolInput._partialJson = existing + partialJson;
+          const existing = typeof lastTool.toolInput._partialJson === 'string' ? lastTool.toolInput._partialJson : '';
+          const mergedJson = existing + partialJson;
+          const parsedInput = parseToolInputJson(mergedJson);
+
+          lastTool.toolInput = parsedInput
+            ? { ...parsedInput, _partialJson: mergedJson }
+            : { ...lastTool.toolInput, _partialJson: mergedJson };
+
+          // Emit tool update to UI with the latest input payload
+          if (onStreamMessage) {
+            onStreamMessage({
+              sessionId: session.sessionId,
+              timestamp: Date.now(),
+              toolInput: lastTool.toolInput,
+              toolName: lastTool.toolName,
+              toolUseId: lastTool.toolUseId,
+              type: 'tool_update',
+            });
+          }
         }
       }
     } else if (eventType === 'content_block_start') {
@@ -1586,6 +1606,26 @@ async function getQueryFunction(): Promise<(typeof import('@anthropic-ai/claude-
     }
   }
   return cachedQueryFn;
+}
+
+/**
+ * Safely parse a tool input JSON payload.
+ */
+function parseToolInputJson(payload: string): null | Record<string, unknown> {
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(payload);
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // Ignore partial JSON parsing failures.
+  }
+
+  return null;
 }
 
 // Export singleton instance
