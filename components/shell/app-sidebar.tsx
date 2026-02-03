@@ -2,7 +2,7 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { Bot, FolderKanban, History, LayoutDashboard, Play, Settings, Star, Workflow } from 'lucide-react';
+import { Bot, FileText, FolderKanban, History, LayoutDashboard, Play, Settings, Star, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { usePathname } from 'next/navigation';
 
@@ -157,7 +157,7 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
           {/* Templates */}
           <NavItem
             href={$path({ route: '/templates' })}
-            icon={Bot}
+            icon={FileText}
             isActive={isPathActive($path({ route: '/templates' }))}
             isCollapsed={isSidebarCollapsed}
             label={'Templates'}

@@ -6,10 +6,17 @@ import { Collapsible as BaseCollapsible } from '@base-ui/react/collapsible';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { CircleCheck, CircleDashed, FileText, Lightbulb, Loader2, MessageSquare, Search } from 'lucide-react';
 
-import type { ClarificationAnswers, ClarificationStepOutput } from '@/lib/validations/clarification';
+import type {
+  ClarificationAnswers,
+  ClarificationOutcome,
+  ClarificationQuestion,
+  ClarificationServicePhase,
+  ClarificationStepOutput,
+} from '@/lib/validations/clarification';
 
 import { Badge } from '@/components/ui/badge';
 import { ClarificationForm } from '@/components/workflows/clarification-form';
+import { ClarificationStreaming } from '@/components/workflows/clarification-streaming';
 import { PipelineStepMetrics, type StepMetrics } from '@/components/workflows/pipeline-step-metrics';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +29,15 @@ export type PipelineStepStatus = 'completed' | 'pending' | 'running';
  * Step type for the pipeline. Each type maps to a specific icon.
  */
 export type PipelineStepType = 'clarification' | 'discovery' | 'planning' | 'refinement';
+
+/**
+ * Active tool indicator for clarification streaming.
+ */
+interface ActiveTool {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+}
 
 /**
  * Maps step types to their corresponding icons.
@@ -76,12 +92,38 @@ export const pipelineStepVariants = cva(
 
 interface PipelineStepProps
   extends Omit<ComponentPropsWithRef<'div'>, 'title'>, VariantProps<typeof pipelineStepVariants> {
+  /** Active tools for clarification streaming */
+  clarificationActiveTools?: Array<ActiveTool>;
+  /** Agent name for clarification streaming */
+  clarificationAgentName?: string;
+  /** Error from clarification streaming */
+  clarificationError?: null | string;
+  /** Outcome from clarification streaming */
+  clarificationOutcome?: ClarificationOutcome | null;
+  /** Phase of clarification streaming */
+  clarificationPhase?: ClarificationServicePhase;
+  /** Session ID for clarification streaming */
+  clarificationSessionId?: null | string;
+  /** Text output from clarification streaming */
+  clarificationText?: string;
+  /** Thinking blocks from clarification streaming */
+  clarificationThinking?: Array<string>;
+  /** Whether clarification streaming is active */
+  isClarificationStreaming?: boolean;
   /** Whether the step is currently expanded */
   isExpanded: boolean;
   /** Whether form submission is in progress */
   isSubmitting?: boolean;
   /** Metrics data for collapsed state display */
   metrics?: StepMetrics;
+  /** Callback when clarification is cancelled */
+  onClarificationCancel?: () => void;
+  /** Callback when clarification error occurs */
+  onClarificationError?: (error: string) => void;
+  /** Callback when clarification questions are ready */
+  onQuestionsReady?: (questions: Array<ClarificationQuestion>) => void;
+  /** Callback when clarification skip is ready */
+  onSkipReady?: (reason: string) => void;
   /** Callback when user skips clarification */
   onSkipStep?: () => void;
   /** Callback when clarification form is submitted */
@@ -99,10 +141,23 @@ interface PipelineStepProps
 }
 
 export const PipelineStep = ({
+  clarificationActiveTools,
+  clarificationAgentName,
+  clarificationError,
+  clarificationOutcome,
+  clarificationPhase,
+  clarificationSessionId,
+  clarificationText,
+  clarificationThinking,
   className,
+  isClarificationStreaming = false,
   isExpanded,
   isSubmitting = false,
   metrics,
+  onClarificationCancel,
+  onClarificationError,
+  onQuestionsReady,
+  onSkipReady,
   onSkipStep,
   onSubmitClarification,
   onToggle,
@@ -120,10 +175,14 @@ export const PipelineStep = ({
   const isPending = status === 'pending';
   const isClarificationStep = stepType === 'clarification';
 
+  // Determine if clarification streaming should be shown
+  const isStreamingActive = isClarificationStep && isClarificationStreaming;
+
   // Determine if clarification form should be shown (all required conditions met)
   const isFormReady =
     isClarificationStep &&
     isRunning &&
+    !isStreamingActive &&
     outputStructured?.questions &&
     outputStructured.questions.length > 0 &&
     onSubmitClarification &&
@@ -189,12 +248,34 @@ export const PipelineStep = ({
           `}
         >
           <div className={'border-t border-border/50 p-4'}>
-            {/* Status Badge */}
+            {/* Status Badge with Agent Name */}
             <div className={'mb-3 flex items-center gap-2'}>
               <Badge size={'sm'} variant={statusBadgeVariants[status ?? 'pending']}>
                 {statusLabels[status ?? 'pending']}
               </Badge>
+              {clarificationAgentName && isClarificationStep && (
+                <span className={'text-xs text-muted-foreground'}>via {clarificationAgentName}</span>
+              )}
             </div>
+
+            {/* Clarification Streaming (when exploration phase is active) */}
+            {isStreamingActive && (
+              <ClarificationStreaming
+                activeTools={clarificationActiveTools}
+                agentName={clarificationAgentName}
+                error={clarificationError}
+                isStreaming={isClarificationStreaming}
+                onCancel={onClarificationCancel}
+                onClarificationError={onClarificationError}
+                onQuestionsReady={onQuestionsReady}
+                onSkipReady={onSkipReady}
+                outcome={clarificationOutcome}
+                phase={clarificationPhase}
+                sessionId={clarificationSessionId}
+                text={clarificationText}
+                thinking={clarificationThinking}
+              />
+            )}
 
             {/* Clarification Form (when step is running and waiting for input) */}
             {isFormReady && (
@@ -208,7 +289,7 @@ export const PipelineStep = ({
             )}
 
             {/* Output Container (for non-clarification steps or completed clarification) */}
-            {!isFormReady && (
+            {!isFormReady && !isStreamingActive && (
               <div className={cn('rounded-md border border-border/50 bg-background p-3', 'min-h-20 text-sm')}>
                 {output ? (
                   <p className={'whitespace-pre-wrap text-foreground'}>{output}</p>

@@ -7,6 +7,7 @@
 import type { DrizzleDatabase } from '../index';
 
 import { seedBuiltInAgents } from './agents.seed';
+import { seedDefaultSettings } from './settings.seed';
 import { seedBuiltInTemplates } from './templates.seed';
 
 /**
@@ -22,6 +23,6 @@ export function seedDatabase(db: DrizzleDatabase): void {
   // Seed built-in agents
   seedBuiltInAgents(db);
 
-  // Future: seed default settings
-  // seedDefaultSettings(db);
+  // Seed default settings
+  seedDefaultSettings(db);
 }

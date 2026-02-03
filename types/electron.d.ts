@@ -165,6 +165,171 @@ export type AgentWithRelations = import('../db/schema').Agent & {
   tools?: Array<import('../db/schema').AgentTool>;
 };
 
+// =============================================================================
+// Clarification Types
+// =============================================================================
+
+/**
+ * Agent configuration for clarification.
+ */
+export interface ClarificationAgentConfig {
+  hooks: Array<{ body: string; eventType: string; matcher: null | string }>;
+  id: number;
+  model: null | string;
+  name: string;
+  permissionMode: null | string;
+  skills: Array<{ isRequired: boolean; skillName: string }>;
+  systemPrompt: string;
+  tools: Array<{ toolName: string; toolPattern: string }>;
+}
+
+/**
+ * Clarification API interface.
+ */
+export interface ClarificationAPI {
+  getState(sessionId: string): Promise<ClarificationServiceState | null>;
+  /** Subscribe to streaming events during clarification. Returns unsubscribe function. */
+  onStreamMessage(callback: (message: ClarificationStreamMessage) => void): () => void;
+  retry(sessionId: string, input: ClarificationStartInput): Promise<ClarificationOutcomeWithPause>;
+  skip(sessionId: string, reason?: string): Promise<ClarificationOutcome>;
+  start(input: ClarificationStartInput): Promise<ClarificationOutcomeWithPause>;
+  submitAnswers(input: ClarificationRefinementInput): Promise<ClarificationSubmitAnswersResult>;
+  submitEdits(sessionId: string, editedText: string): Promise<ClarificationOutcome>;
+}
+
+/**
+ * Assessment of feature request clarity.
+ */
+export interface ClarificationAssessment {
+  reason: string;
+  score: number;
+}
+
+/**
+ * Discriminated union of all possible clarification outcomes.
+ */
+export type ClarificationOutcome =
+  | { assessment: ClarificationAssessment; questions: Array<ClarificationQuestion>; type: 'QUESTIONS_FOR_USER' }
+  | { assessment: ClarificationAssessment; reason: string; type: 'SKIP_CLARIFICATION' }
+  | { elapsedSeconds: number; error: string; type: 'TIMEOUT' }
+  | { error: string; stack?: string; type: 'ERROR' }
+  | { reason?: string; type: 'CANCELLED' };
+
+/**
+ * Extended outcome fields for pause and retry information.
+ */
+export interface ClarificationOutcomePauseInfo {
+  /** Whether the workflow should pause after this step */
+  pauseRequested?: boolean;
+  /** Current retry count for this session */
+  retryCount?: number;
+  /** SDK session ID for potential resumption */
+  sdkSessionId?: string;
+  /** Whether skip fallback is available */
+  skipFallbackAvailable?: boolean;
+  /** Usage statistics from SDK result */
+  usage?: ClarificationUsageStats;
+}
+
+/**
+ * Extended clarification outcome with pause and retry information.
+ */
+export type ClarificationOutcomeWithPause = ClarificationOutcome & ClarificationOutcomePauseInfo;
+
+/**
+ * A single clarification question with options.
+ */
+export interface ClarificationQuestion {
+  header: string;
+  options: Array<{ description: string; label: string }>;
+  question: string;
+}
+
+/**
+ * Input for submitting answers to clarification questions.
+ */
+export interface ClarificationRefinementInput {
+  answers: Record<string, string>;
+  questions: Array<ClarificationQuestion>;
+  stepId: number;
+  workflowId: number;
+}
+
+/**
+ * Phase of clarification service execution.
+ */
+export type ClarificationServicePhase =
+  | 'cancelled'
+  | 'complete'
+  | 'error'
+  | 'executing'
+  | 'idle'
+  | 'loading_agent'
+  | 'processing_response'
+  | 'timeout'
+  | 'waiting_for_user';
+
+/**
+ * State of the clarification service during execution.
+ */
+export interface ClarificationServiceState {
+  agentConfig: ClarificationAgentConfig | null;
+  phase: ClarificationServicePhase;
+  questions: Array<ClarificationQuestion> | null;
+  skipReason: null | string;
+}
+
+/**
+ * Input for starting a clarification session.
+ */
+export interface ClarificationStartInput {
+  featureRequest: string;
+  repositoryPath: string;
+  stepId: number;
+  timeoutSeconds?: number;
+  workflowId: number;
+}
+
+/**
+ * Discriminated union of all clarification stream message types.
+ */
+export type ClarificationStreamMessage =
+  | ClarificationStreamPhaseChange
+  | ClarificationStreamTextDelta
+  | ClarificationStreamThinkingDelta
+  | ClarificationStreamThinkingStart
+  | ClarificationStreamToolStart
+  | ClarificationStreamToolStop;
+
+/**
+ * Result of submitting clarification answers.
+ */
+export interface ClarificationSubmitAnswersResult {
+  formattedAnswers: string;
+  questions: Array<ClarificationQuestion>;
+  selectedOptions: Record<string, string>;
+}
+
+// =============================================================================
+// Clarification Streaming Types
+// =============================================================================
+
+/**
+ * Usage statistics from SDK result.
+ */
+export interface ClarificationUsageStats {
+  /** Total cost in USD */
+  costUsd: number;
+  /** Total duration in milliseconds */
+  durationMs: number;
+  /** Input tokens consumed */
+  inputTokens: number;
+  /** Number of conversation turns */
+  numTurns: number;
+  /** Output tokens generated */
+  outputTokens: number;
+}
+
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<import('../db/schema').Agent | undefined>;
@@ -225,6 +390,7 @@ export interface ElectronAPI {
     findByWorkflow(workflowId: number): Promise<Array<import('../db/schema').AuditLog>>;
     list(): Promise<Array<import('../db/schema').AuditLog>>;
   };
+  clarification: ClarificationAPI;
   debugLog: {
     clearLogs(): Promise<{ error?: string; success: boolean }>;
     getLogPath(): Promise<string>;
@@ -453,6 +619,66 @@ export interface WorkflowStatistics {
   completedCount: number;
   failedCount: number;
   successRate: number;
+}
+
+/**
+ * Base interface for all clarification stream messages.
+ */
+interface ClarificationStreamMessageBase {
+  sessionId: string;
+  timestamp: number;
+  type: 'phase_change' | 'text_delta' | 'thinking_delta' | 'thinking_start' | 'tool_start' | 'tool_stop';
+}
+
+/**
+ * Stream message for phase transitions.
+ */
+interface ClarificationStreamPhaseChange extends ClarificationStreamMessageBase {
+  phase: ClarificationServicePhase;
+  type: 'phase_change';
+}
+
+/**
+ * Stream message for text delta.
+ */
+interface ClarificationStreamTextDelta extends ClarificationStreamMessageBase {
+  delta: string;
+  type: 'text_delta';
+}
+
+/**
+ * Stream message for thinking delta.
+ */
+interface ClarificationStreamThinkingDelta extends ClarificationStreamMessageBase {
+  blockIndex: number;
+  delta: string;
+  type: 'thinking_delta';
+}
+
+/**
+ * Stream message for thinking block start.
+ */
+interface ClarificationStreamThinkingStart extends ClarificationStreamMessageBase {
+  blockIndex: number;
+  type: 'thinking_start';
+}
+
+/**
+ * Stream message for tool start.
+ */
+interface ClarificationStreamToolStart extends ClarificationStreamMessageBase {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_start';
+}
+
+/**
+ * Stream message for tool stop.
+ */
+interface ClarificationStreamToolStop extends ClarificationStreamMessageBase {
+  toolUseId: string;
+  type: 'tool_stop';
 }
 
 declare global {

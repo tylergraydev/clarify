@@ -3,6 +3,11 @@ import { z } from 'zod';
 import { pauseBehaviors, workflowTypes } from '../../db/schema/workflows.schema';
 
 export const createWorkflowSchema = z.object({
+  clarificationAgentId: z
+    .string()
+    .optional()
+    .transform((val) => (val ? Number(val) : null))
+    .refine((val) => val === null || (!isNaN(val) && val > 0), 'Invalid clarification agent selection'),
   featureName: z.string().min(1, 'Feature name is required').max(255, 'Feature name is too long'),
   featureRequest: z.string().min(1, 'Feature request is required').max(10000, 'Feature request is too long'),
   pauseBehavior: z.enum(pauseBehaviors).default('auto_pause'),
@@ -34,6 +39,7 @@ export type CreateWorkflowOutput = z.output<typeof createWorkflowSchema>;
  * All fields are optional since the API accepts partial updates
  */
 export const updateWorkflowSchema = z.object({
+  clarificationAgentId: z.number().nullable().optional(),
   featureName: z.string().min(1, 'Feature name is required').max(255, 'Feature name is too long').optional(),
   featureRequest: z.string().min(1, 'Feature request is required').max(10000, 'Feature request is too long').optional(),
   pauseBehavior: z.enum(pauseBehaviors).optional(),
@@ -48,6 +54,7 @@ export type UpdateWorkflowInput = z.infer<typeof updateWorkflowSchema>;
  * Schema for the edit workflow form (all editable fields are required since they are pre-populated)
  */
 export const editWorkflowFormSchema = z.object({
+  clarificationAgentId: z.number().nullable().optional(),
   featureName: z.string().min(1, 'Feature name is required').max(255, 'Feature name is too long'),
   featureRequest: z.string().min(1, 'Feature request is required').max(10000, 'Feature request is too long'),
   pauseBehavior: z.enum(pauseBehaviors),

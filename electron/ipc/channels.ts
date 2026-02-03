@@ -71,6 +71,15 @@ export const IpcChannels = {
     findByWorkflow: 'audit:findByWorkflow',
     list: 'audit:list',
   },
+  clarification: {
+    getState: 'clarification:getState',
+    retry: 'clarification:retry',
+    skip: 'clarification:skip',
+    start: 'clarification:start',
+    stream: 'clarification:stream',
+    submitAnswers: 'clarification:submitAnswers',
+    submitEdits: 'clarification:submitEdits',
+  },
   debugLog: {
     clearLogs: 'debugLog:clearLogs',
     getLogPath: 'debugLog:getLogPath',

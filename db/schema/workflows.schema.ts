@@ -3,6 +3,7 @@ import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
+import { agents } from './agents.schema';
 import { projects } from './projects.schema';
 
 export const pauseBehaviors = ['continuous', 'auto_pause', 'gates_only'] as const;
@@ -20,6 +21,9 @@ export const workflowTypes = ['planning', 'implementation'] as const;
 export const workflows = sqliteTable(
   'workflows',
   {
+    clarificationAgentId: integer('clarification_agent_id').references(() => agents.id, {
+      onDelete: 'set null',
+    }),
     completedAt: text('completed_at'),
     createdAt: text('created_at')
       .default(sql`(CURRENT_TIMESTAMP)`)

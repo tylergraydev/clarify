@@ -8,7 +8,11 @@ import { workflowSteps } from '../schema';
 export interface WorkflowStepsRepository {
   complete(id: number, outputText: string, durationMs: number): undefined | WorkflowStep;
   create(data: NewWorkflowStep): WorkflowStep;
-  createPlanningSteps(workflowId: number, skipClarification: boolean): Array<WorkflowStep>;
+  createPlanningSteps(
+    workflowId: number,
+    skipClarification: boolean,
+    clarificationAgentId?: null | number
+  ): Array<WorkflowStep>;
   delete(id: number): boolean;
   fail(id: number, errorMessage: string): undefined | WorkflowStep;
   findAll(options?: { status?: string; workflowId?: number }): Array<WorkflowStep>;
@@ -43,7 +47,11 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
       return db.insert(workflowSteps).values(data).returning().get();
     },
 
-    createPlanningSteps(workflowId: number, skipClarification: boolean): Array<WorkflowStep> {
+    createPlanningSteps(
+      workflowId: number,
+      skipClarification: boolean,
+      clarificationAgentId?: null | number
+    ): Array<WorkflowStep> {
       // Guard: Check if steps already exist for this workflow to prevent duplicates
       const existingSteps = db.select().from(workflowSteps).where(eq(workflowSteps.workflowId, workflowId)).all();
 
@@ -90,9 +98,13 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
         for (const stepDef of planningStepDefinitions) {
           const status = stepDef.stepType === 'clarification' && skipClarification ? 'skipped' : 'pending';
 
+          // Set agentId for clarification step if provided
+          const agentId = stepDef.stepType === 'clarification' ? (clarificationAgentId ?? null) : null;
+
           const step = tx
             .insert(workflowSteps)
             .values({
+              agentId,
               description: stepDef.description,
               status,
               stepNumber: stepDef.stepNumber,

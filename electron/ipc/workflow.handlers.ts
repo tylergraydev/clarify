@@ -9,6 +9,8 @@
 import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 
 import type {
+  AgentsRepository,
+  SettingsRepository,
   WorkflowHistoryFilters,
   WorkflowHistoryResult,
   WorkflowsRepository,
@@ -34,10 +36,14 @@ interface WorkflowListFilters {
  *
  * @param workflowsRepository - The workflows repository for database operations
  * @param workflowStepsRepository - The workflow steps repository for creating planning steps
+ * @param settingsRepository - The settings repository for resolving default clarification agent
+ * @param agentsRepository - The agents repository for fallback agent resolution
  */
 export function registerWorkflowHandlers(
   workflowsRepository: WorkflowsRepository,
-  workflowStepsRepository: WorkflowStepsRepository
+  workflowStepsRepository: WorkflowStepsRepository,
+  settingsRepository: SettingsRepository,
+  agentsRepository: AgentsRepository
 ): void {
   // Create a new workflow
   ipcMain.handle(IpcChannels.workflow.create, (_event: IpcMainInvokeEvent, data: NewWorkflow): Workflow => {
@@ -50,47 +56,90 @@ export function registerWorkflowHandlers(
   });
 
   // Start a workflow (update status to running and create planning steps)
-  ipcMain.handle(IpcChannels.workflow.start, (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
-    try {
-      // Fetch the workflow to access skipClarification flag
-      const workflow = workflowsRepository.findById(id);
-      if (!workflow) {
-        return undefined;
-      }
-
-      // Guard: Only start workflows in 'created' status to prevent duplicate step creation
-      if (workflow.status !== 'created') {
-        console.warn(`[IPC] workflow:start - workflow ${id} already has status '${workflow.status}'`);
-        return workflow; // Return current state without modification
-      }
-
-      // Start the workflow (update status to running)
-      const startedWorkflow = workflowsRepository.start(id);
-      if (!startedWorkflow) {
-        return undefined;
-      }
-
-      // Create planning steps atomically
-      // If step creation fails, we attempt to rollback the workflow status
+  ipcMain.handle(
+    IpcChannels.workflow.start,
+    async (_event: IpcMainInvokeEvent, id: number): Promise<undefined | Workflow> => {
       try {
-        workflowStepsRepository.createPlanningSteps(id, workflow.skipClarification);
-      } catch (stepError) {
-        // Attempt to rollback workflow status to 'created'
-        console.error('[IPC Error] workflow:start - step creation failed, rolling back:', stepError);
-        try {
-          workflowsRepository.updateStatus(id, 'created');
-        } catch (rollbackError) {
-          console.error('[IPC Error] workflow:start - rollback failed:', rollbackError);
+        // Fetch the workflow to access skipClarification flag and clarificationAgentId
+        const workflow = workflowsRepository.findById(id);
+        if (!workflow) {
+          return undefined;
         }
-        throw stepError;
-      }
 
-      return startedWorkflow;
-    } catch (error) {
-      console.error('[IPC Error] workflow:start:', error);
-      throw error;
+        // Guard: Only start workflows in 'created' status to prevent duplicate step creation
+        if (workflow.status !== 'created') {
+          console.warn(`[IPC] workflow:start - workflow ${id} already has status '${workflow.status}'`);
+          return workflow; // Return current state without modification
+        }
+
+        // Resolve clarification agent ID with fallback logic
+        let clarificationAgentId: null | number = workflow.clarificationAgentId ?? null;
+
+        if (clarificationAgentId === null) {
+          // Fallback 1: Check default clarification agent setting
+          const defaultAgentIdStr = await settingsRepository.getValue('defaultClarificationAgentId');
+          if (defaultAgentIdStr && defaultAgentIdStr.trim() !== '') {
+            const parsedId = parseInt(defaultAgentIdStr, 10);
+            if (!isNaN(parsedId)) {
+              // Verify the agent exists and is active
+              const defaultAgent = await agentsRepository.findById(parsedId);
+              if (defaultAgent && defaultAgent.deactivatedAt === null) {
+                clarificationAgentId = parsedId;
+                console.log(`[IPC] workflow:start - using default clarification agent: ${parsedId}`);
+              }
+            }
+          }
+        }
+
+        if (clarificationAgentId === null) {
+          // Fallback 2: Find any active planning agent
+          const planningAgents = await agentsRepository.findAll({ type: 'planning' });
+          const firstPlanningAgent = planningAgents[0];
+          if (firstPlanningAgent) {
+            clarificationAgentId = firstPlanningAgent.id;
+            console.log(`[IPC] workflow:start - using first available planning agent: ${clarificationAgentId}`);
+          } else {
+            console.warn('[IPC] workflow:start - no planning agents available for clarification step');
+          }
+        }
+
+        // Start the workflow (update status to running)
+        const startedWorkflow = workflowsRepository.start(id);
+        if (!startedWorkflow) {
+          return undefined;
+        }
+
+        // Create planning steps atomically
+        // If step creation fails, we attempt to rollback the workflow status
+        let createdSteps: Array<import('../../db/schema').WorkflowStep>;
+        try {
+          createdSteps = workflowStepsRepository.createPlanningSteps(id, workflow.skipClarification, clarificationAgentId);
+        } catch (stepError) {
+          // Attempt to rollback workflow status to 'created'
+          console.error('[IPC Error] workflow:start - step creation failed, rolling back:', stepError);
+          try {
+            workflowsRepository.updateStatus(id, 'created');
+          } catch (rollbackError) {
+            console.error('[IPC Error] workflow:start - rollback failed:', rollbackError);
+          }
+          throw stepError;
+        }
+
+        // Start the first non-skipped step to trigger its execution
+        // Steps are created in order, so find the first one with 'pending' status
+        const firstPendingStep = createdSteps.find((step) => step.status === 'pending');
+        if (firstPendingStep) {
+          workflowStepsRepository.start(firstPendingStep.id);
+          console.log(`[IPC] workflow:start - started first step: ${firstPendingStep.stepType} (id: ${firstPendingStep.id})`);
+        }
+
+        return startedWorkflow;
+      } catch (error) {
+        console.error('[IPC Error] workflow:start:', error);
+        throw error;
+      }
     }
-  });
+  );
 
   // Pause a running workflow (update status to paused)
   ipcMain.handle(IpcChannels.workflow.pause, (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {

@@ -2,11 +2,20 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { WorkflowStep } from '@/db/schema/workflow-steps.schema';
-import type { ClarificationAnswers, ClarificationStepOutput } from '@/lib/validations/clarification';
+import type {
+  ClarificationAnswers,
+  ClarificationOutcome,
+  ClarificationQuestion,
+  ClarificationServicePhase,
+  ClarificationStepOutput,
+} from '@/lib/validations/clarification';
 
+import { useAgent } from '@/hooks/queries/use-agents';
+import { useDefaultClarificationAgent } from '@/hooks/queries/use-default-clarification-agent';
+import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useCompleteStep, useSkipStep, useStepsByWorkflow, useUpdateStep } from '@/hooks/queries/use-steps';
 import { useWorkflow } from '@/hooks/queries/use-workflows';
 import { usePipelineStore } from '@/lib/stores/pipeline-store';
@@ -17,6 +26,47 @@ import type { StepMetrics } from './pipeline-step-metrics';
 import { PipelineProgressBar } from './pipeline-progress-bar';
 import { PipelineStep, type PipelineStepStatus, type PipelineStepType } from './pipeline-step';
 import { VerticalConnector, type VerticalConnectorState } from './vertical-connector';
+
+/**
+ * Active tool indicator for displaying current tool operations.
+ */
+interface ActiveTool {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+}
+
+/**
+ * State for clarification streaming during exploration phase.
+ */
+interface ClarificationSessionState {
+  activeTools: Array<ActiveTool>;
+  agentName: string;
+  error: null | string;
+  isStreaming: boolean;
+  outcome: ClarificationOutcome | null;
+  phase: ClarificationServicePhase;
+  sessionId: null | string;
+  stepId: null | number;
+  text: string;
+  thinking: Array<string>;
+}
+
+/**
+ * Initial state for clarification session.
+ */
+const INITIAL_CLARIFICATION_STATE: ClarificationSessionState = {
+  activeTools: [],
+  agentName: 'Clarification Agent',
+  error: null,
+  isStreaming: false,
+  outcome: null,
+  phase: 'idle',
+  sessionId: null,
+  stepId: null,
+  text: '',
+  thinking: [],
+};
 
 /**
  * Default step type used when step.stepType is not a valid PipelineStepType.
@@ -154,15 +204,37 @@ function sortStepsByNumber(steps: Array<WorkflowStep>): Array<WorkflowStep> {
  */
 export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineViewProps) => {
   const [submittingStepId, setSubmittingStepId] = useState<null | number>(null);
+  const [clarificationState, setClarificationState] = useState<ClarificationSessionState>(INITIAL_CLARIFICATION_STATE);
+  const clarificationStartedRef = useRef<null | number>(null);
 
   const { data: steps, isLoading: isLoadingSteps } = useStepsByWorkflow(workflowId);
   const { data: workflow, isLoading: isLoadingWorkflow } = useWorkflow(workflowId);
+  const { agentId: defaultAgentId } = useDefaultClarificationAgent();
+
+  // Get repositories for this workflow's project to find the primary repository path
+  const { data: repositories } = useRepositoriesByProject(workflow?.projectId ?? 0);
+  const primaryRepository = useMemo(
+    () => repositories?.find((r) => r.setAsDefaultAt !== null) ?? repositories?.[0],
+    [repositories]
+  );
 
   const updateStep = useUpdateStep();
   const completeStep = useCompleteStep();
   const skipStep = useSkipStep();
 
   const { expandedStepId, toggleStep } = usePipelineStore();
+
+  // Find the active clarification step to get its agentId
+  const activeClarificationStep = useMemo(() => {
+    if (!steps) return null;
+    return steps.find(
+      (step) => step.stepType === 'clarification' && deriveStepState(step.status) === 'running'
+    );
+  }, [steps]);
+
+  // Get agent details for the clarification step (either from step.agentId or default)
+  const clarificationAgentId = activeClarificationStep?.agentId ?? defaultAgentId;
+  const { data: clarificationAgent } = useAgent(clarificationAgentId ?? 0);
 
   const sortedSteps = useMemo(() => (steps ? sortStepsByNumber(steps) : []), [steps]);
 
@@ -229,6 +301,281 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
     [skipStep]
   );
 
+  /**
+   * Handles when clarification questions are ready from the streaming component.
+   */
+  const handleQuestionsReady = useCallback(
+    async (questions: Array<ClarificationQuestion>) => {
+      if (!activeClarificationStep) return;
+
+      // Update the step's outputStructured with the questions
+      const stepOutput: ClarificationStepOutput = {
+        questions,
+      };
+
+      await updateStep.mutateAsync({
+        data: { outputStructured: stepOutput },
+        id: activeClarificationStep.id,
+      });
+
+      // Update local state to stop streaming phase
+      setClarificationState((prev) => ({
+        ...prev,
+        isStreaming: false,
+        phase: 'waiting_for_user',
+      }));
+    },
+    [activeClarificationStep, updateStep]
+  );
+
+  /**
+   * Handles when clarification determines skip is appropriate.
+   */
+  const handleSkipReady = useCallback(
+    async (reason: string) => {
+      if (!activeClarificationStep) return;
+
+      // Update the step's outputStructured with skip info
+      const stepOutput: ClarificationStepOutput = {
+        questions: [],
+        skipped: true,
+        skipReason: reason,
+      };
+
+      await updateStep.mutateAsync({
+        data: { outputStructured: stepOutput },
+        id: activeClarificationStep.id,
+      });
+
+      // Mark step as skipped
+      await skipStep.mutateAsync(activeClarificationStep.id);
+
+      // Reset clarification state
+      setClarificationState(INITIAL_CLARIFICATION_STATE);
+      clarificationStartedRef.current = null;
+    },
+    [activeClarificationStep, updateStep, skipStep]
+  );
+
+  /**
+   * Handles clarification errors from the streaming component.
+   */
+  const handleClarificationError = useCallback((error: string) => {
+    setClarificationState((prev) => ({
+      ...prev,
+      error,
+      isStreaming: false,
+      phase: 'error',
+    }));
+  }, []);
+
+  /**
+   * Handles cancellation of clarification from the streaming component.
+   */
+  const handleClarificationCancel = useCallback(async () => {
+    // Call the skip IPC to cancel the session
+    if (typeof window !== 'undefined' && window.electronAPI?.clarification) {
+      const sessionId = clarificationState.sessionId;
+      if (sessionId) {
+        await window.electronAPI.clarification.skip(sessionId, 'User cancelled');
+      }
+    }
+
+    // Reset state
+    setClarificationState(INITIAL_CLARIFICATION_STATE);
+    clarificationStartedRef.current = null;
+  }, [clarificationState.sessionId]);
+
+  // Effect to start clarification when a clarification step becomes active
+  useEffect(() => {
+    const isStepRunning =
+      activeClarificationStep &&
+      deriveStepState(activeClarificationStep.status) === 'running';
+
+    const isAlreadyStarted = clarificationStartedRef.current === activeClarificationStep?.id;
+    const hasQuestions =
+      activeClarificationStep?.outputStructured &&
+      (activeClarificationStep.outputStructured as ClarificationStepOutput | null)?.questions?.length;
+
+    // Don't start if already started, not running, or questions already exist
+    if (!isStepRunning || isAlreadyStarted || hasQuestions) {
+      return;
+    }
+
+    // Need repository path and workflow feature request
+    if (!primaryRepository?.path || !workflow?.featureRequest) {
+      return;
+    }
+
+    const startClarification = async () => {
+      if (typeof window === 'undefined' || !window.electronAPI?.clarification) {
+        return;
+      }
+
+      // Mark as started
+      clarificationStartedRef.current = activeClarificationStep.id;
+
+      // Set initial streaming state
+      setClarificationState({
+        activeTools: [],
+        agentName: clarificationAgent?.displayName ?? clarificationAgent?.name ?? 'Clarification Agent',
+        error: null,
+        isStreaming: true,
+        outcome: null,
+        phase: 'loading_agent',
+        sessionId: null,
+        stepId: activeClarificationStep.id,
+        text: '',
+        thinking: [],
+      });
+
+      // Subscribe to streaming events BEFORE starting
+      const unsubscribe = window.electronAPI.clarification.onStreamMessage((message) => {
+        // Update state based on message type
+        switch (message.type) {
+          case 'phase_change':
+            setClarificationState((prev) => ({
+              ...prev,
+              phase: message.phase,
+            }));
+            break;
+
+          case 'text_delta':
+            setClarificationState((prev) => ({
+              ...prev,
+              text: prev.text + message.delta,
+            }));
+            break;
+
+          case 'thinking_delta':
+            setClarificationState((prev) => {
+              const thinking = [...prev.thinking];
+              thinking[message.blockIndex] = (thinking[message.blockIndex] || '') + message.delta;
+              return { ...prev, thinking };
+            });
+            break;
+
+          case 'thinking_start':
+            setClarificationState((prev) => ({
+              ...prev,
+              thinking: [...prev.thinking, ''],
+            }));
+            break;
+
+          case 'tool_start':
+            setClarificationState((prev) => ({
+              ...prev,
+              activeTools: [
+                ...prev.activeTools,
+                {
+                  toolInput: message.toolInput,
+                  toolName: message.toolName,
+                  toolUseId: message.toolUseId,
+                },
+              ],
+            }));
+            break;
+
+          case 'tool_stop':
+            setClarificationState((prev) => ({
+              ...prev,
+              activeTools: prev.activeTools.filter((t) => t.toolUseId !== message.toolUseId),
+            }));
+            break;
+        }
+      });
+
+      try {
+        // Start the clarification session
+        const outcome = await window.electronAPI.clarification.start({
+          featureRequest: workflow.featureRequest,
+          repositoryPath: primaryRepository.path,
+          stepId: activeClarificationStep.id,
+          timeoutSeconds: 120,
+          workflowId,
+        });
+
+        // Cleanup subscription
+        unsubscribe();
+
+        // Update state with outcome
+        setClarificationState((prev) => ({
+          ...prev,
+          isStreaming: false,
+          outcome,
+          phase: outcome.type === 'QUESTIONS_FOR_USER' || outcome.type === 'SKIP_CLARIFICATION' ? 'complete' : 'error',
+        }));
+
+        // Handle outcome directly here since ClarificationStreaming will unmount
+        // when isStreaming becomes false, so its useEffect won't fire
+        if (outcome.type === 'QUESTIONS_FOR_USER') {
+          // Update the step's outputStructured with the questions
+          const stepOutput: ClarificationStepOutput = {
+            questions: outcome.questions,
+          };
+
+          await updateStep.mutateAsync({
+            data: { outputStructured: stepOutput },
+            id: activeClarificationStep.id,
+          });
+
+          // Update local state to show the form
+          setClarificationState((prev) => ({
+            ...prev,
+            phase: 'waiting_for_user',
+          }));
+        } else if (outcome.type === 'SKIP_CLARIFICATION') {
+          // Update the step's outputStructured with skip info
+          const stepOutput: ClarificationStepOutput = {
+            questions: [],
+            skipped: true,
+            skipReason: outcome.reason,
+          };
+
+          await updateStep.mutateAsync({
+            data: { outputStructured: stepOutput },
+            id: activeClarificationStep.id,
+          });
+
+          // Mark step as skipped
+          await skipStep.mutateAsync(activeClarificationStep.id);
+
+          // Reset clarification state
+          setClarificationState(INITIAL_CLARIFICATION_STATE);
+          clarificationStartedRef.current = null;
+        }
+      } catch (error) {
+        // Cleanup subscription on error
+        unsubscribe();
+
+        setClarificationState((prev) => ({
+          ...prev,
+          error: error instanceof Error ? error.message : 'Unknown error occurred',
+          isStreaming: false,
+          phase: 'error',
+        }));
+      }
+    };
+
+    void startClarification();
+  }, [
+    activeClarificationStep,
+    clarificationAgent,
+    primaryRepository?.path,
+    skipStep,
+    updateStep,
+    workflow?.featureRequest,
+    workflowId,
+  ]);
+
+  // Reset clarification state when step changes or completes
+  useEffect(() => {
+    if (!activeClarificationStep && clarificationState.stepId !== null) {
+      setClarificationState(INITIAL_CLARIFICATION_STATE);
+      clarificationStartedRef.current = null;
+    }
+  }, [activeClarificationStep, clarificationState.stepId]);
+
   const isLoading = isLoadingSteps || isLoadingWorkflow;
   const isWorkflowCreated = workflow?.status === 'created';
   const isStepsEmpty = sortedSteps.length === 0;
@@ -289,6 +636,27 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
             // Compute metrics for this step
             const metrics = computeStepMetrics(step);
 
+            // Determine clarification streaming props for this step
+            const isActiveClarification =
+              isClarificationStep && clarificationState.stepId === step.id;
+            const clarificationStreamingProps = isActiveClarification
+              ? {
+                  clarificationActiveTools: clarificationState.activeTools,
+                  clarificationAgentName: clarificationState.agentName,
+                  clarificationError: clarificationState.error,
+                  clarificationOutcome: clarificationState.outcome,
+                  clarificationPhase: clarificationState.phase,
+                  clarificationSessionId: clarificationState.sessionId,
+                  clarificationText: clarificationState.text,
+                  clarificationThinking: clarificationState.thinking,
+                  isClarificationStreaming: clarificationState.isStreaming,
+                  onClarificationCancel: handleClarificationCancel,
+                  onClarificationError: handleClarificationError,
+                  onQuestionsReady: handleQuestionsReady,
+                  onSkipReady: handleSkipReady,
+                }
+              : {};
+
             return (
               <div className={'relative mb-4 last:mb-0'} key={step.id} role={'listitem'}>
                 {/* Vertical Connector */}
@@ -318,6 +686,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
                   status={stepState}
                   stepType={stepType}
                   title={step.title}
+                  {...clarificationStreamingProps}
                 />
               </div>
             );

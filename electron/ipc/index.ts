@@ -38,6 +38,7 @@ import { registerAgentToolHandlers } from './agent-tool.handlers';
 import { registerAgentHandlers } from './agent.handlers';
 import { registerAppHandlers } from './app.handlers';
 import { registerAuditHandlers } from './audit.handlers';
+import { registerClarificationHandlers } from './clarification.handlers';
 import { registerDebugLogHandlers } from './debug-log.handlers';
 import { registerDialogHandlers } from './dialog.handlers';
 import { registerDiscoveryHandlers } from './discovery.handlers';
@@ -145,6 +146,15 @@ export function registerAllHandlers(
   registerTemplateHandlers(templatesRepository, templatePlaceholdersRepository);
 
   // ============================================
+  // Database handlers - Settings (needed by workflow handlers)
+  // ============================================
+
+  // Settings - application configuration
+  // Note: Created before workflows because registerWorkflowHandlers needs settings for agent fallback
+  const settingsRepository = createSettingsRepository(db);
+  registerSettingsHandlers(settingsRepository);
+
+  // ============================================
   // Database handlers - Workflow system
   // ============================================
 
@@ -153,10 +163,15 @@ export function registerAllHandlers(
   const workflowStepsRepository = createWorkflowStepsRepository(db);
   registerStepHandlers(workflowStepsRepository);
 
+  // Clarification handlers - need steps repository to look up agentId from step
+  // Also needs getMainWindow for streaming events to renderer
+  registerClarificationHandlers(workflowStepsRepository, getMainWindow);
+
   // Workflows - orchestration runs
   // Needs workflowStepsRepository for creating planning steps on start
+  // Also needs settingsRepository and agentsRepository for clarification agent fallback logic
   const workflowsRepository = createWorkflowsRepository(db);
-  registerWorkflowHandlers(workflowsRepository, workflowStepsRepository);
+  registerWorkflowHandlers(workflowsRepository, workflowStepsRepository, settingsRepository, agentsRepository);
 
   // Workflow repositories - repository associations for workflows
   const workflowRepositoriesRepository = createWorkflowRepositoriesRepository(db);
@@ -173,14 +188,6 @@ export function registerAllHandlers(
   // Audit logs - system event tracking
   const auditLogsRepository = createAuditLogsRepository(db);
   registerAuditHandlers(auditLogsRepository);
-
-  // ============================================
-  // Database handlers - Settings
-  // ============================================
-
-  // Settings - application configuration
-  const settingsRepository = createSettingsRepository(db);
-  registerSettingsHandlers(settingsRepository);
 
   // ============================================
   // Database handlers - Git worktrees

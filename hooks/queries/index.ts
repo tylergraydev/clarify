@@ -86,6 +86,11 @@ export {
 export type { UseDebugLogsOptions } from './use-debug-logs';
 
 // ============================================================================
+// Default Clarification Agent Hooks
+// ============================================================================
+export { useDefaultClarificationAgent, useSetDefaultClarificationAgent } from './use-default-clarification-agent';
+
+// ============================================================================
 // Discovered File Hooks
 // ============================================================================
 export {
