@@ -21,7 +21,9 @@ export const agents = sqliteTable(
     deactivatedAt: text('deactivated_at'),
     description: text('description'),
     displayName: text('display_name').notNull(),
+    extendedThinkingEnabled: integer('extended_thinking_enabled', { mode: 'boolean' }).notNull().default(false),
     id: integer('id').primaryKey({ autoIncrement: true }),
+    maxThinkingTokens: integer('max_thinking_tokens'),
     model: text('model'),
     name: text('name').notNull().unique(),
     parentAgentId: integer('parent_agent_id').references((): AnySQLiteColumn => agents.id, {

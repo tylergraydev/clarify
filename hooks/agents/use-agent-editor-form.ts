@@ -18,6 +18,8 @@ export interface AgentInitialData {
   color?: AgentColor | null;
   description?: string;
   displayName: string;
+  extendedThinkingEnabled?: boolean;
+  maxThinkingTokens?: null | number;
   name: string;
   systemPrompt: string;
   type: AgentType;
@@ -72,7 +74,10 @@ export const useAgentEditorForm = ({
         color: (agent.color ?? '') as UpdateAgentFormValues['color'],
         description: agent.description ?? '',
         displayName: agent.displayName,
+        extendedThinkingEnabled: agent.extendedThinkingEnabled ?? false,
+        maxThinkingTokens: agent.maxThinkingTokens ?? null,
         model: (agent.model ?? 'inherit') as UpdateAgentFormValues['model'],
+        name: agent.name,
         permissionMode: (agent.permissionMode ?? 'default') as UpdateAgentFormValues['permissionMode'],
         projectId: projectIdToFormValue(agent.projectId),
         systemPrompt: agent.systemPrompt,
@@ -83,6 +88,8 @@ export const useAgentEditorForm = ({
         color: initialData.color ?? 'blue',
         description: initialData.description ?? '',
         displayName: initialData.displayName,
+        extendedThinkingEnabled: initialData.extendedThinkingEnabled ?? false,
+        maxThinkingTokens: initialData.maxThinkingTokens ?? null,
         model: 'inherit' as CreateAgentFormData['model'],
         name: initialData.name,
         permissionMode: 'default' as CreateAgentFormData['permissionMode'],
@@ -95,6 +102,8 @@ export const useAgentEditorForm = ({
       color: 'blue',
       description: '',
       displayName: '',
+      extendedThinkingEnabled: false,
+      maxThinkingTokens: null,
       model: 'inherit' as CreateAgentFormData['model'],
       name: '',
       permissionMode: 'default' as CreateAgentFormData['permissionMode'],

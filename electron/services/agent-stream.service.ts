@@ -192,7 +192,7 @@ class AgentStreamService {
     const activeSession: ActiveSession = {
       abortController,
       id: sessionId,
-      isPartialStreaming: true, // We always use includePartialMessages for real-time streaming
+      isPartialStreaming: true,
       messageQueue: [],
       messageQueueResolver: null,
       pendingPermissions: new Map(),
@@ -206,6 +206,7 @@ class AgentStreamService {
       allowedTools: options.allowedTools,
       cwd: options.cwd,
       maxBudgetUsd: options.maxBudgetUsd,
+      maxThinkingTokens: options.maxThinkingTokens,
       maxTurns: options.maxTurns,
       permissionMode: options.permissionMode,
       prompt: options.prompt.slice(0, 500) + (options.prompt.length > 500 ? '...' : ''),
@@ -800,13 +801,22 @@ class AgentStreamService {
 
       activeSession.session.status = 'running';
 
+      // Detect extended thinking mode
+      // StreamEvent messages are not emitted - only complete messages after each turn.
+      const hasExtendedThinking = options.maxThinkingTokens !== undefined && options.maxThinkingTokens > 0;
+
+      // Update session's partial streaming flag based on extended thinking mode
+      // When extended thinking is enabled, the SDK does NOT emit StreamEvent messages,
+      // so we must process complete text/thinking blocks instead of skipping them.
+      activeSession.isPartialStreaming = !hasExtendedThinking;
+
       // Build SDK options with proper typing
       const sdkOptions: Options = {
         // Pass the abort controller to the SDK for proper cancellation
         abortController: activeSession.abortController,
         cwd: options.cwd ?? process.cwd(),
-        // Enable partial messages for real-time streaming
-        includePartialMessages: true,
+        // Enable partial messages for real-time streaming (unless extended thinking is enabled)
+        includePartialMessages: !hasExtendedThinking,
       };
 
       // Map allowed tools
@@ -832,6 +842,12 @@ class AgentStreamService {
       // Map system prompt
       if (options.systemPrompt) {
         sdkOptions.systemPrompt = options.systemPrompt;
+      }
+
+      // Map maxThinkingTokens for extended thinking
+      // When set, the SDK disables partial streaming and only emits complete messages after each turn
+      if (hasExtendedThinking) {
+        sdkOptions.maxThinkingTokens = options.maxThinkingTokens;
       }
 
       // Map hooks configuration
@@ -990,8 +1006,13 @@ class AgentStreamService {
         allowedTools: sdkOptions.allowedTools,
         cwd: sdkOptions.cwd,
         includePartialMessages: sdkOptions.includePartialMessages,
+        maxThinkingTokens: sdkOptions.maxThinkingTokens,
         maxTurns: sdkOptions.maxTurns,
         permissionMode: sdkOptions.permissionMode,
+        ...(hasExtendedThinking && {
+          extendedThinkingEnabled: true,
+          extendedThinkingNote: 'Partial streaming disabled - will process complete messages only',
+        }),
       });
 
       // Execute the SDK query with streaming input mode

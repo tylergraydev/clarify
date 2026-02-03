@@ -19,6 +19,12 @@ let debugWindow: BrowserWindow | null = null;
  */
 function createApplicationMenu(): void {
   const isMac = process.platform === 'darwin';
+  const isWindows = process.platform === 'win32';
+
+  // Set the App User Model ID (required for Windows notifications/taskbar grouping)
+  if (isWindows) {
+    app.setAppUserModelId('ai.clarify.app');
+  }
 
   const template: Array<MenuItemConstructorOptions> = [
     // App menu (macOS only)

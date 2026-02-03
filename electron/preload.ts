@@ -394,6 +394,23 @@ export interface AgentStreamOptions {
   hooks?: AgentStreamHooks;
   /** Maximum API spend in USD before stopping */
   maxBudgetUsd?: number;
+  /**
+   * Maximum tokens for Claude's extended thinking/reasoning process.
+   *
+   * **Important: Disables partial streaming when set.**
+   *
+   * When `maxThinkingTokens` is explicitly configured, the SDK disables `StreamEvent`
+   * messages. This means:
+   * - No `text_delta` or `thinking_delta` messages will be received
+   * - Only complete `AssistantMessage` objects arrive after each turn completes
+   * - Real-time typewriter effects and incremental thinking display are not available
+   *
+   * Note: Extended thinking is disabled by default in the SDK, so streaming works
+   * normally unless you enable it by setting this option.
+   *
+   * @see {@link https://platform.claude.com/docs/en/agent-sdk/streaming-responses SDK Streaming Documentation}
+   */
+  maxThinkingTokens?: number;
   /** Maximum turns before stopping */
   maxTurns?: number;
   /**

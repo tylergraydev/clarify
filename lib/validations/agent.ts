@@ -65,6 +65,14 @@ export const createAgentSchema = z.object({
   deactivatedAt: z.string().optional(),
   description: z.string().trim().max(1000, 'Description is too long').optional(),
   displayName: z.string().trim().min(1, 'Display name is required').max(255, 'Display name is too long'),
+  extendedThinkingEnabled: z.boolean().optional().default(false),
+  maxThinkingTokens: z
+    .number()
+    .int()
+    .min(1000, 'Minimum 1000 tokens')
+    .max(128000, 'Maximum 128000 tokens')
+    .nullable()
+    .optional(),
   model: z.enum(agentModels).nullable().optional(),
   name: z
     .string()
@@ -98,6 +106,14 @@ export const createAgentFormSchema = z.object({
   color: z.enum(agentColors, { message: 'Please select a color' }),
   description: z.string().trim().max(1000, 'Description is too long').optional(),
   displayName: z.string().trim().min(1, 'Display name is required').max(255, 'Display name is too long'),
+  extendedThinkingEnabled: z.boolean().optional().default(false),
+  maxThinkingTokens: z
+    .number()
+    .int()
+    .min(1000, 'Minimum 1000 tokens')
+    .max(128000, 'Maximum 128000 tokens')
+    .nullable()
+    .optional(),
   model: z.union([z.enum(agentModels), z.literal('')]).optional(),
   name: z
     .string()
@@ -122,11 +138,30 @@ export type CreateAgentFormData = z.infer<typeof createAgentFormSchema>;
 // The form field component handles the state management while this schema validates on submit
 // Note: model and permissionMode use union with empty string for form input (inherit/default)
 // Note: projectId is a string for form input - use GLOBAL_PROJECT_VALUE for global, or numeric ID as string
+// Note: name is optional - only submitted for custom agents (built-in agents have name protected)
 export const updateAgentSchema = z.object({
   color: z.union([z.enum(agentColors), z.literal('')]).optional(),
   description: z.string().trim().max(1000, 'Description is too long').optional(),
   displayName: z.string().trim().min(1, 'Display name is required').max(255, 'Display name is too long'),
+  extendedThinkingEnabled: z.boolean().optional().default(false),
+  maxThinkingTokens: z
+    .number()
+    .int()
+    .min(1000, 'Minimum 1000 tokens')
+    .max(128000, 'Maximum 128000 tokens')
+    .nullable()
+    .optional(),
   model: z.union([z.enum(agentModels), z.literal('')]).optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Agent name is required')
+    .max(100, 'Agent name is too long')
+    .regex(
+      /^[a-z][a-z0-9-]*$/,
+      'Agent name must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens'
+    )
+    .optional(),
   permissionMode: z.union([z.enum(agentPermissionModes), z.literal('')]).optional(),
   projectId: z.string(),
   systemPrompt: z.string().trim().min(1, 'System prompt is required').max(50000, 'System prompt is too long'),
@@ -142,6 +177,14 @@ export const updateAgentRepositorySchema = z.object({
   deactivatedAt: z.string().nullable().optional(),
   description: z.string().trim().max(1000, 'Description is too long').nullable().optional(),
   displayName: z.string().trim().min(1, 'Display name is required').max(255, 'Display name is too long').optional(),
+  extendedThinkingEnabled: z.boolean().optional(),
+  maxThinkingTokens: z
+    .number()
+    .int()
+    .min(1000, 'Minimum 1000 tokens')
+    .max(128000, 'Maximum 128000 tokens')
+    .nullable()
+    .optional(),
   model: z.enum(agentModels).nullable().optional(),
   name: z
     .string()

@@ -85,7 +85,9 @@ export interface AgentImportInput {
     // Optional Claude Code fields
     disallowedTools?: Array<string>;
     displayName?: string;
+    extendedThinkingEnabled?: boolean;
     hooks?: AgentImportHooks;
+    maxThinkingTokens?: number;
     model?: string;
     name: string;
     permissionMode?: string;
@@ -263,6 +265,7 @@ export type ClarificationServicePhase =
   | 'complete'
   | 'error'
   | 'executing'
+  | 'executing_extended_thinking'
   | 'idle'
   | 'loading_agent'
   | 'processing_response'
@@ -294,6 +297,7 @@ export interface ClarificationStartInput {
  * Discriminated union of all clarification stream message types.
  */
 export type ClarificationStreamMessage =
+  | ClarificationStreamExtendedThinkingHeartbeat
   | ClarificationStreamPhaseChange
   | ClarificationStreamTextDelta
   | ClarificationStreamThinkingDelta
@@ -622,12 +626,33 @@ export interface WorkflowStatistics {
 }
 
 /**
+ * Heartbeat message during extended thinking execution.
+ * Sent periodically to indicate progress when streaming is disabled.
+ */
+interface ClarificationStreamExtendedThinkingHeartbeat extends ClarificationStreamMessageBase {
+  /** Elapsed time in milliseconds since execution started */
+  elapsedMs: number;
+  /** Estimated completion percentage (0-100, null if unknown) */
+  estimatedProgress: null | number;
+  /** Maximum thinking tokens budget */
+  maxThinkingTokens: number;
+  type: 'extended_thinking_heartbeat';
+}
+
+/**
  * Base interface for all clarification stream messages.
  */
 interface ClarificationStreamMessageBase {
   sessionId: string;
   timestamp: number;
-  type: 'phase_change' | 'text_delta' | 'thinking_delta' | 'thinking_start' | 'tool_start' | 'tool_stop';
+  type:
+    | 'extended_thinking_heartbeat'
+    | 'phase_change'
+    | 'text_delta'
+    | 'thinking_delta'
+    | 'thinking_start'
+    | 'tool_start'
+    | 'tool_stop';
 }
 
 /**

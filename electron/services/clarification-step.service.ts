@@ -50,7 +50,6 @@ import {
 import {
   clarificationAgentOutputFlatSchema,
   clarificationAgentOutputJSONSchema,
-  clarificationAgentOutputSchema,
 } from '../../lib/validations/clarification';
 import { debugLoggerService } from './debug-logger.service';
 
@@ -68,6 +67,12 @@ const MAX_RETRY_ATTEMPTS = 3;
  * Base delay for exponential backoff in milliseconds.
  */
 const BASE_RETRY_DELAY_MS = 1000;
+
+/**
+ * Heartbeat interval for extended thinking progress updates in milliseconds.
+ * Sends periodic status updates to UI when partial streaming is disabled.
+ */
+const EXTENDED_THINKING_HEARTBEAT_INTERVAL_MS = 2000; // 2 seconds
 
 /**
  * Cached SDK query function to avoid repeated dynamic imports.
@@ -297,12 +302,14 @@ class ClarificationStepService {
     // sdkOptions.hooks = { PreToolUse: [...], PostToolUse: [...] }
     // See .claude/skills/claude-agent-sdk/references/hook-types.md for HookCallbackMatcher format.
     return {
+      extendedThinkingEnabled: agent.extendedThinkingEnabled ?? false,
       hooks: hooks.map((h) => ({
         body: h.body,
         eventType: h.eventType,
         matcher: h.matcher,
       })),
       id: agent.id,
+      maxThinkingTokens: agent.maxThinkingTokens,
       model: agent.model,
       name: agent.name,
       permissionMode: agent.permissionMode,
@@ -389,8 +396,11 @@ class ClarificationStepService {
     // Wait for backoff delay
     await new Promise((resolve) => setTimeout(resolve, backoffDelay));
 
-    // Transfer retry count to new session and start clarification
+    // Start new clarification session
     const outcome = await this.startClarification(options);
+
+    // Clean up previous session's retry count to prevent memory leak
+    this.clearRetryCount(previousSessionId);
 
     // Update the outcome with the correct retry count
     return {
@@ -700,21 +710,42 @@ class ClarificationStepService {
     const { answers, questions, stepId, workflowId } = input;
     const selectedOptions: Record<string, string> = {};
 
+    // Validate all questions have answers
+    const missingIndices = questions
+      .map((_, idx) => idx.toString())
+      .filter((idx) => !answers[idx] || answers[idx].trim() === '');
+
+    if (missingIndices.length > 0) {
+      throw new Error(
+        `Missing answers for ${missingIndices.length} question(s) at indices: ${missingIndices.join(', ')}`
+      );
+    }
+
+    // Validate all selected labels are valid options
+    for (const question of questions) {
+      const questionIndex = questions.indexOf(question).toString();
+      const selectedLabel = answers[questionIndex]!; // Safe - validated above
+      const validLabels = question.options.map((opt) => opt.label);
+
+      if (!validLabels.includes(selectedLabel)) {
+        throw new Error(
+          `Invalid answer "${selectedLabel}" for question "${question.header}". Valid options: ${validLabels.join(', ')}`
+        );
+      }
+    }
+
     // Build formatted answers string
     const formattedLines: Array<string> = [];
 
     for (const question of questions) {
       const questionIndex = questions.indexOf(question).toString();
-      const selectedLabel = answers[questionIndex];
+      const selectedLabel = answers[questionIndex]!; // Safe - validated above
+      const selectedOption = question.options.find((opt) => opt.label === selectedLabel);
 
-      if (selectedLabel) {
-        const selectedOption = question.options.find((opt) => opt.label === selectedLabel);
-        if (selectedOption) {
-          selectedOptions[question.header] = selectedLabel;
-          formattedLines.push(`**${question.header}**: ${selectedLabel}`);
-          formattedLines.push(`  ${selectedOption.description}`);
-        }
-      }
+      // Safe to assert - validated above
+      selectedOptions[question.header] = selectedLabel;
+      formattedLines.push(`**${question.header}**: ${selectedLabel}`);
+      formattedLines.push(`  ${selectedOption!.description}`);
     }
 
     debugLoggerService.logSdkEvent('system', 'Clarification answers submitted', {
@@ -817,6 +848,8 @@ ${featureRequest}
    - If score >= 4: The request is clear enough. Set type to "SKIP_CLARIFICATION" and explain why in the reason field.
    - If score < 4: The request needs clarification. Set type to "QUESTIONS_FOR_USER" and generate targeted questions.
 
+   **Always include an assessment**: Provide both score (1-5) and reason for the score, regardless of outcome type.
+
 3. **If Generating Questions** (for scores 1-3):
    - Create 2-4 focused questions that will meaningfully impact implementation
    - Each question needs a short header (e.g., "Storage", "Scope", "UI Pattern")
@@ -903,34 +936,33 @@ Focus on understanding what the user wants to build and gathering just enough in
     // Use both allowedTools AND disallowedTools as a safeguard
     // The SDK's allowedTools should restrict tools, but we also explicitly
     // disallow tools not in the allowed list to ensure tool restriction works
-    if (agentConfig.tools.length > 0) {
-      const allowedToolNames = agentConfig.tools.map((t) => t.toolName);
-      sdkOptions.allowedTools = allowedToolNames;
+    // SECURITY: Always apply restrictions, even when tools array is empty (empty = NO tools allowed)
+    const allowedToolNames = agentConfig.tools.length > 0 ? agentConfig.tools.map((t) => t.toolName) : [];
+    sdkOptions.allowedTools = allowedToolNames;
 
-      // All built-in Claude Code tools that should be blocked if not in the allowed list
-      const allBuiltInTools = [
-        'Task',
-        'AskUserQuestion',
-        'Bash',
-        'BashOutput',
-        'Edit',
-        'Read',
-        'Write',
-        'Glob',
-        'Grep',
-        'KillBash',
-        'NotebookEdit',
-        'WebFetch',
-        'WebSearch',
-        'TodoWrite',
-        'ExitPlanMode',
-        'ListMcpResources',
-        'ReadMcpResource',
-      ];
+    // All built-in Claude Code tools that should be blocked if not in the allowed list
+    const allBuiltInTools = [
+      'Task',
+      'AskUserQuestion',
+      'Bash',
+      'BashOutput',
+      'Edit',
+      'Read',
+      'Write',
+      'Glob',
+      'Grep',
+      'KillBash',
+      'NotebookEdit',
+      'WebFetch',
+      'WebSearch',
+      'TodoWrite',
+      'ExitPlanMode',
+      'ListMcpResources',
+      'ReadMcpResource',
+    ];
 
-      // Explicitly disallow tools NOT in the allowed list
-      sdkOptions.disallowedTools = allBuiltInTools.filter((tool) => !allowedToolNames.includes(tool));
-    }
+    // Explicitly disallow tools NOT in the allowed list
+    sdkOptions.disallowedTools = allBuiltInTools.filter((tool) => !allowedToolNames.includes(tool));
 
     // Configure permission mode
     if (agentConfig.permissionMode) {
@@ -950,6 +982,45 @@ Focus on understanding what the user wants to build and gathering just enough in
         preset: 'claude_code',
         type: 'preset',
       };
+    }
+
+    // Configure extended thinking
+    // When enabled, the SDK disables partial streaming and only emits complete messages after each turn
+    if (agentConfig.extendedThinkingEnabled && agentConfig.maxThinkingTokens) {
+      sdkOptions.maxThinkingTokens = agentConfig.maxThinkingTokens;
+      // Disable partial streaming for extended thinking mode
+      sdkOptions.includePartialMessages = false;
+
+      debugLoggerService.logSdkEvent(session.sessionId, 'Extended thinking enabled', {
+        extendedThinkingNote: 'Partial streaming disabled - will process complete messages only',
+        maxThinkingTokens: agentConfig.maxThinkingTokens,
+      });
+    }
+
+    // Start heartbeat for extended thinking mode
+    let heartbeatInterval: NodeJS.Timeout | null = null;
+    const startTime = Date.now();
+
+    if (agentConfig.extendedThinkingEnabled && agentConfig.maxThinkingTokens) {
+      heartbeatInterval = setInterval(() => {
+        const elapsedMs = Date.now() - startTime;
+
+        if (onStreamMessage) {
+          onStreamMessage({
+            elapsedMs,
+            estimatedProgress: null,
+            maxThinkingTokens: agentConfig.maxThinkingTokens!,
+            sessionId: session.sessionId,
+            timestamp: Date.now(),
+            type: 'extended_thinking_heartbeat',
+          });
+        }
+
+        debugLoggerService.logSdkEvent(session.sessionId, 'Extended thinking heartbeat', {
+          elapsedMs,
+          elapsedSeconds: Math.floor(elapsedMs / 1000),
+        });
+      }, EXTENDED_THINKING_HEARTBEAT_INTERVAL_MS);
     }
 
     // Build the prompt for clarification
@@ -1141,6 +1212,14 @@ Focus on understanding what the user wants to build and gathering just enough in
       }
 
       throw error;
+    } finally {
+      // Clean up heartbeat interval
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        debugLoggerService.logSdkEvent(session.sessionId, 'Extended thinking heartbeat stopped', {
+          elapsedMs: Date.now() - startTime,
+        });
+      }
     }
   }
 
@@ -1426,6 +1505,17 @@ Focus on understanding what the user wants to build and gathering just enough in
 
     // Transform flat output to discriminated union and validate required fields
     if (flatOutput.type === 'SKIP_CLARIFICATION') {
+      // Validate that assessment is present
+      if (!flatOutput.assessment) {
+        debugLoggerService.logSdkEvent(sessionId, 'Missing assessment for SKIP_CLARIFICATION', {
+          structuredOutput: flatOutput,
+        });
+        return {
+          error: 'SKIP_CLARIFICATION output missing required "assessment" field',
+          type: 'ERROR',
+        };
+      }
+
       // Validate that reason is present for SKIP_CLARIFICATION
       if (!flatOutput.reason) {
         debugLoggerService.logSdkEvent(sessionId, 'Missing reason for SKIP_CLARIFICATION', {
@@ -1437,33 +1527,26 @@ Focus on understanding what the user wants to build and gathering just enough in
         };
       }
 
-      // Validate with the discriminated union schema for full type safety
-      const skipOutput = {
+      // Return the outcome directly after manual validation
+      return {
         assessment: flatOutput.assessment,
         reason: flatOutput.reason,
-        type: 'SKIP_CLARIFICATION' as const,
-      };
-
-      const parsed = clarificationAgentOutputSchema.safeParse(skipOutput);
-      if (!parsed.success) {
-        debugLoggerService.logSdkEvent(sessionId, 'SKIP_CLARIFICATION validation failed', {
-          error: parsed.error.message,
-          structuredOutput: flatOutput,
-        });
-        return {
-          error: `Structured output validation failed: ${parsed.error.message}`,
-          type: 'ERROR',
-        };
-      }
-
-      return {
-        assessment: skipOutput.assessment,
-        reason: skipOutput.reason,
         type: 'SKIP_CLARIFICATION',
       };
     }
 
     // flatOutput.type === 'QUESTIONS_FOR_USER'
+    // Validate that assessment is present
+    if (!flatOutput.assessment) {
+      debugLoggerService.logSdkEvent(sessionId, 'Missing assessment for QUESTIONS_FOR_USER', {
+        structuredOutput: flatOutput,
+      });
+      return {
+        error: 'QUESTIONS_FOR_USER output missing required "assessment" field',
+        type: 'ERROR',
+      };
+    }
+
     // Validate that questions is present for QUESTIONS_FOR_USER
     if (!flatOutput.questions || flatOutput.questions.length === 0) {
       debugLoggerService.logSdkEvent(sessionId, 'Missing questions for QUESTIONS_FOR_USER', {
@@ -1475,28 +1558,10 @@ Focus on understanding what the user wants to build and gathering just enough in
       };
     }
 
-    // Validate with the discriminated union schema for full type safety
-    const questionsOutput = {
+    // Return the outcome directly after manual validation
+    return {
       assessment: flatOutput.assessment,
       questions: flatOutput.questions,
-      type: 'QUESTIONS_FOR_USER' as const,
-    };
-
-    const parsed = clarificationAgentOutputSchema.safeParse(questionsOutput);
-    if (!parsed.success) {
-      debugLoggerService.logSdkEvent(sessionId, 'QUESTIONS_FOR_USER validation failed', {
-        error: parsed.error.message,
-        structuredOutput: flatOutput,
-      });
-      return {
-        error: `Structured output validation failed: ${parsed.error.message}`,
-        type: 'ERROR',
-      };
-    }
-
-    return {
-      assessment: questionsOutput.assessment,
-      questions: questionsOutput.questions,
       type: 'QUESTIONS_FOR_USER',
     };
   }

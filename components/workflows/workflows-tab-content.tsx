@@ -20,6 +20,7 @@ import {
   WorkflowTableToolbar,
   type WorkflowTypeFilterValue,
 } from '@/components/workflows/workflow-table-toolbar';
+import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useCancelWorkflow, useWorkflowsByProject } from '@/hooks/queries/use-workflows';
 import { cn } from '@/lib/utils';
 
@@ -38,6 +39,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
 
   // Data fetching
   const { data: workflows, error, isLoading } = useWorkflowsByProject(projectId);
+  const { data: repositories = [] } = useRepositoriesByProject(projectId);
   const cancelWorkflowMutation = useCancelWorkflow();
 
   // Filter state
@@ -110,6 +112,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
   const isWorkflowsEmpty = !isLoading && !error && workflows?.length === 0;
   const hasWorkflows = !isLoading && !error && workflows && workflows.length > 0;
   const hasError = !isLoading && error;
+  const hasNoRepositories = repositories.length === 0;
 
   // Loading State
   if (isLoading) {
@@ -146,9 +149,10 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
         <EmptyState
           action={
             <CreateWorkflowDialog
+              disabled={hasNoRepositories}
               projectId={projectId}
               trigger={
-                <Button>
+                <Button disabled={hasNoRepositories}>
                   <Plus aria-hidden={'true'} className={'size-4'} />
                   Create Workflow
                 </Button>
@@ -170,9 +174,10 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
         {/* Header with Create Button */}
         <div className={'flex items-center justify-end'}>
           <CreateWorkflowDialog
+            disabled={hasNoRepositories}
             projectId={projectId}
             trigger={
-              <Button>
+              <Button disabled={hasNoRepositories}>
                 <Plus aria-hidden={'true'} className={'size-4'} />
                 Create Workflow
               </Button>

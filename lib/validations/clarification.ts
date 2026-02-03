@@ -73,6 +73,8 @@ export const clarificationStepOutputSchema = z.object({
  * Captures the full agent configuration needed for execution.
  */
 export interface ClarificationAgentConfig {
+  /** Whether extended thinking is enabled */
+  extendedThinkingEnabled: boolean;
   /** Array of hooks for agent events */
   hooks: Array<{
     body: string;
@@ -81,6 +83,8 @@ export interface ClarificationAgentConfig {
   }>;
   /** The unique identifier of the agent */
   id: number;
+  /** Maximum thinking tokens budget for extended thinking */
+  maxThinkingTokens: null | number;
   /** The model to use (e.g., 'claude-sonnet-4-20250514') */
   model: null | string;
   /** The display name of the agent */
@@ -210,6 +214,7 @@ export type ClarificationServicePhase =
   | 'complete'
   | 'error'
   | 'executing'
+  | 'executing_extended_thinking'
   | 'idle'
   | 'loading_agent'
   | 'processing_response'
@@ -330,20 +335,35 @@ export const clarificationAgentOutputJSONSchema: Record<string, unknown> = schem
 // =============================================================================
 
 /**
+ * Heartbeat message during extended thinking execution.
+ * Sent periodically to indicate progress when streaming is disabled.
+ */
+export interface ClarificationStreamExtendedThinkingHeartbeat extends ClarificationStreamMessageBase {
+  /** Elapsed time in milliseconds since execution started */
+  elapsedMs: number;
+  /** Estimated completion percentage (0-100, null if unknown) */
+  estimatedProgress: null | number;
+  /** Maximum thinking tokens budget */
+  maxThinkingTokens: number;
+  type: 'extended_thinking_heartbeat';
+}
+
+// =============================================================================
+// Streaming Message Types
+// =============================================================================
+
+/**
  * Discriminated union of all clarification stream message types.
  * Used for type-safe handling of streaming events in the renderer.
  */
 export type ClarificationStreamMessage =
+  | ClarificationStreamExtendedThinkingHeartbeat
   | ClarificationStreamPhaseChange
   | ClarificationStreamTextDelta
   | ClarificationStreamThinkingDelta
   | ClarificationStreamThinkingStart
   | ClarificationStreamToolStart
   | ClarificationStreamToolStop;
-
-// =============================================================================
-// Streaming Message Types
-// =============================================================================
 
 /**
  * Base interface for all clarification stream messages.
@@ -362,6 +382,7 @@ export interface ClarificationStreamMessageBase {
  * Type discriminator for clarification stream messages.
  */
 export type ClarificationStreamMessageType =
+  | 'extended_thinking_heartbeat'
   | 'phase_change'
   | 'text_delta'
   | 'thinking_delta'

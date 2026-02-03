@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Tooltip } from '@/components/ui/tooltip';
 import { RepositorySelectionField } from '@/components/workflows/repository-selection-field';
 import { pauseBehaviors, workflowTypes } from '@/db/schema/workflows.schema';
 import { useAgentsByType } from '@/hooks/queries/use-agents';
@@ -35,6 +36,10 @@ import { useAppForm } from '@/lib/forms/form-hook';
 import { createWorkflowSchema } from '@/lib/validations/workflow';
 
 interface CreateWorkflowDialogProps {
+  /** Whether the dialog trigger should be disabled (e.g., no repositories) */
+  disabled?: boolean;
+  /** Message to display when the trigger is disabled */
+  disabledMessage?: string;
   /** Callback when workflow is successfully created */
   onSuccess?: () => void;
   /** The project ID to create the workflow for */
@@ -58,7 +63,13 @@ const pauseBehaviorOptions = pauseBehaviors.map((behavior) => ({
   value: behavior,
 }));
 
-export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWorkflowDialogProps) => {
+export const CreateWorkflowDialog = ({
+  disabled = false,
+  disabledMessage = 'Please add at least one repository to the project before creating a workflow',
+  onSuccess,
+  projectId,
+  trigger,
+}: CreateWorkflowDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
@@ -84,7 +95,7 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
   ];
 
   const planningAgentOptions = planningAgents.map((agent) => ({
-    label: agent.name,
+    label: agent.displayName,
     value: String(agent.id),
   }));
 
@@ -185,6 +196,11 @@ export const CreateWorkflowDialog = ({ onSuccess, projectId, trigger }: CreateWo
 
   const isPlanning = selectedType === 'planning';
   const isShowClarificationAgent = !selectedSkipClarification && planningAgentOptions.length > 0;
+
+  // If disabled, show tooltip with disabled message
+  if (disabled) {
+    return <Tooltip content={disabledMessage}>{trigger}</Tooltip>;
+  }
 
   return (
     <DialogRoot onOpenChange={handleOpenChangeInternal} open={isOpen}>

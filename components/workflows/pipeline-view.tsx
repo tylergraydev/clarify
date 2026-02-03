@@ -43,7 +43,9 @@ interface ClarificationSessionState {
   activeTools: Array<ActiveTool>;
   agentName: string;
   error: null | string;
+  extendedThinkingElapsedMs?: number;
   isStreaming: boolean;
+  maxThinkingTokens?: null | number;
   outcome: ClarificationOutcome | null;
   phase: ClarificationServicePhase;
   sessionId: null | string;
@@ -59,7 +61,9 @@ const INITIAL_CLARIFICATION_STATE: ClarificationSessionState = {
   activeTools: [],
   agentName: 'Clarification Agent',
   error: null,
+  extendedThinkingElapsedMs: undefined,
   isStreaming: false,
+  maxThinkingTokens: null,
   outcome: null,
   phase: 'idle',
   sessionId: null,
@@ -416,7 +420,9 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         activeTools: [],
         agentName: clarificationAgent?.displayName ?? clarificationAgent?.name ?? 'Clarification Agent',
         error: null,
+        extendedThinkingElapsedMs: undefined,
         isStreaming: true,
+        maxThinkingTokens: clarificationAgent?.maxThinkingTokens ?? null,
         outcome: null,
         phase: 'loading_agent',
         sessionId: null,
@@ -429,6 +435,15 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
       const unsubscribe = window.electronAPI.clarification.onStreamMessage((message) => {
         // Update state based on message type
         switch (message.type) {
+          case 'extended_thinking_heartbeat':
+            setClarificationState((prev) => ({
+              ...prev,
+              extendedThinkingElapsedMs: message.elapsedMs,
+              maxThinkingTokens: message.maxThinkingTokens,
+              phase: 'executing_extended_thinking',
+            }));
+            break;
+
           case 'phase_change':
             setClarificationState((prev) => ({
               ...prev,
@@ -644,7 +659,9 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
                   clarificationSessionId: clarificationState.sessionId,
                   clarificationText: clarificationState.text,
                   clarificationThinking: clarificationState.thinking,
+                  extendedThinkingElapsedMs: clarificationState.extendedThinkingElapsedMs,
                   isClarificationStreaming: clarificationState.isStreaming,
+                  maxThinkingTokens: clarificationState.maxThinkingTokens,
                   onClarificationCancel: handleClarificationCancel,
                   onClarificationError: handleClarificationError,
                   onQuestionsReady: handleQuestionsReady,

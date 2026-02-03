@@ -44,6 +44,7 @@ const PHASE_LABELS: Record<string, string> = {
   complete: 'Analysis complete',
   error: 'Error occurred',
   executing: 'Analyzing codebase...',
+  executing_extended_thinking: 'Deep reasoning in progress...',
   idle: 'Ready',
   loading_agent: 'Loading agent...',
   processing_response: 'Processing response...',
@@ -97,12 +98,16 @@ interface ClarificationStreamingProps
   agentName?: string;
   /** Error message if something went wrong */
   error?: null | string;
+  /** Elapsed time in milliseconds for extended thinking mode */
+  extendedThinkingElapsedMs?: number;
   /** Whether a retry operation is in progress */
   isRetrying?: boolean;
   /** Whether the stream is currently running */
   isStreaming?: boolean;
   /** Maximum number of retry attempts allowed */
   maxRetries?: number;
+  /** Maximum thinking tokens budget */
+  maxThinkingTokens?: null | number;
   /** Callback when cancel button is clicked */
   onCancel?: () => void;
   /** Callback when a clarification error occurs */
@@ -135,6 +140,22 @@ interface ClarificationStreamingProps
 type ExtendedClarificationOutcome = ClarificationOutcome & ClarificationOutcomePauseInfo;
 
 /**
+ * Formats elapsed time from milliseconds into human-readable format.
+ * @param ms - Elapsed time in milliseconds
+ * @returns Formatted string like "3m 24s" or "42s"
+ */
+function formatElapsedTime(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  if (minutes > 0) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+  return `${seconds}s`;
+}
+
+/**
  * ClarificationStreaming displays live agent output during the clarification exploration phase.
  * Shows streaming text, tool use indicators, thinking blocks, and progress phases.
  */
@@ -144,9 +165,11 @@ export const ClarificationStreaming = memo(
     agentName = 'Clarification Agent',
     className,
     error,
+    extendedThinkingElapsedMs,
     isRetrying = false,
     isStreaming = false,
     maxRetries = 3,
+    maxThinkingTokens,
     onCancel,
     onClarificationError,
     onQuestionsReady,
@@ -187,6 +210,9 @@ export const ClarificationStreaming = memo(
     const isIdle = !isRunning && !isError && !isComplete;
     const isErrorWithDetails = isError && (error || outcome?.type === 'ERROR' || outcome?.type === 'TIMEOUT');
     const isEmptyState = !isRunning && !text && !isError && phase === 'idle';
+    const isExtendedThinking =
+      maxThinkingTokens && maxThinkingTokens > 0 && (phase === 'executing' || phase === 'executing_extended_thinking');
+    const shouldShowElapsedTime = isExtendedThinking && extendedThinkingElapsedMs !== undefined;
 
     // Handle outcome callbacks
     useEffect(() => {
@@ -224,7 +250,8 @@ export const ClarificationStreaming = memo(
         <div className={'flex items-center justify-between border-b border-border/50 px-4 py-3'}>
           {/* Agent Name and Status */}
           <div className={'flex items-center gap-3'}>
-            {isRunning && <Loader2 className={'size-4 animate-spin text-accent'} />}
+            {isRunning && !isExtendedThinking && <Loader2 className={'size-4 animate-spin text-accent'} />}
+            {isRunning && isExtendedThinking && <BrainIcon className={'size-4 animate-pulse text-amber-600'} />}
             {isError && <AlertCircle className={'size-4 text-destructive'} />}
             {isComplete && <BrainIcon className={'size-4 text-green-500'} />}
             {isIdle && <BrainIcon className={'size-4 text-muted-foreground'} />}
@@ -232,7 +259,9 @@ export const ClarificationStreaming = memo(
             <div className={'flex flex-col'}>
               <span className={'text-sm font-medium'}>
                 {isRunning ? (
-                  <Shimmer duration={1.5}>{agentName} is analyzing...</Shimmer>
+                  <Shimmer duration={isExtendedThinking ? 2.5 : 1.5}>
+                    {agentName} is {isExtendedThinking ? 'deeply reasoning' : 'analyzing'}...
+                  </Shimmer>
                 ) : (
                   <Fragment>
                     {agentName}
@@ -241,7 +270,12 @@ export const ClarificationStreaming = memo(
                   </Fragment>
                 )}
               </span>
-              <span className={'text-xs text-muted-foreground'}>{PHASE_LABELS[phase] ?? phase}</span>
+              <span className={'text-xs text-muted-foreground'}>
+                {PHASE_LABELS[phase] ?? phase}
+                {shouldShowElapsedTime && (
+                  <Fragment> · {formatElapsedTime(extendedThinkingElapsedMs)}</Fragment>
+                )}
+              </span>
             </div>
           </div>
 
@@ -253,6 +287,32 @@ export const ClarificationStreaming = memo(
             </Button>
           )}
         </div>
+
+        {/* Extended Thinking Banner */}
+        {isExtendedThinking && (
+          <div className={'border-b border-amber-500/30 bg-amber-500/10 px-4 py-3'}>
+            <div className={'flex items-center gap-3'}>
+              <BrainIcon className={'size-5 animate-pulse text-amber-600'} />
+              <div className={'flex-1'}>
+                <div className={'flex items-center gap-2'}>
+                  <span className={'text-sm font-medium text-amber-900 dark:text-amber-100'}>
+                    Extended Thinking Mode Active
+                  </span>
+                  {extendedThinkingElapsedMs !== undefined && (
+                    <span className={'text-xs text-amber-700 dark:text-amber-300'}>
+                      {formatElapsedTime(extendedThinkingElapsedMs)} elapsed
+                    </span>
+                  )}
+                </div>
+                <p className={'mt-1 text-xs text-amber-700 dark:text-amber-300'}>
+                  The agent is performing deep reasoning with up to {maxThinkingTokens?.toLocaleString()} thinking
+                  tokens. Real-time text streaming is disabled - the complete response will appear when reasoning
+                  finishes.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Active Tools Section */}
         {hasActiveTools && (

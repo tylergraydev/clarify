@@ -85,6 +85,8 @@ interface AgentInitialData {
   color?: AgentColor | null;
   description?: string;
   displayName: string;
+  extendedThinkingEnabled?: boolean;
+  maxThinkingTokens?: null | number;
   name: string;
   systemPrompt: string;
   type: AgentType;
@@ -383,7 +385,10 @@ export const AgentEditorDialog = ({
         color: (agent.color ?? '') as UpdateAgentFormValues['color'],
         description: agent.description ?? '',
         displayName: agent.displayName,
+        extendedThinkingEnabled: agent.extendedThinkingEnabled ?? false,
+        maxThinkingTokens: agent.maxThinkingTokens ?? null,
         model: (agent.model ?? 'inherit') as UpdateAgentFormValues['model'],
+        name: agent.name,
         permissionMode: (agent.permissionMode ?? 'default') as UpdateAgentFormValues['permissionMode'],
         projectId: projectIdToFormValue(agent.projectId),
         systemPrompt: agent.systemPrompt,
@@ -394,6 +399,8 @@ export const AgentEditorDialog = ({
         color: initialData.color ?? 'blue',
         description: initialData.description ?? '',
         displayName: initialData.displayName,
+        extendedThinkingEnabled: false,
+        maxThinkingTokens: null,
         model: 'inherit' as CreateAgentFormData['model'],
         name: initialData.name,
         permissionMode: 'default' as CreateAgentFormData['permissionMode'],
@@ -406,6 +413,8 @@ export const AgentEditorDialog = ({
       color: 'blue',
       description: '',
       displayName: '',
+      extendedThinkingEnabled: false,
+      maxThinkingTokens: null,
       model: 'inherit' as CreateAgentFormData['model'],
       name: '',
       permissionMode: 'default' as CreateAgentFormData['permissionMode'],
@@ -461,7 +470,11 @@ export const AgentEditorDialog = ({
             color: colorValue,
             description: updateValue.description,
             displayName: updateValue.displayName,
+            extendedThinkingEnabled: updateValue.extendedThinkingEnabled,
+            maxThinkingTokens: updateValue.extendedThinkingEnabled ? updateValue.maxThinkingTokens : null,
             model: modelValue,
+            // Only include name for custom agents (built-in agents have name protected on the backend)
+            name: !isBuiltIn ? updateValue.name : undefined,
             permissionMode: permissionModeValue,
             systemPrompt: updateValue.systemPrompt,
           },
@@ -597,6 +610,8 @@ export const AgentEditorDialog = ({
           color: createValue.color,
           description: createValue.description,
           displayName: createValue.displayName,
+          extendedThinkingEnabled: createValue.extendedThinkingEnabled,
+          maxThinkingTokens: createValue.extendedThinkingEnabled ? createValue.maxThinkingTokens : null,
           model: modelValue,
           name: createValue.name,
           permissionMode: permissionModeValue,
@@ -826,6 +841,10 @@ export const AgentEditorDialog = ({
   // Derived values for render
   const { agentTypeLabel, dialogDescription, dialogTitle, submitLabel } = dialogLabels;
 
+  // Boolean helpers for conditional rendering
+  const _showBuiltInNameDisplay = isEditMode && agent && isBuiltIn;
+  const _canEditAgentName = !isEditMode || (isEditMode && !isBuiltIn);
+
   return (
     <DialogRoot onOpenChange={handleOpenChange} open={isOpen}>
       {/* Dialog Trigger */}
@@ -864,8 +883,8 @@ export const AgentEditorDialog = ({
           >
             {/* Scrollable Content */}
             <DialogBody className={'px-2'}>
-              {/* Agent Info Display (Edit Mode Only) */}
-              {isEditMode && agent && (
+              {/* Agent Info Display (Built-in Agents in Edit Mode Only) */}
+              {_showBuiltInNameDisplay && (
                 <form.Subscribe selector={(state) => state.values.color}>
                   {(colorValue) => (
                     <div className={'rounded-md border border-border bg-muted/50 p-3'}>
@@ -881,6 +900,9 @@ export const AgentEditorDialog = ({
                         <div className={'text-sm'}>
                           <span className={'text-muted-foreground'}>{'Internal name: '}</span>
                           <span className={'font-mono text-foreground'}>{agent.name}</span>
+                          <span className={'ml-2 text-xs text-muted-foreground'}>
+                            {'(built-in agents cannot be renamed)'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -892,12 +914,12 @@ export const AgentEditorDialog = ({
               <fieldset className={'mt-4 flex flex-col gap-4'} disabled={isSubmitting || isResetting || isViewMode}>
                 <legend className={'sr-only'}>{'Agent details'}</legend>
 
-                {/* Name Field (Create Mode Only) */}
-                {!isEditMode && (
+                {/* Name Field (Create Mode or Custom Agents in Edit Mode) */}
+                {_canEditAgentName && (
                   <form.AppField name={'name'}>
                     {(field) => (
                       <field.TextField
-                        autoFocus={!isDuplicateMode}
+                        autoFocus={!isDuplicateMode && !isEditMode}
                         description={
                           'A unique identifier using lowercase letters, numbers, and hyphens (e.g., my-custom-agent)'
                         }
@@ -991,6 +1013,40 @@ export const AgentEditorDialog = ({
                     />
                   )}
                 </form.AppField>
+
+                {/* Extended Thinking Toggle */}
+                <form.AppField name={'extendedThinkingEnabled'}>
+                  {(field) => (
+                    <field.SwitchField
+                      description={
+                        'Enables extended reasoning for complex tasks. ' +
+                        'IMPORTANT: Real-time text streaming is disabled when extended thinking is active. ' +
+                        'Instead of seeing incremental updates, the complete response will appear after the agent finishes reasoning. ' +
+                        'You will see elapsed time and periodic heartbeat updates during execution.'
+                      }
+                      label={'Extended Thinking'}
+                    />
+                  )}
+                </form.AppField>
+
+                {/* Thinking Token Budget (Conditional) */}
+                <form.Subscribe selector={(state) => state.values.extendedThinkingEnabled}>
+                  {(extendedThinkingEnabled) =>
+                    extendedThinkingEnabled ? (
+                      <form.AppField name={'maxThinkingTokens'}>
+                        {(field) => (
+                          <field.NumberField
+                            description={'1,000 - 128,000 tokens. Recommended: 10,000 for most tasks.'}
+                            label={'Thinking Token Budget'}
+                            max={128000}
+                            min={1000}
+                            step={1000}
+                          />
+                        )}
+                      </form.AppField>
+                    ) : null
+                  }
+                </form.Subscribe>
 
                 {/* Color Picker Field */}
                 <form.AppField name={'color'}>

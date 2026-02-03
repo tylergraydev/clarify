@@ -451,6 +451,14 @@ export function registerAgentHandlers(
           }
         }
 
+        // Check for duplicate name when name is being changed
+        if (data.name && data.name !== agent.name) {
+          const existingAgentWithName = await agentsRepository.findByName(data.name);
+          if (existingAgentWithName && existingAgentWithName.id !== id) {
+            throw new Error(`An agent with the name "${data.name}" already exists`);
+          }
+        }
+
         // Perform the update
         const updatedAgent = await agentsRepository.update(id, data);
         if (!updatedAgent) {
