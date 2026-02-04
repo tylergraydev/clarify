@@ -22,6 +22,7 @@ declare module "@@@next-typesafe-url" {
     "/settings": StaticRoute;
     "/templates": StaticRoute;
     "/workflows/active": StaticRoute;
+    "/workflows/created": StaticRoute;
     "/debug": StaticRoute;
     "/": StaticRoute;
   }

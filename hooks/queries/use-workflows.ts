@@ -14,6 +14,7 @@ import { useElectronDb } from '../use-electron';
  * Active workflow statuses for filtering
  */
 const ACTIVE_STATUSES = ['running', 'paused', 'editing'] as const;
+const CREATED_STATUS = 'created' as const;
 
 /**
  * Fetch active workflows (running, paused, editing) with automatic polling
@@ -29,6 +30,25 @@ export function useActiveWorkflows(options?: { enabled?: boolean }) {
     queryFn: async () => {
       const allWorkflows = await workflows.list();
       return allWorkflows.filter((w) => ACTIVE_STATUSES.includes(w.status as (typeof ACTIVE_STATUSES)[number]));
+    },
+    refetchInterval: 5000,
+  });
+}
+
+/**
+ * Fetch created workflows (not started yet) with automatic polling
+ * @param options.enabled - Optional flag to pause polling when not needed (defaults to true)
+ */
+export function useCreatedWorkflows(options?: { enabled?: boolean }) {
+  const { isElectron, workflows } = useElectronDb();
+  const enabledOption = options?.enabled ?? true;
+
+  return useQuery({
+    ...workflowKeys.created,
+    enabled: isElectron && enabledOption,
+    queryFn: async () => {
+      const allWorkflows = await workflows.list();
+      return allWorkflows.filter((workflow) => workflow.status === CREATED_STATUS);
     },
     refetchInterval: 5000,
   });
@@ -51,6 +71,9 @@ export function useCancelWorkflow() {
         });
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.running.queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.created.queryKey,
         });
         if (workflow.projectId) {
           void queryClient.invalidateQueries({
@@ -86,6 +109,9 @@ export function useCreateWorkflow(options?: { autoStart?: boolean }) {
         });
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.running.queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.created.queryKey,
         });
         if (workflow.projectId) {
           void queryClient.invalidateQueries({
@@ -189,6 +215,9 @@ export function useStartWorkflow() {
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.running.queryKey,
         });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.created.queryKey,
+        });
         // Invalidate step queries to fetch newly created planning steps
         void queryClient.invalidateQueries({
           queryKey: stepKeys.byWorkflow(workflow.id).queryKey,
@@ -223,6 +252,9 @@ export function useUpdateWorkflow() {
         });
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.running.queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.created.queryKey,
         });
         if (workflow.projectId) {
           void queryClient.invalidateQueries({

@@ -53,7 +53,14 @@ export type WorkflowStatusFilterValue =
   | 'paused'
   | 'running';
 
+export interface WorkflowStatusFilterOption {
+  label: string;
+  value: WorkflowStatusFilterValue;
+}
+
 export interface WorkflowTableToolbarProps extends ComponentPropsWithRef<'div'> {
+  /** Default status filter value for reset/count logic */
+  defaultStatusFilter?: WorkflowStatusFilterValue;
   /** Callback when project filter changes */
   onProjectFilterChange?: (value: string) => void;
   /** Callback when reset filters button is clicked */
@@ -68,6 +75,8 @@ export interface WorkflowTableToolbarProps extends ComponentPropsWithRef<'div'> 
   projects?: Array<ProjectFilterOption>;
   /** Whether to show the project filter */
   showProjectFilter?: boolean;
+  /** Override the available status filter options */
+  statusOptions?: Array<WorkflowStatusFilterOption>;
   /** Current status filter value */
   statusFilter: WorkflowStatusFilterValue;
   /** Current type filter value */
@@ -93,7 +102,7 @@ export const ACTIVE_STATUS_FILTER_OPTIONS = [
   { label: 'Editing', value: 'editing' },
 ] as const;
 
-const STATUS_FILTER_OPTIONS = [
+const STATUS_FILTER_OPTIONS: Array<WorkflowStatusFilterOption> = [
   { label: 'All statuses', value: 'all' },
   { label: 'Created', value: 'created' },
   { label: 'Running', value: 'running' },
@@ -115,6 +124,7 @@ const TYPE_FILTER_OPTIONS = [
 // ============================================================================
 
 interface FilterCountParams {
+  defaultStatusFilter: WorkflowStatusFilterValue;
   projectFilter?: string;
   showProjectFilter?: boolean;
   statusFilter: WorkflowStatusFilterValue;
@@ -125,13 +135,14 @@ interface FilterCountParams {
  * Calculate the number of active filters
  */
 const getActiveFilterCount = ({
+  defaultStatusFilter,
   projectFilter,
   showProjectFilter,
   statusFilter,
   typeFilter,
 }: FilterCountParams): number => {
   let count = 0;
-  if (statusFilter !== DEFAULT_STATUS_FILTER) count++;
+  if (statusFilter !== defaultStatusFilter) count++;
   if (typeFilter !== DEFAULT_TYPE_FILTER) count++;
   if (showProjectFilter && projectFilter && projectFilter !== DEFAULT_PROJECT_FILTER) count++;
   return count;
@@ -196,6 +207,7 @@ const FilterCountBadge = ({ count }: FilterCountBadgeProps) => {
  */
 export const WorkflowTableToolbar = memo(function WorkflowTableToolbar({
   className,
+  defaultStatusFilter,
   onProjectFilterChange,
   onResetFilters,
   onStatusFilterChange,
@@ -204,12 +216,15 @@ export const WorkflowTableToolbar = memo(function WorkflowTableToolbar({
   projects,
   ref,
   showProjectFilter = false,
+  statusOptions,
   statusFilter,
   typeFilter,
   ...props
 }: WorkflowTableToolbarProps) {
+  const resolvedDefaultStatusFilter = defaultStatusFilter ?? DEFAULT_STATUS_FILTER;
   // Computed state
   const activeFilterCount = getActiveFilterCount({
+    defaultStatusFilter: resolvedDefaultStatusFilter,
     projectFilter,
     showProjectFilter,
     statusFilter,
@@ -223,7 +238,7 @@ export const WorkflowTableToolbar = memo(function WorkflowTableToolbar({
   };
 
   const handleStatusFilterChange = (value: null | string) => {
-    onStatusFilterChange((value || DEFAULT_STATUS_FILTER) as WorkflowStatusFilterValue);
+    onStatusFilterChange((value || resolvedDefaultStatusFilter) as WorkflowStatusFilterValue);
   };
 
   const handleTypeFilterChange = (value: null | string) => {
@@ -231,7 +246,7 @@ export const WorkflowTableToolbar = memo(function WorkflowTableToolbar({
   };
 
   const handleResetFilters = () => {
-    onStatusFilterChange(DEFAULT_STATUS_FILTER);
+    onStatusFilterChange(resolvedDefaultStatusFilter);
     onTypeFilterChange(DEFAULT_TYPE_FILTER);
     if (showProjectFilter) {
       onProjectFilterChange?.(DEFAULT_PROJECT_FILTER);
@@ -245,7 +260,11 @@ export const WorkflowTableToolbar = memo(function WorkflowTableToolbar({
     return [allOption, ...(projects || [])];
   }, [projects]);
   const projectFilterItems = useMemo(() => optionsToItems(projectFilterOptions), [projectFilterOptions]);
-  const statusFilterItems = useMemo(() => optionsToItems(STATUS_FILTER_OPTIONS), []);
+  const resolvedStatusOptions = useMemo(
+    () => (statusOptions && statusOptions.length > 0 ? statusOptions : STATUS_FILTER_OPTIONS),
+    [statusOptions]
+  );
+  const statusFilterItems = useMemo(() => optionsToItems(resolvedStatusOptions), [resolvedStatusOptions]);
   const typeFilterItems = useMemo(() => optionsToItems(TYPE_FILTER_OPTIONS), []);
 
   return (
@@ -315,7 +334,7 @@ export const WorkflowTableToolbar = memo(function WorkflowTableToolbar({
                       <SelectPositioner>
                         <SelectPopup size={'sm'}>
                           <SelectList>
-                            {STATUS_FILTER_OPTIONS.map((option) => (
+                            {resolvedStatusOptions.map((option) => (
                               <SelectItem key={option.value} label={option.label} size={'sm'} value={option.value}>
                                 {option.label}
                               </SelectItem>

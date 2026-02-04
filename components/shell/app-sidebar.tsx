@@ -2,7 +2,7 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { Bot, FileText, FolderKanban, History, LayoutDashboard, Play, Settings, Star, Workflow } from 'lucide-react';
+import { Bot, Clock, FileText, FolderKanban, History, LayoutDashboard, Play, Settings, Star, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { usePathname } from 'next/navigation';
 
@@ -179,6 +179,12 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
                   label: 'Active',
                 },
                 {
+                  href: $path({ route: '/workflows/created' }),
+                  icon: Clock,
+                  isActive: pathname === $path({ route: '/workflows/created' }),
+                  label: 'Created',
+                },
+                {
                   href: $path({ route: '/workflows/history', searchParams: {} }),
                   icon: History,
                   isActive: pathname === $path({ route: '/workflows/history', searchParams: {} }),
@@ -213,6 +219,14 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
                   isCollapsed={false}
                   isNested={true}
                   label={'Active'}
+                />
+                <NavItem
+                  href={$path({ route: '/workflows/created' })}
+                  icon={Clock}
+                  isActive={pathname === $path({ route: '/workflows/created' })}
+                  isCollapsed={false}
+                  isNested={true}
+                  label={'Created'}
                 />
                 <NavItem
                   href={$path({ route: '/workflows/history', searchParams: {} })}
