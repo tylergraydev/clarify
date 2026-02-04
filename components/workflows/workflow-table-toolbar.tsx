@@ -78,7 +78,7 @@ export interface WorkflowTableToolbarProps extends ComponentPropsWithRef<'div'> 
   /** Current status filter value */
   statusFilter: WorkflowStatusFilterValue;
   /** Override the available status filter options */
-  statusOptions?: Array<WorkflowStatusFilterOption>;
+  statusOptions?: Array<WorkflowStatusFilterOption> | ReadonlyArray<WorkflowStatusFilterOption>;
   /** Current type filter value */
   typeFilter: WorkflowTypeFilterValue;
 }

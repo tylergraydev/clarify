@@ -21,6 +21,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { DataTableSkeleton } from '@/components/ui/table';
 import { WorkflowTable } from '@/components/workflows/workflow-table';
 import {
+  ACTIVE_STATUS_FILTER_OPTIONS,
   type ActiveWorkflowStatusFilterValue,
   type ProjectFilterOption,
   WorkflowTableToolbar,
@@ -384,6 +385,7 @@ export default function ActiveWorkflowsPage() {
                 projects={projectFilterOptions}
                 showProjectFilter={true}
                 statusFilter={statusFilter}
+                statusOptions={ACTIVE_STATUS_FILTER_OPTIONS}
                 typeFilter={typeFilter}
               />
             }
