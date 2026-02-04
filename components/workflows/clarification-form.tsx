@@ -5,12 +5,18 @@ import type { ReactElement } from 'react';
 import { useStore } from '@tanstack/react-form';
 import { useEffect, useMemo } from 'react';
 
-import type { ClarificationAnswers, ClarificationQuestion } from '@/lib/validations/clarification';
+import type {
+  ClarificationAnswer,
+  ClarificationAnswers,
+  ClarificationQuestion,
+} from '@/lib/validations/clarification';
 
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
+import { ClarificationAnswerField } from '@/components/workflows/clarification-answer-field';
 import { useAppForm } from '@/lib/forms/form-hook';
 import { cn } from '@/lib/utils';
+import { migrateAnswersToNewFormat } from '@/lib/validations/clarification';
 
 interface ClarificationFormProps {
   /** Optional className for styling */
@@ -45,10 +51,28 @@ export const ClarificationForm = ({
 }: ClarificationFormProps): ReactElement => {
   // Build default values from questions array, using existing answers if available
   const defaultValues = useMemo(() => {
-    const values: Record<string, string> = {};
-    questions.forEach((_, index) => {
+    // Migrate existing answers to new format for backward compatibility
+    const migratedAnswers = existingAnswers ? migrateAnswersToNewFormat(existingAnswers, questions) : {};
+
+    const values: Record<string, ClarificationAnswer> = {};
+    questions.forEach((question, index) => {
       const key = String(index);
-      values[key] = existingAnswers?.[key] ?? '';
+      const existingAnswer = migratedAnswers[key];
+
+      // Use existing answer if available, otherwise create default based on question type
+      if (existingAnswer) {
+        values[key] = existingAnswer;
+      } else {
+        // Initialize based on question type
+        if (question.questionType === 'checkbox') {
+          values[key] = { other: '', selected: [], type: 'checkbox' };
+        } else if (question.questionType === 'text') {
+          values[key] = { text: '', type: 'text' };
+        } else {
+          // Default to radio
+          values[key] = { other: '', selected: '', type: 'radio' };
+        }
+      }
     });
     return values;
   }, [questions, existingAnswers]);
@@ -56,11 +80,16 @@ export const ClarificationForm = ({
   const form = useAppForm({
     defaultValues,
     onSubmit: ({ value }) => {
-      // Transform form values to ClarificationAnswers format
+      // Filter out empty answers before submission
       const answers: ClarificationAnswers = {};
-      Object.entries(value).forEach(([key, val]) => {
-        if (val) {
-          answers[key] = val;
+      Object.entries(value).forEach(([key, answer]) => {
+        // Only include answered questions
+        if (answer.type === 'radio' && (answer.selected || answer.other)) {
+          answers[key] = answer;
+        } else if (answer.type === 'checkbox' && (answer.selected.length > 0 || answer.other)) {
+          answers[key] = answer;
+        } else if (answer.type === 'text' && answer.text?.trim()) {
+          answers[key] = answer;
         }
       });
       onSubmit(answers);
@@ -70,7 +99,21 @@ export const ClarificationForm = ({
   const questionCount = questions.length;
   const questionLabel = questionCount === 1 ? 'question' : 'questions';
   const formValues = useStore(form.store, (state) => state.values);
-  const answeredCount = useMemo(() => Object.values(formValues).filter((value) => Boolean(value)).length, [formValues]);
+  const answeredCount = useMemo(() => {
+    return Object.values(formValues).filter((answer) => {
+      // Check if the answer is filled based on its type
+      if (answer.type === 'radio') {
+        return Boolean(answer.selected || answer.other);
+      }
+      if (answer.type === 'checkbox') {
+        return answer.selected.length > 0 || Boolean(answer.other);
+      }
+      if (answer.type === 'text') {
+        return Boolean(answer.text?.trim());
+      }
+      return false;
+    }).length;
+  }, [formValues]);
   const progressPercent = questionCount > 0 ? Math.round((answeredCount / questionCount) * 100) : 0;
   const isIncomplete = answeredCount < questionCount;
   const _shouldShowDisabledTooltip = isIncomplete && !isSubmitting;
@@ -112,11 +155,6 @@ export const ClarificationForm = ({
         <div className={'min-h-0 flex-1 divide-y divide-border/60 overflow-y-auto'}>
           {questions.map((question, index) => {
             const fieldName = String(index);
-            const options = question.options.map((option) => ({
-              description: option.description,
-              label: option.label,
-              value: option.label,
-            }));
 
             return (
               <div className={'px-6 py-5'} key={fieldName}>
@@ -134,9 +172,7 @@ export const ClarificationForm = ({
                   </div>
                 </div>
                 <div className={'mt-4'}>
-                  <form.AppField name={fieldName}>
-                    {(field) => <field.RadioField isDisabled={isSubmitting} label={''} options={options} />}
-                  </form.AppField>
+                  <ClarificationAnswerField form={form} isDisabled={isSubmitting} question={question} questionIndex={index} />
                 </div>
               </div>
             );

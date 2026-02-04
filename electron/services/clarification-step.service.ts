@@ -705,32 +705,18 @@ class ClarificationStepService {
   submitAnswers(input: ClarificationRefinementInput): {
     formattedAnswers: string;
     questions: Array<ClarificationQuestion>;
-    selectedOptions: Record<string, string>;
+    selectedOptions: Record<string, Array<string> | string>;
   } {
     const { answers, questions, stepId, workflowId } = input;
-    const selectedOptions: Record<string, string> = {};
+    const selectedOptions: Record<string, Array<string> | string> = {};
 
     // Validate all questions have answers
-    const missingIndices = questions
-      .map((_, idx) => idx.toString())
-      .filter((idx) => !answers[idx] || answers[idx].trim() === '');
-
-    if (missingIndices.length > 0) {
-      throw new Error(
-        `Missing answers for ${missingIndices.length} question(s) at indices: ${missingIndices.join(', ')}`
-      );
-    }
-
-    // Validate all selected labels are valid options
     for (const question of questions) {
       const questionIndex = questions.indexOf(question).toString();
-      const selectedLabel = answers[questionIndex]!; // Safe - validated above
-      const validLabels = question.options.map((opt) => opt.label);
+      const answer = answers[questionIndex];
 
-      if (!validLabels.includes(selectedLabel)) {
-        throw new Error(
-          `Invalid answer "${selectedLabel}" for question "${question.header}". Valid options: ${validLabels.join(', ')}`
-        );
+      if (!answer) {
+        throw new Error(`Missing answer for question: "${question.header}"`);
       }
     }
 
@@ -739,13 +725,48 @@ class ClarificationStepService {
 
     for (const question of questions) {
       const questionIndex = questions.indexOf(question).toString();
-      const selectedLabel = answers[questionIndex]!; // Safe - validated above
-      const selectedOption = question.options.find((opt) => opt.label === selectedLabel);
+      const answer = answers[questionIndex]!; // Safe - validated above
 
-      // Safe to assert - validated above
-      selectedOptions[question.header] = selectedLabel;
-      formattedLines.push(`**${question.header}**: ${selectedLabel}`);
-      formattedLines.push(`  ${selectedOption!.description}`);
+      if (answer.type === 'radio') {
+        // Radio: single selection with optional "Other" text
+        selectedOptions[question.header] = answer.selected || 'Other';
+
+        formattedLines.push(`**${question.header}**: ${answer.selected || 'Other'}`);
+
+        if (answer.selected) {
+          const selectedOption = question.options?.find((opt) => opt.label === answer.selected);
+
+          if (selectedOption?.description) {
+            formattedLines.push(`  ${selectedOption.description}`);
+          }
+        }
+
+        if (answer.other) {
+          formattedLines.push(`  Other: ${answer.other}`);
+        }
+      } else if (answer.type === 'checkbox') {
+        // Checkbox: multiple selections with optional "Other" text
+        selectedOptions[question.header] = answer.selected;
+
+        formattedLines.push(`**${question.header}**:`);
+
+        answer.selected.forEach((label) => {
+          const option = question.options?.find((opt) => opt.label === label);
+
+          formattedLines.push(`  - ${label}`);
+          if (option?.description) {
+            formattedLines.push(`    ${option.description}`);
+          }
+        });
+
+        if (answer.other) {
+          formattedLines.push(`  - Other: ${answer.other}`);
+        }
+      } else if (answer.type === 'text') {
+        // Text: open-ended response
+        selectedOptions[question.header] = answer.text;
+        formattedLines.push(`**${question.header}**: ${answer.text}`);
+      }
     }
 
     debugLoggerService.logSdkEvent('system', 'Clarification answers submitted', {
@@ -852,9 +873,22 @@ ${featureRequest}
 
 3. **If Generating Questions** (for scores 1-3):
    - Create 2-4 focused questions that will meaningfully impact implementation
+   - **Choose the right question type for each question:**
+     * Use "radio" (questionType: "radio") for mutually exclusive choices where the user should pick ONE option
+     * Use "checkbox" (questionType: "checkbox") for non-exclusive options where the user can pick MULTIPLE
+     * Use "text" (questionType: "text") for open-ended responses that can't be captured in predefined options
+   - **Enable "Other" input when appropriate:**
+     * Set allowOther: true for radio/checkbox questions when users might need a custom option beyond your suggestions
+     * Don't use allowOther for text questions (they're already open-ended)
+   - Each radio/checkbox question needs 2-4 concrete options with descriptions
+   - Text questions don't need options (just the question text)
    - Each question needs a short header (e.g., "Storage", "Scope", "UI Pattern")
-   - Provide 2-4 concrete options per question with descriptions
    - Reference existing codebase patterns when relevant
+
+**Question Type Examples:**
+- Radio: "How should this feature store data?" (SQLite, Electron Store, In-memory) - user picks one
+- Checkbox: "Which platforms should this support?" (Windows, macOS, Linux) - user can pick multiple
+- Text: "Describe any specific edge cases or constraints for this feature." - open-ended answer
 
 Focus on understanding what the user wants to build and gathering just enough information to enable high-quality implementation planning.`;
   }

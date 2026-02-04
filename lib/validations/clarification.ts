@@ -16,15 +16,24 @@ export type ClarificationOption = z.infer<typeof clarificationOptionSchema>;
  * Each question has:
  * - question: The full question text to display
  * - header: Short label for the question (e.g., "Storage", "Scope")
- * - options: Array of 2-4 selectable options
+ * - options: Array of 2-4 selectable options (optional for text questions)
+ * - questionType: Type of question (radio, checkbox, or text)
+ * - allowOther: Whether to show "Other" text input (for radio/checkbox only)
  */
 export const clarificationQuestionSchema = z.object({
+  allowOther: z.boolean().default(false).describe('Whether to show "Other" text input for radio/checkbox questions'),
   header: z.string().min(1, 'Question header is required'),
   options: z
     .array(clarificationOptionSchema)
     .min(2, 'At least 2 options are required')
-    .max(4, 'Maximum 4 options allowed'),
+    .max(4, 'Maximum 4 options allowed')
+    .optional()
+    .describe('Array of selectable options (required for radio/checkbox, not needed for text)'),
   question: z.string().min(1, 'Question text is required'),
+  questionType: z
+    .enum(['radio', 'checkbox', 'text'])
+    .default('radio')
+    .describe('Type of question: radio (single select), checkbox (multi-select), or text (open-ended)'),
 });
 
 export type ClarificationQuestion = z.infer<typeof clarificationQuestionSchema>;
@@ -37,12 +46,82 @@ export const clarificationQuestionsArraySchema = z.array(clarificationQuestionSc
 export type ClarificationQuestions = z.infer<typeof clarificationQuestionsArraySchema>;
 
 /**
- * Schema for clarification answers.
- * Maps question index (as string "0", "1", etc.) to the selected option label.
+ * Schema for a single clarification answer.
+ * Supports three answer formats based on question type:
+ * - Radio: Single selection with optional "Other" text
+ * - Checkbox: Multiple selections with optional "Other" text
+ * - Text: Open-ended text response
  */
-export const clarificationAnswersSchema = z.record(z.string(), z.string());
+export const clarificationAnswerSchema = z.discriminatedUnion('type', [
+  z.object({
+    other: z.string().optional().describe('Custom "Other" text provided by user'),
+    selected: z.string().min(1, 'Selection is required'),
+    type: z.literal('radio'),
+  }),
+  z.object({
+    other: z.string().optional().describe('Custom "Other" text provided by user'),
+    selected: z.array(z.string()).min(1, 'At least one selection is required'),
+    type: z.literal('checkbox'),
+  }),
+  z.object({
+    text: z.string().min(1, 'Text is required'),
+    type: z.literal('text'),
+  }),
+]);
+
+export type ClarificationAnswer = z.infer<typeof clarificationAnswerSchema>;
+
+/**
+ * Schema for clarification answers.
+ * Maps question index (as string "0", "1", etc.) to the answer object.
+ * Supports both new format (ClarificationAnswer) and old format (string) for backward compatibility.
+ */
+export const clarificationAnswersSchema = z.record(z.string(), clarificationAnswerSchema);
 
 export type ClarificationAnswers = z.infer<typeof clarificationAnswersSchema>;
+
+/**
+ * Migrates old-format answers to new format for backward compatibility.
+ * Old format: Record<string, string> (question index → selected label)
+ * New format: Record<string, ClarificationAnswer> (question index → answer object)
+ *
+ * @param answers - The answers object (old or new format)
+ * @param questions - The array of clarification questions
+ * @returns Migrated answers in new format
+ */
+export function migrateAnswersToNewFormat(
+  answers: unknown,
+  questions: Array<ClarificationQuestion>
+): ClarificationAnswers {
+  if (!answers || typeof answers !== 'object') {
+    return {};
+  }
+
+  const result: ClarificationAnswers = {};
+
+  for (const [key, value] of Object.entries(answers)) {
+    const questionIndex = parseInt(key, 10);
+    const question = questions[questionIndex];
+
+    if (!question) continue;
+
+    // Check if already in new format
+    if (typeof value === 'object' && value !== null && 'type' in value) {
+      result[key] = value as ClarificationAnswer;
+      continue;
+    }
+
+    // Old format: string value (treat as radio selection for backward compatibility)
+    if (typeof value === 'string') {
+      result[key] = {
+        selected: value,
+        type: 'radio',
+      };
+    }
+  }
+
+  return result;
+}
 
 /**
  * Schema for the assessment object in clarification output.

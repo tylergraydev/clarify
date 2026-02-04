@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentPropsWithRef, KeyboardEvent } from 'react';
+import type { ComponentPropsWithRef, KeyboardEvent, ReactNode } from 'react';
 
 import { Collapsible as BaseCollapsible } from '@base-ui/react/collapsible';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -291,8 +291,74 @@ export const PipelineStep = ({
         <div className={'mt-4 space-y-3'}>
           {clarificationQuestions.map((question, index) => {
             const answerKey = String(index);
-            const selectedLabel = clarificationAnswers[answerKey];
-            const selectedOption = question.options.find((option) => option.label === selectedLabel);
+            const answer = clarificationAnswers[answerKey];
+
+            // Handle backward compatibility - old format is string
+            let answerDisplay: ReactNode;
+
+            if (!answer) {
+              answerDisplay = <div className={'text-sm text-muted-foreground'}>Unanswered</div>;
+            } else if (typeof answer === 'string') {
+              // Old format: treat as radio selection
+              const selectedOption = question.options?.find((option) => option.label === answer);
+              answerDisplay = (
+                <Fragment>
+                  <div className={'mt-1 text-sm font-semibold text-foreground'}>{answer}</div>
+                  {selectedOption?.description && (
+                    <div className={'mt-1 text-xs text-muted-foreground'}>{selectedOption.description}</div>
+                  )}
+                </Fragment>
+              );
+            } else if (answer.type === 'radio') {
+              // Radio answer: single selection with optional "Other"
+              const selectedOption = question.options?.find((option) => option.label === answer.selected);
+              answerDisplay = (
+                <Fragment>
+                  <div className={'mt-1 text-sm font-semibold text-foreground'}>{answer.selected}</div>
+                  {selectedOption?.description && (
+                    <div className={'mt-1 text-xs text-muted-foreground'}>{selectedOption.description}</div>
+                  )}
+                  {answer.other && (
+                    <div className={'mt-2 rounded-md border border-border/40 bg-muted/30 px-3 py-2'}>
+                      <div className={'text-xs tracking-[0.2em] text-muted-foreground uppercase'}>Other</div>
+                      <div className={'mt-1 text-sm whitespace-pre-wrap text-foreground'}>{answer.other}</div>
+                    </div>
+                  )}
+                </Fragment>
+              );
+            } else if (answer.type === 'checkbox') {
+              // Checkbox answer: multiple selections with optional "Other"
+              answerDisplay = (
+                <Fragment>
+                  <div className={'space-y-2'}>
+                    {answer.selected.map((selectedLabel, selectedIndex) => {
+                      const selectedOption = question.options?.find((option) => option.label === selectedLabel);
+                      return (
+                        <div className={'mt-1'} key={selectedIndex}>
+                          <div className={'text-sm font-semibold text-foreground'}>• {selectedLabel}</div>
+                          {selectedOption?.description && (
+                            <div className={'mt-0.5 ml-3 text-xs text-muted-foreground'}>
+                              {selectedOption.description}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {answer.other && (
+                    <div className={'mt-2 rounded-md border border-border/40 bg-muted/30 px-3 py-2'}>
+                      <div className={'text-xs tracking-[0.2em] text-muted-foreground uppercase'}>Other</div>
+                      <div className={'mt-1 text-sm whitespace-pre-wrap text-foreground'}>{answer.other}</div>
+                    </div>
+                  )}
+                </Fragment>
+              );
+            } else if (answer.type === 'text') {
+              // Text answer: open-ended response
+              answerDisplay = (
+                <div className={'mt-1 text-sm whitespace-pre-wrap text-foreground'}>{answer.text}</div>
+              );
+            }
 
             return (
               <div className={'rounded-md border border-border/40 bg-muted/30 p-3'} key={answerKey}>
@@ -311,10 +377,7 @@ export const PipelineStep = ({
                 </div>
                 <div className={'mt-3 rounded-md border border-border/50 bg-background/80 p-3'}>
                   <div className={'text-xs tracking-[0.2em] text-muted-foreground uppercase'}>Answer</div>
-                  <div className={'mt-1 text-sm font-semibold text-foreground'}>{selectedLabel ?? 'Unanswered'}</div>
-                  {selectedOption?.description && (
-                    <div className={'mt-1 text-xs text-muted-foreground'}>{selectedOption.description}</div>
-                  )}
+                  {answerDisplay}
                 </div>
               </div>
             );

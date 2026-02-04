@@ -73,6 +73,8 @@ Return your assessment followed by a `QUESTIONS_FOR_USER` section with structure
 {
   "questions": [
     {
+      "questionType": "radio",
+      "allowOther": false,
       "question": "How should this feature store data?",
       "header": "Storage",
       "options": [
@@ -91,16 +93,21 @@ Return your assessment followed by a `QUESTIONS_FOR_USER` section with structure
       ]
     },
     {
-      "question": "What scope should this feature have?",
-      "header": "Scope",
+      "questionType": "checkbox",
+      "allowOther": true,
+      "question": "Which platforms should this feature support?",
+      "header": "Platforms",
       "options": [
-        { "label": "Minimal", "description": "Core functionality only" },
-        { "label": "Standard", "description": "Core plus common use cases" },
-        {
-          "label": "Comprehensive",
-          "description": "Full-featured with edge cases"
-        }
+        { "label": "Windows", "description": "Support Windows desktop" },
+        { "label": "macOS", "description": "Support macOS desktop" },
+        { "label": "Linux", "description": "Support Linux desktop" }
       ]
+    },
+    {
+      "questionType": "text",
+      "allowOther": false,
+      "question": "Describe any specific edge cases or constraints for this feature.",
+      "header": "Edge Cases"
     }
   ]
 }
@@ -109,7 +116,26 @@ Return your assessment followed by a `QUESTIONS_FOR_USER` section with structure
 
 ```
 
-**Question Types to Include**:
+**Question Type Selection**:
+
+Choose the appropriate `questionType` for each question:
+
+1. **Radio** (`questionType: "radio"`) - Single selection
+   - Use when the user should choose **exactly one** option from mutually exclusive choices
+   - Examples: Storage approach, Implementation scope, UI pattern to follow
+   - Set `allowOther: true` when users might need a custom option beyond your suggestions
+
+2. **Checkbox** (`questionType: "checkbox"`) - Multi-selection
+   - Use when the user can choose **multiple options** that are not mutually exclusive
+   - Examples: Features to include, Platforms to support, Integrations to enable
+   - Set `allowOther: true` to let users add custom options alongside selections
+
+3. **Text** (`questionType: "text"`) - Open-ended
+   - Use when you need **descriptive text** that can't be captured in predefined options
+   - Examples: Specific use case description, Custom requirements, Edge cases to consider
+   - No `options` array needed, and `allowOther` is ignored (already open-ended)
+
+**Question Content Types**:
 
 1. **Scope Questions** (what to build):
    - Feature boundaries and exclusions
@@ -127,9 +153,10 @@ Return your assessment followed by a `QUESTIONS_FOR_USER` section with structure
 **JSON Question Guidelines**:
 
 - Include 1-4 questions maximum (prefer fewer, more impactful questions)
-- Each question must have: `question`, `header`, and `options` array
+- Each question must have: `question`, `header`, `questionType`, and `allowOther`
+- Each radio/checkbox question must have an `options` array (2-4 options)
 - Each option must have: `label` and `description`
-- Each question should have 2-4 options
+- Text questions don't need `options` (just `question` and `header`)
 - Reference codebase patterns in option descriptions when relevant
 - Phrase questions to unlock specific implementation decisions
 

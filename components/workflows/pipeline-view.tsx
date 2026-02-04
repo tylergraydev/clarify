@@ -8,6 +8,7 @@ import type { WorkflowStep } from '@/db/schema/workflow-steps.schema';
 import type {
   ClarificationAnswers,
   ClarificationOutcome,
+  ClarificationOutcomeQuestions,
   ClarificationQuestion,
   ClarificationServicePhase,
   ClarificationStepOutput,
@@ -109,7 +110,22 @@ function computeStepMetrics(step: WorkflowStep): StepMetrics {
       if (!output) {
         return {};
       }
-      const answeredCount = output.answers ? Object.values(output.answers).filter((v) => v && v.length > 0).length : 0;
+      // Count answered questions - check if answer exists and has content based on type
+      const answeredCount = output.answers
+        ? Object.values(output.answers).filter((answer) => {
+            if (!answer) return false;
+            switch (answer.type) {
+              case 'checkbox':
+                return answer.selected.length > 0;
+              case 'radio':
+                return answer.selected.length > 0;
+              case 'text':
+                return answer.text.length > 0;
+              default:
+                return false;
+            }
+          }).length
+        : 0;
       return {
         clarification: {
           answeredCount,
@@ -286,14 +302,38 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
       if (!answer) {
         return;
       }
-      const selectedOption = question.options.find((option) => option.label === answer);
+
+      // Extract the selected value(s) based on answer type
+      let answerText: string;
+      if (answer.type === 'radio') {
+        answerText = answer.selected;
+        if (answer.other) {
+          answerText = `Other: ${answer.other}`;
+        }
+      } else if (answer.type === 'checkbox') {
+        answerText = answer.selected.join(', ');
+        if (answer.other) {
+          answerText += `, Other: ${answer.other}`;
+        }
+      } else {
+        answerText = answer.text;
+      }
+
       lines.push(`${index + 1}. ${question.header}`);
       lines.push(`Question: ${question.question}`);
-      if (selectedOption?.description) {
-        lines.push(`Answer: ${answer} - ${selectedOption.description}`);
+
+      // Try to find the option description if it's a radio/checkbox answer
+      if ((answer.type === 'radio' || answer.type === 'checkbox') && question.options) {
+        const selectedOption = question.options.find((option) => option.label === answer.selected);
+        if (selectedOption?.description) {
+          lines.push(`Answer: ${answerText} - ${selectedOption.description}`);
+        } else {
+          lines.push(`Answer: ${answerText}`);
+        }
       } else {
-        lines.push(`Answer: ${answer}`);
+        lines.push(`Answer: ${answerText}`);
       }
+
       lines.push('');
     });
 
@@ -404,9 +444,17 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
     async (questions: Array<ClarificationQuestion>) => {
       if (!activeClarificationStepId) return;
 
+      // Normalize questions to ensure they have required fields
+      // Type mismatch between electron.d.ts (old) and lib/validations/clarification.ts (new)
+      const normalizedQuestions: Array<ClarificationQuestion> = questions.map((q) => ({
+        ...q,
+        allowOther: (q as unknown as Record<string, unknown>).allowOther ?? false,
+        questionType: (q as unknown as Record<string, unknown>).questionType ?? 'radio',
+      })) as Array<ClarificationQuestion>;
+
       // Update the step's outputStructured with the questions
       const stepOutput: ClarificationStepOutput = {
-        questions,
+        questions: normalizedQuestions,
       };
 
       await updateStep.mutateAsync({
@@ -638,20 +686,39 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         // Cleanup subscription
         unsubscribe();
 
+        // Normalize outcome to fix type mismatch between electron.d.ts (old) and lib/validations/clarification.ts (new)
+        let normalizedOutcome: ClarificationOutcome;
+        if (outcome.type === 'QUESTIONS_FOR_USER') {
+          normalizedOutcome = {
+            assessment: outcome.assessment,
+            questions: outcome.questions.map((q) => ({
+              ...q,
+              allowOther: (q as unknown as Record<string, unknown>).allowOther ?? false,
+              questionType: (q as unknown as Record<string, unknown>).questionType ?? 'radio',
+            })) as Array<ClarificationQuestion>,
+            type: 'QUESTIONS_FOR_USER',
+          };
+        } else {
+          normalizedOutcome = outcome as ClarificationOutcome;
+        }
+
         // Update state with outcome
         setClarificationState((prev) => ({
           ...prev,
           isStreaming: false,
-          outcome,
+          outcome: normalizedOutcome,
           phase: outcome.type === 'QUESTIONS_FOR_USER' || outcome.type === 'SKIP_CLARIFICATION' ? 'complete' : 'error',
         }));
 
         // Handle outcome directly here since ClarificationStreaming will unmount
         // when isStreaming becomes false, so its useEffect won't fire
         if (outcome.type === 'QUESTIONS_FOR_USER') {
+          // Use normalized questions from above
+          const normalizedQuestions = (normalizedOutcome as ClarificationOutcomeQuestions).questions;
+
           // Update the step's outputStructured with the questions
           const stepOutput: ClarificationStepOutput = {
-            questions: outcome.questions,
+            questions: normalizedQuestions,
           };
 
           await updateStep.mutateAsync({

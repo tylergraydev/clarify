@@ -132,8 +132,14 @@ export function registerClarificationHandlers(
       input: unknown
     ): {
       formattedAnswers: string;
-      questions: Array<{ header: string; options: Array<{ description: string; label: string }>; question: string }>;
-      selectedOptions: Record<string, string>;
+      questions: Array<{
+        allowOther?: boolean;
+        header: string;
+        options?: Array<{ description: string; label: string }>;
+        question: string;
+        questionType?: 'checkbox' | 'radio' | 'text';
+      }>;
+      selectedOptions: Record<string, Array<string> | string>;
     } => {
       try {
         // Validate input structure
@@ -153,6 +159,73 @@ export function registerClarificationHandlers(
 
         if (!typedInput.answers || typeof typedInput.answers !== 'object') {
           throw new Error('Invalid input: expected answers object');
+        }
+
+        // Validate each answer matches its question type
+        for (const question of typedInput.questions) {
+          const questionIndex = typedInput.questions.indexOf(question).toString();
+          const answer = typedInput.answers[questionIndex];
+
+          if (!answer) {
+            throw new Error(`Missing answer for question: "${question.header}"`);
+          }
+
+          const questionType = question.questionType ?? 'radio'; // Default to radio for backward compatibility
+
+          // Type-specific validation
+          if (questionType === 'radio') {
+            if (answer.type !== 'radio') {
+              throw new Error(`Invalid answer type for radio question: "${question.header}"`);
+            }
+
+            // Validate selected option is valid (if provided)
+            if (answer.selected) {
+              const validLabels = question.options?.map((opt) => opt.label) ?? [];
+
+              if (validLabels.length > 0 && !validLabels.includes(answer.selected)) {
+                throw new Error(
+                  `Invalid selection "${answer.selected}" for question "${question.header}". Valid options: ${validLabels.join(', ')}`
+                );
+              }
+            }
+
+            // Require either selected or other
+            if (!answer.selected && !answer.other) {
+              throw new Error(`No answer provided for question: "${question.header}"`);
+            }
+          } else if (questionType === 'checkbox') {
+            if (answer.type !== 'checkbox') {
+              throw new Error(`Invalid answer type for checkbox question: "${question.header}"`);
+            }
+
+            // Validate all selected options are valid
+            if (answer.selected.length > 0) {
+              const validLabels = question.options?.map((opt) => opt.label) ?? [];
+
+              if (validLabels.length > 0) {
+                const invalidSelections = answer.selected.filter((label) => !validLabels.includes(label));
+
+                if (invalidSelections.length > 0) {
+                  throw new Error(
+                    `Invalid selections for "${question.header}": ${invalidSelections.join(', ')}. Valid options: ${validLabels.join(', ')}`
+                  );
+                }
+              }
+            }
+
+            // Require either selections or other
+            if (answer.selected.length === 0 && !answer.other) {
+              throw new Error(`No answer provided for question: "${question.header}"`);
+            }
+          } else if (questionType === 'text') {
+            if (answer.type !== 'text') {
+              throw new Error(`Invalid answer type for text question: "${question.header}"`);
+            }
+
+            if (!answer.text || answer.text.trim() === '') {
+              throw new Error(`No answer provided for text question: "${question.header}"`);
+            }
+          }
         }
 
         console.log('[IPC] clarification:submitAnswers', {
