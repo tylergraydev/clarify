@@ -8,6 +8,7 @@ import { useEffect, useMemo } from 'react';
 import type { ClarificationAnswers, ClarificationQuestion } from '@/lib/validations/clarification';
 
 import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
 import { useAppForm } from '@/lib/forms/form-hook';
 import { cn } from '@/lib/utils';
 
@@ -71,6 +72,8 @@ export const ClarificationForm = ({
   const formValues = useStore(form.store, (state) => state.values);
   const answeredCount = useMemo(() => Object.values(formValues).filter((value) => Boolean(value)).length, [formValues]);
   const progressPercent = questionCount > 0 ? Math.round((answeredCount / questionCount) * 100) : 0;
+  const isIncomplete = answeredCount < questionCount;
+  const _shouldShowDisabledTooltip = isIncomplete && !isSubmitting;
 
   useEffect(() => {
     onProgressChange?.(answeredCount, questionCount);
@@ -150,7 +153,15 @@ export const ClarificationForm = ({
                 Skip
               </Button>
               <form.AppForm>
-                <form.SubmitButton>{isSubmitting ? 'Submitting...' : 'Submit Answers'}</form.SubmitButton>
+                {_shouldShowDisabledTooltip ? (
+                  <Tooltip content={'Answer all questions to submit'} side={'top'}>
+                    <span>
+                      <form.SubmitButton isDisabled={true}>Submit Answers</form.SubmitButton>
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <form.SubmitButton>{isSubmitting ? 'Submitting...' : 'Submit Answers'}</form.SubmitButton>
+                )}
               </form.AppForm>
             </div>
           </div>
