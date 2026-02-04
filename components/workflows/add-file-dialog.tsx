@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react';
 
-import { useState } from 'react';
+import { ClipboardPaste, FolderOpen } from 'lucide-react';
+import { useCallback, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { fileActions, filePriorities } from '@/db/schema/discovered-files.schema';
 import { useAddDiscoveredFile } from '@/hooks/queries/use-discovered-files';
+import { useElectronDialog } from '@/hooks/use-electron';
 import { useToast } from '@/hooks/use-toast';
 import { useAppForm } from '@/lib/forms/form-hook';
 import { addDiscoveredFileSchema } from '@/lib/validations/discovered-file';
@@ -63,6 +65,7 @@ export const AddFileDialog = ({ onOpenChange, onSuccess, open, stepId, trigger }
 
   const toast = useToast();
   const addFileMutation = useAddDiscoveredFile();
+  const { isElectron, openFile } = useElectronDialog();
 
   const isSubmitting = addFileMutation.isPending;
 
@@ -108,6 +111,16 @@ export const AddFileDialog = ({ onOpenChange, onSuccess, open, stepId, trigger }
     },
   });
 
+  const handleBrowseFile = useCallback(async () => {
+    const filePath = await openFile([
+      { extensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'md', 'css', 'scss'], name: 'Code Files' },
+      { extensions: ['*'], name: 'All Files' },
+    ]);
+    if (filePath) {
+      form.setFieldValue('filePath', filePath);
+    }
+  }, [openFile, form]);
+
   const handleClose = () => {
     setIsOpen(false);
     form.reset();
@@ -119,6 +132,19 @@ export const AddFileDialog = ({ onOpenChange, onSuccess, open, stepId, trigger }
       form.reset();
     }
   };
+
+  const handlePaste = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        // Clean up the path (remove quotes, trim whitespace)
+        const cleanPath = text.trim().replace(/^["']|["']$/g, '');
+        form.setFieldValue('filePath', cleanPath);
+      }
+    } catch (err) {
+      console.error('Failed to read clipboard:', err);
+    }
+  }, [form]);
 
   return (
     <DialogRoot onOpenChange={handleOpenChangeInternal} open={isOpen}>
@@ -145,19 +171,45 @@ export const AddFileDialog = ({ onOpenChange, onSuccess, open, stepId, trigger }
             }}
           >
             <div className={'flex flex-col gap-4'}>
-              {/* File Path Field */}
-              <form.AppField name={'filePath'}>
-                {(field) => (
-                  <field.TextField
-                    autoFocus
-                    description={'Enter the file path relative to the repository root'}
-                    isDisabled={isSubmitting}
-                    isRequired
-                    label={'File Path'}
-                    placeholder={'src/components/example.tsx'}
-                  />
-                )}
-              </form.AppField>
+              {/* File Path Field with Browse and Paste buttons */}
+              <div className={'space-y-1.5'}>
+                <div className={'flex items-end gap-2'}>
+                  <div className={'flex-1'}>
+                    <form.AppField name={'filePath'}>
+                      {(field) => (
+                        <field.TextField
+                          autoFocus
+                          description={'Enter the file path relative to the repository root'}
+                          isDisabled={isSubmitting}
+                          isRequired
+                          label={'File Path'}
+                          placeholder={'src/components/example.tsx'}
+                        />
+                      )}
+                    </form.AppField>
+                  </div>
+                  {isElectron && (
+                    <Button
+                      disabled={isSubmitting}
+                      onClick={handleBrowseFile}
+                      size={'sm'}
+                      type={'button'}
+                      variant={'outline'}
+                    >
+                      <FolderOpen className={'size-4'} />
+                    </Button>
+                  )}
+                  <Button
+                    disabled={isSubmitting}
+                    onClick={handlePaste}
+                    size={'sm'}
+                    type={'button'}
+                    variant={'ghost'}
+                  >
+                    <ClipboardPaste className={'size-4'} />
+                  </Button>
+                </div>
+              </div>
 
               {/* Priority Field */}
               <form.AppField name={'priority'}>

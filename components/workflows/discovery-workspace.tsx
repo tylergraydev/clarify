@@ -51,12 +51,18 @@ const PHASE_LABELS: Record<string, string> = {
  * Props for the DiscoveryWorkspace component.
  */
 interface DiscoveryWorkspaceProps extends Omit<ComponentPropsWithRef<'section'>, 'children'> {
+  /** The agent ID to use for file discovery */
+  agentId: number;
   /** Timestamp when the discovery was completed */
   discoveryCompletedAt?: Date | null | string;
   /** Callback when step completes */
   onComplete: () => void;
+  /** The refined feature request text from the refinement step */
+  refinedFeatureRequest: string;
   /** Timestamp when the refinement was last updated */
   refinementUpdatedAt?: Date | null | string;
+  /** The repository path for file discovery */
+  repositoryPath: string;
   /** The workflow step ID */
   stepId: number;
   /** The workflow ID */
@@ -104,11 +110,14 @@ function formatElapsedTime(ms: number): string {
  * ```
  */
 export const DiscoveryWorkspace = ({
+  agentId,
   className,
   discoveryCompletedAt,
   onComplete,
   ref,
+  refinedFeatureRequest,
   refinementUpdatedAt,
+  repositoryPath,
   stepId,
   workflowId,
   ...props
@@ -234,11 +243,10 @@ export const DiscoveryWorkspace = ({
     setPhase('streaming');
 
     try {
-      // TODO: Get these values from workflow/step context
       const result = await startDiscoveryMutation.mutateAsync({
-        agentId: 1, // Will need to be passed in or fetched
-        refinedFeatureRequest: '', // Will need to be passed in or fetched
-        repositoryPath: '', // Will need to be passed in or fetched
+        agentId,
+        refinedFeatureRequest,
+        repositoryPath,
         stepId,
         workflowId,
       });
@@ -260,15 +268,18 @@ export const DiscoveryWorkspace = ({
       setPhase('error');
     }
   }, [
+    agentId,
+    refinedFeatureRequest,
+    repositoryPath,
     resetStore,
     resetStream,
+    setError,
     setPhase,
+    setSessionId,
+    setStreamSessionId,
     startDiscoveryMutation,
     stepId,
     workflowId,
-    setSessionId,
-    setStreamSessionId,
-    setError,
   ]);
 
   const handleCancelDiscovery = useCallback(() => {
@@ -295,12 +306,11 @@ export const DiscoveryWorkspace = ({
       setPhase('streaming');
 
       try {
-        // TODO: Get these values from workflow/step context
         const result = await rediscoverMutation.mutateAsync({
-          agentId: 1, // Will need to be passed in or fetched
+          agentId,
           mode,
-          refinedFeatureRequest: '', // Will need to be passed in or fetched
-          repositoryPath: '', // Will need to be passed in or fetched
+          refinedFeatureRequest,
+          repositoryPath,
           stepId,
           workflowId,
         });
@@ -322,7 +332,20 @@ export const DiscoveryWorkspace = ({
         setPhase('error');
       }
     },
-    [resetStore, resetStream, setPhase, rediscoverMutation, stepId, workflowId, setSessionId, setStreamSessionId, setError]
+    [
+      agentId,
+      rediscoverMutation,
+      refinedFeatureRequest,
+      repositoryPath,
+      resetStore,
+      resetStream,
+      setError,
+      setPhase,
+      setSessionId,
+      setStreamSessionId,
+      stepId,
+      workflowId,
+    ]
   );
 
   const handleRediscoverReplace = useCallback(() => {

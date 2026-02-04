@@ -14,7 +14,7 @@ import type {
   ClarificationStepOutput,
 } from '@/lib/validations/clarification';
 
-import { useAgent } from '@/hooks/queries/use-agents';
+import { useAgent, useAgents } from '@/hooks/queries/use-agents';
 import { useDefaultClarificationAgent } from '@/hooks/queries/use-default-clarification-agent';
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useCompleteStep, useSkipStep, useStepsByWorkflow, useUpdateStep } from '@/hooks/queries/use-steps';
@@ -267,6 +267,19 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
   // Get agent details for the clarification step (either from step.agentId or default)
   const clarificationAgentId = activeClarificationStep?.agentId ?? defaultAgentId;
   const { data: clarificationAgent } = useAgent(clarificationAgentId ?? 0);
+
+  // Get discovery agent for file discovery step
+  const { data: agents } = useAgents();
+  const discoveryAgent = useMemo(() => agents?.find((a) => a.name === 'file-discovery-agent'), [agents]);
+  const discoveryAgentId = discoveryAgent?.id ?? 1;
+
+  // Get refinement step data for discovery workspace
+  const refinementStep = useMemo(() => steps?.find((s) => s.stepType === 'refinement'), [steps]);
+  const refinedFeatureRequest = refinementStep?.outputText ?? workflow?.featureRequest ?? '';
+  const refinementUpdatedAt = refinementStep?.updatedAt;
+
+  // Repository path for discovery
+  const repositoryPath = primaryRepository?.path ?? '';
 
   const sortedSteps = useMemo(() => (steps ? sortStepsByNumber(steps) : []), [steps]);
   const activeClarificationStepId = activeClarificationStep?.id ?? null;
@@ -891,8 +904,12 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         {isDiscoveryWorkspaceActive && activeDiscoveryStep && (
           <div className={'w-full max-w-6xl px-4'}>
             <DiscoveryWorkspace
+              agentId={discoveryAgentId}
               discoveryCompletedAt={activeDiscoveryStep.completedAt}
               onComplete={handleDiscoveryComplete}
+              refinedFeatureRequest={refinedFeatureRequest}
+              refinementUpdatedAt={refinementUpdatedAt}
+              repositoryPath={repositoryPath}
               stepId={activeDiscoveryStep.id}
               workflowId={workflowId}
             />
