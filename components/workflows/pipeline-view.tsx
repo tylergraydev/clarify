@@ -55,6 +55,7 @@ interface ClarificationSessionState {
   stepId: null | number;
   text: string;
   thinking: Array<string>;
+  toolHistory: Array<ActiveTool>;
 }
 
 /**
@@ -73,6 +74,7 @@ const INITIAL_CLARIFICATION_STATE: ClarificationSessionState = {
   stepId: null,
   text: '',
   thinking: [],
+  toolHistory: [],
 };
 
 /**
@@ -571,6 +573,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         stepId: activeClarificationStep.id,
         text: '',
         thinking: [],
+        toolHistory: [],
       });
 
       // Subscribe to streaming events BEFORE starting
@@ -616,17 +619,18 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
             break;
 
           case 'tool_start':
-            setClarificationState((prev) => ({
-              ...prev,
-              activeTools: [
-                ...prev.activeTools,
-                {
-                  toolInput: message.toolInput,
-                  toolName: message.toolName,
-                  toolUseId: message.toolUseId,
-                },
-              ],
-            }));
+            setClarificationState((prev) => {
+              const newTool: ActiveTool = {
+                toolInput: message.toolInput,
+                toolName: message.toolName,
+                toolUseId: message.toolUseId,
+              };
+              return {
+                ...prev,
+                activeTools: [...prev.activeTools, newTool],
+                toolHistory: [...prev.toolHistory, newTool],
+              };
+            });
             break;
           case 'tool_stop':
             setClarificationState((prev) => ({
@@ -637,31 +641,36 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
           case 'tool_update':
             setClarificationState((prev) => {
-              const existingIndex = prev.activeTools.findIndex((tool) => tool.toolUseId === message.toolUseId);
-              if (existingIndex === -1) {
-                return {
-                  ...prev,
-                  activeTools: [
-                    ...prev.activeTools,
-                    {
-                      toolInput: message.toolInput,
-                      toolName: message.toolName,
-                      toolUseId: message.toolUseId,
-                    },
-                  ],
-                };
-              }
-
-              const updatedTools = [...prev.activeTools];
-              const existingTool = updatedTools[existingIndex]!;
-              updatedTools[existingIndex] = {
+              const updatedTool: ActiveTool = {
                 toolInput: message.toolInput,
                 toolName: message.toolName,
-                toolUseId: existingTool.toolUseId,
+                toolUseId: message.toolUseId,
               };
+
+              // Update activeTools
+              const activeIndex = prev.activeTools.findIndex((tool) => tool.toolUseId === message.toolUseId);
+              let newActiveTools: Array<ActiveTool>;
+              if (activeIndex === -1) {
+                newActiveTools = [...prev.activeTools, updatedTool];
+              } else {
+                newActiveTools = [...prev.activeTools];
+                newActiveTools[activeIndex] = updatedTool;
+              }
+
+              // Update toolHistory
+              const historyIndex = prev.toolHistory.findIndex((tool) => tool.toolUseId === message.toolUseId);
+              let newToolHistory: Array<ActiveTool>;
+              if (historyIndex === -1) {
+                newToolHistory = [...prev.toolHistory, updatedTool];
+              } else {
+                newToolHistory = [...prev.toolHistory];
+                newToolHistory[historyIndex] = updatedTool;
+              }
+
               return {
                 ...prev,
-                activeTools: updatedTools,
+                activeTools: newActiveTools,
+                toolHistory: newToolHistory,
               };
             });
             break;
@@ -838,6 +847,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
                 sessionId: clarificationState.sessionId,
                 text: clarificationState.text,
                 thinking: clarificationState.thinking,
+                toolHistory: clarificationState.toolHistory,
               }}
             />
           </div>
@@ -886,6 +896,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
                   clarificationSessionId: clarificationState.sessionId,
                   clarificationText: clarificationState.text,
                   clarificationThinking: clarificationState.thinking,
+                  clarificationToolHistory: clarificationState.toolHistory,
                   extendedThinkingElapsedMs: clarificationState.extendedThinkingElapsedMs,
                   isClarificationStreaming: clarificationState.isStreaming,
                   maxThinkingTokens: clarificationState.maxThinkingTokens,

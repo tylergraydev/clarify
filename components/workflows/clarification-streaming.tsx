@@ -10,6 +10,7 @@ import {
   ChevronDownIcon,
   File,
   Globe,
+  History,
   Loader2,
   RefreshCw,
   Search,
@@ -145,6 +146,8 @@ interface ClarificationStreamingProps
   text?: string;
   /** Thinking/reasoning blocks from the agent */
   thinking?: Array<string>;
+  /** History of all tool calls from the session */
+  toolHistory?: Array<ActiveTool>;
 }
 
 /**
@@ -197,9 +200,11 @@ export const ClarificationStreaming = memo(
     status,
     text = '',
     thinking = [],
+    toolHistory = [],
     ...props
   }: ClarificationStreamingProps): ReactElement => {
     const [isThinkingOpen, setIsThinkingOpen] = useState(layout !== 'summary');
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const handledOutcomeRef = useRef<null | string>(null);
 
     // Compute retry-related state from outcome or props
@@ -223,6 +228,14 @@ export const ClarificationStreaming = memo(
     const isComplete = outcome?.type === 'QUESTIONS_FOR_USER' || outcome?.type === 'SKIP_CLARIFICATION';
     const hasActiveTools = activeTools.length > 0;
     const isIdle = !isRunning && !isError && !isComplete;
+
+    // Compute past tools (tools in history that are no longer active)
+    const activeToolIds = useMemo(() => new Set(activeTools.map((t) => t.toolUseId)), [activeTools]);
+    const pastTools = useMemo(
+      () => toolHistory.filter((t) => !activeToolIds.has(t.toolUseId)),
+      [toolHistory, activeToolIds]
+    );
+    const hasPastTools = pastTools.length > 0;
     const isErrorWithDetails = isError && (error || outcome?.type === 'ERROR' || outcome?.type === 'TIMEOUT');
     const isEmptyState = !isRunning && !text && !isError && phase === 'idle';
     const isExtendedThinking =
@@ -268,6 +281,10 @@ export const ClarificationStreaming = memo(
 
     const handleToggleThinking = useCallback((open: boolean) => {
       setIsThinkingOpen(open);
+    }, []);
+
+    const handleToggleHistory = useCallback((open: boolean) => {
+      setIsHistoryOpen(open);
     }, []);
 
     return (
@@ -347,6 +364,44 @@ export const ClarificationStreaming = memo(
               ))}
             </div>
           </div>
+        )}
+
+        {/* Tool History Section (Collapsible) */}
+        {hasPastTools && (
+          <Collapsible onOpenChange={handleToggleHistory} open={isHistoryOpen}>
+            <div className={'border-b border-border/50'}>
+              <CollapsibleTrigger
+                className={cn(
+                  'flex w-full items-center gap-2 px-4 py-2 text-sm text-muted-foreground',
+                  'transition-colors hover:text-foreground'
+                )}
+                isHideChevron
+                variant={'ghost'}
+              >
+                <History className={'size-4'} />
+                <span className={'flex-1 text-left'}>
+                  Tool history ({pastTools.length} {pastTools.length === 1 ? 'tool' : 'tools'})
+                </span>
+                <ChevronDownIcon
+                  className={cn('size-4 transition-transform', isHistoryOpen ? 'rotate-180' : 'rotate-0')}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent
+                className={cn(
+                  'text-sm text-muted-foreground outline-none',
+                  'data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-top-2',
+                  'data-open:animate-in data-open:slide-in-from-top-2'
+                )}
+              >
+                <div className={'max-h-64 space-y-2 overflow-y-auto px-4 pb-3'}>
+                  {/* Reverse to show newest first */}
+                  {[...pastTools].reverse().map((tool) => (
+                    <ToolIndicator key={tool.toolUseId} tool={tool} variant={'history'} />
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
         )}
 
         {/* Thinking Section (Collapsible) */}
@@ -512,9 +567,11 @@ interface ToolDetail {
  */
 interface ToolIndicatorProps {
   tool: ActiveTool;
+  /** Variant for styling: 'active' for current tools, 'history' for past tools */
+  variant?: 'active' | 'history';
 }
 
-const ToolIndicator = memo(({ tool }: ToolIndicatorProps): ReactElement => {
+const ToolIndicator = memo(({ tool, variant = 'active' }: ToolIndicatorProps): ReactElement => {
   const config = TOOL_CONFIG[tool.toolName] ?? { icon: File, label: tool.toolName };
   const Icon = config.icon;
   const { details, label, rawPreview, summary } = useMemo(() => buildToolDisplay(tool), [tool]);
@@ -523,23 +580,32 @@ const ToolIndicator = memo(({ tool }: ToolIndicatorProps): ReactElement => {
   const _shouldShowRawPreview = _hasNoFormattedContent && rawPreview;
   const _shouldShowPreparingMessage = _hasNoFormattedContent && !rawPreview;
 
+  const isHistory = variant === 'history';
+
   return (
     <div
       className={cn(
-        'flex min-w-[220px] flex-1 flex-col gap-1 rounded-lg border border-accent/30 bg-accent/5 px-3 py-2',
-        'animate-in text-xs text-accent fade-in-0 slide-in-from-left-2'
+        'flex flex-col gap-1 rounded-lg border px-3 py-2 text-xs',
+        isHistory
+          ? 'border-border/40 bg-muted/20 text-muted-foreground'
+          : 'min-w-[220px] flex-1 animate-in border-accent/30 bg-accent/5 text-accent fade-in-0 slide-in-from-left-2'
       )}
     >
       <div className={'flex items-center gap-2'}>
         <Icon className={'size-3.5'} />
-        <span className={'font-medium text-foreground'}>{label}</span>
-        <span className={'rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] tracking-wide text-accent uppercase'}>
+        <span className={cn('font-medium', isHistory ? 'text-foreground/70' : 'text-foreground')}>{label}</span>
+        <span
+          className={cn(
+            'rounded-full px-1.5 py-0.5 text-[10px] tracking-wide uppercase',
+            isHistory ? 'bg-muted/40 text-muted-foreground' : 'bg-accent/20 text-accent'
+          )}
+        >
           Tool
         </span>
         <span className={'font-mono text-[11px] text-muted-foreground'}>{tool.toolName}</span>
       </div>
 
-      {summary && <div className={'text-xs text-foreground'}>{summary}</div>}
+      {summary && <div className={cn('text-xs', isHistory ? 'text-foreground/60' : 'text-foreground')}>{summary}</div>}
 
       {details.length > 0 && (
         <div className={'flex flex-wrap gap-1'}>
@@ -560,7 +626,7 @@ const ToolIndicator = memo(({ tool }: ToolIndicatorProps): ReactElement => {
         </div>
       )}
 
-      {_shouldShowPreparingMessage && (
+      {_shouldShowPreparingMessage && !isHistory && (
         <div className={'text-[11px] text-muted-foreground'}>Preparing tool input...</div>
       )}
     </div>

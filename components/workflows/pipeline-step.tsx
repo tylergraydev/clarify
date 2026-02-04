@@ -120,6 +120,8 @@ interface PipelineStepProps
   clarificationText?: string;
   /** Thinking blocks from clarification streaming */
   clarificationThinking?: Array<string>;
+  /** Tool history for clarification streaming */
+  clarificationToolHistory?: Array<ActiveTool>;
   /** Elapsed time in ms for extended thinking */
   extendedThinkingElapsedMs?: number;
   /** Whether clarification streaming is active */
@@ -173,6 +175,7 @@ export const PipelineStep = ({
   clarificationSessionId,
   clarificationText,
   clarificationThinking,
+  clarificationToolHistory,
   className,
   extendedThinkingElapsedMs,
   isClarificationStreaming = false,
@@ -497,6 +500,7 @@ export const PipelineStep = ({
                 sessionId={clarificationSessionId}
                 text={clarificationText}
                 thinking={clarificationThinking}
+                toolHistory={clarificationToolHistory}
               />
             )}
 
