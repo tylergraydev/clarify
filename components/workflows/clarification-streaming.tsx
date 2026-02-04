@@ -298,9 +298,7 @@ export const ClarificationStreaming = memo(
               </span>
               <span className={'text-xs text-muted-foreground'}>
                 {PHASE_LABELS[phase] ?? phase}
-                {shouldShowElapsedTime && (
-                  <Fragment> · {formatElapsedTime(extendedThinkingElapsedMs)}</Fragment>
-                )}
+                {shouldShowElapsedTime && <Fragment> · {formatElapsedTime(extendedThinkingElapsedMs)}</Fragment>}
               </span>
             </div>
           </div>
@@ -521,6 +519,10 @@ const ToolIndicator = memo(({ tool }: ToolIndicatorProps): ReactElement => {
   const Icon = config.icon;
   const { details, label, rawPreview, summary } = useMemo(() => buildToolDisplay(tool), [tool]);
 
+  const _hasNoFormattedContent = !summary && details.length === 0;
+  const _shouldShowRawPreview = _hasNoFormattedContent && rawPreview;
+  const _shouldShowPreparingMessage = _hasNoFormattedContent && !rawPreview;
+
   return (
     <div
       className={cn(
@@ -552,13 +554,13 @@ const ToolIndicator = memo(({ tool }: ToolIndicatorProps): ReactElement => {
         </div>
       )}
 
-      {!summary && details.length === 0 && rawPreview && (
+      {_shouldShowRawPreview && (
         <div className={'rounded-md bg-muted/40 px-2 py-1 font-mono text-[11px] text-muted-foreground'}>
           {rawPreview}
         </div>
       )}
 
-      {!summary && details.length === 0 && !rawPreview && (
+      {_shouldShowPreparingMessage && (
         <div className={'text-[11px] text-muted-foreground'}>Preparing tool input...</div>
       )}
     </div>
@@ -808,18 +810,14 @@ function buildToolSummary(toolName: string, input: Record<string, unknown>): nul
     }
     case 'Read': {
       if (!filePath) return null;
-      const range =
-        offset !== null || limit !== null
-          ? ` (offset ${offset ?? 0}, limit ${limit ?? 'auto'})`
-          : '';
+      const range = offset !== null || limit !== null ? ` (offset ${offset ?? 0}, limit ${limit ?? 'auto'})` : '';
       return `Reading ${formatPath(filePath)}${range}`;
     }
     case 'StructuredOutput': {
       return 'Generating structured output';
     }
     case 'Task': {
-      const description =
-        getString(input, 'description') ?? getString(input, 'task') ?? getString(input, 'prompt');
+      const description = getString(input, 'description') ?? getString(input, 'task') ?? getString(input, 'prompt');
       return description ? `Delegating "${truncateText(description, TOOL_TEXT_LIMIT)}"` : 'Delegating to sub-agent';
     }
     case 'WebFetch': {

@@ -56,7 +56,11 @@ export const updateWorkflowSchema = z
   .object({
     clarificationAgentId: z.number().nullable().optional(),
     featureName: z.string().min(1, 'Feature name is required').max(255, 'Feature name is too long').optional(),
-    featureRequest: z.string().min(1, 'Feature request is required').max(10000, 'Feature request is too long').optional(),
+    featureRequest: z
+      .string()
+      .min(1, 'Feature request is required')
+      .max(10000, 'Feature request is too long')
+      .optional(),
     pauseBehavior: z.enum(pauseBehaviors).optional(),
     projectId: z.number().positive('Invalid project ID').optional(),
     skipClarification: z.boolean().optional(),

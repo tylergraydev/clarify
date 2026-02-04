@@ -15,6 +15,7 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react';
+import { Fragment } from 'react';
 
 import type {
   ClarificationAnswers,
@@ -310,9 +311,7 @@ export const PipelineStep = ({
                 </div>
                 <div className={'mt-3 rounded-md border border-border/50 bg-background/80 p-3'}>
                   <div className={'text-xs tracking-[0.2em] text-muted-foreground uppercase'}>Answer</div>
-                  <div className={'mt-1 text-sm font-semibold text-foreground'}>
-                    {selectedLabel ?? 'Unanswered'}
-                  </div>
+                  <div className={'mt-1 text-sm font-semibold text-foreground'}>{selectedLabel ?? 'Unanswered'}</div>
                   {selectedOption?.description && (
                     <div className={'mt-1 text-xs text-muted-foreground'}>{selectedOption.description}</div>
                   )}
@@ -451,7 +450,7 @@ export const PipelineStep = ({
 
             {/* Output Container (for non-clarification steps or completed clarification) */}
             {!isFormReady && !isStreamingActive && (
-              <>
+              <Fragment>
                 {showClarificationSummary ? (
                   renderClarificationSummary()
                 ) : (
@@ -463,7 +462,7 @@ export const PipelineStep = ({
                     )}
                   </div>
                 )}
-              </>
+              </Fragment>
             )}
           </div>
         </BaseCollapsible.Panel>

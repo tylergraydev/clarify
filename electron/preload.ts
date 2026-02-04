@@ -871,7 +871,14 @@ export interface WorkflowStatistics {
 interface ClarificationStreamMessageBase {
   sessionId: string;
   timestamp: number;
-  type: 'phase_change' | 'text_delta' | 'thinking_delta' | 'thinking_start' | 'tool_start' | 'tool_stop' | 'tool_update';
+  type:
+    | 'phase_change'
+    | 'text_delta'
+    | 'thinking_delta'
+    | 'thinking_start'
+    | 'tool_start'
+    | 'tool_stop'
+    | 'tool_update';
 }
 
 /**

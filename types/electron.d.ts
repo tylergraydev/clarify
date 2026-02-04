@@ -303,7 +303,8 @@ export type ClarificationStreamMessage =
   | ClarificationStreamThinkingDelta
   | ClarificationStreamThinkingStart
   | ClarificationStreamToolStart
-  | ClarificationStreamToolStop;
+  | ClarificationStreamToolStop
+  | ClarificationStreamToolUpdate;
 
 /**
  * Result of submitting clarification answers.
@@ -704,6 +705,16 @@ interface ClarificationStreamToolStart extends ClarificationStreamMessageBase {
 interface ClarificationStreamToolStop extends ClarificationStreamMessageBase {
   toolUseId: string;
   type: 'tool_stop';
+}
+
+/**
+ * Stream message for tool input updates.
+ */
+interface ClarificationStreamToolUpdate extends ClarificationStreamMessageBase {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
 }
 
 declare global {

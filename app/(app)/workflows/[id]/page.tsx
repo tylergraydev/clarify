@@ -6,7 +6,7 @@ import { $path } from 'next-typesafe-url';
 import { useRouteParams } from 'next-typesafe-url/app';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 
 import type { badgeVariants } from '@/components/ui/badge';
 import type { Workflow } from '@/types/electron';
@@ -14,7 +14,12 @@ import type { Workflow } from '@/types/electron';
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PipelineView, WorkflowDetailSkeleton } from '@/components/workflows';
+import {
+  ConfirmCancelWorkflowDialog,
+  ConfirmStartWorkflowDialog,
+  PipelineView,
+  WorkflowDetailSkeleton,
+} from '@/components/workflows';
 import { useProject } from '@/hooks/queries/use-projects';
 import {
   useCancelWorkflow,
@@ -130,6 +135,10 @@ const WorkflowDetailPage = () => {
   // Get validated workflow ID (safe to access after loading/error checks)
   const workflowId = routeParams.data?.id;
 
+  // Dialog state
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [isStartDialogOpen, setIsStartDialogOpen] = useState(false);
+
   // Fetch workflow data (only when we have a valid ID)
   const { data: workflow, isError: isWorkflowError, isLoading: isWorkflowLoading } = useWorkflow(workflowId ?? 0);
 
@@ -182,7 +191,12 @@ const WorkflowDetailPage = () => {
 
   // Event handlers
   const handleStartWorkflow = () => {
+    setIsStartDialogOpen(true);
+  };
+
+  const handleConfirmStart = () => {
     startWorkflow.mutate(workflowId);
+    setIsStartDialogOpen(false);
   };
 
   const handlePauseWorkflow = () => {
@@ -194,7 +208,12 @@ const WorkflowDetailPage = () => {
   };
 
   const handleCancelWorkflow = () => {
+    setIsCancelDialogOpen(true);
+  };
+
+  const handleConfirmCancel = () => {
     cancelWorkflow.mutate(workflowId);
+    setIsCancelDialogOpen(false);
   };
 
   return (
@@ -235,8 +254,21 @@ const WorkflowDetailPage = () => {
           )}
           <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
 
-          {/* Static "Workflows" text (no link) */}
-          <span className={'text-sm text-muted-foreground'}>{'Workflows'}</span>
+          {/* Workflows link (navigates to project workflows tab) */}
+          {hasProject ? (
+            <Link
+              className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
+              href={$path({
+                route: '/projects/[id]',
+                routeParams: { id: workflow.projectId },
+                searchParams: { tab: 'workflows' },
+              })}
+            >
+              {'Workflows'}
+            </Link>
+          ) : (
+            <span className={'text-sm text-muted-foreground'}>{'Workflows'}</span>
+          )}
           <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
 
           {/* Current workflow name (no link) */}
@@ -342,6 +374,24 @@ const WorkflowDetailPage = () => {
         <section aria-label={'Workflow pipeline'}>
           <PipelineView workflowId={workflowId} />
         </section>
+
+        {/* Start Confirmation Dialog */}
+        <ConfirmStartWorkflowDialog
+          isLoading={isStarting}
+          isOpen={isStartDialogOpen}
+          onConfirm={handleConfirmStart}
+          onOpenChange={setIsStartDialogOpen}
+          workflowFeatureName={workflow.featureName}
+        />
+
+        {/* Cancel Confirmation Dialog */}
+        <ConfirmCancelWorkflowDialog
+          isLoading={isCancelling}
+          isOpen={isCancelDialogOpen}
+          onConfirm={handleConfirmCancel}
+          onOpenChange={setIsCancelDialogOpen}
+          workflowFeatureName={workflow.featureName}
+        />
       </main>
     </QueryErrorBoundary>
   );

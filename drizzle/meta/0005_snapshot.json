@@ -70,16 +70,12 @@
       "indexes": {
         "agent_hooks_agent_id_idx": {
           "name": "agent_hooks_agent_id_idx",
-          "columns": [
-            "agent_id"
-          ],
+          "columns": ["agent_id"],
           "isUnique": false
         },
         "agent_hooks_event_type_idx": {
           "name": "agent_hooks_event_type_idx",
-          "columns": [
-            "event_type"
-          ],
+          "columns": ["event_type"],
           "isUnique": false
         }
       },
@@ -88,12 +84,8 @@
           "name": "agent_hooks_agent_id_agents_id_fk",
           "tableFrom": "agent_hooks",
           "tableTo": "agents",
-          "columnsFrom": [
-            "agent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["agent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -161,17 +153,12 @@
       "indexes": {
         "agent_skills_agent_id_idx": {
           "name": "agent_skills_agent_id_idx",
-          "columns": [
-            "agent_id"
-          ],
+          "columns": ["agent_id"],
           "isUnique": false
         },
         "agent_skills_unique_idx": {
           "name": "agent_skills_unique_idx",
-          "columns": [
-            "agent_id",
-            "skill_name"
-          ],
+          "columns": ["agent_id", "skill_name"],
           "isUnique": true
         }
       },
@@ -180,12 +167,8 @@
           "name": "agent_skills_agent_id_agents_id_fk",
           "tableFrom": "agent_skills",
           "tableTo": "agents",
-          "columnsFrom": [
-            "agent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["agent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -261,18 +244,12 @@
       "indexes": {
         "agent_tools_agent_id_idx": {
           "name": "agent_tools_agent_id_idx",
-          "columns": [
-            "agent_id"
-          ],
+          "columns": ["agent_id"],
           "isUnique": false
         },
         "agent_tools_unique_idx": {
           "name": "agent_tools_unique_idx",
-          "columns": [
-            "agent_id",
-            "tool_name",
-            "tool_pattern"
-          ],
+          "columns": ["agent_id", "tool_name", "tool_pattern"],
           "isUnique": true
         }
       },
@@ -281,12 +258,8 @@
           "name": "agent_tools_agent_id_agents_id_fk",
           "tableFrom": "agent_tools",
           "tableTo": "agents",
-          "columnsFrom": [
-            "agent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["agent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -432,30 +405,22 @@
       "indexes": {
         "agents_name_unique": {
           "name": "agents_name_unique",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": true
         },
         "agents_parent_agent_id_idx": {
           "name": "agents_parent_agent_id_idx",
-          "columns": [
-            "parent_agent_id"
-          ],
+          "columns": ["parent_agent_id"],
           "isUnique": false
         },
         "agents_project_id_idx": {
           "name": "agents_project_id_idx",
-          "columns": [
-            "project_id"
-          ],
+          "columns": ["project_id"],
           "isUnique": false
         },
         "agents_type_idx": {
           "name": "agents_type_idx",
-          "columns": [
-            "type"
-          ],
+          "columns": ["type"],
           "isUnique": false
         }
       },
@@ -464,12 +429,8 @@
           "name": "agents_parent_agent_id_agents_id_fk",
           "tableFrom": "agents",
           "tableTo": "agents",
-          "columnsFrom": [
-            "parent_agent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_agent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -477,12 +438,8 @@
           "name": "agents_project_id_projects_id_fk",
           "tableFrom": "agents",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -585,45 +542,32 @@
       "indexes": {
         "audit_logs_event_category_idx": {
           "name": "audit_logs_event_category_idx",
-          "columns": [
-            "event_category"
-          ],
+          "columns": ["event_category"],
           "isUnique": false
         },
         "audit_logs_event_type_idx": {
           "name": "audit_logs_event_type_idx",
-          "columns": [
-            "event_type"
-          ],
+          "columns": ["event_type"],
           "isUnique": false
         },
         "audit_logs_timestamp_idx": {
           "name": "audit_logs_timestamp_idx",
-          "columns": [
-            "timestamp"
-          ],
+          "columns": ["timestamp"],
           "isUnique": false
         },
         "audit_logs_workflow_id_idx": {
           "name": "audit_logs_workflow_id_idx",
-          "columns": [
-            "workflow_id"
-          ],
+          "columns": ["workflow_id"],
           "isUnique": false
         },
         "audit_logs_workflow_step_id_idx": {
           "name": "audit_logs_workflow_step_id_idx",
-          "columns": [
-            "workflow_step_id"
-          ],
+          "columns": ["workflow_step_id"],
           "isUnique": false
         },
         "audit_logs_workflow_timestamp_idx": {
           "name": "audit_logs_workflow_timestamp_idx",
-          "columns": [
-            "workflow_id",
-            "timestamp"
-          ],
+          "columns": ["workflow_id", "timestamp"],
           "isUnique": false
         }
       },
@@ -632,12 +576,8 @@
           "name": "audit_logs_workflow_id_workflows_id_fk",
           "tableFrom": "audit_logs",
           "tableTo": "workflows",
-          "columnsFrom": [
-            "workflow_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workflow_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -645,12 +585,8 @@
           "name": "audit_logs_workflow_step_id_workflow_steps_id_fk",
           "tableFrom": "audit_logs",
           "tableTo": "workflow_steps",
-          "columnsFrom": [
-            "workflow_step_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workflow_step_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -769,16 +705,12 @@
       "indexes": {
         "discovered_files_priority_idx": {
           "name": "discovered_files_priority_idx",
-          "columns": [
-            "priority"
-          ],
+          "columns": ["priority"],
           "isUnique": false
         },
         "discovered_files_workflow_step_id_idx": {
           "name": "discovered_files_workflow_step_id_idx",
-          "columns": [
-            "workflow_step_id"
-          ],
+          "columns": ["workflow_step_id"],
           "isUnique": false
         }
       },
@@ -787,12 +719,8 @@
           "name": "discovered_files_workflow_step_id_workflow_steps_id_fk",
           "tableFrom": "discovered_files",
           "tableTo": "workflow_steps",
-          "columnsFrom": [
-            "workflow_step_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workflow_step_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -868,9 +796,7 @@
       "indexes": {
         "impl_plan_step_files_plan_step_id_idx": {
           "name": "impl_plan_step_files_plan_step_id_idx",
-          "columns": [
-            "plan_step_id"
-          ],
+          "columns": ["plan_step_id"],
           "isUnique": false
         }
       },
@@ -879,12 +805,8 @@
           "name": "implementation_plan_step_files_plan_step_id_implementation_plan_steps_id_fk",
           "tableFrom": "implementation_plan_step_files",
           "tableTo": "implementation_plan_steps",
-          "columnsFrom": [
-            "plan_step_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_step_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -994,24 +916,17 @@
       "indexes": {
         "implementation_plan_steps_agent_id_idx": {
           "name": "implementation_plan_steps_agent_id_idx",
-          "columns": [
-            "agent_id"
-          ],
+          "columns": ["agent_id"],
           "isUnique": false
         },
         "implementation_plan_steps_plan_id_idx": {
           "name": "implementation_plan_steps_plan_id_idx",
-          "columns": [
-            "plan_id"
-          ],
+          "columns": ["plan_id"],
           "isUnique": false
         },
         "implementation_plan_steps_unique_idx": {
           "name": "implementation_plan_steps_unique_idx",
-          "columns": [
-            "plan_id",
-            "step_number"
-          ],
+          "columns": ["plan_id", "step_number"],
           "isUnique": true
         }
       },
@@ -1020,12 +935,8 @@
           "name": "implementation_plan_steps_agent_id_agents_id_fk",
           "tableFrom": "implementation_plan_steps",
           "tableTo": "agents",
-          "columnsFrom": [
-            "agent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["agent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1033,12 +944,8 @@
           "name": "implementation_plan_steps_agent_override_id_agents_id_fk",
           "tableFrom": "implementation_plan_steps",
           "tableTo": "agents",
-          "columnsFrom": [
-            "agent_override_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["agent_override_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1046,12 +953,8 @@
           "name": "implementation_plan_steps_plan_id_implementation_plans_id_fk",
           "tableFrom": "implementation_plan_steps",
           "tableTo": "implementation_plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1132,16 +1035,12 @@
       "indexes": {
         "implementation_plans_workflow_id_unique": {
           "name": "implementation_plans_workflow_id_unique",
-          "columns": [
-            "workflow_id"
-          ],
+          "columns": ["workflow_id"],
           "isUnique": true
         },
         "implementation_plans_workflow_id_idx": {
           "name": "implementation_plans_workflow_id_idx",
-          "columns": [
-            "workflow_id"
-          ],
+          "columns": ["workflow_id"],
           "isUnique": false
         }
       },
@@ -1150,12 +1049,8 @@
           "name": "implementation_plans_workflow_id_workflows_id_fk",
           "tableFrom": "implementation_plans",
           "tableTo": "workflows",
-          "columnsFrom": [
-            "workflow_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workflow_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1223,23 +1118,17 @@
       "indexes": {
         "projects_archived_at_idx": {
           "name": "projects_archived_at_idx",
-          "columns": [
-            "archived_at"
-          ],
+          "columns": ["archived_at"],
           "isUnique": false
         },
         "projects_created_at_idx": {
           "name": "projects_created_at_idx",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         },
         "projects_is_favorite_idx": {
           "name": "projects_is_favorite_idx",
-          "columns": [
-            "is_favorite"
-          ],
+          "columns": ["is_favorite"],
           "isUnique": false
         }
       },
@@ -1321,16 +1210,12 @@
       "indexes": {
         "repositories_path_idx": {
           "name": "repositories_path_idx",
-          "columns": [
-            "path"
-          ],
+          "columns": ["path"],
           "isUnique": false
         },
         "repositories_project_id_idx": {
           "name": "repositories_project_id_idx",
-          "columns": [
-            "project_id"
-          ],
+          "columns": ["project_id"],
           "isUnique": false
         }
       },
@@ -1339,12 +1224,8 @@
           "name": "repositories_project_id_projects_id_fk",
           "tableFrom": "repositories",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1440,16 +1321,12 @@
       "indexes": {
         "settings_key_unique": {
           "name": "settings_key_unique",
-          "columns": [
-            "key"
-          ],
+          "columns": ["key"],
           "isUnique": true
         },
         "settings_category_idx": {
           "name": "settings_category_idx",
-          "columns": [
-            "category"
-          ],
+          "columns": ["category"],
           "isUnique": false
         }
       },
@@ -1545,17 +1422,12 @@
       "indexes": {
         "template_placeholders_template_id_idx": {
           "name": "template_placeholders_template_id_idx",
-          "columns": [
-            "template_id"
-          ],
+          "columns": ["template_id"],
           "isUnique": false
         },
         "template_placeholders_template_id_name_idx": {
           "name": "template_placeholders_template_id_name_idx",
-          "columns": [
-            "template_id",
-            "name"
-          ],
+          "columns": ["template_id", "name"],
           "isUnique": true
         }
       },
@@ -1564,12 +1436,8 @@
           "name": "template_placeholders_template_id_templates_id_fk",
           "tableFrom": "template_placeholders",
           "tableTo": "templates",
-          "columnsFrom": [
-            "template_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["template_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1658,16 +1526,12 @@
       "indexes": {
         "templates_name_unique": {
           "name": "templates_name_unique",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": true
         },
         "templates_category_idx": {
           "name": "templates_category_idx",
-          "columns": [
-            "category"
-          ],
+          "columns": ["category"],
           "isUnique": false
         }
       },
@@ -1719,24 +1583,17 @@
       "indexes": {
         "workflow_repositories_repository_id_idx": {
           "name": "workflow_repositories_repository_id_idx",
-          "columns": [
-            "repository_id"
-          ],
+          "columns": ["repository_id"],
           "isUnique": false
         },
         "workflow_repositories_workflow_id_idx": {
           "name": "workflow_repositories_workflow_id_idx",
-          "columns": [
-            "workflow_id"
-          ],
+          "columns": ["workflow_id"],
           "isUnique": false
         },
         "workflow_repositories_unique_idx": {
           "name": "workflow_repositories_unique_idx",
-          "columns": [
-            "workflow_id",
-            "repository_id"
-          ],
+          "columns": ["workflow_id", "repository_id"],
           "isUnique": true
         }
       },
@@ -1745,12 +1602,8 @@
           "name": "workflow_repositories_repository_id_repositories_id_fk",
           "tableFrom": "workflow_repositories",
           "tableTo": "repositories",
-          "columnsFrom": [
-            "repository_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["repository_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1758,12 +1611,8 @@
           "name": "workflow_repositories_workflow_id_workflows_id_fk",
           "tableFrom": "workflow_repositories",
           "tableTo": "workflows",
-          "columnsFrom": [
-            "workflow_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workflow_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1937,31 +1786,22 @@
       "indexes": {
         "workflow_steps_agent_id_idx": {
           "name": "workflow_steps_agent_id_idx",
-          "columns": [
-            "agent_id"
-          ],
+          "columns": ["agent_id"],
           "isUnique": false
         },
         "workflow_steps_status_idx": {
           "name": "workflow_steps_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "workflow_steps_workflow_id_idx": {
           "name": "workflow_steps_workflow_id_idx",
-          "columns": [
-            "workflow_id"
-          ],
+          "columns": ["workflow_id"],
           "isUnique": false
         },
         "workflow_steps_workflow_id_step_number_idx": {
           "name": "workflow_steps_workflow_id_step_number_idx",
-          "columns": [
-            "workflow_id",
-            "step_number"
-          ],
+          "columns": ["workflow_id", "step_number"],
           "isUnique": false
         }
       },
@@ -1970,12 +1810,8 @@
           "name": "workflow_steps_agent_id_agents_id_fk",
           "tableFrom": "workflow_steps",
           "tableTo": "agents",
-          "columnsFrom": [
-            "agent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["agent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1983,12 +1819,8 @@
           "name": "workflow_steps_workflow_id_workflows_id_fk",
           "tableFrom": "workflow_steps",
           "tableTo": "workflows",
-          "columnsFrom": [
-            "workflow_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workflow_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2143,46 +1975,32 @@
       "indexes": {
         "workflows_parent_workflow_id_idx": {
           "name": "workflows_parent_workflow_id_idx",
-          "columns": [
-            "parent_workflow_id"
-          ],
+          "columns": ["parent_workflow_id"],
           "isUnique": false
         },
         "workflows_project_id_idx": {
           "name": "workflows_project_id_idx",
-          "columns": [
-            "project_id"
-          ],
+          "columns": ["project_id"],
           "isUnique": false
         },
         "workflows_status_idx": {
           "name": "workflows_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "workflows_status_type_created_idx": {
           "name": "workflows_status_type_created_idx",
-          "columns": [
-            "status",
-            "type",
-            "created_at"
-          ],
+          "columns": ["status", "type", "created_at"],
           "isUnique": false
         },
         "workflows_type_idx": {
           "name": "workflows_type_idx",
-          "columns": [
-            "type"
-          ],
+          "columns": ["type"],
           "isUnique": false
         },
         "workflows_worktree_id_idx": {
           "name": "workflows_worktree_id_idx",
-          "columns": [
-            "worktree_id"
-          ],
+          "columns": ["worktree_id"],
           "isUnique": false
         }
       },
@@ -2191,12 +2009,8 @@
           "name": "workflows_clarification_agent_id_agents_id_fk",
           "tableFrom": "workflows",
           "tableTo": "agents",
-          "columnsFrom": [
-            "clarification_agent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["clarification_agent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -2204,12 +2018,8 @@
           "name": "workflows_parent_workflow_id_workflows_id_fk",
           "tableFrom": "workflows",
           "tableTo": "workflows",
-          "columnsFrom": [
-            "parent_workflow_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_workflow_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -2217,12 +2027,8 @@
           "name": "workflows_project_id_projects_id_fk",
           "tableFrom": "workflows",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2297,30 +2103,22 @@
       "indexes": {
         "worktrees_path_unique": {
           "name": "worktrees_path_unique",
-          "columns": [
-            "path"
-          ],
+          "columns": ["path"],
           "isUnique": true
         },
         "worktrees_workflow_id_unique": {
           "name": "worktrees_workflow_id_unique",
-          "columns": [
-            "workflow_id"
-          ],
+          "columns": ["workflow_id"],
           "isUnique": true
         },
         "worktrees_repository_id_idx": {
           "name": "worktrees_repository_id_idx",
-          "columns": [
-            "repository_id"
-          ],
+          "columns": ["repository_id"],
           "isUnique": false
         },
         "worktrees_status_idx": {
           "name": "worktrees_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         }
       },
@@ -2329,12 +2127,8 @@
           "name": "worktrees_repository_id_repositories_id_fk",
           "tableFrom": "worktrees",
           "tableTo": "repositories",
-          "columnsFrom": [
-            "repository_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["repository_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

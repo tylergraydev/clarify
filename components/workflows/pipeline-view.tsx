@@ -27,6 +27,7 @@ import { ClarificationWorkspace } from './clarification-workspace';
 import { PipelineProgressBar } from './pipeline-progress-bar';
 import { PipelineStep, type PipelineStepStatus, type PipelineStepType } from './pipeline-step';
 import { VerticalConnector, type VerticalConnectorState } from './vertical-connector';
+import { WorkflowEmptyState } from './workflow-empty-state';
 
 /**
  * Active tool indicator for displaying current tool operations.
@@ -604,10 +605,11 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
               }
 
               const updatedTools = [...prev.activeTools];
+              const existingTool = updatedTools[existingIndex]!;
               updatedTools[existingIndex] = {
-                ...updatedTools[existingIndex],
                 toolInput: message.toolInput,
                 toolName: message.toolName,
+                toolUseId: existingTool.toolUseId,
               };
               return {
                 ...prev,
@@ -715,8 +717,9 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
   }, [activeClarificationStep, clarificationState.stepId]);
 
   const isLoading = isLoadingSteps || isLoadingWorkflow;
-  const isWorkflowCreated = workflow?.status === 'created';
   const isStepsEmpty = visibleSteps.length === 0;
+  const _shouldShowEmptyState = isStepsEmpty && !isLoading && !isClarificationWorkspaceActive && Boolean(workflow);
+  const _hasQuestionsToSubmit = activeClarificationOutput && activeClarificationOutput.questions?.length;
 
   return (
     <div className={cn('flex h-full flex-col', className)} ref={ref} {...props}>
@@ -745,8 +748,9 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
               isSubmitting={submittingStepId === activeClarificationStep.id}
               onSkip={() => handleSkipClarification(activeClarificationStep.id)}
               onSubmit={
-                activeClarificationOutput && activeClarificationOutput.questions?.length
-                  ? (answers) => handleSubmitClarification(activeClarificationStep.id, activeClarificationOutput, answers)
+                _hasQuestionsToSubmit
+                  ? (answers) =>
+                      handleSubmitClarification(activeClarificationStep.id, activeClarificationOutput, answers)
                   : undefined
               }
               phase={clarificationState.phase}
@@ -778,15 +782,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
           role={'list'}
         >
           {/* Empty State - Workflow created but no steps yet */}
-          {isStepsEmpty && !isLoading && !isClarificationWorkspaceActive && (
-            <div className={'flex min-h-24 w-full items-center justify-center text-muted-foreground'} role={'listitem'}>
-              {isWorkflowCreated ? (
-                <p className={'text-sm'}>Workflow is ready. Start the workflow to create pipeline steps.</p>
-              ) : (
-                <p className={'text-sm'}>No steps available for this workflow.</p>
-              )}
-            </div>
-          )}
+          {_shouldShowEmptyState && workflow && <WorkflowEmptyState workflow={workflow} />}
 
           {/* Pipeline Steps */}
           {visibleSteps.map((step, index) => {

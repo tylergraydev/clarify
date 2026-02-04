@@ -69,10 +69,7 @@ export const ClarificationForm = ({
   const questionCount = questions.length;
   const questionLabel = questionCount === 1 ? 'question' : 'questions';
   const formValues = useStore(form.store, (state) => state.values);
-  const answeredCount = useMemo(
-    () => Object.values(formValues).filter((value) => Boolean(value)).length,
-    [formValues]
-  );
+  const answeredCount = useMemo(() => Object.values(formValues).filter((value) => Boolean(value)).length, [formValues]);
   const progressPercent = questionCount > 0 ? Math.round((answeredCount / questionCount) * 100) : 0;
 
   useEffect(() => {
@@ -121,7 +118,11 @@ export const ClarificationForm = ({
             return (
               <div className={'px-6 py-5'} key={fieldName}>
                 <div className={'flex items-start gap-3'}>
-                  <div className={'mt-0.5 flex size-7 items-center justify-center rounded-full bg-muted text-xs font-semibold'}>
+                  <div
+                    className={
+                      'mt-0.5 flex size-7 items-center justify-center rounded-full bg-muted text-xs font-semibold'
+                    }
+                  >
                     {index + 1}
                   </div>
                   <div className={'flex-1'}>

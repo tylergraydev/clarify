@@ -6,6 +6,7 @@ import { $path } from 'next-typesafe-url';
 import { useRouteParams } from 'next-typesafe-url/app';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
 import type { Project } from '@/types/electron';
 
@@ -20,7 +21,7 @@ import { useProject } from '@/hooks/queries/use-projects';
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useWorkflowsByProject } from '@/hooks/queries/use-workflows';
 
-import { Route } from './route-type';
+import { type ProjectTabValue, projectTabValues, Route } from './route-type';
 
 type ProjectWithDates = Pick<Project, 'archivedAt' | 'createdAt' | 'updatedAt'>;
 
@@ -81,6 +82,12 @@ const ProjectDetailPage = () => {
   // Fetch repositories and workflows for counts
   const { data: repositories } = useRepositoriesByProject(projectId ?? 0);
   const { data: workflows } = useWorkflowsByProject(projectId ?? 0);
+
+  // URL state management for active tab
+  const [activeTab, setActiveTab] = useQueryState(
+    'tab',
+    parseAsStringLiteral(projectTabValues).withDefault('overview')
+  );
 
   // Handle route params loading state
   if (routeParams.isLoading) {
@@ -160,7 +167,7 @@ const ProjectDetailPage = () => {
 
         {/* Tabbed content */}
         <section aria-label={'Project content'} aria-live={'polite'} id={'project-content'}>
-          <TabsRoot defaultValue={'overview'}>
+          <TabsRoot onValueChange={(value) => setActiveTab(value as ProjectTabValue)} value={activeTab}>
             <TabsList>
               <TabsTrigger value={'overview'}>
                 <Building2 aria-hidden={'true'} className={'mr-2 size-4'} />
