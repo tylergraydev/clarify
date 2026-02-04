@@ -36,15 +36,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useActiveWorkflowsStore } from '@/lib/stores/active-workflows-store';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 type ActiveWorkflowsStatusFilter = 'all' | 'editing' | 'paused' | 'running';
-
-// ============================================================================
-// Helpers
-// ============================================================================
 
 /**
  * Filter active workflows based on status, type, project, and search filter values.
@@ -65,10 +57,6 @@ const filterActiveWorkflows = (
     return matchesStatus && matchesType && matchesProject && matchesSearch;
   });
 };
-
-// ============================================================================
-// Main Component
-// ============================================================================
 
 /**
  * Active Workflows page - Displays currently running, paused, and editing workflows.
