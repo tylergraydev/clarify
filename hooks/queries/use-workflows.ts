@@ -36,25 +36,6 @@ export function useActiveWorkflows(options?: { enabled?: boolean }) {
 }
 
 /**
- * Fetch created workflows (not started yet) with automatic polling
- * @param options.enabled - Optional flag to pause polling when not needed (defaults to true)
- */
-export function useCreatedWorkflows(options?: { enabled?: boolean }) {
-  const { isElectron, workflows } = useElectronDb();
-  const enabledOption = options?.enabled ?? true;
-
-  return useQuery({
-    ...workflowKeys.created,
-    enabled: isElectron && enabledOption,
-    queryFn: async () => {
-      const allWorkflows = await workflows.list();
-      return allWorkflows.filter((workflow) => workflow.status === CREATED_STATUS);
-    },
-    refetchInterval: 5000,
-  });
-}
-
-/**
  * Cancel a workflow
  */
 export function useCancelWorkflow() {
@@ -82,6 +63,25 @@ export function useCancelWorkflow() {
         }
       }
     },
+  });
+}
+
+/**
+ * Fetch created workflows (not started yet) with automatic polling
+ * @param options.enabled - Optional flag to pause polling when not needed (defaults to true)
+ */
+export function useCreatedWorkflows(options?: { enabled?: boolean }) {
+  const { isElectron, workflows } = useElectronDb();
+  const enabledOption = options?.enabled ?? true;
+
+  return useQuery({
+    ...workflowKeys.created,
+    enabled: isElectron && enabledOption,
+    queryFn: async () => {
+      const allWorkflows = await workflows.list();
+      return allWorkflows.filter((workflow) => workflow.status === CREATED_STATUS);
+    },
+    refetchInterval: 5000,
   });
 }
 

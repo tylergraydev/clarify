@@ -42,6 +42,11 @@ export interface ProjectFilterOption {
   value: string;
 }
 
+export interface WorkflowStatusFilterOption {
+  label: string;
+  value: WorkflowStatusFilterValue;
+}
+
 /** Available workflow status filter values */
 export type WorkflowStatusFilterValue =
   | 'all'
@@ -52,11 +57,6 @@ export type WorkflowStatusFilterValue =
   | 'failed'
   | 'paused'
   | 'running';
-
-export interface WorkflowStatusFilterOption {
-  label: string;
-  value: WorkflowStatusFilterValue;
-}
 
 export interface WorkflowTableToolbarProps extends ComponentPropsWithRef<'div'> {
   /** Default status filter value for reset/count logic */
@@ -75,10 +75,10 @@ export interface WorkflowTableToolbarProps extends ComponentPropsWithRef<'div'> 
   projects?: Array<ProjectFilterOption>;
   /** Whether to show the project filter */
   showProjectFilter?: boolean;
-  /** Override the available status filter options */
-  statusOptions?: Array<WorkflowStatusFilterOption>;
   /** Current status filter value */
   statusFilter: WorkflowStatusFilterValue;
+  /** Override the available status filter options */
+  statusOptions?: Array<WorkflowStatusFilterOption>;
   /** Current type filter value */
   typeFilter: WorkflowTypeFilterValue;
 }
@@ -216,8 +216,8 @@ export const WorkflowTableToolbar = memo(function WorkflowTableToolbar({
   projects,
   ref,
   showProjectFilter = false,
-  statusOptions,
   statusFilter,
+  statusOptions,
   typeFilter,
   ...props
 }: WorkflowTableToolbarProps) {

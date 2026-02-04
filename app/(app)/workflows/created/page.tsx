@@ -23,6 +23,7 @@ import { EditWorkflowDialog } from '@/components/workflows/edit-workflow-dialog'
 import { WorkflowTable } from '@/components/workflows/workflow-table';
 import {
   type ProjectFilterOption,
+  type WorkflowStatusFilterOption,
   type WorkflowStatusFilterValue,
   WorkflowTableToolbar,
   type WorkflowTypeFilterValue,
@@ -53,7 +54,9 @@ const filterCreatedWorkflows = (
   });
 };
 
-const CREATED_STATUS_OPTIONS = [{ label: 'Created', value: 'created' }] as const;
+const CREATED_STATUS_OPTIONS: Array<WorkflowStatusFilterOption> = [
+  { label: 'Created', value: 'created' },
+];
 
 // ============================================================================
 // Main Component
@@ -199,7 +202,7 @@ export default function CreatedWorkflowsPage() {
     }
   }, []);
 
-  const handleStatusFilterChange = useCallback((_value: WorkflowStatusFilterValue) => {
+  const handleStatusFilterChange = useCallback(() => {
     setStatusFilter('created');
   }, []);
 
