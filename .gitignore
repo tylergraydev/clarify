@@ -49,3 +49,4 @@ clarify-dev.db-shm
 clarify-dev.db-wal
 
 .worktrees
+.aider*
