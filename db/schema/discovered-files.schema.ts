@@ -3,7 +3,7 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 import { workflowSteps } from './workflow-steps.schema';
 
-export const fileActions = ['create', 'modify', 'delete'] as const;
+export const fileActions = ['create', 'modify', 'delete', 'reference'] as const;
 export const filePriorities = ['high', 'medium', 'low'] as const;
 
 export const discoveredFiles = sqliteTable(
@@ -21,6 +21,8 @@ export const discoveredFiles = sqliteTable(
     orderIndex: integer('order_index').notNull().default(0),
     originalPriority: text('original_priority'),
     priority: text('priority').notNull().default('medium'),
+    relevanceExplanation: text('relevance_explanation'),
+    role: text('role'),
     updatedAt: text('updated_at')
       .default(sql`(CURRENT_TIMESTAMP)`)
       .notNull(),
