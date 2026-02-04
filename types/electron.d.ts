@@ -335,6 +335,10 @@ export interface ClarificationUsageStats {
   outputTokens: number;
 }
 
+// =============================================================================
+// File Discovery Types
+// =============================================================================
+
 export interface ElectronAPI {
   agent: {
     activate(id: number): Promise<import('../db/schema').Agent | undefined>;
@@ -412,17 +416,7 @@ export interface ElectronAPI {
       filters?: Array<{ extensions: Array<string>; name: string }>
     ): Promise<null | string>;
   };
-  discovery: {
-    add(stepId: number, data: import('../db/schema').NewDiscoveredFile): Promise<import('../db/schema').DiscoveredFile>;
-    exclude(id: number): Promise<import('../db/schema').DiscoveredFile | undefined>;
-    include(id: number): Promise<import('../db/schema').DiscoveredFile | undefined>;
-    list(stepId: number): Promise<Array<import('../db/schema').DiscoveredFile>>;
-    update(
-      id: number,
-      data: Partial<import('../db/schema').NewDiscoveredFile>
-    ): Promise<import('../db/schema').DiscoveredFile | undefined>;
-    updatePriority(id: number, priority: string): Promise<import('../db/schema').DiscoveredFile | undefined>;
-  };
+  discovery: FileDiscoveryAPI;
   fs: {
     exists(path: string): Promise<boolean>;
     readDirectory(path: string): Promise<{
@@ -564,6 +558,146 @@ export interface ElectronAPI {
     getByWorkflowId(workflowId: number): Promise<import('../db/schema').Worktree | undefined>;
     list(options?: { repositoryId?: number; status?: string }): Promise<Array<import('../db/schema').Worktree>>;
   };
+}
+
+/**
+ * Agent configuration for file discovery.
+ */
+export interface FileDiscoveryAgentConfig {
+  extendedThinkingEnabled: boolean;
+  hooks: Array<{ body: string; eventType: string; matcher: null | string }>;
+  id: number;
+  maxThinkingTokens: null | number;
+  model: null | string;
+  name: string;
+  permissionMode: null | string;
+  skills: Array<{ isRequired: boolean; skillName: string }>;
+  systemPrompt: string;
+  tools: Array<{ toolName: string; toolPattern: string }>;
+}
+
+/**
+ * File discovery API interface.
+ */
+export interface FileDiscoveryAPI {
+  add(stepId: number, data: import('../db/schema').NewDiscoveredFile): Promise<import('../db/schema').DiscoveredFile>;
+  cancel(sessionId: string): Promise<FileDiscoveryOutcome>;
+  delete(id: number): Promise<boolean>;
+  exclude(id: number): Promise<import('../db/schema').DiscoveredFile | undefined>;
+  getState(sessionId: string): Promise<FileDiscoveryServiceState | null>;
+  include(id: number): Promise<import('../db/schema').DiscoveredFile | undefined>;
+  list(stepId: number): Promise<Array<import('../db/schema').DiscoveredFile>>;
+  /** Subscribe to streaming events during file discovery. Returns unsubscribe function. */
+  onStreamMessage(callback: (message: FileDiscoveryStreamMessage) => void): () => void;
+  rediscover(input: FileDiscoveryRediscoverInput): Promise<FileDiscoveryOutcomeWithPause>;
+  start(input: FileDiscoveryStartInput): Promise<FileDiscoveryOutcomeWithPause>;
+  toggle(id: number): Promise<import('../db/schema').DiscoveredFile | undefined>;
+  update(
+    id: number,
+    data: Partial<import('../db/schema').NewDiscoveredFile>
+  ): Promise<import('../db/schema').DiscoveredFile | undefined>;
+  updatePriority(id: number, priority: string): Promise<import('../db/schema').DiscoveredFile | undefined>;
+}
+
+/**
+ * Discriminated union of all possible file discovery outcomes.
+ */
+export type FileDiscoveryOutcome =
+  | { discoveredFiles: Array<{ filePath: string; id: number; priority: string }>; summary: string; totalCount: number; type: 'SUCCESS' }
+  | { elapsedSeconds: number; error: string; partialCount?: number; type: 'TIMEOUT' }
+  | { error: string; partialCount?: number; stack?: string; type: 'ERROR' }
+  | { partialCount: number; reason?: string; type: 'CANCELLED' };
+
+/**
+ * Extended outcome fields for pause and retry information.
+ */
+export interface FileDiscoveryOutcomePauseInfo {
+  /** Whether the workflow should pause after this step */
+  pauseRequested?: boolean;
+  /** Current retry count for this session */
+  retryCount?: number;
+  /** SDK session ID for potential resumption */
+  sdkSessionId?: string;
+  /** Whether skip fallback is available */
+  skipFallbackAvailable?: boolean;
+  /** Usage statistics from SDK result */
+  usage?: FileDiscoveryUsageStats;
+}
+
+/**
+ * Extended file discovery outcome with pause and retry information.
+ */
+export type FileDiscoveryOutcomeWithPause = FileDiscoveryOutcome & FileDiscoveryOutcomePauseInfo;
+
+/**
+ * Input for re-discovery operation.
+ */
+export interface FileDiscoveryRediscoverInput extends FileDiscoveryStartInput {
+  mode: 'additive' | 'replace';
+}
+
+/**
+ * Phase type for file discovery service.
+ */
+export type FileDiscoveryServicePhase =
+  | 'cancelled'
+  | 'complete'
+  | 'error'
+  | 'executing'
+  | 'executing_extended_thinking'
+  | 'idle'
+  | 'loading_agent'
+  | 'processing_response'
+  | 'saving_results'
+  | 'timeout';
+
+/**
+ * State of the file discovery service during execution.
+ */
+export interface FileDiscoveryServiceState {
+  agentConfig: FileDiscoveryAgentConfig | null;
+  discoveredCount: number;
+  phase: FileDiscoveryServicePhase;
+  summary: null | string;
+}
+
+/**
+ * Input for starting a file discovery session.
+ */
+export interface FileDiscoveryStartInput {
+  agentId: number;
+  refinedFeatureRequest: string;
+  repositoryPath: string;
+  stepId: number;
+  timeoutSeconds?: number;
+  workflowId: number;
+}
+
+/**
+ * Discriminated union of all file discovery stream message types.
+ */
+export type FileDiscoveryStreamMessage =
+  | FileDiscoveryStreamComplete
+  | FileDiscoveryStreamError
+  | FileDiscoveryStreamExtendedThinkingHeartbeat
+  | FileDiscoveryStreamFileDiscovered
+  | FileDiscoveryStreamPhaseChange
+  | FileDiscoveryStreamTextDelta
+  | FileDiscoveryStreamThinkingDelta
+  | FileDiscoveryStreamThinkingStart
+  | FileDiscoveryStreamToolFinish
+  | FileDiscoveryStreamToolStart
+  | FileDiscoveryStreamToolUpdate;
+
+/**
+ * Usage statistics for file discovery.
+ */
+export interface FileDiscoveryUsageStats {
+  costUsd: number;
+  durationMs: number;
+  inputTokens: number;
+  numTurns: number;
+  outputTokens: number;
 }
 
 /**
@@ -711,6 +845,129 @@ interface ClarificationStreamToolStop extends ClarificationStreamMessageBase {
  * Stream message for tool input updates.
  */
 interface ClarificationStreamToolUpdate extends ClarificationStreamMessageBase {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
+}
+
+/**
+ * Stream message indicating discovery completed.
+ */
+interface FileDiscoveryStreamComplete extends FileDiscoveryStreamMessageBase {
+  outcome: FileDiscoveryOutcome;
+  type: 'complete';
+}
+
+/**
+ * Stream message indicating an error occurred.
+ */
+interface FileDiscoveryStreamError extends FileDiscoveryStreamMessageBase {
+  error: string;
+  stack?: string;
+  type: 'error';
+}
+
+/**
+ * Heartbeat message during extended thinking execution.
+ */
+interface FileDiscoveryStreamExtendedThinkingHeartbeat extends FileDiscoveryStreamMessageBase {
+  elapsedMs: number;
+  estimatedProgress: null | number;
+  maxThinkingTokens: number;
+  type: 'extended_thinking_heartbeat';
+}
+
+/**
+ * Stream message for a single file discovered during execution.
+ */
+interface FileDiscoveryStreamFileDiscovered extends FileDiscoveryStreamMessageBase {
+  file: {
+    action: 'create' | 'delete' | 'modify' | 'reference';
+    filePath: string;
+    priority: 'high' | 'low' | 'medium';
+    relevanceExplanation: string;
+    role: string;
+  };
+  type: 'file_discovered';
+}
+
+/**
+ * Base interface for all file discovery stream messages.
+ */
+interface FileDiscoveryStreamMessageBase {
+  sessionId: string;
+  timestamp: number;
+  type:
+    | 'complete'
+    | 'error'
+    | 'extended_thinking_heartbeat'
+    | 'file_discovered'
+    | 'phase_change'
+    | 'text_delta'
+    | 'thinking_delta'
+    | 'thinking_start'
+    | 'tool_finish'
+    | 'tool_start'
+    | 'tool_update';
+}
+
+/**
+ * Stream message for phase transitions.
+ */
+interface FileDiscoveryStreamPhaseChange extends FileDiscoveryStreamMessageBase {
+  phase: FileDiscoveryServicePhase;
+  type: 'phase_change';
+}
+
+/**
+ * Stream message for text delta.
+ */
+interface FileDiscoveryStreamTextDelta extends FileDiscoveryStreamMessageBase {
+  delta: string;
+  type: 'text_delta';
+}
+
+/**
+ * Stream message for thinking delta.
+ */
+interface FileDiscoveryStreamThinkingDelta extends FileDiscoveryStreamMessageBase {
+  blockIndex: number;
+  delta: string;
+  type: 'thinking_delta';
+}
+
+/**
+ * Stream message for thinking block start.
+ */
+interface FileDiscoveryStreamThinkingStart extends FileDiscoveryStreamMessageBase {
+  blockIndex: number;
+  type: 'thinking_start';
+}
+
+/**
+ * Stream message for tool finish.
+ */
+interface FileDiscoveryStreamToolFinish extends FileDiscoveryStreamMessageBase {
+  toolOutput?: unknown;
+  toolUseId: string;
+  type: 'tool_finish';
+}
+
+/**
+ * Stream message for tool start.
+ */
+interface FileDiscoveryStreamToolStart extends FileDiscoveryStreamMessageBase {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_start';
+}
+
+/**
+ * Stream message for tool input updates.
+ */
+interface FileDiscoveryStreamToolUpdate extends FileDiscoveryStreamMessageBase {
   toolInput: Record<string, unknown>;
   toolName: string;
   toolUseId: string;

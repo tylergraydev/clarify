@@ -182,8 +182,9 @@ export function registerAllHandlers(
   // ============================================
 
   // Discovered files - files found during analysis
+  // Also needs workflowStepsRepository and getMainWindow for discovery streaming
   const discoveredFilesRepository = createDiscoveredFilesRepository(db);
-  registerDiscoveryHandlers(discoveredFilesRepository);
+  registerDiscoveryHandlers(discoveredFilesRepository, workflowStepsRepository, getMainWindow);
 
   // Audit logs - system event tracking
   const auditLogsRepository = createAuditLogsRepository(db);

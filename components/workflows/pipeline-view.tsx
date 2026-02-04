@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import type { StepMetrics } from './pipeline-step-metrics';
 
 import { ClarificationWorkspace } from './clarification-workspace';
+import { DiscoveryWorkspace } from './discovery-workspace';
 import { PipelineProgressBar } from './pipeline-progress-bar';
 import { PipelineStep, type PipelineStepStatus, type PipelineStepType } from './pipeline-step';
 import { VerticalConnector, type VerticalConnectorState } from './vertical-connector';
@@ -257,21 +258,30 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
     return steps.find((step) => step.stepType === 'clarification' && deriveStepState(step.status) === 'running');
   }, [steps]);
 
+  // Find the active discovery step
+  const activeDiscoveryStep = useMemo(() => {
+    if (!steps) return null;
+    return steps.find((step) => step.stepType === 'discovery' && deriveStepState(step.status) === 'running');
+  }, [steps]);
+
   // Get agent details for the clarification step (either from step.agentId or default)
   const clarificationAgentId = activeClarificationStep?.agentId ?? defaultAgentId;
   const { data: clarificationAgent } = useAgent(clarificationAgentId ?? 0);
 
   const sortedSteps = useMemo(() => (steps ? sortStepsByNumber(steps) : []), [steps]);
   const activeClarificationStepId = activeClarificationStep?.id ?? null;
+  const activeDiscoveryStepId = activeDiscoveryStep?.id ?? null;
   const activeClarificationOutput = useMemo(() => {
     if (!activeClarificationStep) return null;
     return activeClarificationStep.outputStructured as ClarificationStepOutput | null;
   }, [activeClarificationStep]);
   const isClarificationWorkspaceActive = Boolean(activeClarificationStepId);
+  const isDiscoveryWorkspaceActive = Boolean(activeDiscoveryStepId);
   const visibleSteps = useMemo(() => {
-    if (!isClarificationWorkspaceActive) return sortedSteps;
-    return sortedSteps.filter((step) => step.id !== activeClarificationStepId);
-  }, [sortedSteps, isClarificationWorkspaceActive, activeClarificationStepId]);
+    const activeStepIds = [activeClarificationStepId, activeDiscoveryStepId].filter(Boolean);
+    if (activeStepIds.length === 0) return sortedSteps;
+    return sortedSteps.filter((step) => !activeStepIds.includes(step.id));
+  }, [sortedSteps, activeClarificationStepId, activeDiscoveryStepId]);
 
   // Calculate progress metrics
   const completedCount = useMemo(
@@ -535,6 +545,20 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
     setClarificationState(INITIAL_CLARIFICATION_STATE);
     clarificationStartedRef.current = null;
   }, [clarificationState.sessionId]);
+
+  /**
+   * Handles completion of the discovery step.
+   * Transitions the step to completed status.
+   */
+  const handleDiscoveryComplete = useCallback(async () => {
+    if (!activeDiscoveryStepId) return;
+
+    try {
+      await completeStep.mutateAsync({ id: activeDiscoveryStepId });
+    } catch (error) {
+      console.error('Failed to complete discovery step:', error);
+    }
+  }, [activeDiscoveryStepId, completeStep]);
 
   // Effect to start clarification when a clarification step becomes active
   useEffect(() => {
@@ -802,7 +826,8 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
   const isLoading = isLoadingSteps || isLoadingWorkflow;
   const isStepsEmpty = visibleSteps.length === 0;
-  const _shouldShowEmptyState = isStepsEmpty && !isLoading && !isClarificationWorkspaceActive && Boolean(workflow);
+  const isAnyWorkspaceActive = isClarificationWorkspaceActive || isDiscoveryWorkspaceActive;
+  const _shouldShowEmptyState = isStepsEmpty && !isLoading && !isAnyWorkspaceActive && Boolean(workflow);
   const _hasQuestionsToSubmit = activeClarificationOutput && activeClarificationOutput.questions?.length;
 
   return (
@@ -822,6 +847,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
       {/* Vertical Pipeline Container */}
       <div className={'flex flex-1 flex-col items-center overflow-y-auto py-6'}>
+        {/* Clarification Workspace */}
         {isClarificationWorkspaceActive && activeClarificationStep && (
           <div className={'w-full max-w-6xl px-4'}>
             <ClarificationWorkspace
@@ -861,9 +887,21 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
           </div>
         )}
 
+        {/* Discovery Workspace */}
+        {isDiscoveryWorkspaceActive && activeDiscoveryStep && (
+          <div className={'w-full max-w-6xl px-4'}>
+            <DiscoveryWorkspace
+              discoveryCompletedAt={activeDiscoveryStep.completedAt}
+              onComplete={handleDiscoveryComplete}
+              stepId={activeDiscoveryStep.id}
+              workflowId={workflowId}
+            />
+          </div>
+        )}
+
         <div
           aria-label={'Workflow pipeline'}
-          className={cn('w-full px-4', isClarificationWorkspaceActive ? 'mt-10 max-w-4xl' : 'max-w-4xl')}
+          className={cn('w-full px-4', isAnyWorkspaceActive ? 'mt-10 max-w-4xl' : 'max-w-4xl')}
           role={'list'}
         >
           {/* Empty State - Workflow created but no steps yet */}

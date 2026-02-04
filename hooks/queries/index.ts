@@ -95,12 +95,20 @@ export { useDefaultClarificationAgent, useSetDefaultClarificationAgent } from '.
 // ============================================================================
 export {
   useAddDiscoveredFile,
+  useCancelDiscovery,
+  useDeleteDiscoveredFile,
   useDiscoveredFiles,
+  useDiscoveryStream,
   useExcludeFile,
   useIncludedFiles,
   useIncludeFile,
+  useRediscover,
+  useStartDiscovery,
+  useToggleDiscoveredFile,
   useUpdateDiscoveredFile,
 } from './use-discovered-files';
+
+export type { DiscoveryStreamState, UseDiscoveryStreamReturn } from './use-discovered-files';
 
 // ============================================================================
 // Project Hooks
