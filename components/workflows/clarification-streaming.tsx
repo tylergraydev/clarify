@@ -356,15 +356,17 @@ export const ClarificationStreaming = memo(
         )}
 
         {/* Active Tools Section */}
-        {hasActiveTools && (
-          <div className={'border-b border-border/50 px-4 py-2'}>
+        <div className={'border-b border-border/50 px-4 py-2'}>
+          {hasActiveTools ? (
             <div className={'flex flex-wrap items-center gap-2'}>
               {activeTools.map((tool) => (
                 <ToolIndicator key={tool.toolUseId} tool={tool} />
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <span className={'text-xs text-muted-foreground'}>Waiting for tool execution</span>
+          )}
+        </div>
 
         {/* Tool History Section (Collapsible) */}
         {hasPastTools && (
