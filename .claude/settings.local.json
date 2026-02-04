@@ -1,4 +1,6 @@
 {
-  "enabledMcpjsonServers": ["base-ui"],
-  "enableAllProjectMcpServers": true
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "base-ui"
+  ]
 }

@@ -3,7 +3,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { UpdateWorkflowInput } from '@/lib/validations/workflow';
-import type { WorkflowHistoryFilters } from '@/types/electron';
+import type { Workflow, WorkflowHistoryFilters, WorkflowStep } from '@/types/electron';
 
 import { stepKeys } from '@/lib/queries/steps';
 import { workflowKeys } from '@/lib/queries/workflows';
@@ -17,11 +17,17 @@ const ACTIVE_STATUSES = ['running', 'paused', 'editing'] as const;
 const CREATED_STATUS = 'created' as const;
 
 /**
- * Fetch active workflows (running, paused, editing) with automatic polling
+ * Step statuses that count as completed for progress calculation
+ */
+const COMPLETED_STEP_STATUSES = ['completed', 'skipped'] as const;
+
+/**
+ * Fetch active workflows (running, paused, editing) with automatic polling.
+ * Enriches each workflow with computed progress from its steps.
  * @param options.enabled - Optional flag to pause polling when not needed (defaults to true)
  */
 export function useActiveWorkflows(options?: { enabled?: boolean }) {
-  const { isElectron, workflows } = useElectronDb();
+  const { isElectron, steps, workflows } = useElectronDb();
   const enabledOption = options?.enabled ?? true;
 
   return useQuery({
@@ -29,7 +35,22 @@ export function useActiveWorkflows(options?: { enabled?: boolean }) {
     enabled: isElectron && enabledOption,
     queryFn: async () => {
       const allWorkflows = await workflows.list();
-      return allWorkflows.filter((w) => ACTIVE_STATUSES.includes(w.status as (typeof ACTIVE_STATUSES)[number]));
+      const activeWorkflows = allWorkflows.filter((w) =>
+        ACTIVE_STATUSES.includes(w.status as (typeof ACTIVE_STATUSES)[number])
+      );
+
+      // Fetch steps for each active workflow and compute progress
+      return await Promise.all(
+        activeWorkflows.map(async (workflow) => {
+          const workflowSteps = await steps.list(workflow.id);
+          const progress = computeProgress(workflowSteps);
+          return {
+            ...workflow,
+            currentStepNumber: progress.currentStepNumber,
+            totalSteps: progress.totalSteps > 0 ? progress.totalSteps : null,
+          } as Workflow;
+        })
+      );
     },
     refetchInterval: 5000,
   });
@@ -339,4 +360,16 @@ export function useWorkflowStatistics(filters?: { dateFrom?: string; dateTo?: st
     enabled: isElectron,
     queryFn: () => workflows.getStatistics(filters),
   });
+}
+
+/**
+ * Compute progress from workflow steps.
+ * Returns currentStepNumber (completed + skipped count) and totalSteps (always step count).
+ */
+function computeProgress(steps: Array<WorkflowStep>): { currentStepNumber: number; totalSteps: number } {
+  const totalSteps = steps.length;
+  const currentStepNumber = steps.filter((step) =>
+    COMPLETED_STEP_STATUSES.includes(step.status as (typeof COMPLETED_STEP_STATUSES)[number])
+  ).length;
+  return { currentStepNumber, totalSteps };
 }
