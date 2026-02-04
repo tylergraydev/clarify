@@ -448,11 +448,15 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
       // Normalize questions to ensure they have required fields
       // Type mismatch between electron.d.ts (old) and lib/validations/clarification.ts (new)
-      const normalizedQuestions: Array<ClarificationQuestion> = questions.map((q) => ({
-        ...q,
-        allowOther: (q as unknown as Record<string, unknown>).allowOther ?? false,
-        questionType: (q as unknown as Record<string, unknown>).questionType ?? 'radio',
-      })) as Array<ClarificationQuestion>;
+      const normalizedQuestions: Array<ClarificationQuestion> = questions.map((q) => {
+        const questionType = (q as unknown as Record<string, unknown>).questionType ?? 'radio';
+
+        return {
+          ...q,
+          allowOther: questionType === 'text' ? false : true,
+          questionType,
+        };
+      }) as Array<ClarificationQuestion>;
 
       // Update the step's outputStructured with the questions
       const stepOutput: ClarificationStepOutput = {
@@ -700,11 +704,15 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         if (outcome.type === 'QUESTIONS_FOR_USER') {
           normalizedOutcome = {
             assessment: outcome.assessment,
-            questions: outcome.questions.map((q) => ({
-              ...q,
-              allowOther: (q as unknown as Record<string, unknown>).allowOther ?? false,
-              questionType: (q as unknown as Record<string, unknown>).questionType ?? 'radio',
-            })) as Array<ClarificationQuestion>,
+            questions: outcome.questions.map((q) => {
+              const questionType = (q as unknown as Record<string, unknown>).questionType ?? 'radio';
+
+              return {
+                ...q,
+                allowOther: questionType === 'text' ? false : true,
+                questionType,
+              };
+            }) as Array<ClarificationQuestion>,
             type: 'QUESTIONS_FOR_USER',
           };
         } else {

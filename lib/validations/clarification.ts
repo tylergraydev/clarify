@@ -18,10 +18,13 @@ export type ClarificationOption = z.infer<typeof clarificationOptionSchema>;
  * - header: Short label for the question (e.g., "Storage", "Scope")
  * - options: Array of 2-4 selectable options (optional for text questions)
  * - questionType: Type of question (radio, checkbox, or text)
- * - allowOther: Whether to show "Other" text input (for radio/checkbox only)
+ * - allowOther: Whether to show "Other" text input (for radio/checkbox only, ignored for text)
  */
 export const clarificationQuestionSchema = z.object({
-  allowOther: z.boolean().default(false).describe('Whether to show "Other" text input for radio/checkbox questions'),
+  allowOther: z
+    .boolean()
+    .default(true)
+    .describe('Whether to show "Other" text input for radio/checkbox questions (ignored for text)'),
   header: z.string().min(1, 'Question header is required'),
   options: z
     .array(clarificationOptionSchema)

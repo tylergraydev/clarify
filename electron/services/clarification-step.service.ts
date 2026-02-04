@@ -877,9 +877,9 @@ ${featureRequest}
      * Use "radio" (questionType: "radio") for mutually exclusive choices where the user should pick ONE option
      * Use "checkbox" (questionType: "checkbox") for non-exclusive options where the user can pick MULTIPLE
      * Use "text" (questionType: "text") for open-ended responses that can't be captured in predefined options
-   - **Enable "Other" input when appropriate:**
-     * Set allowOther: true for radio/checkbox questions when users might need a custom option beyond your suggestions
-     * Don't use allowOther for text questions (they're already open-ended)
+   - **Always enable "Other" input for option questions:**
+     * Set allowOther: true for every radio/checkbox question so users can provide custom answers
+     * Set allowOther: false for text questions (they're already open-ended)
    - Each radio/checkbox question needs 2-4 concrete options with descriptions
    - Text questions don't need options (just the question text)
    - Each question needs a short header (e.g., "Storage", "Scope", "UI Pattern")

@@ -15,7 +15,7 @@ interface ClarificationAnswerFieldProps {
 /**
  * ClarificationAnswerField renders different field types based on the question's questionType.
  * Supports radio (single select), checkbox (multi-select), and text (open-ended) questions.
- * Conditionally shows "Other" text input when allowOther is true for radio/checkbox types.
+ * Always shows "Other" text input for radio/checkbox types so users can add custom answers.
  */
 export const ClarificationAnswerField = ({
   form,
@@ -23,9 +23,8 @@ export const ClarificationAnswerField = ({
   question,
   questionIndex,
 }: ClarificationAnswerFieldProps) => {
-
   const questionType = question.questionType ?? 'radio';
-  const _hasOtherOption = question.allowOther ?? false;
+  const hasOtherOption = questionType !== 'text';
 
   // Radio field
   if (questionType === 'radio') {
@@ -45,7 +44,7 @@ export const ClarificationAnswerField = ({
           {(field: any) => <field.RadioField isDisabled={isDisabled} label={''} options={options} />}
         </form.AppField>
 
-        {_hasOtherOption && (
+        {hasOtherOption && (
           <div className={'mt-3'}>
             <form.AppField name={otherFieldName}>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -81,7 +80,7 @@ export const ClarificationAnswerField = ({
           {(field: any) => <field.CheckboxGroupField isDisabled={isDisabled} label={''} options={options} />}
         </form.AppField>
 
-        {_hasOtherOption && (
+        {hasOtherOption && (
           <div className={'mt-3'}>
             <form.AppField name={otherFieldName}>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}

@@ -75,7 +75,7 @@ Return your assessment followed by a `QUESTIONS_FOR_USER` section with structure
   "questions": [
     {
       "questionType": "radio",
-      "allowOther": false,
+      "allowOther": true,
       "question": "How should this feature store data?",
       "header": "Storage",
       "options": [
@@ -124,17 +124,17 @@ Choose the appropriate `questionType` for each question:
 1. **Radio** (`questionType: "radio"`) - Single selection
    - Use when the user should choose **exactly one** option from mutually exclusive choices
    - Examples: Storage approach, Implementation scope, UI pattern to follow
-   - Set `allowOther: true` when users might need a custom option beyond your suggestions
+    - Always set `allowOther: true` for radio questions so users can add a custom option
 
 2. **Checkbox** (`questionType: "checkbox"`) - Multi-selection
    - Use when the user can choose **multiple options** that are not mutually exclusive
    - Examples: Features to include, Platforms to support, Integrations to enable
-   - Set `allowOther: true` to let users add custom options alongside selections
+    - Always set `allowOther: true` to let users add custom options alongside selections
 
 3. **Text** (`questionType: "text"`) - Open-ended
    - Use when you need **descriptive text** that can't be captured in predefined options
    - Examples: Specific use case description, Custom requirements, Edge cases to consider
-   - No `options` array needed, and `allowOther` is ignored (already open-ended)
+    - No `options` array needed, and set `allowOther: false` (already open-ended)
 
 **Question Content Types**:
 
