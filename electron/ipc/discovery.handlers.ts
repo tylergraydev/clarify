@@ -84,7 +84,7 @@ interface FileDiscoveryStartInput {
  * Register all discovery file-related IPC handlers.
  *
  * @param discoveredFilesRepository - The discovered files repository for database operations
- * @param workflowStepsRepository - The workflow steps repository for looking up step data
+ * @param _workflowStepsRepository
  * @param getMainWindow - Function to get the main BrowserWindow for streaming events
  */
 export function registerDiscoveryHandlers(
@@ -132,7 +132,7 @@ export function registerDiscoveryHandlers(
         };
 
         // Call the service with options and stream callback
-        const outcome = await fileDiscoveryStepService.startDiscovery(
+        return await fileDiscoveryStepService.startDiscovery(
           {
             agentId,
             refinedFeatureRequest,
@@ -143,8 +143,6 @@ export function registerDiscoveryHandlers(
           },
           handleStreamMessage
         );
-
-        return outcome;
       } catch (error) {
         console.error('[IPC Error] discovery:start:', error);
         throw error;
@@ -155,13 +153,13 @@ export function registerDiscoveryHandlers(
   // Cancel an active discovery session
   ipcMain.handle(
     IpcChannels.discovery.cancel,
-    (_event: IpcMainInvokeEvent, workflowId: unknown): FileDiscoveryOutcome => {
+    async (_event: IpcMainInvokeEvent, workflowId: unknown): Promise<FileDiscoveryOutcome> => {
       try {
         const validWorkflowId = validateNumberId(workflowId, 'workflowId');
 
         console.log('[IPC] discovery:cancel', { workflowId: validWorkflowId });
 
-        return fileDiscoveryStepService.cancelDiscovery(validWorkflowId);
+        return await fileDiscoveryStepService.cancelDiscovery(validWorkflowId);
       } catch (error) {
         console.error('[IPC Error] discovery:cancel:', error);
         throw error;
@@ -228,7 +226,7 @@ export function registerDiscoveryHandlers(
         };
 
         // Call the service with rediscovery mode
-        const outcome = await fileDiscoveryStepService.startDiscovery(
+        return await fileDiscoveryStepService.startDiscovery(
           {
             agentId,
             rediscoveryMode: mode,
@@ -240,8 +238,6 @@ export function registerDiscoveryHandlers(
           },
           handleStreamMessage
         );
-
-        return outcome;
       } catch (error) {
         console.error('[IPC Error] discovery:rediscover:', error);
         throw error;

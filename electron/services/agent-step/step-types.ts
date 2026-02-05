@@ -110,3 +110,21 @@ export interface SessionState<TServicePhase> {
   /** Extended thinking blocks */
   thinkingBlocks: Array<string>;
 }
+
+/**
+ * Type alias for step-specific outcome pause info.
+ * Convenience re-export for services.
+ *
+ * @template TUsage - Step-specific usage statistics type
+ */
+export type StepOutcomePauseInfo<TUsage = unknown> = OutcomePauseInfo<TUsage>;
+
+/**
+ * Type alias for outcomes combined with pause information.
+ * Used by all step services to create their OutcomeWithPause types.
+ *
+ * @template TOutcome - Step-specific outcome type
+ * @template TUsage - Step-specific usage statistics type
+ */
+export type StepOutcomeWithPause<TOutcome, TUsage = unknown> =
+  OutcomePauseInfo<TUsage> & TOutcome;

@@ -62,6 +62,7 @@
 import type { SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
 
 import type { BaseAgentConfig } from './agent-sdk-executor';
+import type { StepAuditLogger } from './step-audit-logger';
 
 import { getDatabase } from '../../../db';
 import {
@@ -70,7 +71,9 @@ import {
   createAgentsRepository,
   createAgentToolsRepository,
 } from '../../../db/repositories';
-import { RetryTracker } from './retry-backoff';
+import { debugLoggerService } from '../debug-logger.service';
+import { MAX_RETRY_ATTEMPTS, STEP_TIMEOUTS, StepName } from './agent-step-constants';
+import { calculateBackoffDelay, RetryTracker } from './retry-backoff';
 
 // =============================================================================
 // Type Definitions
@@ -243,6 +246,40 @@ export abstract class BaseAgentStepService<
   // ===========================================================================
 
   /**
+   * Build the cancelled outcome specific to this step.
+   *
+   * Each step has a different cancelled outcome structure:
+   * - Clarification: { type: 'CANCELLED', reason: string }
+   * - Refinement: { type: 'CANCELLED', reason: string }
+   * - File Discovery: { type: 'CANCELLED', partialCount: number, reason?: string }
+   *
+   * @param session - The active session being cancelled
+   * @returns The step-specific cancelled outcome
+   */
+  protected abstract buildCancelledOutcome(session: TSession): TOutcome;
+
+  /**
+   * Build the error outcome when maximum retry attempts are reached.
+   *
+   * Each step has a specific error format with appropriate messages and flags:
+   * - Clarification: Includes skipFallbackAvailable flag
+   * - Refinement: Includes skipFallbackAvailable flag
+   * - File Discovery: Includes skipFallbackAvailable flag
+   *
+   * @param workflowId - The workflow ID
+   * @returns The step-specific error outcome for max retries
+   */
+  protected abstract buildMaxRetryErrorOutcome(workflowId: number): TOutcome;
+
+  /**
+   * Build the error outcome when no active session is found for cancellation.
+   *
+   * @param workflowId - The workflow ID that was not found
+   * @returns The step-specific error outcome
+   */
+  protected abstract buildNotFoundErrorOutcome(workflowId: number): TOutcome;
+
+  /**
    * Build the prompt for the agent based on service options.
    *
    * Each step has a unique prompt structure based on its purpose:
@@ -254,6 +291,80 @@ export abstract class BaseAgentStepService<
    * @returns The formatted prompt string
    */
   protected abstract buildPrompt(options: TOptions): string;
+
+  // ===========================================================================
+  // Abstract Template Methods (Implemented by Subclasses)
+  // ===========================================================================
+
+  /**
+   * Cancel an active session with standardized cleanup.
+   *
+   * Template method that handles common cancel logic:
+   * 1. Session existence check
+   * 2. Debug logging
+   * 3. Audit logging
+   * 4. Timeout cleanup
+   * 5. Abort signal
+   * 6. Pre-cancel hook (optional)
+   * 7. Phase update
+   * 8. Session cleanup
+   *
+   * @param workflowId - The workflow ID to cancel
+   * @param auditLogger - The step audit logger for audit entries
+   * @param onStreamMessage - Optional callback for streaming events
+   * @returns The step-specific cancelled or error outcome
+   */
+  protected async cancelSession(
+    workflowId: number,
+    auditLogger: StepAuditLogger,
+    onStreamMessage?: (message: TStreamMessage) => void
+  ): Promise<TOutcome> {
+    const session = this.activeSessions.get(workflowId);
+
+    if (!session) {
+      debugLoggerService.logSdkEvent('unknown', `${this.getStepName()} cancel - no active session`, { workflowId });
+      return this.buildNotFoundErrorOutcome(workflowId);
+    }
+
+    debugLoggerService.logSession(session.sessionId, 'cancel', {
+      stepName: this.getStepName(),
+      workflowId,
+    });
+
+    // Audit log: step cancelled
+    auditLogger.logStepCancelled(workflowId, session.options.stepId, session.agentConfig?.id, session.agentConfig?.name, {
+      phase: session.phase,
+      reason: 'User cancelled',
+      sessionId: session.sessionId,
+    });
+
+    // Clear timeout if active
+    if (session.timeoutId) {
+      clearTimeout(session.timeoutId);
+    }
+
+    // Abort the SDK operation
+    session.abortController.abort();
+
+    // Allow subclass to perform pre-cancel actions
+    if (this.onBeforeCancel) {
+      await this.onBeforeCancel(session);
+    }
+
+    // Update phase to cancelled
+    // Type assertion is safe because all step phase unions include 'cancelled'
+    const cancelledPhase = 'cancelled' as unknown as TPhase;
+    session.phase = cancelledPhase;
+    this.emitPhaseChange(session.sessionId, cancelledPhase, onStreamMessage);
+
+    // Build step-specific cancelled outcome
+    const outcome = this.buildCancelledOutcome(session);
+
+    // Cleanup
+    this.cleanupSession(workflowId);
+
+    return outcome;
+  }
 
   /**
    * Clean up a session after completion or cancellation.
@@ -280,10 +391,6 @@ export abstract class BaseAgentStepService<
    */
   protected abstract createSession(workflowId: number, options: TOptions): TSession;
 
-  // ===========================================================================
-  // Abstract Template Methods (Implemented by Subclasses)
-  // ===========================================================================
-
   /**
    * Emit a phase change message to the stream callback.
    *
@@ -308,6 +415,10 @@ export abstract class BaseAgentStepService<
     }
   }
 
+  // ===========================================================================
+  // Cancel Template Method Abstract Methods
+  // ===========================================================================
+
   /**
    * Extract step-specific state from a session.
    *
@@ -318,6 +429,73 @@ export abstract class BaseAgentStepService<
    * @returns The extracted state object
    */
   protected abstract extractState(session: TSession): unknown;
+
+  /**
+   * Return the step name for logging (e.g., 'clarification', 'refinement', 'discovery').
+   *
+   * @returns The step name string
+   */
+  protected abstract getStepName(): string;
+
+  /**
+   * Initialize a new session for a step operation.
+   *
+   * Common initialization logic:
+   * 1. Extract workflowId and timeoutSeconds from options
+   * 2. Create session via template method
+   * 3. Store in activeSessions
+   * 4. Log session start
+   * 5. Log step started audit event
+   *
+   * @param options - The service options
+   * @param auditLogger - The step audit logger
+   * @param metadata - Optional metadata for logging
+   * @returns Object containing session, sessionId, timeoutSeconds, and workflowId
+   */
+  protected initializeSession(
+    options: TOptions,
+    auditLogger: StepAuditLogger,
+    metadata?: Record<string, unknown>
+  ): { session: TSession; sessionId: string; timeoutSeconds: number; workflowId: number } {
+    const { timeoutSeconds = STEP_TIMEOUTS[this.getStepName() as StepName] ?? 300, workflowId } = options;
+
+    const session = this.createSession(workflowId, options);
+    this.activeSessions.set(workflowId, session);
+
+    debugLoggerService.logSession(session.sessionId, 'start', {
+      stepName: this.getStepName(),
+      workflowId,
+      ...metadata,
+    });
+
+    auditLogger.logStepStarted(workflowId, options.stepId, options.agentId, {
+      sessionId: session.sessionId,
+      ...metadata,
+    });
+
+    return {
+      session,
+      sessionId: session.sessionId,
+      timeoutSeconds,
+      workflowId,
+    };
+  }
+
+  // ===========================================================================
+  // Cancel Template Method Optional Hooks
+  // ===========================================================================
+
+  /**
+   * Optional hook for pre-cancel actions (e.g., save partial results).
+   * Override in subclass if needed.
+   *
+   * @param _session - The active session being cancelled
+   */
+  protected onBeforeCancel?(_session: TSession): Promise<void> | void;
+
+  // ===========================================================================
+  // Retry Template Method
+  // ===========================================================================
 
   /**
    * Process structured output from the SDK result message.
@@ -333,6 +511,84 @@ export abstract class BaseAgentStepService<
    * @returns The step-specific outcome
    */
   protected abstract processStructuredOutput(result: SDKResultMessage, sessionId: string): TOutcome;
+
+  // ===========================================================================
+  // Process Output Template Method
+  // ===========================================================================
+
+  /**
+   * Retry an agent step with exponential backoff.
+   *
+   * Template method implementing common retry logic:
+   * 1. Check retry limit
+   * 2. Increment retry count
+   * 3. Calculate and wait for backoff delay
+   * 4. Call step's start method
+   *
+   * @param workflowId - The workflow ID
+   * @param options - Service options for the retry
+   * @param startMethod - Bound method to call (e.g., this.startClarification.bind(this))
+   * @param auditLogger - The step's audit logger
+   * @param onStreamMessage - Optional stream callback
+   * @returns The outcome with retry count
+   */
+  protected async retrySession<TOutcomeWithPause extends TOutcome & { retryCount?: number }>(
+    workflowId: number,
+    options: TOptions,
+    startMethod: (options: TOptions, onStreamMessage?: (message: TStreamMessage) => void) => Promise<TOutcomeWithPause>,
+    auditLogger: StepAuditLogger,
+    onStreamMessage?: (message: TStreamMessage) => void
+  ): Promise<TOutcomeWithPause> {
+    const stepName = this.getStepName();
+
+    // Check retry limit
+    if (this.isRetryLimitReached(workflowId)) {
+      debugLoggerService.logSdkEvent(workflowId.toString(), 'Retry limit reached', {
+        maxRetries: MAX_RETRY_ATTEMPTS,
+      });
+
+      auditLogger.logRetryLimitReached(workflowId, options.stepId, MAX_RETRY_ATTEMPTS, {
+        workflowId,
+      });
+
+      // Cast through unknown because TOutcome doesn't include retryCount/skipFallbackAvailable
+      // but TOutcomeWithPause does (via intersection with OutcomePauseInfo)
+      const errorOutcome = this.buildMaxRetryErrorOutcome(workflowId);
+      return {
+        ...errorOutcome,
+        retryCount: MAX_RETRY_ATTEMPTS,
+        skipFallbackAvailable: true,
+      } as unknown as TOutcomeWithPause;
+    }
+
+    // Increment retry count
+    const newRetryCount = this.retryTracker.incrementRetryCount(workflowId.toString());
+
+    // Calculate backoff delay
+    const backoffDelay = calculateBackoffDelay(newRetryCount);
+
+    debugLoggerService.logSdkEvent(workflowId.toString(), `Retrying ${stepName} with backoff`, {
+      backoffDelayMs: backoffDelay,
+      retryCount: newRetryCount,
+    });
+
+    auditLogger.logRetryStarted(workflowId, options.stepId, newRetryCount, MAX_RETRY_ATTEMPTS, {
+      backoffDelayMs: backoffDelay,
+      workflowId,
+    });
+
+    // Wait for backoff delay
+    await new Promise((resolve) => setTimeout(resolve, backoffDelay));
+
+    // Call the start method
+    const outcome = await startMethod(options, onStreamMessage);
+
+    // Add retry count to outcome
+    return {
+      ...outcome,
+      retryCount: newRetryCount,
+    };
+  }
 
   /**
    * Set up a timeout for an agent operation.

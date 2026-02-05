@@ -303,7 +303,7 @@ export function registerClarificationHandlers(
         const repositoryPath = validateString(typedInput.repositoryPath, 'repositoryPath');
 
         // Cancel the existing session first if it's still active
-        clarificationStepService.cancelClarification(workflowId);
+        await clarificationStepService.cancelClarification(workflowId);
 
         // Look up the workflow step to get the agentId
         const step = workflowStepsRepository.findById(stepId);

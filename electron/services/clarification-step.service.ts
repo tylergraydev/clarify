@@ -36,7 +36,8 @@ import type {
   ClarificationStreamMessage,
   ClarificationUsageStats,
 } from '../../lib/validations/clarification';
-import type { ActiveToolInfo, ExecuteAgentResult, OutcomePauseInfo } from './agent-step/step-types';
+import type { StepOutcomeWithPause } from './agent-step';
+import type { ActiveToolInfo, ExecuteAgentResult } from './agent-step/step-types';
 
 import {
   clarificationAgentOutputFlatSchema,
@@ -46,9 +47,9 @@ import { AgentSdkExecutor } from './agent-step/agent-sdk-executor';
 import { MAX_RETRY_ATTEMPTS, STEP_TIMEOUTS } from './agent-step/agent-step-constants';
 import { createTimeoutPromise } from './agent-step/agent-timeout-manager';
 import { BaseAgentStepService } from './agent-step/base-agent-step-service';
-import { buildErrorOutcomeWithRetry, buildOutcomeWithPauseInfo } from './agent-step/outcome-builder';
-import { calculateBackoffDelay, isTransientError } from './agent-step/retry-backoff';
+import { buildOutcomeWithPauseInfo } from './agent-step/outcome-builder';
 import { StepAuditLogger } from './agent-step/step-audit-logger';
+import { buildErrorOutcomeFromResult, handleStepError } from './agent-step/step-error-handler';
 import { StructuredOutputValidator } from './agent-step/structured-output-validator';
 import { extractUsageStats } from './agent-step/usage-stats';
 import { debugLoggerService } from './debug-logger.service';
@@ -59,15 +60,10 @@ import { debugLoggerService } from './debug-logger.service';
 const DEFAULT_TIMEOUT_SECONDS = STEP_TIMEOUTS.clarification;
 
 /**
- * Extended outcome fields for pause and retry information.
- * Uses shared OutcomePauseInfo type with clarification-specific usage stats.
- */
-export type ClarificationOutcomePauseInfo = OutcomePauseInfo<ClarificationUsageStats>;
-
-/**
  * Extended outcome that includes pause information.
+ * Uses generic StepOutcomeWithPause to combine clarification outcome with pause/retry fields.
  */
-export type ClarificationOutcomeWithPause = ClarificationOutcome & ClarificationOutcomePauseInfo;
+export type ClarificationOutcomeWithPause = StepOutcomeWithPause<ClarificationOutcome, ClarificationUsageStats>;
 
 /**
  * Active clarification session tracking.
@@ -119,52 +115,17 @@ class ClarificationStepService extends BaseAgentStepService<
   /**
    * Cancel an active clarification session.
    *
+   * Uses the template method from BaseAgentStepService for standardized cleanup.
+   *
    * @param workflowId - The workflow ID to cancel
-   * @returns The cancelled outcome
+   * @param onStreamMessage - Optional callback for streaming events
+   * @returns Promise resolving to the cancelled outcome
    */
-  cancelClarification(workflowId: number): ClarificationOutcome {
-    const session = this.activeSessions.get(workflowId);
-    if (!session) {
-      return {
-        error: 'Session not found',
-        type: 'ERROR',
-      };
-    }
-
-    debugLoggerService.logSession(session.sessionId, 'cancel', {
-      phase: session.phase,
-      reason: 'User cancelled',
-    });
-
-    // Audit log: clarification cancelled
-    this.auditLogger.logStepCancelled(
-      workflowId,
-      session.options.stepId,
-      session.agentConfig?.id,
-      session.agentConfig?.name,
-      {
-        phase: session.phase,
-        reason: 'User cancelled',
-        sessionId: session.sessionId,
-      }
-    );
-
-    // Clear timeout if active
-    if (session.timeoutId) {
-      clearTimeout(session.timeoutId);
-    }
-
-    // Abort the SDK operation
-    session.abortController.abort();
-    session.phase = 'cancelled';
-
-    // Clean up
-    this.cleanupSession(workflowId);
-
-    return {
-      reason: 'User cancelled clarification',
-      type: 'CANCELLED',
-    };
+  async cancelClarification(
+    workflowId: number,
+    onStreamMessage?: (message: ClarificationStreamMessage) => void
+  ): Promise<ClarificationOutcome> {
+    return this.cancelSession(workflowId, this.auditLogger, onStreamMessage);
   }
 
   /**
@@ -173,59 +134,23 @@ class ClarificationStepService extends BaseAgentStepService<
    * Automatically increments retry count and applies backoff delay.
    * If retry limit is reached, returns an error with skip fallback flag.
    *
+   * Uses the template method from BaseAgentStepService for standardized retry logic.
+   *
    * @param options - The clarification service options
+   * @param onStreamMessage - Optional callback for streaming events
    * @returns Promise resolving to the clarification outcome
    */
-  async retryClarification(options: ClarificationServiceOptions): Promise<ClarificationOutcomeWithPause> {
-    const workflowId = options.workflowId;
-
-    // Check if retry limit reached
-    if (this.isRetryLimitReached(workflowId)) {
-      debugLoggerService.logSdkEvent(workflowId.toString(), 'Retry limit reached', {
-        maxRetries: MAX_RETRY_ATTEMPTS,
-      });
-
-      // Audit log: retry limit reached
-      this.auditLogger.logRetryLimitReached(workflowId, options.stepId, MAX_RETRY_ATTEMPTS, {
-        workflowId,
-      });
-
-      return {
-        error: `Maximum retry attempts (${MAX_RETRY_ATTEMPTS}) reached. Please skip clarification or try again later.`,
-        retryCount: MAX_RETRY_ATTEMPTS,
-        skipFallbackAvailable: true,
-        type: 'ERROR',
-      };
-    }
-
-    // Increment retry count
-    const newRetryCount = this.retryTracker.incrementRetryCount(workflowId.toString());
-
-    // Calculate and apply backoff delay
-    const backoffDelay = calculateBackoffDelay(newRetryCount);
-
-    debugLoggerService.logSdkEvent(workflowId.toString(), 'Retrying clarification with backoff', {
-      backoffDelayMs: backoffDelay,
-      retryCount: newRetryCount,
-    });
-
-    // Audit log: retrying clarification
-    this.auditLogger.logRetryStarted(workflowId, options.stepId, newRetryCount, MAX_RETRY_ATTEMPTS, {
-      backoffDelayMs: backoffDelay,
-      workflowId,
-    });
-
-    // Wait for backoff delay
-    await new Promise((resolve) => setTimeout(resolve, backoffDelay));
-
-    // Start new clarification session
-    const outcome = await this.startClarification(options);
-
-    // Update the outcome with the correct retry count
-    return {
-      ...outcome,
-      retryCount: newRetryCount,
-    };
+  async retryClarification(
+    options: ClarificationServiceOptions,
+    onStreamMessage?: (message: ClarificationStreamMessage) => void
+  ): Promise<ClarificationOutcomeWithPause> {
+    return this.retrySession(
+      options.workflowId,
+      options,
+      this.startClarification.bind(this),
+      this.auditLogger,
+      onStreamMessage
+    );
   }
 
   /**
@@ -307,27 +232,13 @@ class ClarificationStepService extends BaseAgentStepService<
     options: ClarificationServiceOptions,
     onStreamMessage?: (message: ClarificationStreamMessage) => void
   ): Promise<ClarificationOutcomeWithPause> {
-    const workflowId = options.workflowId;
-    const timeoutSeconds = options.timeoutSeconds ?? DEFAULT_TIMEOUT_SECONDS;
-
-    // Initialize session using createSession template method
-    const session = this.createSession(workflowId, options);
-    this.activeSessions.set(workflowId, session);
-
-    debugLoggerService.logSession(session.sessionId, 'start', {
+    // Initialize session using base class helper
+    const { session, timeoutSeconds, workflowId } = this.initializeSession(options, this.auditLogger, {
       agentId: options.agentId,
-      repositoryPath: options.repositoryPath,
-      stepId: options.stepId,
-      timeoutSeconds,
-      workflowId,
-    });
-
-    // Audit log: clarification started
-    this.auditLogger.logStepStarted(workflowId, options.stepId, options.agentId, {
       featureRequestLength: options.featureRequest.length,
       repositoryPath: options.repositoryPath,
-      sessionId: session.sessionId,
-      timeoutSeconds,
+      stepId: options.stepId,
+      timeoutSeconds: options.timeoutSeconds ?? DEFAULT_TIMEOUT_SECONDS,
     });
 
     try {
@@ -429,41 +340,25 @@ class ClarificationStepService extends BaseAgentStepService<
       session.phase = 'error';
       this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      const errorStack = error instanceof Error ? error.stack : undefined;
-      const retryCount = this.getRetryCount(workflowId);
-      const isRetryable = isTransientError(errorMessage);
-      const retryLimitReached = this.isRetryLimitReached(workflowId);
-
-      debugLoggerService.logSdkEvent(session.sessionId, 'Clarification error', {
-        error: errorMessage,
-        isRetryable,
-        retryCount,
-        retryLimitReached,
-      });
-
-      // Audit log: clarification error
-      this.auditLogger.logStepError(
+      // Use centralized error handler for consistent logging
+      const errorResult = handleStepError({
+        agentId: session.agentConfig?.id,
+        agentName: session.agentConfig?.name,
+        auditLogger: this.auditLogger,
+        error,
+        getRetryCount: () => this.getRetryCount(workflowId),
+        isRetryLimitReached: () => this.isRetryLimitReached(workflowId),
+        sessionId: session.sessionId,
+        stepId: options.stepId,
+        stepName: 'Clarification',
         workflowId,
-        options.stepId,
-        session.agentConfig?.id,
-        session.agentConfig?.name,
-        errorMessage,
-        {
-          error: errorMessage,
-          isRetryable,
-          retryCount,
-          retryLimitReached,
-          sessionId: session.sessionId,
-          stack: errorStack,
-        }
-      );
+      });
 
       // Clean up session (but keep retry count for potential retry)
       this.activeSessions.delete(workflowId);
 
-      // Return extended outcome with retry information using OutcomeBuilder
-      return buildErrorOutcomeWithRetry(errorMessage, retryCount, true, errorStack) as ClarificationOutcomeWithPause;
+      // Return extended outcome with retry information
+      return buildErrorOutcomeFromResult(errorResult, true) as ClarificationOutcomeWithPause;
     }
   }
 
@@ -622,6 +517,48 @@ class ClarificationStepService extends BaseAgentStepService<
   // ===========================================================================
 
   /**
+   * Build cancelled outcome specific to clarification step.
+   *
+   * @param _session - The active session (unused for clarification)
+   * @returns The clarification cancelled outcome
+   */
+  protected buildCancelledOutcome(_session: ActiveClarificationSession): ClarificationOutcome {
+    return {
+      reason: 'User cancelled clarification',
+      type: 'CANCELLED',
+    };
+  }
+
+  /**
+   * Build error outcome when maximum retry attempts are reached.
+   *
+   * Note: retryCount and skipFallbackAvailable are added by the base class
+   * template method to avoid duplicating intersection type fields.
+   *
+   * @param _workflowId - The workflow ID (unused)
+   * @returns The clarification error outcome
+   */
+  protected buildMaxRetryErrorOutcome(_workflowId: number): ClarificationOutcome {
+    return {
+      error: `Maximum retry attempts (${MAX_RETRY_ATTEMPTS}) reached. Please skip clarification or try again later.`,
+      type: 'ERROR',
+    };
+  }
+
+  /**
+   * Build error outcome when no active session found.
+   *
+   * @param _workflowId - The workflow ID (unused)
+   * @returns The clarification error outcome
+   */
+  protected buildNotFoundErrorOutcome(_workflowId: number): ClarificationOutcome {
+    return {
+      error: 'Session not found',
+      type: 'ERROR',
+    };
+  }
+
+  /**
    * Build the clarification prompt for the agent.
    *
    * The prompt focuses on the task (analyzing the feature request) without
@@ -715,6 +652,15 @@ Focus on understanding what the user wants to build and gathering just enough in
       questions: session.questions,
       skipReason: session.skipReason,
     };
+  }
+
+  /**
+   * Return the step name for logging.
+   *
+   * @returns The step name 'clarification'
+   */
+  protected getStepName(): string {
+    return 'clarification';
   }
 
   /**

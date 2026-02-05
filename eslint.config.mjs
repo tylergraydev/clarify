@@ -45,6 +45,16 @@ const eslintConfig = defineConfig([
   {
     rules: {
       '@typescript-eslint/array-type': 'off',
+      // Allow unused variables prefixed with underscore (standard TypeScript convention)
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
       'better-tailwindcss/enforce-consistent-line-wrapping': 'off',
       eqeqeq: 'error',
       'react-snob/no-inline-styles': 'off',

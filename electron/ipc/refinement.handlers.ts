@@ -142,18 +142,21 @@ export function registerRefinementHandlers(
   );
 
   // Cancel an active refinement session
-  ipcMain.handle(IpcChannels.refinement.cancel, (_event: IpcMainInvokeEvent, workflowId: unknown): RefinementOutcome => {
-    try {
-      const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
+  ipcMain.handle(
+    IpcChannels.refinement.cancel,
+    async (_event: IpcMainInvokeEvent, workflowId: unknown): Promise<RefinementOutcome> => {
+      try {
+        const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
 
-      console.log('[IPC] refinement:cancel', { workflowId: validatedWorkflowId });
+        console.log('[IPC] refinement:cancel', { workflowId: validatedWorkflowId });
 
-      return refinementStepService.cancelRefinement(validatedWorkflowId);
-    } catch (error) {
-      console.error('[IPC Error] refinement:cancel:', error);
-      throw error;
+        return await refinementStepService.cancelRefinement(validatedWorkflowId);
+      } catch (error) {
+        console.error('[IPC Error] refinement:cancel:', error);
+        throw error;
+      }
     }
-  });
+  );
 
   // Get current session state
   ipcMain.handle(

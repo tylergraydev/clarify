@@ -58,10 +58,14 @@ import { startHeartbeat, stopHeartbeat } from './heartbeat';
 export interface BaseAgentConfig {
   /** Whether extended thinking is enabled */
   extendedThinkingEnabled: boolean;
+  /** The unique identifier of the agent */
+  id: number;
   /** Maximum thinking tokens budget */
   maxThinkingTokens: null | number;
   /** The model to use (optional) */
   model: null | string;
+  /** The display name of the agent */
+  name: string;
   /** Permission mode for tool execution (optional) */
   permissionMode: null | string;
   /** System prompt for the agent */
@@ -102,12 +106,30 @@ export interface SdkExecutorConfig<TAgentConfig extends BaseAgentConfig> {
 }
 
 /**
- * Stream event handlers for phase changes and message emission.
+ * Handlers for stream events during SDK execution.
+ *
+ * @template TStreamMessage - The step-specific stream message type
+ * @template TSession - The step-specific session type
  */
-export interface StreamEventHandlers<TStreamMessage> {
-  /** Callback for message emission (optional) */
+export interface StreamEventHandlers<TStreamMessage, TSession extends BaseSession = BaseSession> {
+  /**
+   * Optional hook for custom stream event processing.
+   * Called for each stream event before standard processing.
+   * Use this for step-specific event handling (e.g., file_discovered events).
+   *
+   * @param event - The raw stream event object
+   * @param session - The current session
+   */
+  onCustomStreamEvent?: (event: Record<string, unknown>, session: TSession) => void;
+
+  /**
+   * Called when a message should be emitted to the stream.
+   */
   onMessageEmit?: (message: TStreamMessage) => void;
-  /** Callback for phase changes (optional) */
+
+  /**
+   * Called when the execution phase changes.
+   */
   onPhaseChange?: (phase: string) => void;
 }
 
@@ -249,7 +271,7 @@ export class AgentSdkExecutor<
     session: TSession,
     config: SdkExecutorConfig<TAgentConfig>,
     prompt: string,
-    handlers: StreamEventHandlers<TStreamMessage>
+    handlers: StreamEventHandlers<TStreamMessage, TSession>
   ): Promise<null | SDKResultMessage> {
     const query = await getQueryFunction();
     const sdkOptions = this.buildSdkOptions(config);
@@ -291,7 +313,7 @@ export class AgentSdkExecutor<
 
         // Process streaming events for real-time UI updates
         if (message.type === 'stream_event') {
-          this.processStreamEvent(session, message, handlers.onMessageEmit);
+          this.processStreamEvent(session, message, handlers);
         }
 
         // Capture the result message for structured output extraction
@@ -311,7 +333,7 @@ export class AgentSdkExecutor<
   }
 
   /**
-   * Process streaming events from the SDK for real-time UI updates.
+   * Process a stream event from the SDK.
    *
    * Handles text deltas, thinking deltas, and tool use events to accumulate
    * streaming content in the session state and emit messages to the UI.
@@ -321,14 +343,20 @@ export class AgentSdkExecutor<
    *
    * @param session - The active session for state tracking
    * @param message - The SDK stream event message
-   * @param onMessageEmit - Optional callback for emitting stream messages
+   * @param handlers - The event handlers including custom processing hook
    */
   processStreamEvent(
     session: TSession,
     message: { event: Record<string, unknown>; type: 'stream_event' },
-    onMessageEmit?: (message: TStreamMessage) => void
+    handlers: StreamEventHandlers<TStreamMessage, TSession>
   ): void {
     const event = message.event;
+
+    // Call custom handler first to allow step-specific processing
+    if (handlers.onCustomStreamEvent) {
+      handlers.onCustomStreamEvent(event, session);
+    }
+
     const eventType = event.type as string;
 
     if (eventType === 'content_block_delta') {
@@ -343,8 +371,8 @@ export class AgentSdkExecutor<
         session.streamingText += text;
 
         // Emit text delta to UI
-        if (onMessageEmit) {
-          onMessageEmit({
+        if (handlers.onMessageEmit) {
+          handlers.onMessageEmit({
             delta: text,
             sessionId: session.sessionId,
             timestamp: Date.now(),
@@ -359,8 +387,8 @@ export class AgentSdkExecutor<
           session.thinkingBlocks[lastIndex] += thinking;
 
           // Emit thinking delta to UI
-          if (onMessageEmit) {
-            onMessageEmit({
+          if (handlers.onMessageEmit) {
+            handlers.onMessageEmit({
               blockIndex: lastIndex,
               delta: thinking,
               sessionId: session.sessionId,
@@ -387,8 +415,8 @@ export class AgentSdkExecutor<
             : { ...lastTool.toolInput, _partialJson: mergedJson };
 
           // Emit tool update to UI with the latest input payload
-          if (onMessageEmit) {
-            onMessageEmit({
+          if (handlers.onMessageEmit) {
+            handlers.onMessageEmit({
               sessionId: session.sessionId,
               timestamp: Date.now(),
               toolInput: lastTool.toolInput,
@@ -411,8 +439,8 @@ export class AgentSdkExecutor<
         session.thinkingBlocks.push('');
 
         // Emit thinking start to UI
-        if (onMessageEmit) {
-          onMessageEmit({
+        if (handlers.onMessageEmit) {
+          handlers.onMessageEmit({
             blockIndex,
             sessionId: session.sessionId,
             timestamp: Date.now(),
@@ -436,8 +464,8 @@ export class AgentSdkExecutor<
         });
 
         // Emit tool start to UI
-        if (onMessageEmit) {
-          onMessageEmit({
+        if (handlers.onMessageEmit) {
+          handlers.onMessageEmit({
             sessionId: session.sessionId,
             timestamp: Date.now(),
             toolInput: {},
@@ -458,8 +486,8 @@ export class AgentSdkExecutor<
           });
 
           // Emit tool stop to UI
-          if (onMessageEmit) {
-            onMessageEmit({
+          if (handlers.onMessageEmit) {
+            handlers.onMessageEmit({
               sessionId: session.sessionId,
               timestamp: Date.now(),
               toolUseId: completedTool.toolUseId,

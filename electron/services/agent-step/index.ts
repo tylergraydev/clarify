@@ -82,6 +82,13 @@ export { calculateBackoffDelay, isTransientError, RetryTracker } from './retry-b
 export { StepAuditLogger } from './step-audit-logger';
 
 // =============================================================================
+// Step Error Handling
+// =============================================================================
+
+export { buildErrorOutcomeFromResult, handleStepError } from './step-error-handler';
+export type { StepErrorContext, StepErrorResult } from './step-error-handler';
+
+// =============================================================================
 // Shared Types
 // =============================================================================
 
@@ -92,6 +99,8 @@ export type {
   OutcomePauseInfo,
   PauseBehavior,
   SessionState,
+  StepOutcomePauseInfo,
+  StepOutcomeWithPause,
 } from './step-types';
 
 // =============================================================================

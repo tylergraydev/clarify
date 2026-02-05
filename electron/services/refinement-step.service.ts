@@ -42,16 +42,17 @@ import type {
   RefinementStreamMessage,
   RefinementUsageStats,
 } from '../../lib/validations/refinement';
-import type { ActiveToolInfo, ExecuteAgentResult, OutcomePauseInfo } from './agent-step/step-types';
+import type { StepOutcomeWithPause } from './agent-step';
+import type { ActiveToolInfo, ExecuteAgentResult } from './agent-step/step-types';
 
 import { refinementAgentOutputFlatSchema, refinementAgentOutputJSONSchema } from '../../lib/validations/refinement';
 import { AgentSdkExecutor } from './agent-step/agent-sdk-executor';
 import { MAX_RETRY_ATTEMPTS, STEP_TIMEOUTS } from './agent-step/agent-step-constants';
 import { createTimeoutPromise } from './agent-step/agent-timeout-manager';
 import { BaseAgentStepService } from './agent-step/base-agent-step-service';
-import { buildErrorOutcomeWithRetry, buildOutcomeWithPauseInfo } from './agent-step/outcome-builder';
-import { calculateBackoffDelay, isTransientError } from './agent-step/retry-backoff';
+import { buildOutcomeWithPauseInfo } from './agent-step/outcome-builder';
 import { StepAuditLogger } from './agent-step/step-audit-logger';
+import { buildErrorOutcomeFromResult, handleStepError } from './agent-step/step-error-handler';
 import { StructuredOutputValidator } from './agent-step/structured-output-validator';
 import { extractUsageStats } from './agent-step/usage-stats';
 import { debugLoggerService } from './debug-logger.service';
@@ -63,15 +64,10 @@ import { debugLoggerService } from './debug-logger.service';
 const DEFAULT_TIMEOUT_SECONDS = STEP_TIMEOUTS.refinement;
 
 /**
- * Extended outcome fields for pause and retry information.
- * Uses shared OutcomePauseInfo type with refinement-specific usage stats.
- */
-export type RefinementOutcomePauseInfo = OutcomePauseInfo<RefinementUsageStats>;
-
-/**
  * Extended outcome that includes pause information.
+ * Uses generic StepOutcomeWithPause to combine refinement outcome with pause/retry fields.
  */
-export type RefinementOutcomeWithPause = RefinementOutcome & RefinementOutcomePauseInfo;
+export type RefinementOutcomeWithPause = StepOutcomeWithPause<RefinementOutcome, RefinementUsageStats>;
 
 /**
  * Active refinement session tracking.
@@ -123,52 +119,17 @@ class RefinementStepService extends BaseAgentStepService<
   /**
    * Cancel an active refinement session.
    *
+   * Uses the template method from BaseAgentStepService for standardized cleanup.
+   *
    * @param workflowId - The workflow ID to cancel
-   * @returns The cancelled outcome
+   * @param onStreamMessage - Optional callback for streaming events
+   * @returns Promise resolving to the cancelled outcome
    */
-  cancelRefinement(workflowId: number): RefinementOutcome {
-    const session = this.activeSessions.get(workflowId);
-    if (!session) {
-      return {
-        error: 'Session not found',
-        type: 'ERROR',
-      };
-    }
-
-    debugLoggerService.logSession(session.sessionId, 'cancel', {
-      phase: session.phase,
-      reason: 'User cancelled',
-    });
-
-    // Audit log: refinement cancelled
-    this.auditLogger.logStepCancelled(
-      workflowId,
-      session.options.stepId,
-      session.agentConfig?.id,
-      session.agentConfig?.name,
-      {
-        phase: session.phase,
-        reason: 'User cancelled',
-        sessionId: session.sessionId,
-      }
-    );
-
-    // Clear timeout if active
-    if (session.timeoutId) {
-      clearTimeout(session.timeoutId);
-    }
-
-    // Abort the SDK operation
-    session.abortController.abort();
-    session.phase = 'cancelled';
-
-    // Clean up
-    this.cleanupSession(workflowId);
-
-    return {
-      reason: 'User cancelled refinement',
-      type: 'CANCELLED',
-    };
+  async cancelRefinement(
+    workflowId: number,
+    onStreamMessage?: (message: RefinementStreamMessage) => void
+  ): Promise<RefinementOutcome> {
+    return this.cancelSession(workflowId, this.auditLogger, onStreamMessage);
   }
 
   /**
@@ -177,59 +138,23 @@ class RefinementStepService extends BaseAgentStepService<
    * Automatically increments retry count and applies backoff delay.
    * If retry limit is reached, returns an error.
    *
+   * Uses the template method from BaseAgentStepService for standardized retry logic.
+   *
    * @param options - The refinement service options
+   * @param onStreamMessage - Optional callback for streaming events
    * @returns Promise resolving to the refinement outcome
    */
-  async retryRefinement(options: RefinementServiceOptions): Promise<RefinementOutcomeWithPause> {
-    const workflowId = options.workflowId;
-
-    // Check if retry limit reached
-    if (this.isRetryLimitReached(workflowId)) {
-      debugLoggerService.logSdkEvent(workflowId.toString(), 'Retry limit reached', {
-        maxRetries: MAX_RETRY_ATTEMPTS,
-      });
-
-      // Audit log: retry limit reached
-      this.auditLogger.logRetryLimitReached(workflowId, options.stepId, MAX_RETRY_ATTEMPTS, {
-        workflowId,
-      });
-
-      return {
-        error: `Maximum retry attempts (${MAX_RETRY_ATTEMPTS}) reached. Please skip refinement or try again later.`,
-        retryCount: MAX_RETRY_ATTEMPTS,
-        skipFallbackAvailable: true,
-        type: 'ERROR',
-      };
-    }
-
-    // Increment retry count
-    const newRetryCount = this.retryTracker.incrementRetryCount(workflowId.toString());
-
-    // Calculate and apply backoff delay
-    const backoffDelay = calculateBackoffDelay(newRetryCount);
-
-    debugLoggerService.logSdkEvent(workflowId.toString(), 'Retrying refinement with backoff', {
-      backoffDelayMs: backoffDelay,
-      retryCount: newRetryCount,
-    });
-
-    // Audit log: retrying refinement
-    this.auditLogger.logRetryStarted(workflowId, options.stepId, newRetryCount, MAX_RETRY_ATTEMPTS, {
-      backoffDelayMs: backoffDelay,
-      workflowId,
-    });
-
-    // Wait for backoff delay
-    await new Promise((resolve) => setTimeout(resolve, backoffDelay));
-
-    // Start new refinement session
-    const outcome = await this.startRefinement(options);
-
-    // Update the outcome with the correct retry count
-    return {
-      ...outcome,
-      retryCount: newRetryCount,
-    };
+  async retryRefinement(
+    options: RefinementServiceOptions,
+    onStreamMessage?: (message: RefinementStreamMessage) => void
+  ): Promise<RefinementOutcomeWithPause> {
+    return this.retrySession(
+      options.workflowId,
+      options,
+      this.startRefinement.bind(this),
+      this.auditLogger,
+      onStreamMessage
+    );
   }
 
   /**
@@ -249,29 +174,14 @@ class RefinementStepService extends BaseAgentStepService<
     options: RefinementServiceOptions,
     onStreamMessage?: (message: RefinementStreamMessage) => void
   ): Promise<RefinementOutcomeWithPause> {
-    const workflowId = options.workflowId;
-    const timeoutSeconds = options.timeoutSeconds ?? DEFAULT_TIMEOUT_SECONDS;
-
-    // Initialize session using createSession template method
-    const session = this.createSession(workflowId, options);
-    this.activeSessions.set(workflowId, session);
-
-    debugLoggerService.logSession(session.sessionId, 'start', {
+    // Initialize session using base class helper
+    const { session, timeoutSeconds, workflowId } = this.initializeSession(options, this.auditLogger, {
       agentId: options.agentId,
-      clarificationQuestionCount: options.clarificationContext.questions.length,
-      repositoryPath: options.repositoryPath,
-      stepId: options.stepId,
-      timeoutSeconds,
-      workflowId,
-    });
-
-    // Audit log: refinement started
-    this.auditLogger.logStepStarted(workflowId, options.stepId, options.agentId, {
       clarificationQuestionCount: options.clarificationContext.questions.length,
       featureRequestLength: options.featureRequest.length,
       repositoryPath: options.repositoryPath,
-      sessionId: session.sessionId,
-      timeoutSeconds,
+      stepId: options.stepId,
+      timeoutSeconds: options.timeoutSeconds ?? DEFAULT_TIMEOUT_SECONDS,
     });
 
     try {
@@ -373,47 +283,73 @@ class RefinementStepService extends BaseAgentStepService<
       session.phase = 'error';
       this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      const errorStack = error instanceof Error ? error.stack : undefined;
-      const retryCount = this.getRetryCount(workflowId);
-      const isRetryable = isTransientError(errorMessage);
-      const retryLimitReached = this.isRetryLimitReached(workflowId);
-
-      debugLoggerService.logSdkEvent(session.sessionId, 'Refinement error', {
-        error: errorMessage,
-        isRetryable,
-        retryCount,
-        retryLimitReached,
-      });
-
-      // Audit log: refinement error
-      this.auditLogger.logStepError(
+      // Use centralized error handler for consistent logging
+      const errorResult = handleStepError({
+        agentId: session.agentConfig?.id,
+        agentName: session.agentConfig?.name,
+        auditLogger: this.auditLogger,
+        error,
+        getRetryCount: () => this.getRetryCount(workflowId),
+        isRetryLimitReached: () => this.isRetryLimitReached(workflowId),
+        sessionId: session.sessionId,
+        stepId: options.stepId,
+        stepName: 'Refinement',
         workflowId,
-        options.stepId,
-        session.agentConfig?.id,
-        session.agentConfig?.name,
-        errorMessage,
-        {
-          error: errorMessage,
-          isRetryable,
-          retryCount,
-          retryLimitReached,
-          sessionId: session.sessionId,
-          stack: errorStack,
-        }
-      );
+      });
 
       // Clean up session (but keep retry count for potential retry)
       this.activeSessions.delete(workflowId);
 
-      // Return extended outcome with retry information using OutcomeBuilder
-      return buildErrorOutcomeWithRetry(errorMessage, retryCount, true, errorStack) as RefinementOutcomeWithPause;
+      // Return extended outcome with retry information
+      return buildErrorOutcomeFromResult(errorResult, true) as RefinementOutcomeWithPause;
     }
   }
 
   // ===========================================================================
   // Protected Template Method Implementations
   // ===========================================================================
+
+  /**
+   * Build cancelled outcome specific to refinement step.
+   *
+   * @param _session - The active session (unused for refinement)
+   * @returns The refinement cancelled outcome
+   */
+  protected buildCancelledOutcome(_session: ActiveRefinementSession): RefinementOutcome {
+    return {
+      reason: 'User cancelled refinement',
+      type: 'CANCELLED',
+    };
+  }
+
+  /**
+   * Build error outcome when maximum retry attempts are reached.
+   *
+   * Note: retryCount and skipFallbackAvailable are added by the base class
+   * template method to avoid duplicating intersection type fields.
+   *
+   * @param _workflowId - The workflow ID (unused)
+   * @returns The refinement error outcome
+   */
+  protected buildMaxRetryErrorOutcome(_workflowId: number): RefinementOutcome {
+    return {
+      error: `Maximum retry attempts (${MAX_RETRY_ATTEMPTS}) reached. Please skip refinement or try again later.`,
+      type: 'ERROR',
+    };
+  }
+
+  /**
+   * Build error outcome when no active session found.
+   *
+   * @param _workflowId - The workflow ID (unused)
+   * @returns The refinement error outcome
+   */
+  protected buildNotFoundErrorOutcome(_workflowId: number): RefinementOutcome {
+    return {
+      error: 'Session not found',
+      type: 'ERROR',
+    };
+  }
 
   /**
    * Build the refinement prompt for the agent.
@@ -526,6 +462,15 @@ The refined text should be a prose narrative that reads as if the user had provi
       phase: session.phase,
       refinedText: session.refinedText,
     };
+  }
+
+  /**
+   * Return the step name for logging.
+   *
+   * @returns The step name 'refinement'
+   */
+  protected getStepName(): string {
+    return 'refinement';
   }
 
   /**
