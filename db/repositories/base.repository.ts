@@ -25,12 +25,8 @@ export function createBaseRepository<TTable extends TableWithIdAndTimestamps, TS
 ): BaseRepository<TSelect, TInsert> {
   return {
     create(data: TInsert): TSelect {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return db
-        .insert(table)
-        .values(data as any)
-        .returning()
-        .get() as TSelect;
+      // @ts-expect-error - the type inference here is tricky, but we know it's correct
+      return db.insert(table).values(data).returning().get() as TSelect;
     },
 
     delete(id: number): boolean {
