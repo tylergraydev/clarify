@@ -1,17 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import {
-  DialogBackdrop,
-  DialogClose,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
-  DialogPortal,
-  DialogRoot,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 
 interface ConfirmResetAgentDialogProps {
   /** The agent display name to show in the dialog */
@@ -49,50 +38,26 @@ export const ConfirmResetAgentDialog = ({
   };
 
   return (
-    <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
-      {/* Portal */}
-      <DialogPortal>
-        <DialogBackdrop />
-        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
-          {/* Header */}
-          <DialogHeader>
-            <DialogTitle id={'confirm-reset-title'}>{'Reset Agent'}</DialogTitle>
-            <DialogDescription id={'confirm-reset-description'}>
-              {`Are you sure you want to reset "${agentName}" to its default configuration?`}
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Warning */}
-          <div
-            aria-live={'polite'}
-            className={'mt-4 rounded-md border border-warning-border bg-warning-bg p-3'}
-            role={'alert'}
-          >
-            <p className={'text-sm text-warning-text'}>
-              This will discard all your customizations including display name, description, system prompt, and color.
-              This action cannot be undone.
-            </p>
-          </div>
-
-          {/* Actions */}
-          <DialogFooter sticky={false}>
-            <DialogClose>
-              <Button disabled={isLoading} variant={'outline'}>
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button
-              aria-describedby={'confirm-reset-description'}
-              aria-label={`Reset ${agentName} agent to default`}
-              disabled={isLoading}
-              onClick={handleConfirmClick}
-              variant={'destructive'}
-            >
-              {isLoading ? 'Resetting...' : 'Reset to Default'}
-            </Button>
-          </DialogFooter>
-        </DialogPopup>
-      </DialogPortal>
-    </DialogRoot>
+    <ConfirmActionDialog
+      alerts={[
+        {
+          description:
+            'This will discard all your customizations including display name, description, system prompt, and color. This action cannot be undone.',
+          tone: 'warning',
+        },
+      ]}
+      confirmAriaDescribedById={'confirm-reset-description'}
+      confirmAriaLabel={`Reset ${agentName} agent to default`}
+      confirmLabel={'Reset to Default'}
+      description={`Are you sure you want to reset "${agentName}" to its default configuration?`}
+      descriptionId={'confirm-reset-description'}
+      isLoading={isLoading}
+      isOpen={isOpen}
+      loadingLabel={'Resetting...'}
+      onConfirm={handleConfirmClick}
+      onOpenChange={onOpenChange}
+      title={'Reset Agent'}
+      titleId={'confirm-reset-title'}
+    />
   );
 };

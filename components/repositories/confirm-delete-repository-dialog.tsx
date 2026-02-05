@@ -1,17 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import {
-  DialogBackdrop,
-  DialogClose,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
-  DialogPortal,
-  DialogRoot,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 
 interface ConfirmDeleteRepositoryDialogProps {
   /** Whether the mutation is in progress */
@@ -36,71 +25,43 @@ export const ConfirmDeleteRepositoryDialog = ({
   repositoryName,
   workflowCount = 0,
 }: ConfirmDeleteRepositoryDialogProps) => {
-  const hasWorkflows = workflowCount > 0;
-
   const handleConfirmClick = () => {
     onConfirm();
   };
 
+  const hasWorkflows = workflowCount > 0;
+  const workflowLabel = workflowCount === 1 ? 'workflow' : 'workflows';
+
   return (
-    <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
-      {/* Portal */}
-      <DialogPortal>
-        <DialogBackdrop />
-        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
-          {/* Header */}
-          <DialogHeader>
-            <DialogTitle id={'confirm-delete-repository-title'}>Remove Repository</DialogTitle>
-            <DialogDescription id={'confirm-delete-repository-description'}>
-              {`Are you sure you want to remove "${repositoryName}" from this project?`}
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Warning */}
-          <div
-            aria-live={'polite'}
-            className={
-              'mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 dark:border-destructive/30 dark:bg-destructive/20'
-            }
-            role={'alert'}
-          >
-            <p className={'text-sm text-destructive'}>
-              This action is permanent and cannot be undone. The repository will be removed from this project.
-            </p>
-          </div>
-
-          {/* Workflow Warning */}
-          {hasWorkflows && (
-            <div
-              aria-live={'polite'}
-              className={'mt-4 rounded-md border border-warning-border bg-warning-bg p-3'}
-              role={'alert'}
-            >
-              <p className={'text-sm text-warning-text'}>
-                {`This repository is associated with ${workflowCount} ${workflowCount === 1 ? 'workflow' : 'workflows'}. Removing it will not delete workflow history but may affect active workflows.`}
-              </p>
-            </div>
-          )}
-
-          {/* Actions */}
-          <DialogFooter sticky={false}>
-            <DialogClose>
-              <Button disabled={isLoading} variant={'outline'}>
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button
-              aria-describedby={'confirm-delete-repository-description'}
-              aria-label={`Remove ${repositoryName} repository permanently`}
-              disabled={isLoading}
-              onClick={handleConfirmClick}
-              variant={'destructive'}
-            >
-              {isLoading ? 'Removing...' : 'Remove'}
-            </Button>
-          </DialogFooter>
-        </DialogPopup>
-      </DialogPortal>
-    </DialogRoot>
+    <ConfirmActionDialog
+      alerts={[
+        {
+          containerClassName: 'dark:border-destructive/30 dark:bg-destructive/20',
+          description:
+            'This action is permanent and cannot be undone. The repository will be removed from this project.',
+          tone: 'destructive' as const,
+        },
+        ...(hasWorkflows
+          ? [
+              {
+                description: `This repository is associated with ${workflowCount} ${workflowLabel}. Removing it will not delete workflow history but may affect active workflows.`,
+                tone: 'warning' as const,
+              },
+            ]
+          : []),
+      ]}
+      confirmAriaDescribedById={'confirm-delete-repository-description'}
+      confirmAriaLabel={`Remove ${repositoryName} repository permanently`}
+      confirmLabel={'Remove'}
+      description={`Are you sure you want to remove "${repositoryName}" from this project?`}
+      descriptionId={'confirm-delete-repository-description'}
+      isLoading={isLoading}
+      isOpen={isOpen}
+      loadingLabel={'Removing...'}
+      onConfirm={handleConfirmClick}
+      onOpenChange={onOpenChange}
+      title={'Remove Repository'}
+      titleId={'confirm-delete-repository-title'}
+    />
   );
 };

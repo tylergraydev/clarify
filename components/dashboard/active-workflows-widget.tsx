@@ -12,15 +12,7 @@ import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  DialogBackdrop,
-  DialogClose,
-  DialogDescription,
-  DialogPopup,
-  DialogPortal,
-  DialogRoot,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useProjects } from '@/hooks/queries/use-projects';
 import { useCancelWorkflow, usePauseWorkflow, useResumeWorkflow, useWorkflows } from '@/hooks/queries/use-workflows';
@@ -441,25 +433,23 @@ const ActiveWorkflowsContent = () => {
       </div>
 
       {/* Cancel Confirmation Dialog */}
-      <DialogRoot onOpenChange={(open: boolean) => !open && setWorkflowToCancel(null)} open={workflowToCancel !== null}>
-        <DialogPortal>
-          <DialogBackdrop />
-          <DialogPopup size={'sm'}>
-            <DialogTitle>Cancel Workflow</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to cancel{' '}
-              <span className={'font-medium text-foreground'}>{workflowToCancel?.featureName}</span>? This action cannot
-              be undone.
-            </DialogDescription>
-            <div className={'mt-6 flex justify-end gap-3'}>
-              <DialogClose render={<Button variant={'outline'} />}>Keep Running</DialogClose>
-              <Button onClick={handleConfirmCancel} variant={'destructive'}>
-                Cancel Workflow
-              </Button>
-            </div>
-          </DialogPopup>
-        </DialogPortal>
-      </DialogRoot>
+      <ConfirmActionDialog
+        cancelLabel={'Keep Running'}
+        confirmLabel={'Cancel Workflow'}
+        confirmVariant={'destructive'}
+        description={
+          <Fragment>
+            Are you sure you want to cancel{' '}
+            <span className={'font-medium text-foreground'}>{workflowToCancel?.featureName}</span>? This action cannot
+            be undone.
+          </Fragment>
+        }
+        isOpen={workflowToCancel !== null}
+        onConfirm={handleConfirmCancel}
+        onOpenChange={(open: boolean) => !open && setWorkflowToCancel(null)}
+        size={'sm'}
+        title={'Cancel Workflow'}
+      />
     </Fragment>
   );
 };

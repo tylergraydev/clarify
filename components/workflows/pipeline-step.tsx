@@ -155,10 +155,10 @@ interface PipelineStepProps
   onSkipReady?: (reason: string) => void;
   /** Callback when user skips clarification */
   onSkipStep?: () => void;
-  /** Callback when clarification form is submitted */
-  onSubmitClarification?: (answers: ClarificationAnswers) => void;
   /** Callback when start button is clicked */
   onStart?: () => void;
+  /** Callback when clarification form is submitted */
+  onSubmitClarification?: (answers: ClarificationAnswers) => void;
   /** Callback when expand/collapse is toggled */
   onToggle: () => void;
   /** Output content to display when expanded */
@@ -198,8 +198,8 @@ export const PipelineStep = ({
   onRerunClarification,
   onSkipReady,
   onSkipStep,
-  onSubmitClarification,
   onStart,
+  onSubmitClarification,
   onToggle,
   output,
   outputStructured,

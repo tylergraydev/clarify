@@ -12,7 +12,7 @@
  */
 import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 
-import type { WorkflowStepsRepository, WorkflowsRepository } from '../../db/repositories';
+import type { WorkflowsRepository, WorkflowStepsRepository } from '../../db/repositories';
 import type { NewWorkflowStep, WorkflowStep } from '../../db/schema';
 
 import { IpcChannels } from './channels';

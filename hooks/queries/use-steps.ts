@@ -39,36 +39,6 @@ export function useCompleteStep() {
 }
 
 /**
- * Start a step (transition to running)
- */
-export function useStartStep() {
-  const queryClient = useQueryClient();
-  const { steps } = useElectronDb();
-
-  return useMutation({
-    mutationFn: (id: number) => steps.start(id),
-    onSuccess: (step) => {
-      if (step) {
-        queryClient.setQueryData(stepKeys.detail(step.id).queryKey, step);
-        void queryClient.invalidateQueries({ queryKey: stepKeys.list._def });
-        void queryClient.invalidateQueries({
-          queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: workflowKeys.detail(step.workflowId).queryKey,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: workflowKeys.list._def,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: workflowKeys.running.queryKey,
-        });
-      }
-    },
-  });
-}
-
-/**
  * Edit a step's output
  */
 export function useEditStep() {
@@ -158,6 +128,36 @@ export function useSkipStep() {
 
   return useMutation({
     mutationFn: (id: number) => steps.skip(id),
+    onSuccess: (step) => {
+      if (step) {
+        queryClient.setQueryData(stepKeys.detail(step.id).queryKey, step);
+        void queryClient.invalidateQueries({ queryKey: stepKeys.list._def });
+        void queryClient.invalidateQueries({
+          queryKey: stepKeys.byWorkflow(step.workflowId).queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.detail(step.workflowId).queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.list._def,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.running.queryKey,
+        });
+      }
+    },
+  });
+}
+
+/**
+ * Start a step (transition to running)
+ */
+export function useStartStep() {
+  const queryClient = useQueryClient();
+  const { steps } = useElectronDb();
+
+  return useMutation({
+    mutationFn: (id: number) => steps.start(id),
     onSuccess: (step) => {
       if (step) {
         queryClient.setQueryData(stepKeys.detail(step.id).queryKey, step);

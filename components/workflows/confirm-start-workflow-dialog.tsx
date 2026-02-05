@@ -1,17 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import {
-  DialogBackdrop,
-  DialogClose,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
-  DialogPortal,
-  DialogRoot,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 
 interface ConfirmStartWorkflowDialogProps {
   /** Whether the mutation is in progress */
@@ -33,47 +22,29 @@ export const ConfirmStartWorkflowDialog = ({
   onOpenChange,
   workflowFeatureName,
 }: ConfirmStartWorkflowDialogProps) => {
-  const title = 'Start Workflow';
-  const description = `Are you sure you want to start "${workflowFeatureName}"? This will begin the workflow execution process.`;
-  const confirmButtonText = 'Start Workflow';
-
   const handleConfirmClick = () => {
     onConfirm();
   };
 
+  const title = 'Start Workflow';
+  const description = `Are you sure you want to start "${workflowFeatureName}"? This will begin the workflow execution process.`;
   const confirmButtonLabel = `Start ${workflowFeatureName} workflow`;
 
   return (
-    <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
-      {/* Portal */}
-      <DialogPortal>
-        <DialogBackdrop />
-        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
-          {/* Header */}
-          <DialogHeader>
-            <DialogTitle id={'confirm-start-workflow-title'}>{title}</DialogTitle>
-            <DialogDescription id={'confirm-start-workflow-description'}>{description}</DialogDescription>
-          </DialogHeader>
-
-          {/* Actions */}
-          <DialogFooter sticky={false}>
-            <DialogClose>
-              <Button disabled={isLoading} variant={'outline'}>
-                {'Cancel'}
-              </Button>
-            </DialogClose>
-            <Button
-              aria-describedby={'confirm-start-workflow-description'}
-              aria-label={confirmButtonLabel}
-              disabled={isLoading}
-              onClick={handleConfirmClick}
-              variant={'default'}
-            >
-              {isLoading ? 'Starting...' : confirmButtonText}
-            </Button>
-          </DialogFooter>
-        </DialogPopup>
-      </DialogPortal>
-    </DialogRoot>
+    <ConfirmActionDialog
+      confirmAriaDescribedById={'confirm-start-workflow-description'}
+      confirmAriaLabel={confirmButtonLabel}
+      confirmLabel={'Start Workflow'}
+      confirmVariant={'default'}
+      description={description}
+      descriptionId={'confirm-start-workflow-description'}
+      isLoading={isLoading}
+      isOpen={isOpen}
+      loadingLabel={'Starting...'}
+      onConfirm={handleConfirmClick}
+      onOpenChange={onOpenChange}
+      title={title}
+      titleId={'confirm-start-workflow-title'}
+    />
   );
 };

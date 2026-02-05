@@ -1,17 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import {
-  DialogBackdrop,
-  DialogClose,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
-  DialogPortal,
-  DialogRoot,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 
 interface ConfirmDiscardDialogProps {
   /** Whether the mutation is in progress */
@@ -45,38 +34,20 @@ export const ConfirmDiscardDialog = ({
   };
 
   return (
-    <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
-      {/* Portal */}
-      <DialogPortal>
-        <DialogBackdrop />
-        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
-          {/* Header */}
-          <DialogHeader>
-            <DialogTitle id={'confirm-discard-title'}>{'Discard changes?'}</DialogTitle>
-            <DialogDescription id={'confirm-discard-description'}>
-              You have unsaved changes that will be lost if you close this dialog.
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Actions */}
-          <DialogFooter sticky={false}>
-            <DialogClose>
-              <Button disabled={isLoading} variant={'outline'}>
-                Keep editing
-              </Button>
-            </DialogClose>
-            <Button
-              aria-describedby={'confirm-discard-description'}
-              aria-label={'Discard unsaved changes'}
-              disabled={isLoading}
-              onClick={handleConfirmClick}
-              variant={'destructive'}
-            >
-              {isLoading ? 'Discarding...' : 'Discard'}
-            </Button>
-          </DialogFooter>
-        </DialogPopup>
-      </DialogPortal>
-    </DialogRoot>
+    <ConfirmActionDialog
+      cancelLabel={'Keep editing'}
+      confirmAriaDescribedById={'confirm-discard-description'}
+      confirmAriaLabel={'Discard unsaved changes'}
+      confirmLabel={'Discard'}
+      description={'You have unsaved changes that will be lost if you close this dialog.'}
+      descriptionId={'confirm-discard-description'}
+      isLoading={isLoading}
+      isOpen={isOpen}
+      loadingLabel={'Discarding...'}
+      onConfirm={handleConfirmClick}
+      onOpenChange={onOpenChange}
+      title={'Discard changes?'}
+      titleId={'confirm-discard-title'}
+    />
   );
 };

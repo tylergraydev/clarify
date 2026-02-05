@@ -1626,9 +1626,9 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
                   onGenerateClarifications={
                     isClarificationStep ? () => handleGenerateClarifications(step, outputStructured) : undefined
                   }
-                  onStart={canStartStep ? () => handleStartStep(step.id) : undefined}
                   onRerunClarification={isClarificationStep ? () => handleRerunClarification(step) : undefined}
                   onSkipStep={isClarificationStep ? () => handleSkipClarification(step.id) : undefined}
+                  onStart={canStartStep ? () => handleStartStep(step.id) : undefined}
                   onSubmitClarification={
                     isSubmittable
                       ? (answers) => handleSubmitClarification(step.id, outputStructured, answers)

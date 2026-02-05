@@ -4,8 +4,6 @@ export * from './agent-tools.schema';
 export * from './agents.schema';
 export * from './audit-logs.schema';
 export * from './discovered-files.schema';
-export * from './implementation-plan-step-files.schema';
-export * from './implementation-plan-steps.schema';
 export * from './implementation-plans.schema';
 export * from './projects.schema';
 export * from './repositories.schema';

@@ -1,17 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import {
-  DialogBackdrop,
-  DialogClose,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
-  DialogPortal,
-  DialogRoot,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 
 interface ConfirmCancelWorkflowDialogProps {
   /** Whether the mutation is in progress */
@@ -33,47 +22,29 @@ export const ConfirmCancelWorkflowDialog = ({
   onOpenChange,
   workflowFeatureName,
 }: ConfirmCancelWorkflowDialogProps) => {
-  const title = 'Cancel Workflow';
-  const description = `Are you sure you want to cancel "${workflowFeatureName}"? This action cannot be undone and all progress will be stopped.`;
-  const confirmButtonText = 'Cancel Workflow';
-
   const handleConfirmClick = () => {
     onConfirm();
   };
 
+  const title = 'Cancel Workflow';
+  const description = `Are you sure you want to cancel "${workflowFeatureName}"? This action cannot be undone and all progress will be stopped.`;
   const confirmButtonLabel = `Cancel ${workflowFeatureName} workflow`;
 
   return (
-    <DialogRoot onOpenChange={onOpenChange} open={isOpen}>
-      {/* Portal */}
-      <DialogPortal>
-        <DialogBackdrop />
-        <DialogPopup aria-modal={'true'} role={'alertdialog'}>
-          {/* Header */}
-          <DialogHeader>
-            <DialogTitle id={'confirm-cancel-workflow-title'}>{title}</DialogTitle>
-            <DialogDescription id={'confirm-cancel-workflow-description'}>{description}</DialogDescription>
-          </DialogHeader>
-
-          {/* Actions */}
-          <DialogFooter sticky={false}>
-            <DialogClose>
-              <Button disabled={isLoading} variant={'outline'}>
-                {'Keep Running'}
-              </Button>
-            </DialogClose>
-            <Button
-              aria-describedby={'confirm-cancel-workflow-description'}
-              aria-label={confirmButtonLabel}
-              disabled={isLoading}
-              onClick={handleConfirmClick}
-              variant={'destructive'}
-            >
-              {isLoading ? 'Cancelling...' : confirmButtonText}
-            </Button>
-          </DialogFooter>
-        </DialogPopup>
-      </DialogPortal>
-    </DialogRoot>
+    <ConfirmActionDialog
+      cancelLabel={'Keep Running'}
+      confirmAriaDescribedById={'confirm-cancel-workflow-description'}
+      confirmAriaLabel={confirmButtonLabel}
+      confirmLabel={'Cancel Workflow'}
+      description={description}
+      descriptionId={'confirm-cancel-workflow-description'}
+      isLoading={isLoading}
+      isOpen={isOpen}
+      loadingLabel={'Cancelling...'}
+      onConfirm={handleConfirmClick}
+      onOpenChange={onOpenChange}
+      title={title}
+      titleId={'confirm-cancel-workflow-title'}
+    />
   );
 };

@@ -8,15 +8,7 @@ import { Fragment, useCallback, useMemo, useState } from 'react';
 import type { Workflow } from '@/types/electron';
 
 import { Button } from '@/components/ui/button';
-import {
-  DialogBackdrop,
-  DialogClose,
-  DialogDescription,
-  DialogPopup,
-  DialogPortal,
-  DialogRoot,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DataTableSkeleton } from '@/components/ui/table';
 import { WorkflowTable } from '@/components/workflows/workflow-table';
@@ -394,25 +386,23 @@ export default function ActiveWorkflowsPage() {
         </main>
 
         {/* Cancel Confirmation Dialog */}
-        <DialogRoot onOpenChange={handleCancelDialogClose} open={workflowToCancel !== null}>
-          <DialogPortal>
-            <DialogBackdrop />
-            <DialogPopup size={'sm'}>
-              <DialogTitle>Cancel Workflow</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to cancel{' '}
-                <span className={'font-medium text-foreground'}>{workflowToCancel?.featureName}</span>? This action
-                cannot be undone.
-              </DialogDescription>
-              <div className={'mt-6 flex justify-end gap-3'}>
-                <DialogClose render={<Button variant={'outline'} />}>Keep Running</DialogClose>
-                <Button onClick={handleConfirmCancel} variant={'destructive'}>
-                  Cancel Workflow
-                </Button>
-              </div>
-            </DialogPopup>
-          </DialogPortal>
-        </DialogRoot>
+        <ConfirmActionDialog
+          cancelLabel={'Keep Running'}
+          confirmLabel={'Cancel Workflow'}
+          confirmVariant={'destructive'}
+          description={
+            <Fragment>
+              Are you sure you want to cancel{' '}
+              <span className={'font-medium text-foreground'}>{workflowToCancel?.featureName}</span>? This action cannot
+              be undone.
+            </Fragment>
+          }
+          isOpen={workflowToCancel !== null}
+          onConfirm={handleConfirmCancel}
+          onOpenChange={handleCancelDialogClose}
+          size={'sm'}
+          title={'Cancel Workflow'}
+        />
       </Fragment>
     );
   }
