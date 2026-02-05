@@ -1,38 +1,38 @@
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 
 import type { DrizzleDatabase } from '../index';
 
 import { createAgentToolSchema, updateAgentToolSchema } from '../../lib/validations/agent';
 import { type AgentTool, agentTools, type NewAgentTool } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 export interface AgentToolsRepository {
-  allow(id: number): Promise<AgentTool | undefined>;
-  create(data: NewAgentTool): Promise<AgentTool>;
-  delete(id: number): Promise<boolean>;
-  deleteByAgentId(agentId: number): Promise<boolean>;
-  disallow(id: number): Promise<AgentTool | undefined>;
-  findAllowed(agentId: number): Promise<Array<AgentTool>>;
-  findByAgentId(agentId: number): Promise<Array<AgentTool>>;
-  findById(id: number): Promise<AgentTool | undefined>;
-  update(id: number, data: Partial<Omit<NewAgentTool, 'createdAt' | 'id'>>): Promise<AgentTool | undefined>;
+  allow(id: number): AgentTool | undefined;
+  create(data: NewAgentTool): AgentTool;
+  delete(id: number): boolean;
+  deleteByAgentId(agentId: number): boolean;
+  disallow(id: number): AgentTool | undefined;
+  findAllowed(agentId: number): Array<AgentTool>;
+  findByAgentId(agentId: number): Array<AgentTool>;
+  findById(id: number): AgentTool | undefined;
+  update(id: number, data: Partial<Omit<NewAgentTool, 'createdAt' | 'id'>>): AgentTool | undefined;
 }
 
 export function createAgentToolsRepository(db: DrizzleDatabase): AgentToolsRepository {
+  const base = createBaseRepository<typeof agentTools, AgentTool, NewAgentTool>(db, agentTools);
+
   return {
-    async allow(id: number): Promise<AgentTool | undefined> {
-      const now = new Date().toISOString();
+    allow(id: number): AgentTool | undefined {
       return db
         .update(agentTools)
-        .set({ disallowedAt: null, updatedAt: now })
+        .set({ disallowedAt: null, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(agentTools.id, id))
         .returning()
         .get();
     },
 
-    async create(data: NewAgentTool): Promise<AgentTool> {
-      // Validate all fields
+    create(data: NewAgentTool): AgentTool {
       const validated = createAgentToolSchema.parse(data);
-
       const result = db.insert(agentTools).values(validated).returning().get();
       if (!result) {
         throw new Error('Failed to create agent tool');
@@ -40,50 +40,42 @@ export function createAgentToolsRepository(db: DrizzleDatabase): AgentToolsRepos
       return result;
     },
 
-    async delete(id: number): Promise<boolean> {
-      const result = db.delete(agentTools).where(eq(agentTools.id, id)).run();
-      return result.changes > 0;
-    },
+    delete: base.delete,
 
-    async deleteByAgentId(agentId: number): Promise<boolean> {
+    deleteByAgentId(agentId: number): boolean {
       const result = db.delete(agentTools).where(eq(agentTools.agentId, agentId)).run();
       return result.changes > 0;
     },
 
-    async disallow(id: number): Promise<AgentTool | undefined> {
-      const now = new Date().toISOString();
+    disallow(id: number): AgentTool | undefined {
       return db
         .update(agentTools)
-        .set({ disallowedAt: now, updatedAt: now })
+        .set({ disallowedAt: sql`(CURRENT_TIMESTAMP)`, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(agentTools.id, id))
         .returning()
         .get();
     },
 
-    async findAllowed(agentId: number): Promise<Array<AgentTool>> {
+    findAllowed(agentId: number): Array<AgentTool> {
       return db
         .select()
         .from(agentTools)
         .where(and(eq(agentTools.agentId, agentId), isNull(agentTools.disallowedAt)))
-        .orderBy(asc(agentTools.orderIndex));
+        .orderBy(asc(agentTools.orderIndex))
+        .all();
     },
 
-    async findByAgentId(agentId: number): Promise<Array<AgentTool>> {
-      return db.select().from(agentTools).where(eq(agentTools.agentId, agentId)).orderBy(asc(agentTools.orderIndex));
+    findByAgentId(agentId: number): Array<AgentTool> {
+      return db.select().from(agentTools).where(eq(agentTools.agentId, agentId)).orderBy(asc(agentTools.orderIndex)).all();
     },
 
-    async findById(id: number): Promise<AgentTool | undefined> {
-      return db.select().from(agentTools).where(eq(agentTools.id, id)).get();
-    },
+    findById: base.findById,
 
-    async update(id: number, data: Partial<Omit<NewAgentTool, 'createdAt' | 'id'>>): Promise<AgentTool | undefined> {
-      // Validate all provided fields
+    update(id: number, data: Partial<Omit<NewAgentTool, 'createdAt' | 'id'>>): AgentTool | undefined {
       const validated = updateAgentToolSchema.parse(data);
-
-      const now = new Date().toISOString();
       return db
         .update(agentTools)
-        .set({ ...validated, updatedAt: now })
+        .set({ ...validated, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(agentTools.id, id))
         .returning()
         .get();

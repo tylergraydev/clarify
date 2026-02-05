@@ -77,12 +77,12 @@ export function registerWorkflowHandlers(
 
         if (clarificationAgentId === null) {
           // Fallback 1: Check default clarification agent setting
-          const defaultAgentIdStr = await settingsRepository.getValue('defaultClarificationAgentId');
+          const defaultAgentIdStr = settingsRepository.getValue('defaultClarificationAgentId');
           if (defaultAgentIdStr && defaultAgentIdStr.trim() !== '') {
             const parsedId = parseInt(defaultAgentIdStr, 10);
             if (!isNaN(parsedId)) {
               // Verify the agent exists and is active
-              const defaultAgent = await agentsRepository.findById(parsedId);
+              const defaultAgent = agentsRepository.findById(parsedId);
               if (defaultAgent && defaultAgent.deactivatedAt === null) {
                 clarificationAgentId = parsedId;
                 console.log(`[IPC] workflow:start - using default clarification agent: ${parsedId}`);
@@ -93,7 +93,7 @@ export function registerWorkflowHandlers(
 
         if (clarificationAgentId === null) {
           // Fallback 2: Find any active planning agent
-          const planningAgents = await agentsRepository.findAll({ type: 'planning' });
+          const planningAgents = agentsRepository.findAll({ type: 'planning' });
           const firstPlanningAgent = planningAgents[0];
           if (firstPlanningAgent) {
             clarificationAgentId = firstPlanningAgent.id;

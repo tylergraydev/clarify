@@ -4,6 +4,7 @@ import type { DrizzleDatabase } from '../index';
 import type { NewWorktree, Worktree } from '../schema';
 
 import { worktrees } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 export interface WorktreesRepository {
   create(data: NewWorktree): Worktree;
@@ -19,15 +20,10 @@ export interface WorktreesRepository {
 }
 
 export function createWorktreesRepository(db: DrizzleDatabase): WorktreesRepository {
-  return {
-    create(data: NewWorktree): Worktree {
-      return db.insert(worktrees).values(data).returning().get();
-    },
+  const base = createBaseRepository<typeof worktrees, Worktree, NewWorktree>(db, worktrees);
 
-    delete(id: number): boolean {
-      const result = db.delete(worktrees).where(eq(worktrees.id, id)).run();
-      return result.changes > 0;
-    },
+  return {
+    ...base,
 
     findActive(repositoryId: number): Array<Worktree> {
       return db
@@ -57,10 +53,6 @@ export function createWorktreesRepository(db: DrizzleDatabase): WorktreesReposit
         .all();
     },
 
-    findById(id: number): undefined | Worktree {
-      return db.select().from(worktrees).where(eq(worktrees.id, id)).get();
-    },
-
     findByPath(path: string): undefined | Worktree {
       return db.select().from(worktrees).where(eq(worktrees.path, path)).get();
     },
@@ -71,15 +63,6 @@ export function createWorktreesRepository(db: DrizzleDatabase): WorktreesReposit
 
     findByWorkflowId(workflowId: number): undefined | Worktree {
       return db.select().from(worktrees).where(eq(worktrees.workflowId, workflowId)).get();
-    },
-
-    update(id: number, data: Partial<NewWorktree>): undefined | Worktree {
-      return db
-        .update(worktrees)
-        .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` })
-        .where(eq(worktrees.id, id))
-        .returning()
-        .get();
     },
 
     updateStatus(id: number, status: string): undefined | Worktree {

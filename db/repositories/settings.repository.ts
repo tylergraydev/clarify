@@ -1,62 +1,60 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 import type { DrizzleDatabase } from '../index';
 
 import { type NewSetting, type Setting, settings } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 export interface SettingsRepository {
-  create(data: NewSetting): Promise<Setting>;
-  delete(id: number): Promise<void>;
-  findAll(options?: { category?: string }): Promise<Array<Setting>>;
-  findByCategory(category: string): Promise<Array<Setting>>;
-  findById(id: number): Promise<Setting | undefined>;
-  findByKey(key: string): Promise<Setting | undefined>;
-  getTypedValue<T>(key: string): Promise<T | undefined>;
-  getValue(key: string): Promise<string | undefined>;
-  resetToDefault(key: string): Promise<Setting | undefined>;
-  setValue(key: string, value: string): Promise<Setting | undefined>;
-  update(id: number, data: Partial<Omit<NewSetting, 'createdAt' | 'id'>>): Promise<Setting | undefined>;
-  upsert(key: string, value: string, category?: string, displayName?: string): Promise<Setting>;
+  create(data: NewSetting): Setting;
+  delete(id: number): void;
+  findAll(options?: { category?: string }): Array<Setting>;
+  findByCategory(category: string): Array<Setting>;
+  findById(id: number): Setting | undefined;
+  findByKey(key: string): Setting | undefined;
+  getTypedValue<T>(key: string): T | undefined;
+  getValue(key: string): string | undefined;
+  resetToDefault(key: string): Setting | undefined;
+  setValue(key: string, value: string): Setting | undefined;
+  update(id: number, data: Partial<Omit<NewSetting, 'createdAt' | 'id'>>): Setting | undefined;
+  upsert(key: string, value: string, category?: string, displayName?: string): Setting;
 }
 
 export function createSettingsRepository(db: DrizzleDatabase): SettingsRepository {
+  const base = createBaseRepository<typeof settings, Setting, NewSetting>(db, settings);
+
   return {
-    async create(data: NewSetting): Promise<Setting> {
-      const result = await db.insert(settings).values(data).returning();
-      if (!result[0]) {
+    create(data: NewSetting): Setting {
+      const result = db.insert(settings).values(data).returning().get();
+      if (!result) {
         throw new Error('Failed to create setting');
       }
-      return result[0];
+      return result;
     },
 
-    async delete(id: number): Promise<void> {
-      await db.delete(settings).where(eq(settings.id, id));
+    delete(id: number): void {
+      db.delete(settings).where(eq(settings.id, id)).run();
     },
 
-    async findAll(options?: { category?: string }): Promise<Array<Setting>> {
+    findAll(options?: { category?: string }): Array<Setting> {
       if (options?.category) {
-        return db.select().from(settings).where(eq(settings.category, options.category));
+        return db.select().from(settings).where(eq(settings.category, options.category)).all();
       }
-      return db.select().from(settings);
+      return db.select().from(settings).all();
     },
 
-    async findByCategory(category: string): Promise<Array<Setting>> {
-      return db.select().from(settings).where(eq(settings.category, category));
+    findByCategory(category: string): Array<Setting> {
+      return db.select().from(settings).where(eq(settings.category, category)).all();
     },
 
-    async findById(id: number): Promise<Setting | undefined> {
-      const result = await db.select().from(settings).where(eq(settings.id, id));
-      return result[0];
+    findById: base.findById,
+
+    findByKey(key: string): Setting | undefined {
+      return db.select().from(settings).where(eq(settings.key, key)).get();
     },
 
-    async findByKey(key: string): Promise<Setting | undefined> {
-      const result = await db.select().from(settings).where(eq(settings.key, key));
-      return result[0];
-    },
-
-    async getTypedValue<T>(key: string): Promise<T | undefined> {
-      const result = await db.select().from(settings).where(eq(settings.key, key));
-      const setting = result[0];
+    getTypedValue<T>(key: string): T | undefined {
+      const setting = db.select().from(settings).where(eq(settings.key, key)).get();
       if (!setting) {
         return undefined;
       }
@@ -78,95 +76,91 @@ export function createSettingsRepository(db: DrizzleDatabase): SettingsRepositor
       }
     },
 
-    async getValue(key: string): Promise<string | undefined> {
-      const result = await db.select().from(settings).where(eq(settings.key, key));
-      return result[0]?.value;
+    getValue(key: string): string | undefined {
+      return db.select().from(settings).where(eq(settings.key, key)).get()?.value;
     },
 
-    async resetToDefault(key: string): Promise<Setting | undefined> {
-      const existing = await db.select().from(settings).where(eq(settings.key, key));
-      const setting = existing[0];
+    resetToDefault(key: string): Setting | undefined {
+      const setting = db.select().from(settings).where(eq(settings.key, key)).get();
       if (!setting || setting.defaultValue === null) {
         return undefined;
       }
 
-      const now = new Date().toISOString();
-      const result = await db
+      return db
         .update(settings)
         .set({
-          updatedAt: now,
+          updatedAt: sql`(CURRENT_TIMESTAMP)`,
           userModifiedAt: null,
           value: setting.defaultValue,
         })
         .where(eq(settings.key, key))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
 
-    async setValue(key: string, value: string): Promise<Setting | undefined> {
-      const now = new Date().toISOString();
-      const result = await db
+    setValue(key: string, value: string): Setting | undefined {
+      return db
         .update(settings)
         .set({
-          updatedAt: now,
-          userModifiedAt: now,
+          updatedAt: sql`(CURRENT_TIMESTAMP)`,
+          userModifiedAt: sql`(CURRENT_TIMESTAMP)`,
           value,
         })
         .where(eq(settings.key, key))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
 
-    async update(id: number, data: Partial<Omit<NewSetting, 'createdAt' | 'id'>>): Promise<Setting | undefined> {
-      const now = new Date().toISOString();
-      const result = await db
+    update(id: number, data: Partial<Omit<NewSetting, 'createdAt' | 'id'>>): Setting | undefined {
+      return db
         .update(settings)
-        .set({ ...data, updatedAt: now })
+        .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(settings.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
 
-    async upsert(key: string, value: string, category?: string, displayName?: string): Promise<Setting> {
-      const existing = await db.select().from(settings).where(eq(settings.key, key));
-      const now = new Date().toISOString();
+    upsert(key: string, value: string, category?: string, displayName?: string): Setting {
+      const existing = db.select().from(settings).where(eq(settings.key, key)).get();
 
-      if (existing[0]) {
-        const result = await db
+      if (existing) {
+        const result = db
           .update(settings)
           .set({
             ...(category !== undefined && { category }),
             ...(displayName !== undefined && { displayName }),
-            updatedAt: now,
-            userModifiedAt: now,
+            updatedAt: sql`(CURRENT_TIMESTAMP)`,
+            userModifiedAt: sql`(CURRENT_TIMESTAMP)`,
             value,
           })
           .where(eq(settings.key, key))
-          .returning();
-        if (!result[0]) {
+          .returning()
+          .get();
+        if (!result) {
           throw new Error('Failed to update setting');
         }
-        return result[0];
+        return result;
       }
 
       if (!category || !displayName) {
         throw new Error('Category and displayName are required when creating a new setting');
       }
 
-      const result = await db
+      const result = db
         .insert(settings)
         .values({
           category,
           displayName,
           key,
-          userModifiedAt: now,
+          userModifiedAt: sql`(CURRENT_TIMESTAMP)`,
           value,
         })
-        .returning();
-      if (!result[0]) {
+        .returning()
+        .get();
+      if (!result) {
         throw new Error('Failed to create setting');
       }
-      return result[0];
+      return result;
     },
   };
 }

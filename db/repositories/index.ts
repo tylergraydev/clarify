@@ -3,6 +3,7 @@ export * from './agent-skills.repository';
 export * from './agent-tools.repository';
 export * from './agents.repository';
 export * from './audit-logs.repository';
+export * from './base.repository';
 export * from './discovered-files.repository';
 export * from './implementation-plans.repository';
 export * from './projects.repository';

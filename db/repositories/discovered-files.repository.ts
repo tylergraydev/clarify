@@ -4,6 +4,7 @@ import type { DrizzleDatabase } from '../index';
 import type { DiscoveredFile, NewDiscoveredFile } from '../schema';
 
 import { discoveredFiles } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 export interface DiscoveredFilesRepository {
   clearByWorkflowStep(stepId: number): number;
@@ -25,14 +26,14 @@ export interface DiscoveredFilesRepository {
 }
 
 export function createDiscoveredFilesRepository(db: DrizzleDatabase): DiscoveredFilesRepository {
+  const base = createBaseRepository<typeof discoveredFiles, DiscoveredFile, NewDiscoveredFile>(db, discoveredFiles);
+
   return {
+    ...base,
+
     clearByWorkflowStep(stepId: number): number {
       const result = db.delete(discoveredFiles).where(eq(discoveredFiles.workflowStepId, stepId)).run();
       return result.changes;
-    },
-
-    create(data: NewDiscoveredFile): DiscoveredFile {
-      return db.insert(discoveredFiles).values(data).returning().get();
     },
 
     createMany(data: Array<NewDiscoveredFile>): Array<DiscoveredFile> {
@@ -40,11 +41,6 @@ export function createDiscoveredFilesRepository(db: DrizzleDatabase): Discovered
         return [];
       }
       return db.insert(discoveredFiles).values(data).returning().all();
-    },
-
-    delete(id: number): boolean {
-      const result = db.delete(discoveredFiles).where(eq(discoveredFiles.id, id)).run();
-      return result.changes > 0;
     },
 
     deleteMany(ids: Array<number>): number {
@@ -88,10 +84,6 @@ export function createDiscoveredFilesRepository(db: DrizzleDatabase): Discovered
         .all();
     },
 
-    findById(id: number): DiscoveredFile | undefined {
-      return db.select().from(discoveredFiles).where(eq(discoveredFiles.id, id)).get();
-    },
-
     findByPath(stepId: number, filePath: string): DiscoveredFile | undefined {
       return db
         .select()
@@ -125,29 +117,17 @@ export function createDiscoveredFilesRepository(db: DrizzleDatabase): Discovered
     },
 
     toggleInclude(id: number): DiscoveredFile | undefined {
-      // First get the current record to check its includedAt state
       const current = db.select().from(discoveredFiles).where(eq(discoveredFiles.id, id)).get();
       if (!current) {
         return undefined;
       }
 
-      // Toggle: if includedAt is set, clear it; if null, set it to now
-      const now = new Date().toISOString();
       return db
         .update(discoveredFiles)
         .set({
-          includedAt: current.includedAt ? null : now,
-          updatedAt: now,
+          includedAt: current.includedAt ? null : sql`(CURRENT_TIMESTAMP)`,
+          updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
-        .where(eq(discoveredFiles.id, id))
-        .returning()
-        .get();
-    },
-
-    update(id: number, data: Partial<NewDiscoveredFile>): DiscoveredFile | undefined {
-      return db
-        .update(discoveredFiles)
-        .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(discoveredFiles.id, id))
         .returning()
         .get();
@@ -170,11 +150,9 @@ export function createDiscoveredFilesRepository(db: DrizzleDatabase): Discovered
         return [];
       }
 
-      const now = new Date().toISOString();
       const results: Array<DiscoveredFile> = [];
 
       for (const file of files) {
-        // Check if file already exists for this workflow step
         const existing = db
           .select()
           .from(discoveredFiles)
@@ -184,7 +162,6 @@ export function createDiscoveredFilesRepository(db: DrizzleDatabase): Discovered
           .get();
 
         if (existing) {
-          // Update existing record
           const updated = db
             .update(discoveredFiles)
             .set({
@@ -194,7 +171,7 @@ export function createDiscoveredFilesRepository(db: DrizzleDatabase): Discovered
               priority: file.priority,
               relevanceExplanation: file.relevanceExplanation,
               role: file.role,
-              updatedAt: now,
+              updatedAt: sql`(CURRENT_TIMESTAMP)`,
             })
             .where(eq(discoveredFiles.id, existing.id))
             .returning()
@@ -203,7 +180,6 @@ export function createDiscoveredFilesRepository(db: DrizzleDatabase): Discovered
             results.push(updated);
           }
         } else {
-          // Insert new record
           const inserted = db.insert(discoveredFiles).values(file).returning().get();
           results.push(inserted);
         }

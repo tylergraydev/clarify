@@ -42,7 +42,7 @@ export function registerProjectHandlers(
   repositoriesRepository: RepositoriesRepository
 ): void {
   // Create a new project
-  ipcMain.handle(IpcChannels.project.create, async (_event: IpcMainInvokeEvent, data: NewProject): Promise<Project> => {
+  ipcMain.handle(IpcChannels.project.create, (_event: IpcMainInvokeEvent, data: NewProject): Project => {
     try {
       return projectsRepository.create(data);
     } catch (error) {
@@ -54,7 +54,7 @@ export function registerProjectHandlers(
   // Get a project by ID
   ipcMain.handle(
     IpcChannels.project.get,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Project | undefined> => {
+    (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
       try {
         return projectsRepository.findById(id);
       } catch (error) {
@@ -67,7 +67,7 @@ export function registerProjectHandlers(
   // List all projects with optional archive inclusion
   ipcMain.handle(
     IpcChannels.project.list,
-    async (_event: IpcMainInvokeEvent, options?: ProjectListOptions): Promise<Array<Project>> => {
+    (_event: IpcMainInvokeEvent, options?: ProjectListOptions): Array<Project> => {
       try {
         return projectsRepository.findAll(options);
       } catch (error) {
@@ -80,11 +80,11 @@ export function registerProjectHandlers(
   // Update project details
   ipcMain.handle(
     IpcChannels.project.update,
-    async (
+    (
       _event: IpcMainInvokeEvent,
       id: number,
       data: Partial<Omit<NewProject, 'createdAt' | 'id'>>
-    ): Promise<Project | undefined> => {
+    ): Project | undefined => {
       try {
         return projectsRepository.update(id, data);
       } catch (error) {
@@ -97,7 +97,7 @@ export function registerProjectHandlers(
   // Archive a project (set archivedAt timestamp)
   ipcMain.handle(
     IpcChannels.project.archive,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Project | undefined> => {
+    (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
       try {
         return projectsRepository.archive(id);
       } catch (error) {
@@ -108,9 +108,9 @@ export function registerProjectHandlers(
   );
 
   // Soft delete a project (calls archive for backwards compatibility)
-  ipcMain.handle(IpcChannels.project.delete, async (_event: IpcMainInvokeEvent, id: number): Promise<boolean> => {
+  ipcMain.handle(IpcChannels.project.delete, (_event: IpcMainInvokeEvent, id: number): boolean => {
     try {
-      const result = await projectsRepository.archive(id);
+      const result = projectsRepository.archive(id);
       return !!result;
     } catch (error) {
       console.error('[IPC Error] project:delete:', error);
@@ -121,7 +121,7 @@ export function registerProjectHandlers(
   // Unarchive a project (clear archivedAt timestamp)
   ipcMain.handle(
     IpcChannels.project.unarchive,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Project | undefined> => {
+    (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
       try {
         return projectsRepository.unarchive(id);
       } catch (error) {
@@ -132,9 +132,9 @@ export function registerProjectHandlers(
   );
 
   // Permanently delete a project and all associated data
-  ipcMain.handle(IpcChannels.project.deleteHard, async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
+  ipcMain.handle(IpcChannels.project.deleteHard, (_event: IpcMainInvokeEvent, id: number): void => {
     try {
-      await projectsRepository.delete(id);
+      projectsRepository.delete(id);
     } catch (error) {
       console.error('[IPC Error] project:deleteHard:', error);
       throw error;
@@ -144,7 +144,7 @@ export function registerProjectHandlers(
   // Add a repository to a project
   ipcMain.handle(
     IpcChannels.project.addRepo,
-    async (_event: IpcMainInvokeEvent, projectId: number, repoData: AddRepoData): Promise<Repository> => {
+    (_event: IpcMainInvokeEvent, projectId: number, repoData: AddRepoData): Repository => {
       try {
         // Build the new repository data with project association
         const newRepo: NewRepository = {
@@ -166,7 +166,7 @@ export function registerProjectHandlers(
   // Toggle favorite status for a project
   ipcMain.handle(
     IpcChannels.project.toggleFavorite,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Project | undefined> => {
+    (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
       try {
         return projectsRepository.toggleFavorite(id);
       } catch (error) {
@@ -177,7 +177,7 @@ export function registerProjectHandlers(
   );
 
   // List all favorite projects
-  ipcMain.handle(IpcChannels.project.listFavorites, async (): Promise<Array<Project>> => {
+  ipcMain.handle(IpcChannels.project.listFavorites, (): Array<Project> => {
     try {
       return projectsRepository.findFavorites();
     } catch (error) {

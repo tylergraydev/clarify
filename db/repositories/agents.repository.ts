@@ -4,6 +4,7 @@ import type { DrizzleDatabase } from '../index';
 
 import { createAgentSchema, updateAgentRepositorySchema } from '../../lib/validations/agent';
 import { type Agent, agents, type NewAgent } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 export interface AgentListFilters {
   excludeProjectAgents?: boolean;
@@ -14,31 +15,36 @@ export interface AgentListFilters {
 }
 
 export interface AgentsRepository {
-  activate(id: number): Promise<Agent | undefined>;
-  create(data: NewAgent): Promise<Agent>;
-  deactivate(id: number): Promise<Agent | undefined>;
-  delete(id: number): Promise<boolean>;
-  findActive(projectId?: number): Promise<Array<Agent>>;
-  findAll(options?: AgentListFilters): Promise<Array<Agent>>;
-  findBuiltIn(): Promise<Array<Agent>>;
-  findById(id: number): Promise<Agent | undefined>;
-  findByName(name: string): Promise<Agent | undefined>;
-  findByProjectId(projectId: number): Promise<Array<Agent>>;
-  findByProjectWithParents(projectId: number): Promise<Array<Agent>>;
-  findByType(type: string): Promise<Array<Agent>>;
-  findGlobal(options?: { includeDeactivated?: boolean; type?: string }): Promise<Array<Agent>>;
-  update(id: number, data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>): Promise<Agent | undefined>;
+  activate(id: number): Agent | undefined;
+  create(data: NewAgent): Agent;
+  deactivate(id: number): Agent | undefined;
+  delete(id: number): boolean;
+  findActive(projectId?: number): Array<Agent>;
+  findAll(options?: AgentListFilters): Array<Agent>;
+  findBuiltIn(): Array<Agent>;
+  findById(id: number): Agent | undefined;
+  findByName(name: string): Agent | undefined;
+  findByProjectId(projectId: number): Array<Agent>;
+  findByProjectWithParents(projectId: number): Array<Agent>;
+  findByType(type: string): Array<Agent>;
+  findGlobal(options?: { includeDeactivated?: boolean; type?: string }): Array<Agent>;
+  update(id: number, data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>): Agent | undefined;
 }
 
 export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
+  const base = createBaseRepository<typeof agents, Agent, NewAgent>(db, agents);
+
   return {
-    async activate(id: number): Promise<Agent | undefined> {
-      const now = new Date().toISOString();
-      return db.update(agents).set({ deactivatedAt: null, updatedAt: now }).where(eq(agents.id, id)).returning().get();
+    activate(id: number): Agent | undefined {
+      return db
+        .update(agents)
+        .set({ deactivatedAt: null, updatedAt: sql`(CURRENT_TIMESTAMP)` })
+        .where(eq(agents.id, id))
+        .returning()
+        .get();
     },
 
-    async create(data: NewAgent): Promise<Agent> {
-      // Validate input data through Zod schema
+    create(data: NewAgent): Agent {
       const validatedData = createAgentSchema.parse(data);
       const result = db.insert(agents).values(validatedData).returning().get();
       if (!result) {
@@ -47,46 +53,43 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       return result;
     },
 
-    async deactivate(id: number): Promise<Agent | undefined> {
-      const now = new Date().toISOString();
-      return db.update(agents).set({ deactivatedAt: now, updatedAt: now }).where(eq(agents.id, id)).returning().get();
+    deactivate(id: number): Agent | undefined {
+      return db
+        .update(agents)
+        .set({ deactivatedAt: sql`(CURRENT_TIMESTAMP)`, updatedAt: sql`(CURRENT_TIMESTAMP)` })
+        .where(eq(agents.id, id))
+        .returning()
+        .get();
     },
 
-    async delete(id: number): Promise<boolean> {
-      const result = db.delete(agents).where(eq(agents.id, id)).run();
-      return result.changes > 0;
-    },
+    delete: base.delete,
 
-    async findActive(projectId?: number): Promise<Array<Agent>> {
+    findActive(projectId?: number): Array<Agent> {
       if (projectId !== undefined) {
         return db
           .select()
           .from(agents)
-          .where(and(isNull(agents.deactivatedAt), eq(agents.projectId, projectId)));
+          .where(and(isNull(agents.deactivatedAt), eq(agents.projectId, projectId)))
+          .all();
       }
-      return db.select().from(agents).where(isNull(agents.deactivatedAt));
+      return db.select().from(agents).where(isNull(agents.deactivatedAt)).all();
     },
 
-    async findAll(options?: AgentListFilters): Promise<Array<Agent>> {
+    findAll(options?: AgentListFilters): Array<Agent> {
       const conditions = [];
 
       if (!options?.includeDeactivated) {
         conditions.push(isNull(agents.deactivatedAt));
       }
 
-      // Handle scope filter
       if (options?.scope === 'global') {
-        // Global scope: only agents where projectId IS NULL
         conditions.push(isNull(agents.projectId));
       } else if (options?.scope === 'project' && options?.projectId) {
-        // Project scope: only agents for the specific project
         conditions.push(eq(agents.projectId, options.projectId));
       } else if (options?.projectId !== undefined) {
-        // Legacy behavior: filter by projectId if provided
         conditions.push(eq(agents.projectId, options.projectId));
       }
 
-      // Handle excludeProjectAgents flag (for global view that excludes project-specific agents)
       if (options?.excludeProjectAgents) {
         conditions.push(isNull(agents.projectId));
       }
@@ -96,34 +99,31 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       }
 
       if (conditions.length === 0) {
-        return db.select().from(agents);
+        return db.select().from(agents).all();
       }
 
       return db
         .select()
         .from(agents)
-        .where(conditions.length === 1 ? conditions[0] : and(...conditions));
+        .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+        .all();
     },
 
-    async findBuiltIn(): Promise<Array<Agent>> {
-      return db.select().from(agents).where(isNotNull(agents.builtInAt));
+    findBuiltIn(): Array<Agent> {
+      return db.select().from(agents).where(isNotNull(agents.builtInAt)).all();
     },
 
-    async findById(id: number): Promise<Agent | undefined> {
-      return db.select().from(agents).where(eq(agents.id, id)).get();
-    },
+    findById: base.findById,
 
-    async findByName(name: string): Promise<Agent | undefined> {
+    findByName(name: string): Agent | undefined {
       return db.select().from(agents).where(eq(agents.name, name)).get();
     },
 
-    async findByProjectId(projectId: number): Promise<Array<Agent>> {
-      return db.select().from(agents).where(eq(agents.projectId, projectId));
+    findByProjectId(projectId: number): Array<Agent> {
+      return db.select().from(agents).where(eq(agents.projectId, projectId)).all();
     },
 
-    async findByProjectWithParents(projectId: number): Promise<Array<Agent>> {
-      // Get project-specific agents and their global parent agents
-      // This is useful for resolving agent overrides in project context
+    findByProjectWithParents(projectId: number): Array<Agent> {
       return db
         .select()
         .from(agents)
@@ -131,20 +131,19 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
           and(
             isNull(agents.deactivatedAt),
             or(
-              // Include project-specific agents for this project
               eq(agents.projectId, projectId),
-              // Include global agents (potential parents)
               isNull(agents.projectId)
             )
           )
-        );
+        )
+        .all();
     },
 
-    async findByType(type: string): Promise<Array<Agent>> {
-      return db.select().from(agents).where(eq(agents.type, type));
+    findByType(type: string): Array<Agent> {
+      return db.select().from(agents).where(eq(agents.type, type)).all();
     },
 
-    async findGlobal(options?: { includeDeactivated?: boolean; type?: string }): Promise<Array<Agent>> {
+    findGlobal(options?: { includeDeactivated?: boolean; type?: string }): Array<Agent> {
       const conditions = [isNull(agents.projectId)];
 
       if (!options?.includeDeactivated) {
@@ -158,18 +157,17 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       return db
         .select()
         .from(agents)
-        .where(conditions.length === 1 ? conditions[0] : and(...conditions));
+        .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+        .all();
     },
 
-    async update(id: number, data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>): Promise<Agent | undefined> {
-      // Validate input data through Zod schema
+    update(id: number, data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>): Agent | undefined {
       const validatedData = updateAgentRepositorySchema.parse(data);
-      const now = new Date().toISOString();
       return db
         .update(agents)
         .set({
           ...validatedData,
-          updatedAt: now,
+          updatedAt: sql`(CURRENT_TIMESTAMP)`,
           version: sql`${agents.version} + 1`,
         })
         .where(eq(agents.id, id))

@@ -1,25 +1,27 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
 import type { DrizzleDatabase } from '../index';
 
 import { createAgentHookSchema, updateAgentHookOrderSchema, updateAgentHookSchema } from '../../lib/validations/agent';
 import { type AgentHook, agentHooks, type NewAgentHook } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 export interface AgentHooksRepository {
-  create(data: NewAgentHook): Promise<AgentHook>;
-  delete(id: number): Promise<boolean>;
-  deleteByAgentId(agentId: number): Promise<boolean>;
-  findByAgentId(agentId: number): Promise<Array<AgentHook>>;
-  findByEventType(agentId: number, eventType: string): Promise<Array<AgentHook>>;
-  findById(id: number): Promise<AgentHook | undefined>;
-  update(id: number, data: Partial<Omit<NewAgentHook, 'createdAt' | 'id'>>): Promise<AgentHook | undefined>;
-  updateOrder(id: number, orderIndex: number): Promise<AgentHook | undefined>;
+  create(data: NewAgentHook): AgentHook;
+  delete(id: number): boolean;
+  deleteByAgentId(agentId: number): boolean;
+  findByAgentId(agentId: number): Array<AgentHook>;
+  findByEventType(agentId: number, eventType: string): Array<AgentHook>;
+  findById(id: number): AgentHook | undefined;
+  update(id: number, data: Partial<Omit<NewAgentHook, 'createdAt' | 'id'>>): AgentHook | undefined;
+  updateOrder(id: number, orderIndex: number): AgentHook | undefined;
 }
 
 export function createAgentHooksRepository(db: DrizzleDatabase): AgentHooksRepository {
+  const base = createBaseRepository<typeof agentHooks, AgentHook, NewAgentHook>(db, agentHooks);
+
   return {
-    async create(data: NewAgentHook): Promise<AgentHook> {
-      // Validate input data through Zod schema
+    create(data: NewAgentHook): AgentHook {
       const validatedData = createAgentHookSchema.parse(data);
       const result = db.insert(agentHooks).values(validatedData).returning().get();
       if (!result) {
@@ -28,51 +30,43 @@ export function createAgentHooksRepository(db: DrizzleDatabase): AgentHooksRepos
       return result;
     },
 
-    async delete(id: number): Promise<boolean> {
-      const result = db.delete(agentHooks).where(eq(agentHooks.id, id)).run();
-      return result.changes > 0;
-    },
+    delete: base.delete,
 
-    async deleteByAgentId(agentId: number): Promise<boolean> {
+    deleteByAgentId(agentId: number): boolean {
       const result = db.delete(agentHooks).where(eq(agentHooks.agentId, agentId)).run();
       return result.changes > 0;
     },
 
-    async findByAgentId(agentId: number): Promise<Array<AgentHook>> {
-      return db.select().from(agentHooks).where(eq(agentHooks.agentId, agentId)).orderBy(asc(agentHooks.orderIndex));
+    findByAgentId(agentId: number): Array<AgentHook> {
+      return db.select().from(agentHooks).where(eq(agentHooks.agentId, agentId)).orderBy(asc(agentHooks.orderIndex)).all();
     },
 
-    async findByEventType(agentId: number, eventType: string): Promise<Array<AgentHook>> {
+    findByEventType(agentId: number, eventType: string): Array<AgentHook> {
       return db
         .select()
         .from(agentHooks)
         .where(and(eq(agentHooks.agentId, agentId), eq(agentHooks.eventType, eventType)))
-        .orderBy(asc(agentHooks.orderIndex));
+        .orderBy(asc(agentHooks.orderIndex))
+        .all();
     },
 
-    async findById(id: number): Promise<AgentHook | undefined> {
-      return db.select().from(agentHooks).where(eq(agentHooks.id, id)).get();
-    },
+    findById: base.findById,
 
-    async update(id: number, data: Partial<Omit<NewAgentHook, 'createdAt' | 'id'>>): Promise<AgentHook | undefined> {
-      // Validate input data through Zod schema
+    update(id: number, data: Partial<Omit<NewAgentHook, 'createdAt' | 'id'>>): AgentHook | undefined {
       const validatedData = updateAgentHookSchema.parse(data);
-      const now = new Date().toISOString();
       return db
         .update(agentHooks)
-        .set({ ...validatedData, updatedAt: now })
+        .set({ ...validatedData, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(agentHooks.id, id))
         .returning()
         .get();
     },
 
-    async updateOrder(id: number, orderIndex: number): Promise<AgentHook | undefined> {
-      // Validate input data through Zod schema
+    updateOrder(id: number, orderIndex: number): AgentHook | undefined {
       const validatedData = updateAgentHookOrderSchema.parse({ orderIndex });
-      const now = new Date().toISOString();
       return db
         .update(agentHooks)
-        .set({ orderIndex: validatedData.orderIndex, updatedAt: now })
+        .set({ orderIndex: validatedData.orderIndex, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(agentHooks.id, id))
         .returning()
         .get();

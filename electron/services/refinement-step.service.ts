@@ -189,7 +189,7 @@ class RefinementStepService extends BaseAgentStepService<
       session.phase = 'loading_agent';
       this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
-      const agentConfig = await this.loadAgentConfig(workflowId, options.agentId);
+      const agentConfig = this.loadAgentConfig(workflowId, options.agentId);
       session.agentConfig = agentConfig;
 
       debugLoggerService.logSdkEvent(session.sessionId, 'Agent configuration loaded', {

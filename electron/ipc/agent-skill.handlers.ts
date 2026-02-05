@@ -26,7 +26,7 @@ export function registerAgentSkillHandlers(agentSkillsRepository: AgentSkillsRep
    */
   ipcMain.handle(
     IpcChannels.agentSkill.list,
-    async (_event: IpcMainInvokeEvent, agentId: number): Promise<Array<AgentSkill>> => {
+    (_event: IpcMainInvokeEvent, agentId: number): Array<AgentSkill> => {
       try {
         return agentSkillsRepository.findByAgentId(agentId);
       } catch (error) {
@@ -41,7 +41,7 @@ export function registerAgentSkillHandlers(agentSkillsRepository: AgentSkillsRep
    */
   ipcMain.handle(
     IpcChannels.agentSkill.create,
-    async (_event: IpcMainInvokeEvent, data: NewAgentSkill): Promise<AgentSkill> => {
+    (_event: IpcMainInvokeEvent, data: NewAgentSkill): AgentSkill => {
       try {
         return agentSkillsRepository.create(data);
       } catch (error) {
@@ -56,11 +56,11 @@ export function registerAgentSkillHandlers(agentSkillsRepository: AgentSkillsRep
    */
   ipcMain.handle(
     IpcChannels.agentSkill.update,
-    async (
+    (
       _event: IpcMainInvokeEvent,
       id: number,
       data: Partial<Omit<NewAgentSkill, 'createdAt' | 'id'>>
-    ): Promise<AgentSkill | undefined> => {
+    ): AgentSkill | undefined => {
       try {
         return agentSkillsRepository.update(id, data);
       } catch (error) {
@@ -75,7 +75,7 @@ export function registerAgentSkillHandlers(agentSkillsRepository: AgentSkillsRep
    */
   ipcMain.handle(
     IpcChannels.agentSkill.setRequired,
-    async (_event: IpcMainInvokeEvent, id: number, required: boolean): Promise<AgentSkill | undefined> => {
+    (_event: IpcMainInvokeEvent, id: number, required: boolean): AgentSkill | undefined => {
       try {
         return agentSkillsRepository.setRequired(id, required);
       } catch (error) {
@@ -88,7 +88,7 @@ export function registerAgentSkillHandlers(agentSkillsRepository: AgentSkillsRep
   /**
    * Delete a skill by ID.
    */
-  ipcMain.handle(IpcChannels.agentSkill.delete, async (_event: IpcMainInvokeEvent, id: number): Promise<boolean> => {
+  ipcMain.handle(IpcChannels.agentSkill.delete, (_event: IpcMainInvokeEvent, id: number): boolean => {
     try {
       return agentSkillsRepository.delete(id);
     } catch (error) {

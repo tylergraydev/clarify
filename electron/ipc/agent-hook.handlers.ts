@@ -25,7 +25,7 @@ export function registerAgentHookHandlers(agentHooksRepository: AgentHooksReposi
    */
   ipcMain.handle(
     IpcChannels.agentHook.list,
-    async (_event: IpcMainInvokeEvent, agentId: number): Promise<Array<AgentHook>> => {
+    (_event: IpcMainInvokeEvent, agentId: number): Array<AgentHook> => {
       try {
         return agentHooksRepository.findByAgentId(agentId);
       } catch (error) {
@@ -40,7 +40,7 @@ export function registerAgentHookHandlers(agentHooksRepository: AgentHooksReposi
    */
   ipcMain.handle(
     IpcChannels.agentHook.create,
-    async (_event: IpcMainInvokeEvent, data: NewAgentHook): Promise<AgentHook> => {
+    (_event: IpcMainInvokeEvent, data: NewAgentHook): AgentHook => {
       try {
         return agentHooksRepository.create(data);
       } catch (error) {
@@ -55,11 +55,11 @@ export function registerAgentHookHandlers(agentHooksRepository: AgentHooksReposi
    */
   ipcMain.handle(
     IpcChannels.agentHook.update,
-    async (
+    (
       _event: IpcMainInvokeEvent,
       id: number,
       data: Partial<Omit<NewAgentHook, 'createdAt' | 'id'>>
-    ): Promise<AgentHook | undefined> => {
+    ): AgentHook | undefined => {
       try {
         return agentHooksRepository.update(id, data);
       } catch (error) {
@@ -72,7 +72,7 @@ export function registerAgentHookHandlers(agentHooksRepository: AgentHooksReposi
   /**
    * Delete a hook by ID.
    */
-  ipcMain.handle(IpcChannels.agentHook.delete, async (_event: IpcMainInvokeEvent, id: number): Promise<boolean> => {
+  ipcMain.handle(IpcChannels.agentHook.delete, (_event: IpcMainInvokeEvent, id: number): boolean => {
     try {
       return agentHooksRepository.delete(id);
     } catch (error) {

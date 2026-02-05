@@ -4,6 +4,7 @@ import type { DrizzleDatabase } from '../index';
 import type { NewRepository, Repository } from '../schema';
 
 import { repositories } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 export interface RepositoriesRepository {
   clearDefault(id: number): Repository | undefined;
@@ -19,7 +20,11 @@ export interface RepositoriesRepository {
 }
 
 export function createRepositoriesRepository(db: DrizzleDatabase): RepositoriesRepository {
+  const base = createBaseRepository<typeof repositories, Repository, NewRepository>(db, repositories);
+
   return {
+    ...base,
+
     clearDefault(id: number): Repository | undefined {
       return db
         .update(repositories)
@@ -29,24 +34,11 @@ export function createRepositoriesRepository(db: DrizzleDatabase): RepositoriesR
         .get();
     },
 
-    create(data: NewRepository): Repository {
-      return db.insert(repositories).values(data).returning().get();
-    },
-
-    delete(id: number): boolean {
-      const result = db.delete(repositories).where(eq(repositories.id, id)).run();
-      return result.changes > 0;
-    },
-
     findAll(options?: { projectId?: number }): Array<Repository> {
       if (options?.projectId) {
         return db.select().from(repositories).where(eq(repositories.projectId, options.projectId)).all();
       }
       return db.select().from(repositories).all();
-    },
-
-    findById(id: number): Repository | undefined {
-      return db.select().from(repositories).where(eq(repositories.id, id)).get();
     },
 
     findByPath(path: string): Repository | undefined {
@@ -72,15 +64,6 @@ export function createRepositoriesRepository(db: DrizzleDatabase): RepositoriesR
           setAsDefaultAt: sql`(CURRENT_TIMESTAMP)`,
           updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
-        .where(eq(repositories.id, id))
-        .returning()
-        .get();
-    },
-
-    update(id: number, data: Partial<NewRepository>): Repository | undefined {
-      return db
-        .update(repositories)
-        .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(repositories.id, id))
         .returning()
         .get();

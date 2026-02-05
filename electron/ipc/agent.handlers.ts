@@ -161,7 +161,7 @@ export function registerAgentHandlers(
   /**
    * Create a new agent with validation for required fields and duplicate names.
    */
-  ipcMain.handle(IpcChannels.agent.create, async (_event: IpcMainInvokeEvent, data: NewAgent): Promise<Agent> => {
+  ipcMain.handle(IpcChannels.agent.create, (_event: IpcMainInvokeEvent, data: NewAgent): Agent => {
     try {
       // Validate required fields
       if (!data.name || !data.name.trim()) {
@@ -178,7 +178,7 @@ export function registerAgentHandlers(
       }
 
       // Check for duplicate names
-      const existingAgent = await agentsRepository.findByName(data.name);
+      const existingAgent = agentsRepository.findByName(data.name);
       if (existingAgent) {
         throw new Error(`An agent with the name "${data.name}" already exists`);
       }
@@ -193,10 +193,10 @@ export function registerAgentHandlers(
   /**
    * Delete an agent with built-in protection (built-in agents cannot be deleted).
    */
-  ipcMain.handle(IpcChannels.agent.delete, async (_event: IpcMainInvokeEvent, id: number): Promise<void> => {
+  ipcMain.handle(IpcChannels.agent.delete, (_event: IpcMainInvokeEvent, id: number): void => {
     try {
       // Get the agent to check if it's built-in
-      const agent = await agentsRepository.findById(id);
+      const agent = agentsRepository.findById(id);
       if (!agent) {
         throw new Error('Agent not found');
       }
@@ -207,7 +207,7 @@ export function registerAgentHandlers(
       }
 
       // Delete the custom agent
-      await agentsRepository.delete(id);
+      agentsRepository.delete(id);
     } catch (error) {
       console.error('[IPC Error] agent:delete:', error);
       throw error;
@@ -217,10 +217,10 @@ export function registerAgentHandlers(
   /**
    * Duplicate an agent, creating a copy with modified name and copying all tools and skills.
    */
-  ipcMain.handle(IpcChannels.agent.duplicate, async (_event: IpcMainInvokeEvent, id: number): Promise<Agent> => {
+  ipcMain.handle(IpcChannels.agent.duplicate, (_event: IpcMainInvokeEvent, id: number): Agent => {
     try {
       // Fetch the source agent by ID
-      const sourceAgent = await agentsRepository.findById(id);
+      const sourceAgent = agentsRepository.findById(id);
       if (!sourceAgent) {
         throw new Error('Agent not found');
       }
@@ -233,12 +233,12 @@ export function registerAgentHandlers(
       let newDisplayName = `${sourceAgent.displayName} (Copy)`;
 
       // Check if a copy already exists and increment the number if needed
-      let existingAgent = await agentsRepository.findByName(newName);
+      let existingAgent = agentsRepository.findByName(newName);
       while (existingAgent) {
         copyNumber++;
         newName = `${sourceAgent.name}-copy-${copyNumber}`;
         newDisplayName = `${sourceAgent.displayName} (Copy ${copyNumber})`;
-        existingAgent = await agentsRepository.findByName(newName);
+        existingAgent = agentsRepository.findByName(newName);
       }
 
       // Create the duplicate agent with copied data
@@ -255,12 +255,12 @@ export function registerAgentHandlers(
         version: 1, // Reset version to 1 for the new copy
       };
 
-      const duplicatedAgent = await agentsRepository.create(newAgentData);
+      const duplicatedAgent = agentsRepository.create(newAgentData);
 
       // Copy tools from source agent to duplicated agent
-      const sourceTools = await agentToolsRepository.findByAgentId(id);
+      const sourceTools = agentToolsRepository.findByAgentId(id);
       for (const tool of sourceTools) {
-        await agentToolsRepository.create({
+        agentToolsRepository.create({
           agentId: duplicatedAgent.id,
           disallowedAt: tool.disallowedAt,
           orderIndex: tool.orderIndex,
@@ -270,9 +270,9 @@ export function registerAgentHandlers(
       }
 
       // Copy skills from source agent to duplicated agent
-      const sourceSkills = await agentSkillsRepository.findByAgentId(id);
+      const sourceSkills = agentSkillsRepository.findByAgentId(id);
       for (const skill of sourceSkills) {
-        await agentSkillsRepository.create({
+        agentSkillsRepository.create({
           agentId: duplicatedAgent.id,
           orderIndex: skill.orderIndex,
           requiredAt: skill.requiredAt,
@@ -281,9 +281,9 @@ export function registerAgentHandlers(
       }
 
       // Copy hooks from source agent to duplicated agent
-      const sourceHooks = await agentHooksRepository.findByAgentId(id);
+      const sourceHooks = agentHooksRepository.findByAgentId(id);
       for (const hook of sourceHooks) {
-        await agentHooksRepository.create({
+        agentHooksRepository.create({
           agentId: duplicatedAgent.id,
           body: hook.body,
           eventType: hook.eventType,
@@ -304,7 +304,7 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.createOverride,
-    async (_event: IpcMainInvokeEvent, agentId: number, projectId: number): Promise<Agent> => {
+    (_event: IpcMainInvokeEvent, agentId: number, projectId: number): Agent => {
       try {
         // Validate projectId
         if (!projectId || projectId <= 0) {
@@ -312,7 +312,7 @@ export function registerAgentHandlers(
         }
 
         // Fetch the source agent by ID
-        const sourceAgent = await agentsRepository.findById(agentId);
+        const sourceAgent = agentsRepository.findById(agentId);
         if (!sourceAgent) {
           throw new Error('Agent not found');
         }
@@ -323,7 +323,7 @@ export function registerAgentHandlers(
         }
 
         // Check if an override already exists for this agent and project
-        const existingOverrides = await agentsRepository.findAll({
+        const existingOverrides = agentsRepository.findAll({
           projectId,
           scope: 'project',
         });
@@ -339,12 +339,12 @@ export function registerAgentHandlers(
 
         // Check for name conflicts (unlikely but handle gracefully)
         let copyNumber = 1;
-        let existingAgent = await agentsRepository.findByName(newName);
+        let existingAgent = agentsRepository.findByName(newName);
         while (existingAgent) {
           copyNumber++;
           newName = `${sourceAgent.name}-project-${projectId}-${copyNumber}`;
           newDisplayName = `${sourceAgent.displayName} (Project Override ${copyNumber})`;
-          existingAgent = await agentsRepository.findByName(newName);
+          existingAgent = agentsRepository.findByName(newName);
         }
 
         // Create the override agent with projectId and parentAgentId set
@@ -374,9 +374,9 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.list,
-    async (_event: IpcMainInvokeEvent, filters?: AgentListFilters): Promise<Array<AgentWithRelations>> => {
+    (_event: IpcMainInvokeEvent, filters?: AgentListFilters): Array<AgentWithRelations> => {
       try {
-        const agents = await agentsRepository.findAll(filters);
+        const agents = agentsRepository.findAll(filters);
 
         // If no relation includes are requested, return plain agents
         if (!filters?.includeTools && !filters?.includeSkills && !filters?.includeHooks) {
@@ -384,25 +384,23 @@ export function registerAgentHandlers(
         }
 
         // Fetch tools, skills, and/or hooks for each agent
-        const agentsWithRelations: Array<AgentWithRelations> = await Promise.all(
-          agents.map(async (agent) => {
-            const result: AgentWithRelations = { ...agent };
+        const agentsWithRelations: Array<AgentWithRelations> = agents.map((agent) => {
+          const result: AgentWithRelations = { ...agent };
 
-            if (filters?.includeTools) {
-              result.tools = await agentToolsRepository.findByAgentId(agent.id);
-            }
+          if (filters?.includeTools) {
+            result.tools = agentToolsRepository.findByAgentId(agent.id);
+          }
 
-            if (filters?.includeSkills) {
-              result.skills = await agentSkillsRepository.findByAgentId(agent.id);
-            }
+          if (filters?.includeSkills) {
+            result.skills = agentSkillsRepository.findByAgentId(agent.id);
+          }
 
-            if (filters?.includeHooks) {
-              result.hooks = await agentHooksRepository.findByAgentId(agent.id);
-            }
+          if (filters?.includeHooks) {
+            result.hooks = agentHooksRepository.findByAgentId(agent.id);
+          }
 
-            return result;
-          })
-        );
+          return result;
+        });
 
         return agentsWithRelations;
       } catch (error) {
@@ -415,7 +413,7 @@ export function registerAgentHandlers(
   /**
    * Get an agent by ID.
    */
-  ipcMain.handle(IpcChannels.agent.get, async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
+  ipcMain.handle(IpcChannels.agent.get, (_event: IpcMainInvokeEvent, id: number): Agent | undefined => {
     try {
       return agentsRepository.findById(id);
     } catch (error) {
@@ -429,14 +427,14 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.update,
-    async (
+    (
       _event: IpcMainInvokeEvent,
       id: number,
       data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>
-    ): Promise<Agent> => {
+    ): Agent => {
       try {
         // Get the agent to check if it's built-in
-        const agent = await agentsRepository.findById(id);
+        const agent = agentsRepository.findById(id);
         if (!agent) {
           throw new Error('Agent not found');
         }
@@ -453,14 +451,14 @@ export function registerAgentHandlers(
 
         // Check for duplicate name when name is being changed
         if (data.name && data.name !== agent.name) {
-          const existingAgentWithName = await agentsRepository.findByName(data.name);
+          const existingAgentWithName = agentsRepository.findByName(data.name);
           if (existingAgentWithName && existingAgentWithName.id !== id) {
             throw new Error(`An agent with the name "${data.name}" already exists`);
           }
         }
 
         // Perform the update
-        const updatedAgent = await agentsRepository.update(id, data);
+        const updatedAgent = agentsRepository.update(id, data);
         if (!updatedAgent) {
           throw new Error('Failed to update agent');
         }
@@ -478,10 +476,10 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.reset,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
+    (_event: IpcMainInvokeEvent, id: number): Agent | undefined => {
       try {
         // Get the current agent to find its parent (built-in version)
-        const agent = await agentsRepository.findById(id);
+        const agent = agentsRepository.findById(id);
         if (!agent) {
           return undefined;
         }
@@ -492,7 +490,7 @@ export function registerAgentHandlers(
           // Store the parent ID before deletion
           const parentId = agent.parentAgentId;
           // Delete the custom agent entirely (not just deactivate)
-          await agentsRepository.delete(id);
+          agentsRepository.delete(id);
           // Activate the parent (built-in) agent
           return agentsRepository.activate(parentId);
         }
@@ -511,7 +509,7 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.activate,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
+    (_event: IpcMainInvokeEvent, id: number): Agent | undefined => {
       try {
         return agentsRepository.activate(id);
       } catch (error) {
@@ -526,7 +524,7 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.deactivate,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<Agent | undefined> => {
+    (_event: IpcMainInvokeEvent, id: number): Agent | undefined => {
       try {
         return agentsRepository.deactivate(id);
       } catch (error) {
@@ -541,10 +539,10 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.move,
-    async (_event: IpcMainInvokeEvent, agentId: number, targetProjectId: null | number): Promise<Agent> => {
+    (_event: IpcMainInvokeEvent, agentId: number, targetProjectId: null | number): Agent => {
       try {
         // Validate agent exists
-        const agent = await agentsRepository.findById(agentId);
+        const agent = agentsRepository.findById(agentId);
         if (!agent) {
           throw new Error('Agent not found');
         }
@@ -556,7 +554,7 @@ export function registerAgentHandlers(
 
         // If moving to a project, validate the project exists
         if (targetProjectId !== null) {
-          const project = await projectsRepository.findById(targetProjectId);
+          const project = projectsRepository.findById(targetProjectId);
           if (!project) {
             throw new Error('Target project not found');
           }
@@ -568,7 +566,7 @@ export function registerAgentHandlers(
         }
 
         // Update the agent's projectId
-        const updatedAgent = await agentsRepository.update(agentId, {
+        const updatedAgent = agentsRepository.update(agentId, {
           projectId: targetProjectId,
         });
         if (!updatedAgent) {
@@ -588,10 +586,10 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.copyToProject,
-    async (_event: IpcMainInvokeEvent, agentId: number, targetProjectId: number): Promise<Agent> => {
+    (_event: IpcMainInvokeEvent, agentId: number, targetProjectId: number): Agent => {
       try {
         // Validate agent exists
-        const sourceAgent = await agentsRepository.findById(agentId);
+        const sourceAgent = agentsRepository.findById(agentId);
         if (!sourceAgent) {
           throw new Error('Agent not found');
         }
@@ -602,7 +600,7 @@ export function registerAgentHandlers(
         }
 
         // Validate the target project exists
-        const project = await projectsRepository.findById(targetProjectId);
+        const project = projectsRepository.findById(targetProjectId);
         if (!project) {
           throw new Error('Target project not found');
         }
@@ -619,12 +617,12 @@ export function registerAgentHandlers(
         let newDisplayName = `${sourceAgent.displayName} (${project.name})`;
 
         // Check if a copy already exists and increment the number if needed
-        let existingAgent = await agentsRepository.findByName(newName);
+        let existingAgent = agentsRepository.findByName(newName);
         while (existingAgent) {
           copyNumber++;
           newName = `${sourceAgent.name}-project-${targetProjectId}-${copyNumber}`;
           newDisplayName = `${sourceAgent.displayName} (${project.name} ${copyNumber})`;
-          existingAgent = await agentsRepository.findByName(newName);
+          existingAgent = agentsRepository.findByName(newName);
         }
 
         // Create the copy with the target projectId
@@ -641,12 +639,12 @@ export function registerAgentHandlers(
           version: 1, // Reset version to 1 for the new copy
         };
 
-        const copiedAgent = await agentsRepository.create(newAgentData);
+        const copiedAgent = agentsRepository.create(newAgentData);
 
         // Copy tools from source agent to the new agent
-        const sourceTools = await agentToolsRepository.findByAgentId(agentId);
+        const sourceTools = agentToolsRepository.findByAgentId(agentId);
         for (const tool of sourceTools) {
-          await agentToolsRepository.create({
+          agentToolsRepository.create({
             agentId: copiedAgent.id,
             disallowedAt: tool.disallowedAt,
             orderIndex: tool.orderIndex,
@@ -656,9 +654,9 @@ export function registerAgentHandlers(
         }
 
         // Copy skills from source agent to the new agent
-        const sourceSkills = await agentSkillsRepository.findByAgentId(agentId);
+        const sourceSkills = agentSkillsRepository.findByAgentId(agentId);
         for (const skill of sourceSkills) {
-          await agentSkillsRepository.create({
+          agentSkillsRepository.create({
             agentId: copiedAgent.id,
             orderIndex: skill.orderIndex,
             requiredAt: skill.requiredAt,
@@ -667,9 +665,9 @@ export function registerAgentHandlers(
         }
 
         // Copy hooks from source agent to the new agent
-        const sourceHooks = await agentHooksRepository.findByAgentId(agentId);
+        const sourceHooks = agentHooksRepository.findByAgentId(agentId);
         for (const hook of sourceHooks) {
-          await agentHooksRepository.create({
+          agentHooksRepository.create({
             agentId: copiedAgent.id,
             body: hook.body,
             eventType: hook.eventType,
@@ -693,7 +691,7 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.import,
-    async (_event: IpcMainInvokeEvent, parsedMarkdown: AgentImportInput): Promise<AgentImportResult> => {
+    (_event: IpcMainInvokeEvent, parsedMarkdown: AgentImportInput): AgentImportResult => {
       try {
         // Prepare the data for validation
         const importData = prepareAgentImportData(parsedMarkdown);
@@ -711,7 +709,7 @@ export function registerAgentHandlers(
         const validatedData: AgentImportData = validationResult.data;
 
         // Check for duplicate agent names in database
-        const existingAgent = await agentsRepository.findByName(validatedData.name);
+        const existingAgent = agentsRepository.findByName(validatedData.name);
         if (existingAgent) {
           return {
             errors: [
@@ -744,14 +742,14 @@ export function registerAgentHandlers(
           version: validatedData.version ?? 1,
         };
 
-        const createdAgent = await agentsRepository.create(newAgentData);
+        const createdAgent = agentsRepository.create(newAgentData);
 
         // Create associated tools (now simple string array)
         if (validatedData.tools && validatedData.tools.length > 0) {
           for (let i = 0; i < validatedData.tools.length; i++) {
             const toolName = validatedData.tools[i];
             if (toolName) {
-              await agentToolsRepository.create({
+              agentToolsRepository.create({
                 agentId: createdAgent.id,
                 disallowedAt: null,
                 orderIndex: i,
@@ -767,7 +765,7 @@ export function registerAgentHandlers(
           for (let i = 0; i < validatedData.disallowedTools.length; i++) {
             const toolName = validatedData.disallowedTools[i];
             if (toolName) {
-              await agentToolsRepository.create({
+              agentToolsRepository.create({
                 agentId: createdAgent.id,
                 disallowedAt: new Date().toISOString(),
                 orderIndex: i,
@@ -783,7 +781,7 @@ export function registerAgentHandlers(
           for (let i = 0; i < validatedData.skills.length; i++) {
             const skillName = validatedData.skills[i];
             if (skillName) {
-              await agentSkillsRepository.create({
+              agentSkillsRepository.create({
                 agentId: createdAgent.id,
                 orderIndex: i,
                 requiredAt: null,
@@ -800,7 +798,7 @@ export function registerAgentHandlers(
             const eventHooks = validatedData.hooks[eventType];
             if (eventHooks) {
               for (const hook of eventHooks) {
-                await agentHooksRepository.create({
+                agentHooksRepository.create({
                   agentId: createdAgent.id,
                   body: hook.body,
                   eventType,
@@ -835,18 +833,18 @@ export function registerAgentHandlers(
   /**
    * Export an agent to markdown format for sharing or backup.
    */
-  ipcMain.handle(IpcChannels.agent.export, async (_event: IpcMainInvokeEvent, id: number): Promise<string> => {
+  ipcMain.handle(IpcChannels.agent.export, (_event: IpcMainInvokeEvent, id: number): string => {
     try {
       // Fetch the agent
-      const agent = await agentsRepository.findById(id);
+      const agent = agentsRepository.findById(id);
       if (!agent) {
         throw new Error('Agent not found');
       }
 
       // Fetch associated tools, skills, and hooks
-      const allTools = await agentToolsRepository.findByAgentId(id);
-      const skills = await agentSkillsRepository.findByAgentId(id);
-      const hooks = await agentHooksRepository.findByAgentId(id);
+      const allTools = agentToolsRepository.findByAgentId(id);
+      const skills = agentSkillsRepository.findByAgentId(id);
+      const hooks = agentHooksRepository.findByAgentId(id);
 
       // Separate allowed and disallowed tools
       const tools = allTools.filter((t) => t.disallowedAt === null);
@@ -891,13 +889,13 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.exportBatch,
-    async (_event: IpcMainInvokeEvent, ids: Array<number>): Promise<Array<AgentExportBatchItem>> => {
+    (_event: IpcMainInvokeEvent, ids: Array<number>): Array<AgentExportBatchItem> => {
       const results: Array<AgentExportBatchItem> = [];
 
       for (const id of ids) {
         try {
           // Fetch the agent
-          const agent = await agentsRepository.findById(id);
+          const agent = agentsRepository.findById(id);
           if (!agent) {
             results.push({
               agentName: `Unknown (ID: ${id})`,
@@ -908,9 +906,9 @@ export function registerAgentHandlers(
           }
 
           // Fetch associated tools, skills, and hooks
-          const allTools = await agentToolsRepository.findByAgentId(id);
-          const skills = await agentSkillsRepository.findByAgentId(id);
-          const hooks = await agentHooksRepository.findByAgentId(id);
+          const allTools = agentToolsRepository.findByAgentId(id);
+          const skills = agentSkillsRepository.findByAgentId(id);
+          const hooks = agentHooksRepository.findByAgentId(id);
 
           // Separate allowed and disallowed tools
           const tools = allTools.filter((t) => t.disallowedAt === null);

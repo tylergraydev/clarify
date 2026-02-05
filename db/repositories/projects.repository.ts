@@ -1,61 +1,57 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 
 import type { DrizzleDatabase } from '../index';
 
 import { createProjectSchema, updateProjectSchema } from '../../lib/validations/project';
 import { type NewProject, type Project, projects } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 export interface ProjectsRepository {
-  archive(id: number): Promise<Project | undefined>;
-  create(data: NewProject): Promise<Project>;
-  delete(id: number): Promise<boolean>;
-  findAll(options?: { includeArchived?: boolean }): Promise<Array<Project>>;
-  findById(id: number): Promise<Project | undefined>;
-  findFavorites(): Promise<Array<Project>>;
-  toggleFavorite(id: number): Promise<Project | undefined>;
-  unarchive(id: number): Promise<Project | undefined>;
-  update(id: number, data: Partial<Omit<NewProject, 'createdAt' | 'id'>>): Promise<Project | undefined>;
+  archive(id: number): Project | undefined;
+  create(data: NewProject): Project;
+  delete(id: number): boolean;
+  findAll(options?: { includeArchived?: boolean }): Array<Project>;
+  findById(id: number): Project | undefined;
+  findFavorites(): Array<Project>;
+  toggleFavorite(id: number): Project | undefined;
+  unarchive(id: number): Project | undefined;
+  update(id: number, data: Partial<Omit<NewProject, 'createdAt' | 'id'>>): Project | undefined;
 }
 
 export function createProjectsRepository(db: DrizzleDatabase): ProjectsRepository {
+  const base = createBaseRepository<typeof projects, Project, NewProject>(db, projects);
+
   return {
-    async archive(id: number): Promise<Project | undefined> {
-      const now = new Date().toISOString();
-      const result = await db
+    archive(id: number): Project | undefined {
+      return db
         .update(projects)
-        .set({ archivedAt: now, updatedAt: now })
+        .set({ archivedAt: sql`(CURRENT_TIMESTAMP)`, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(projects.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
 
-    async create(data: NewProject): Promise<Project> {
+    create(data: NewProject): Project {
       const validatedData = createProjectSchema.parse(data);
-      const result = await db.insert(projects).values(validatedData).returning();
-      if (!result[0]) {
+      const result = db.insert(projects).values(validatedData).returning().get();
+      if (!result) {
         throw new Error('Failed to create project');
       }
-      return result[0];
+      return result;
     },
 
-    async delete(id: number): Promise<boolean> {
-      const result = db.delete(projects).where(eq(projects.id, id)).run();
-      return result.changes > 0;
-    },
+    delete: base.delete,
 
-    async findAll(options?: { includeArchived?: boolean }): Promise<Array<Project>> {
+    findAll(options?: { includeArchived?: boolean }): Array<Project> {
       if (options?.includeArchived) {
         return db.select().from(projects).all();
       }
       return db.select().from(projects).where(isNull(projects.archivedAt)).all();
     },
 
-    async findById(id: number): Promise<Project | undefined> {
-      const result = await db.select().from(projects).where(eq(projects.id, id));
-      return result[0];
-    },
+    findById: base.findById,
 
-    async findFavorites(): Promise<Array<Project>> {
+    findFavorites(): Array<Project> {
       return db
         .select()
         .from(projects)
@@ -63,44 +59,39 @@ export function createProjectsRepository(db: DrizzleDatabase): ProjectsRepositor
         .all();
     },
 
-    async toggleFavorite(id: number): Promise<Project | undefined> {
-      // First, get the current project to determine its favorite status
-      const existing = await db.select().from(projects).where(eq(projects.id, id));
-      if (!existing[0]) {
+    toggleFavorite(id: number): Project | undefined {
+      const existing = db.select().from(projects).where(eq(projects.id, id)).get();
+      if (!existing) {
         return undefined;
       }
 
-      const now = new Date().toISOString();
-      const newFavoriteStatus = !existing[0].isFavorite;
+      const newFavoriteStatus = !existing.isFavorite;
 
-      const result = await db
+      return db
         .update(projects)
-        .set({ isFavorite: newFavoriteStatus, updatedAt: now })
+        .set({ isFavorite: newFavoriteStatus, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(projects.id, id))
-        .returning();
-
-      return result[0];
+        .returning()
+        .get();
     },
 
-    async unarchive(id: number): Promise<Project | undefined> {
-      const now = new Date().toISOString();
-      const result = await db
+    unarchive(id: number): Project | undefined {
+      return db
         .update(projects)
-        .set({ archivedAt: null, updatedAt: now })
+        .set({ archivedAt: null, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(projects.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
 
-    async update(id: number, data: Partial<Omit<NewProject, 'createdAt' | 'id'>>): Promise<Project | undefined> {
+    update(id: number, data: Partial<Omit<NewProject, 'createdAt' | 'id'>>): Project | undefined {
       const validatedData = updateProjectSchema.parse(data);
-      const now = new Date().toISOString();
-      const result = await db
+      return db
         .update(projects)
-        .set({ ...validatedData, updatedAt: now })
+        .set({ ...validatedData, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(projects.id, id))
-        .returning();
-      return result[0];
+        .returning()
+        .get();
     },
   };
 }

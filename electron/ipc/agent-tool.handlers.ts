@@ -26,7 +26,7 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
    */
   ipcMain.handle(
     IpcChannels.agentTool.list,
-    async (_event: IpcMainInvokeEvent, agentId: number): Promise<Array<AgentTool>> => {
+    (_event: IpcMainInvokeEvent, agentId: number): Array<AgentTool> => {
       try {
         return agentToolsRepository.findByAgentId(agentId);
       } catch (error) {
@@ -41,7 +41,7 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
    */
   ipcMain.handle(
     IpcChannels.agentTool.create,
-    async (_event: IpcMainInvokeEvent, data: NewAgentTool): Promise<AgentTool> => {
+    (_event: IpcMainInvokeEvent, data: NewAgentTool): AgentTool => {
       try {
         return agentToolsRepository.create(data);
       } catch (error) {
@@ -56,11 +56,11 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
    */
   ipcMain.handle(
     IpcChannels.agentTool.update,
-    async (
+    (
       _event: IpcMainInvokeEvent,
       id: number,
       data: Partial<Omit<NewAgentTool, 'createdAt' | 'id'>>
-    ): Promise<AgentTool | undefined> => {
+    ): AgentTool | undefined => {
       try {
         return agentToolsRepository.update(id, data);
       } catch (error) {
@@ -75,7 +75,7 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
    */
   ipcMain.handle(
     IpcChannels.agentTool.allow,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<AgentTool | undefined> => {
+    (_event: IpcMainInvokeEvent, id: number): AgentTool | undefined => {
       try {
         return agentToolsRepository.allow(id);
       } catch (error) {
@@ -90,7 +90,7 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
    */
   ipcMain.handle(
     IpcChannels.agentTool.disallow,
-    async (_event: IpcMainInvokeEvent, id: number): Promise<AgentTool | undefined> => {
+    (_event: IpcMainInvokeEvent, id: number): AgentTool | undefined => {
       try {
         return agentToolsRepository.disallow(id);
       } catch (error) {
@@ -103,7 +103,7 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
   /**
    * Delete a tool by ID.
    */
-  ipcMain.handle(IpcChannels.agentTool.delete, async (_event: IpcMainInvokeEvent, id: number): Promise<boolean> => {
+  ipcMain.handle(IpcChannels.agentTool.delete, (_event: IpcMainInvokeEvent, id: number): boolean => {
     try {
       return agentToolsRepository.delete(id);
     } catch (error) {

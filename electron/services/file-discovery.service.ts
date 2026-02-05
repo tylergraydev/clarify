@@ -593,7 +593,7 @@ class FileDiscoveryStepService extends BaseAgentStepService<
       session.phase = 'loading_agent';
       this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
-      const agentConfig = await this.loadAgentConfig(workflowId, options.agentId);
+      const agentConfig = this.loadAgentConfig(workflowId, options.agentId);
       session.agentConfig = agentConfig;
 
       debugLoggerService.logSdkEvent(session.sessionId, 'Agent configuration loaded', {
@@ -1198,7 +1198,7 @@ Focus on actionable discovery that will help create a comprehensive implementati
     // Handle additive mode: check for existing files by path
     const existingFilesByPath = new Map<string, number>();
     if (session.options.rediscoveryMode === 'additive') {
-      const existing = await discoveredFilesRepo.findByWorkflowStepId(session.options.stepId);
+      const existing = discoveredFilesRepo.findByWorkflowStepId(session.options.stepId);
       for (const file of existing) {
         existingFilesByPath.set(file.filePath, file.id);
       }

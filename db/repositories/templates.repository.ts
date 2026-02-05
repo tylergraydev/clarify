@@ -4,6 +4,7 @@ import type { DrizzleDatabase } from '../index';
 import type { NewTemplate, Template, TemplateCategory } from '../schema';
 
 import { templates } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 export interface TemplatesRepository {
   activate(id: number): Template | undefined;
@@ -21,7 +22,11 @@ export interface TemplatesRepository {
 }
 
 export function createTemplatesRepository(db: DrizzleDatabase): TemplatesRepository {
+  const base = createBaseRepository<typeof templates, Template, NewTemplate>(db, templates);
+
   return {
+    ...base,
+
     activate(id: number): Template | undefined {
       return db
         .update(templates)
@@ -34,10 +39,6 @@ export function createTemplatesRepository(db: DrizzleDatabase): TemplatesReposit
         .get();
     },
 
-    create(data: NewTemplate): Template {
-      return db.insert(templates).values(data).returning().get();
-    },
-
     deactivate(id: number): Template | undefined {
       return db
         .update(templates)
@@ -48,11 +49,6 @@ export function createTemplatesRepository(db: DrizzleDatabase): TemplatesReposit
         .where(eq(templates.id, id))
         .returning()
         .get();
-    },
-
-    delete(id: number): boolean {
-      const result = db.delete(templates).where(eq(templates.id, id)).run();
-      return result.changes > 0;
     },
 
     findActive(): Array<Template> {
@@ -89,10 +85,6 @@ export function createTemplatesRepository(db: DrizzleDatabase): TemplatesReposit
       return db.select().from(templates).where(eq(templates.category, category)).all();
     },
 
-    findById(id: number): Template | undefined {
-      return db.select().from(templates).where(eq(templates.id, id)).get();
-    },
-
     findByName(name: string): Template | undefined {
       return db.select().from(templates).where(eq(templates.name, name)).get();
     },
@@ -104,15 +96,6 @@ export function createTemplatesRepository(db: DrizzleDatabase): TemplatesReposit
           updatedAt: sql`(CURRENT_TIMESTAMP)`,
           usageCount: sql`${templates.usageCount} + 1`,
         })
-        .where(eq(templates.id, id))
-        .returning()
-        .get();
-    },
-
-    update(id: number, data: Partial<NewTemplate>): Template | undefined {
-      return db
-        .update(templates)
-        .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(templates.id, id))
         .returning()
         .get();

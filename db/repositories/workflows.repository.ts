@@ -5,6 +5,7 @@ import type { NewWorkflow, Workflow } from '../schema';
 
 import { type UpdateWorkflowInput, updateWorkflowSchema } from '../../lib/validations/workflow';
 import { workflows } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 /**
  * Terminal workflow statuses that indicate a workflow has finished execution
@@ -80,7 +81,11 @@ export interface WorkflowStatistics {
 }
 
 export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsRepository {
+  const base = createBaseRepository<typeof workflows, Workflow, NewWorkflow>(db, workflows);
+
   return {
+    ...base,
+
     complete(id: number, durationMs: number): undefined | Workflow {
       return db
         .update(workflows)
@@ -93,15 +98,6 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         .where(eq(workflows.id, id))
         .returning()
         .get();
-    },
-
-    create(data: NewWorkflow): Workflow {
-      return db.insert(workflows).values(data).returning().get();
-    },
-
-    delete(id: number): boolean {
-      const result = db.delete(workflows).where(eq(workflows.id, id)).run();
-      return result.changes > 0;
     },
 
     fail(id: number, errorMessage: string): undefined | Workflow {
@@ -141,10 +137,6 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         .all();
     },
 
-    findById(id: number): undefined | Workflow {
-      return db.select().from(workflows).where(eq(workflows.id, id)).get();
-    },
-
     findByProjectId(projectId: number): Array<Workflow> {
       return db.select().from(workflows).where(eq(workflows.projectId, projectId)).all();
     },
@@ -164,13 +156,10 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
       const sortOrder = filters?.sortOrder ?? 'desc';
       const statuses = filters?.statuses ?? [...terminalStatuses];
 
-      // Build conditions array
       const conditions = [];
 
-      // Always filter by terminal statuses (or user-specified subset)
       conditions.push(inArray(workflows.status, statuses));
 
-      // Date range filtering
       if (filters?.dateFrom !== undefined) {
         conditions.push(gte(workflows.completedAt, filters.dateFrom));
       }
@@ -178,12 +167,10 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         conditions.push(lte(workflows.completedAt, filters.dateTo));
       }
 
-      // Project filter
       if (filters?.projectId !== undefined) {
         conditions.push(eq(workflows.projectId, filters.projectId));
       }
 
-      // Search term filter (searches feature name and feature request)
       if (filters?.searchTerm !== undefined && filters.searchTerm.trim() !== '') {
         const searchPattern = `%${filters.searchTerm}%`;
         conditions.push(
@@ -191,12 +178,10 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         );
       }
 
-      // Type filter
       if (filters?.type !== undefined) {
         conditions.push(eq(workflows.type, filters.type));
       }
 
-      // Determine sort column
       const getSortColumn = () => {
         switch (sortBy) {
           case 'completedAt':
@@ -214,7 +199,6 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
       const sortColumn = getSortColumn();
       const orderFn = sortOrder === 'asc' ? asc : desc;
 
-      // Get total count for pagination
       const countResult = db
         .select({ count: count() })
         .from(workflows)
@@ -222,7 +206,6 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         .get();
       const total = countResult?.count ?? 0;
 
-      // Get paginated results
       const results = db
         .select()
         .from(workflows)
@@ -245,11 +228,9 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
     },
 
     getHistoryStatistics(filters?: { dateFrom?: string; dateTo?: string; projectId?: number }): WorkflowStatistics {
-      // Build conditions array for terminal statuses
       const conditions = [];
       conditions.push(inArray(workflows.status, [...terminalStatuses]));
 
-      // Date range filtering
       if (filters?.dateFrom !== undefined) {
         conditions.push(gte(workflows.completedAt, filters.dateFrom));
       }
@@ -257,12 +238,10 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         conditions.push(lte(workflows.completedAt, filters.dateTo));
       }
 
-      // Project filter
       if (filters?.projectId !== undefined) {
         conditions.push(eq(workflows.projectId, filters.projectId));
       }
 
-      // Use SQL aggregation for efficient statistics calculation
       const result = db
         .select({
           averageDurationMs: sql<null | number>`AVG(${workflows.durationMs})`,
@@ -280,7 +259,6 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
       const cancelledCount = result?.cancelledCount ?? 0;
       const totalCount = result?.totalCount ?? 0;
 
-      // Calculate success rate (completed / total * 100), handle division by zero
       const successRate = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
       return {
@@ -305,15 +283,6 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         .get();
     },
 
-    update(id: number, data: Partial<NewWorkflow>): undefined | Workflow {
-      return db
-        .update(workflows)
-        .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` })
-        .where(eq(workflows.id, id))
-        .returning()
-        .get();
-    },
-
     updateStatus(id: number, status: string, errorMessage?: string): undefined | Workflow {
       const updateData: Record<string, unknown> = {
         status,
@@ -328,7 +297,6 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
     },
 
     updateWorkflow(id: number, data: UpdateWorkflowInput): Workflow {
-      // First, find the workflow and check its status
       const workflow = db.select().from(workflows).where(eq(workflows.id, id)).get();
 
       if (!workflow) {
@@ -339,14 +307,11 @@ export function createWorkflowsRepository(db: DrizzleDatabase): WorkflowsReposit
         throw new Error(`Cannot update workflow: status must be 'created' but is '${workflow.status}'`);
       }
 
-      // Validate the update data
       const validated = updateWorkflowSchema.parse(data);
 
-      // Update the workflow with validated data
-      const now = new Date().toISOString();
       const updated = db
         .update(workflows)
-        .set({ ...validated, updatedAt: now })
+        .set({ ...validated, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(workflows.id, id))
         .returning()
         .get();

@@ -4,6 +4,7 @@ import type { DrizzleDatabase } from '../index';
 import type { NewWorkflowStep, WorkflowStep } from '../schema';
 
 import { workflowSteps } from '../schema';
+import { createBaseRepository } from './base.repository';
 
 export interface WorkflowStepsRepository {
   complete(id: number, outputText: string, durationMs: number): undefined | WorkflowStep;
@@ -27,7 +28,11 @@ export interface WorkflowStepsRepository {
 }
 
 export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStepsRepository {
+  const base = createBaseRepository<typeof workflowSteps, WorkflowStep, NewWorkflowStep>(db, workflowSteps);
+
   return {
+    ...base,
+
     complete(id: number, outputText: string, durationMs: number): undefined | WorkflowStep {
       return db
         .update(workflowSteps)
@@ -43,16 +48,11 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
         .get();
     },
 
-    create(data: NewWorkflowStep): WorkflowStep {
-      return db.insert(workflowSteps).values(data).returning().get();
-    },
-
     createPlanningSteps(
       workflowId: number,
       skipClarification: boolean,
       clarificationAgentId?: null | number
     ): Array<WorkflowStep> {
-      // Guard: Check if steps already exist for this workflow to prevent duplicates
       const existingSteps = db.select().from(workflowSteps).where(eq(workflowSteps.workflowId, workflowId)).all();
 
       if (existingSteps.length > 0) {
@@ -98,7 +98,6 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
         for (const stepDef of planningStepDefinitions) {
           const status = stepDef.stepType === 'clarification' && skipClarification ? 'skipped' : 'pending';
 
-          // Set agentId for clarification step if provided
           const agentId = stepDef.stepType === 'clarification' ? (clarificationAgentId ?? null) : null;
 
           const step = tx
@@ -120,11 +119,6 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
 
         return createdSteps;
       });
-    },
-
-    delete(id: number): boolean {
-      const result = db.delete(workflowSteps).where(eq(workflowSteps.id, id)).run();
-      return result.changes > 0;
     },
 
     fail(id: number, errorMessage: string): undefined | WorkflowStep {
@@ -159,10 +153,6 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
         .from(workflowSteps)
         .where(and(...conditions))
         .all();
-    },
-
-    findById(id: number): undefined | WorkflowStep {
-      return db.select().from(workflowSteps).where(eq(workflowSteps.id, id)).get();
     },
 
     findByStepNumber(workflowId: number, stepNumber: number): undefined | WorkflowStep {
@@ -211,15 +201,6 @@ export function createWorkflowStepsRepository(db: DrizzleDatabase): WorkflowStep
           status: 'running',
           updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
-        .where(eq(workflowSteps.id, id))
-        .returning()
-        .get();
-    },
-
-    update(id: number, data: Partial<NewWorkflowStep>): undefined | WorkflowStep {
-      return db
-        .update(workflowSteps)
-        .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` })
         .where(eq(workflowSteps.id, id))
         .returning()
         .get();

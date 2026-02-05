@@ -192,21 +192,21 @@ export abstract class BaseAgentStepService<
    * @returns The complete agent configuration
    * @throws Error if agent is not found
    */
-  async loadAgentConfig(_workflowId: number, agentId: number): Promise<TAgentConfig> {
+  loadAgentConfig(_workflowId: number, agentId: number): TAgentConfig {
     const db = getDatabase();
     const agentsRepo = createAgentsRepository(db);
     const toolsRepo = createAgentToolsRepository(db);
     const skillsRepo = createAgentSkillsRepository(db);
     const hooksRepo = createAgentHooksRepository(db);
 
-    const agent = await agentsRepo.findById(agentId);
+    const agent = agentsRepo.findById(agentId);
     if (!agent) {
       throw new Error(`Agent with ID ${agentId} not found`);
     }
 
-    const tools = await toolsRepo.findByAgentId(agentId);
-    const skills = await skillsRepo.findByAgentId(agentId);
-    const hooks = await hooksRepo.findByAgentId(agentId);
+    const tools = toolsRepo.findByAgentId(agentId);
+    const skills = skillsRepo.findByAgentId(agentId);
+    const hooks = hooksRepo.findByAgentId(agentId);
 
     // TODO: Hooks are loaded for future extensibility but not yet passed to SDK options.
     // To enable hooks, convert to SDK format and add to sdkOptions:
