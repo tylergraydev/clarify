@@ -266,14 +266,6 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             label={'Settings'}
           />
 
-          {/* Dev Tool */}
-          <NavItem
-            href={$path({ route: '/dev/stream-test' })}
-            icon={Settings}
-            isActive={isPathActive($path({ route: '/dev/stream-test' }))}
-            isCollapsed={isSidebarCollapsed}
-            label={'Dev Tool'}
-          />
         </div>
       </nav>
     </aside>

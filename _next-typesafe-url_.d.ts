@@ -18,7 +18,6 @@ declare module "@@@next-typesafe-url" {
   interface StaticRouter {
     "/agents": StaticRoute;
     "/dashboard": StaticRoute;
-    "/dev/stream-test": StaticRoute;
     "/settings": StaticRoute;
     "/templates": StaticRoute;
     "/workflows/active": StaticRoute;

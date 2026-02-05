@@ -169,14 +169,6 @@ Some frequently queried combinations lack indexes:
 
 ### 5. INCOMPLETE FEATURES
 
-#### **HIGH - Half-Implemented Stream Test Page**
-`app/(app)/dev/stream-test/page.tsx`:
-- Line 247: `// TODO: Collect actual answers from form inputs`
-- Entire page seems like a development test that was never removed
-- Not linked in navigation
-
-**Impact**: Confusing dead code, unclear if it's supposed to be production.
-
 #### **MEDIUM - Disabled Tools in Services**
 All three agent services have TODO comments about hooks:
 
