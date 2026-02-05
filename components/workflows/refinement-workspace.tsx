@@ -134,9 +134,7 @@ export const RefinementWorkspace = ({
 
   const columnLayoutClass = useMemo(
     () =>
-      isStreaming
-        ? 'lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]'
-        : 'lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]',
+      isStreaming ? 'lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]' : 'lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]',
     [isStreaming]
   );
 
@@ -230,8 +228,8 @@ export const RefinementWorkspace = ({
 
               {/* Description */}
               <p className={'max-w-2xl text-sm text-muted-foreground'}>
-                The feature request is being refined based on your clarification answers to produce a clear,
-                unambiguous specification.
+                The feature request is being refined based on your clarification answers to produce a clear, unambiguous
+                specification.
               </p>
             </div>
           </div>

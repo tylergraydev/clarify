@@ -29,8 +29,7 @@ export const staleDiscoveryIndicatorVariants = cva(
 );
 
 interface StaleDiscoveryIndicatorProps
-  extends ComponentPropsWithRef<'div'>,
-    VariantProps<typeof staleDiscoveryIndicatorVariants> {
+  extends ComponentPropsWithRef<'div'>, VariantProps<typeof staleDiscoveryIndicatorVariants> {
   /** Timestamp when the discovery was completed */
   discoveryCompletedAt?: Date | null | string;
   /** Timestamp when the discovery was started */
@@ -85,12 +84,8 @@ export const StaleDiscoveryIndicator = ({
     }
 
     // Convert to Date objects if strings
-    const discoveryDate = discoveryTimestamp instanceof Date
-      ? discoveryTimestamp
-      : new Date(discoveryTimestamp);
-    const refinementDate = refinementUpdatedAt instanceof Date
-      ? refinementUpdatedAt
-      : new Date(refinementUpdatedAt);
+    const discoveryDate = discoveryTimestamp instanceof Date ? discoveryTimestamp : new Date(discoveryTimestamp);
+    const refinementDate = refinementUpdatedAt instanceof Date ? refinementUpdatedAt : new Date(refinementUpdatedAt);
 
     // Stale if refinement was updated after discovery started/completed
     return refinementDate.getTime() > discoveryDate.getTime();
@@ -112,8 +107,8 @@ export const StaleDiscoveryIndicator = ({
         <div className={'flex flex-1 flex-col'}>
           <AlertTitle>Discovery May Be Outdated</AlertTitle>
           <AlertDescription>
-            The feature refinement has been updated since the last file discovery. The discovered files may no
-            longer accurately reflect the current requirements.
+            The feature refinement has been updated since the last file discovery. The discovered files may no longer
+            accurately reflect the current requirements.
           </AlertDescription>
         </div>
         {onRediscover && (

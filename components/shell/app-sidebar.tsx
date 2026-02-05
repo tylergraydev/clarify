@@ -2,7 +2,18 @@
 
 import type { ComponentPropsWithRef } from 'react';
 
-import { Bot, Clock, FileText, FolderKanban, History, LayoutDashboard, Play, Settings, Star, Workflow } from 'lucide-react';
+import {
+  Bot,
+  Clock,
+  FileText,
+  FolderKanban,
+  History,
+  LayoutDashboard,
+  Play,
+  Settings,
+  Star,
+  Workflow,
+} from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { usePathname } from 'next/navigation';
 

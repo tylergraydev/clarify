@@ -1,9 +1,99 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ab17d610-8817-47f5-8285-aa8e6a185ad3",
+  "id": "8220b499-8f5b-4ac8-ba25-34658387b5b8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
+    "agent_hooks": {
+      "name": "agent_hooks",
+      "columns": {
+        "agent_id": {
+          "name": "agent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(CURRENT_TIMESTAMP)"
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "matcher": {
+          "name": "matcher",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "order_index": {
+          "name": "order_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(CURRENT_TIMESTAMP)"
+        }
+      },
+      "indexes": {
+        "agent_hooks_agent_id_idx": {
+          "name": "agent_hooks_agent_id_idx",
+          "columns": ["agent_id"],
+          "isUnique": false
+        },
+        "agent_hooks_event_type_idx": {
+          "name": "agent_hooks_event_type_idx",
+          "columns": ["event_type"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "agent_hooks_agent_id_agents_id_fk": {
+          "name": "agent_hooks_agent_id_agents_id_fk",
+          "tableFrom": "agent_hooks",
+          "tableTo": "agents",
+          "columnsFrom": ["agent_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "agent_skills": {
       "name": "agent_skills",
       "columns": {
@@ -224,12 +314,34 @@
           "notNull": true,
           "autoincrement": false
         },
+        "extended_thinking_enabled": {
+          "name": "extended_thinking_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
         "id": {
           "name": "id",
           "type": "integer",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": true
+        },
+        "max_thinking_tokens": {
+          "name": "max_thinking_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "name": {
           "name": "name",
@@ -241,6 +353,13 @@
         "parent_agent_id": {
           "name": "parent_agent_id",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "permission_mode": {
+          "name": "permission_mode",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -502,13 +621,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "file_exists_at": {
-          "name": "file_exists_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "file_path": {
           "name": "file_path",
           "type": "text",
@@ -553,6 +665,20 @@
           "autoincrement": false,
           "default": "'medium'"
         },
+        "relevance_explanation": {
+          "name": "relevance_explanation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "text",
@@ -560,20 +686,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(CURRENT_TIMESTAMP)"
-        },
-        "user_added_at": {
-          "name": "user_added_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "user_modified_at": {
-          "name": "user_modified_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         },
         "workflow_step_id": {
           "name": "workflow_step_id",
@@ -601,240 +713,6 @@
           "tableFrom": "discovered_files",
           "tableTo": "workflow_steps",
           "columnsFrom": ["workflow_step_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "implementation_plan_step_files": {
-      "name": "implementation_plan_step_files",
-      "columns": {
-        "action": {
-          "name": "action",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'modify'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "file_path": {
-          "name": "file_path",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "order_index": {
-          "name": "order_index",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "plan_step_id": {
-          "name": "plan_step_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        }
-      },
-      "indexes": {
-        "impl_plan_step_files_plan_step_id_idx": {
-          "name": "impl_plan_step_files_plan_step_id_idx",
-          "columns": ["plan_step_id"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "implementation_plan_step_files_plan_step_id_implementation_plan_steps_id_fk": {
-          "name": "implementation_plan_step_files_plan_step_id_implementation_plan_steps_id_fk",
-          "tableFrom": "implementation_plan_step_files",
-          "tableTo": "implementation_plan_steps",
-          "columnsFrom": ["plan_step_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "implementation_plan_steps": {
-      "name": "implementation_plan_steps",
-      "columns": {
-        "agent_id": {
-          "name": "agent_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "agent_override_id": {
-          "name": "agent_override_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "estimated_duration_ms": {
-          "name": "estimated_duration_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "gemini_review_at": {
-          "name": "gemini_review_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "order_index": {
-          "name": "order_index",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "plan_id": {
-          "name": "plan_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "quality_gate_at": {
-          "name": "quality_gate_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "step_number": {
-          "name": "step_number",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        }
-      },
-      "indexes": {
-        "implementation_plan_steps_agent_id_idx": {
-          "name": "implementation_plan_steps_agent_id_idx",
-          "columns": ["agent_id"],
-          "isUnique": false
-        },
-        "implementation_plan_steps_plan_id_idx": {
-          "name": "implementation_plan_steps_plan_id_idx",
-          "columns": ["plan_id"],
-          "isUnique": false
-        },
-        "implementation_plan_steps_unique_idx": {
-          "name": "implementation_plan_steps_unique_idx",
-          "columns": ["plan_id", "step_number"],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "implementation_plan_steps_agent_id_agents_id_fk": {
-          "name": "implementation_plan_steps_agent_id_agents_id_fk",
-          "tableFrom": "implementation_plan_steps",
-          "tableTo": "agents",
-          "columnsFrom": ["agent_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "implementation_plan_steps_agent_override_id_agents_id_fk": {
-          "name": "implementation_plan_steps_agent_override_id_agents_id_fk",
-          "tableFrom": "implementation_plan_steps",
-          "tableTo": "agents",
-          "columnsFrom": ["agent_override_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "implementation_plan_steps_plan_id_implementation_plans_id_fk": {
-          "name": "implementation_plan_steps_plan_id_implementation_plans_id_fk",
-          "tableFrom": "implementation_plan_steps",
-          "tableTo": "implementation_plans",
-          "columnsFrom": ["plan_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -972,6 +850,14 @@
           "notNull": true,
           "autoincrement": true
         },
+        "is_favorite": {
+          "name": "is_favorite",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
         "name": {
           "name": "name",
           "type": "text",
@@ -997,6 +883,11 @@
         "projects_created_at_idx": {
           "name": "projects_created_at_idx",
           "columns": ["created_at"],
+          "isUnique": false
+        },
+        "projects_is_favorite_idx": {
+          "name": "projects_is_favorite_idx",
+          "columns": ["is_favorite"],
           "isUnique": false
         }
       },
@@ -1499,20 +1390,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "cli_exit_code": {
-          "name": "cli_exit_code",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "cli_output": {
-          "name": "cli_output",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "completed_at": {
           "name": "completed_at",
           "type": "text",
@@ -1558,13 +1435,6 @@
         },
         "input_text": {
           "name": "input_text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "original_output_text": {
-          "name": "original_output_text",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -1700,6 +1570,13 @@
     "workflows": {
       "name": "workflows",
       "columns": {
+        "clarification_agent_id": {
+          "name": "clarification_agent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "completed_at": {
           "name": "completed_at",
           "type": "text",
@@ -1758,13 +1635,6 @@
           "notNull": true,
           "autoincrement": true
         },
-        "parent_workflow_id": {
-          "name": "parent_workflow_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "pause_behavior": {
           "name": "pause_behavior",
           "type": "text",
@@ -1779,6 +1649,14 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "skip_clarification": {
+          "name": "skip_clarification",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
         },
         "started_at": {
           "name": "started_at",
@@ -1826,11 +1704,6 @@
         }
       },
       "indexes": {
-        "workflows_parent_workflow_id_idx": {
-          "name": "workflows_parent_workflow_id_idx",
-          "columns": ["parent_workflow_id"],
-          "isUnique": false
-        },
         "workflows_project_id_idx": {
           "name": "workflows_project_id_idx",
           "columns": ["project_id"],
@@ -1858,11 +1731,11 @@
         }
       },
       "foreignKeys": {
-        "workflows_parent_workflow_id_workflows_id_fk": {
-          "name": "workflows_parent_workflow_id_workflows_id_fk",
+        "workflows_clarification_agent_id_agents_id_fk": {
+          "name": "workflows_clarification_agent_id_agents_id_fk",
           "tableFrom": "workflows",
-          "tableTo": "workflows",
-          "columnsFrom": ["parent_workflow_id"],
+          "tableTo": "agents",
+          "columnsFrom": ["clarification_agent_id"],
           "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"

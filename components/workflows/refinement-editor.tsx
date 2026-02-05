@@ -160,12 +160,7 @@ export const RefinementEditor = ({
 
         {/* Action Buttons */}
         <div className={'mt-4 flex items-center justify-end gap-3'}>
-          <Button
-            disabled={!isRevertEnabled}
-            onClick={handleRevertClick}
-            type={'button'}
-            variant={'outline'}
-          >
+          <Button disabled={!isRevertEnabled} onClick={handleRevertClick} type={'button'} variant={'outline'}>
             <RotateCcw className={'size-4'} />
             Revert
           </Button>
@@ -191,7 +186,9 @@ export const RefinementEditor = ({
           className={'min-h-24'}
           disabled={isActionsDisabled}
           onChange={handleGuidanceChange}
-          placeholder={'Enter guidance for regeneration (e.g., "Focus more on error handling" or "Add more detail about the database schema")...'}
+          placeholder={
+            'Enter guidance for regeneration (e.g., "Focus more on error handling" or "Add more detail about the database schema")...'
+          }
           value={guidanceText}
         />
 

@@ -25,8 +25,6 @@ export const discoveredFiles = sqliteTable(
     updatedAt: text('updated_at')
       .default(sql`(CURRENT_TIMESTAMP)`)
       .notNull(),
-    userAddedAt: text('user_added_at'),
-    userModifiedAt: text('user_modified_at'),
     workflowStepId: integer('workflow_step_id')
       .notNull()
       .references(() => workflowSteps.id, { onDelete: 'cascade' }),

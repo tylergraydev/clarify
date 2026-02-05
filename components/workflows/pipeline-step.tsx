@@ -474,13 +474,7 @@ export const PipelineStep = ({
 
           {/* Start Button - positioned outside trigger to avoid nested button issue */}
           {showStartButton && (
-            <Button
-              className={'absolute right-12'}
-              onClick={onStart}
-              size={'sm'}
-              type={'button'}
-              variant={'outline'}
-            >
+            <Button className={'absolute right-12'} onClick={onStart} size={'sm'} type={'button'} variant={'outline'}>
               <Play aria-hidden={'true'} className={'size-3.5'} />
               Start
             </Button>

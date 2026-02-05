@@ -31,7 +31,6 @@ export const workflowSteps = sqliteTable(
     errorMessage: text('error_message'),
     id: integer('id').primaryKey({ autoIncrement: true }),
     inputText: text('input_text'),
-    originalOutputText: text('original_output_text'),
     outputEditedAt: text('output_edited_at'),
     outputStructured: text('output_structured', { mode: 'json' }),
     outputText: text('output_text'),

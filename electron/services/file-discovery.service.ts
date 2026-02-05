@@ -83,11 +83,10 @@ let cachedQueryFn: (typeof import('@anthropic-ai/claude-agent-sdk'))['query'] | 
 export const discoveredFileSchema = z.object({
   action: z
     .enum(['create', 'modify', 'delete', 'reference'])
-    .describe('What action is needed for this file: create (new file), modify (existing file changes), delete (remove file), reference (context only)'),
-  filePath: z
-    .string()
-    .min(1)
-    .describe('Relative path from repository root (e.g., "components/ui/Button.tsx")'),
+    .describe(
+      'What action is needed for this file: create (new file), modify (existing file changes), delete (remove file), reference (context only)'
+    ),
+  filePath: z.string().min(1).describe('Relative path from repository root (e.g., "components/ui/Button.tsx")'),
   priority: z
     .enum(['high', 'medium', 'low'])
     .describe('Importance level: high (core to feature), medium (supporting), low (peripheral)'),
@@ -108,12 +107,8 @@ export type DiscoveredFileFromAgent = z.infer<typeof discoveredFileSchema>;
  * Uses a flat structure (no oneOf) to work around Claude's structured output limitations.
  */
 export const fileDiscoveryAgentOutputSchema = z.object({
-  discoveredFiles: z
-    .array(discoveredFileSchema)
-    .describe('Array of discovered files with their metadata'),
-  summary: z
-    .string()
-    .describe('Brief summary of the discovery analysis and findings'),
+  discoveredFiles: z.array(discoveredFileSchema).describe('Array of discovered files with their metadata'),
+  summary: z.string().describe('Brief summary of the discovery analysis and findings'),
 });
 
 export type FileDiscoveryAgentOutput = z.infer<typeof fileDiscoveryAgentOutputSchema>;
@@ -1648,7 +1643,9 @@ Focus on actionable discovery that will help create a comprehensive implementati
   private processStructuredOutput(
     resultMessage: SDKResultMessage,
     sessionId: string
-  ): { error: string; files?: undefined; success: false; summary?: undefined } | { error?: undefined; files: Array<DiscoveredFileFromAgent>; success: true; summary: string } {
+  ):
+    | { error: string; files?: undefined; success: false; summary?: undefined }
+    | { error?: undefined; files: Array<DiscoveredFileFromAgent>; success: true; summary: string } {
     // Check for structured output validation failure
     if (resultMessage.subtype === 'error_max_structured_output_retries') {
       const errors = 'errors' in resultMessage ? resultMessage.errors : [];

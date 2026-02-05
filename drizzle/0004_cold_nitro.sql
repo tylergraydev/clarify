@@ -1,1 +1,0 @@
-ALTER TABLE `workflows` ADD `clarification_agent_id` integer REFERENCES agents(id);

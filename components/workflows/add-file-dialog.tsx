@@ -199,13 +199,7 @@ export const AddFileDialog = ({ onOpenChange, onSuccess, open, stepId, trigger }
                       <FolderOpen className={'size-4'} />
                     </Button>
                   )}
-                  <Button
-                    disabled={isSubmitting}
-                    onClick={handlePaste}
-                    size={'sm'}
-                    type={'button'}
-                    variant={'ghost'}
-                  >
+                  <Button disabled={isSubmitting} onClick={handlePaste} size={'sm'} type={'button'} variant={'ghost'}>
                     <ClipboardPaste className={'size-4'} />
                   </Button>
                 </div>

@@ -18,8 +18,6 @@ export interface DiscoveredFilesRepository {
   findByWorkflowStepId(workflowStepId: number): Array<DiscoveredFile>;
   findIncluded(workflowStepId: number): Array<DiscoveredFile>;
   include(id: number): DiscoveredFile | undefined;
-  markUserAdded(id: number): DiscoveredFile | undefined;
-  markUserModified(id: number): DiscoveredFile | undefined;
   toggleInclude(id: number): DiscoveredFile | undefined;
   update(id: number, data: Partial<NewDiscoveredFile>): DiscoveredFile | undefined;
   updatePriority(id: number, priority: string): DiscoveredFile | undefined;
@@ -126,30 +124,6 @@ export function createDiscoveredFilesRepository(db: DrizzleDatabase): Discovered
         .get();
     },
 
-    markUserAdded(id: number): DiscoveredFile | undefined {
-      return db
-        .update(discoveredFiles)
-        .set({
-          updatedAt: sql`(CURRENT_TIMESTAMP)`,
-          userAddedAt: sql`(CURRENT_TIMESTAMP)`,
-        })
-        .where(eq(discoveredFiles.id, id))
-        .returning()
-        .get();
-    },
-
-    markUserModified(id: number): DiscoveredFile | undefined {
-      return db
-        .update(discoveredFiles)
-        .set({
-          updatedAt: sql`(CURRENT_TIMESTAMP)`,
-          userModifiedAt: sql`(CURRENT_TIMESTAMP)`,
-        })
-        .where(eq(discoveredFiles.id, id))
-        .returning()
-        .get();
-    },
-
     toggleInclude(id: number): DiscoveredFile | undefined {
       // First get the current record to check its includedAt state
       const current = db.select().from(discoveredFiles).where(eq(discoveredFiles.id, id)).get();
@@ -204,7 +178,9 @@ export function createDiscoveredFilesRepository(db: DrizzleDatabase): Discovered
         const existing = db
           .select()
           .from(discoveredFiles)
-          .where(and(eq(discoveredFiles.workflowStepId, file.workflowStepId), eq(discoveredFiles.filePath, file.filePath)))
+          .where(
+            and(eq(discoveredFiles.workflowStepId, file.workflowStepId), eq(discoveredFiles.filePath, file.filePath))
+          )
           .get();
 
         if (existing) {

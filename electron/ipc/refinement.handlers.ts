@@ -25,10 +25,7 @@ import type {
   RefinementStreamMessage,
 } from '../../lib/validations/refinement';
 
-import {
-  type RefinementOutcomeWithPause,
-  refinementStepService,
-} from '../services/refinement-step.service';
+import { type RefinementOutcomeWithPause, refinementStepService } from '../services/refinement-step.service';
 import { IpcChannels } from './channels';
 
 /**
@@ -146,23 +143,20 @@ export function registerRefinementHandlers(
   );
 
   // Cancel an active refinement session
-  ipcMain.handle(
-    IpcChannels.refinement.cancel,
-    (_event: IpcMainInvokeEvent, sessionId: unknown): RefinementOutcome => {
-      try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
-
-        console.log('[IPC] refinement:cancel', { sessionId });
-
-        return refinementStepService.cancelRefinement(sessionId);
-      } catch (error) {
-        console.error('[IPC Error] refinement:cancel:', error);
-        throw error;
+  ipcMain.handle(IpcChannels.refinement.cancel, (_event: IpcMainInvokeEvent, sessionId: unknown): RefinementOutcome => {
+    try {
+      if (!isValidSessionId(sessionId)) {
+        throw new Error(`Invalid session ID: ${String(sessionId)}`);
       }
+
+      console.log('[IPC] refinement:cancel', { sessionId });
+
+      return refinementStepService.cancelRefinement(sessionId);
+    } catch (error) {
+      console.error('[IPC Error] refinement:cancel:', error);
+      throw error;
     }
-  );
+  });
 
   // Get current session state
   ipcMain.handle(

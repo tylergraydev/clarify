@@ -315,9 +315,7 @@ export function registerDiscoveryHandlers(
   // Add a user file to discovery
   ipcMain.handle(IpcChannels.discovery.add, (_event: IpcMainInvokeEvent, data: NewDiscoveredFile): DiscoveredFile => {
     try {
-      const file = discoveredFilesRepository.create(data);
-      // Mark as user-added
-      return discoveredFilesRepository.markUserAdded(file.id) ?? file;
+      return discoveredFilesRepository.create(data);
     } catch (error) {
       console.error('[IPC Error] discovery:add:', error);
       throw error;
@@ -348,27 +346,24 @@ export function registerDiscoveryHandlers(
   });
 
   // Toggle file inclusion status
-  ipcMain.handle(
-    IpcChannels.discovery.toggle,
-    (_event: IpcMainInvokeEvent, id: number): DiscoveredFile | undefined => {
-      try {
-        const file = discoveredFilesRepository.findById(id);
-        if (!file) {
-          return undefined;
-        }
-
-        // Toggle based on current includedAt state
-        if (file.includedAt) {
-          return discoveredFilesRepository.exclude(id);
-        } else {
-          return discoveredFilesRepository.include(id);
-        }
-      } catch (error) {
-        console.error('[IPC Error] discovery:toggle:', error);
-        throw error;
+  ipcMain.handle(IpcChannels.discovery.toggle, (_event: IpcMainInvokeEvent, id: number): DiscoveredFile | undefined => {
+    try {
+      const file = discoveredFilesRepository.findById(id);
+      if (!file) {
+        return undefined;
       }
+
+      // Toggle based on current includedAt state
+      if (file.includedAt) {
+        return discoveredFilesRepository.exclude(id);
+      } else {
+        return discoveredFilesRepository.include(id);
+      }
+    } catch (error) {
+      console.error('[IPC Error] discovery:toggle:', error);
+      throw error;
     }
-  );
+  });
 }
 
 // =============================================================================

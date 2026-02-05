@@ -5,11 +5,7 @@ import type { ReactElement } from 'react';
 import { useStore } from '@tanstack/react-form';
 import { useEffect, useMemo } from 'react';
 
-import type {
-  ClarificationAnswer,
-  ClarificationAnswers,
-  ClarificationQuestion,
-} from '@/lib/validations/clarification';
+import type { ClarificationAnswer, ClarificationAnswers, ClarificationQuestion } from '@/lib/validations/clarification';
 
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -172,7 +168,12 @@ export const ClarificationForm = ({
                   </div>
                 </div>
                 <div className={'mt-4'}>
-                  <ClarificationAnswerField form={form} isDisabled={isSubmitting} question={question} questionIndex={index} />
+                  <ClarificationAnswerField
+                    form={form}
+                    isDisabled={isSubmitting}
+                    question={question}
+                    questionIndex={index}
+                  />
                 </div>
               </div>
             );

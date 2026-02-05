@@ -44,12 +44,7 @@ const actionOptions = fileActions.map((action) => ({
   value: action,
 }));
 
-export const EditDiscoveredFileDialog = ({
-  file,
-  isOpen,
-  onOpenChange,
-  onSuccess,
-}: EditDiscoveredFileDialogProps) => {
+export const EditDiscoveredFileDialog = ({ file, isOpen, onOpenChange, onSuccess }: EditDiscoveredFileDialogProps) => {
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
   const toast = useToast();

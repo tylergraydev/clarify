@@ -118,9 +118,7 @@ export const CheckboxGroupField = ({
                 />
                 <div className={'flex flex-col gap-0.5'}>
                   <span className={checkboxGroupFieldOptionLabelVariants({ size })}>{option.label}</span>
-                  <span className={checkboxGroupFieldOptionDescriptionVariants({ size })}>
-                    {option.description}
-                  </span>
+                  <span className={checkboxGroupFieldOptionDescriptionVariants({ size })}>{option.description}</span>
                 </div>
               </label>
             );

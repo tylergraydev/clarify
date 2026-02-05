@@ -53,8 +53,7 @@ export function useSetDefaultRefinementAgent() {
   const { settings } = useElectronDb();
 
   return useMutation({
-    mutationFn: (agentId: null | number) =>
-      settings.setValue(DEFAULT_REFINEMENT_AGENT_KEY, agentId?.toString() ?? ''),
+    mutationFn: (agentId: null | number) => settings.setValue(DEFAULT_REFINEMENT_AGENT_KEY, agentId?.toString() ?? ''),
     onSuccess: (setting) => {
       if (setting) {
         // Update the cache directly for immediate feedback

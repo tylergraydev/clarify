@@ -1,3 +1,17 @@
+CREATE TABLE `agent_hooks` (
+	`agent_id` integer NOT NULL,
+	`body` text NOT NULL,
+	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+	`event_type` text NOT NULL,
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`matcher` text,
+	`order_index` integer DEFAULT 0 NOT NULL,
+	`updated_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+	FOREIGN KEY (`agent_id`) REFERENCES `agents`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `agent_hooks_agent_id_idx` ON `agent_hooks` (`agent_id`);--> statement-breakpoint
+CREATE INDEX `agent_hooks_event_type_idx` ON `agent_hooks` (`event_type`);--> statement-breakpoint
 CREATE TABLE `agent_skills` (
 	`agent_id` integer NOT NULL,
 	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
@@ -32,9 +46,13 @@ CREATE TABLE `agents` (
 	`deactivated_at` text,
 	`description` text,
 	`display_name` text NOT NULL,
+	`extended_thinking_enabled` integer DEFAULT false NOT NULL,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`max_thinking_tokens` integer,
+	`model` text,
 	`name` text NOT NULL,
 	`parent_agent_id` integer,
+	`permission_mode` text,
 	`project_id` integer,
 	`system_prompt` text NOT NULL,
 	`type` text NOT NULL,
@@ -75,57 +93,21 @@ CREATE TABLE `discovered_files` (
 	`action` text DEFAULT 'modify' NOT NULL,
 	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`description` text,
-	`file_exists_at` text,
 	`file_path` text NOT NULL,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`included_at` text,
 	`order_index` integer DEFAULT 0 NOT NULL,
 	`original_priority` text,
 	`priority` text DEFAULT 'medium' NOT NULL,
+	`relevance_explanation` text,
+	`role` text,
 	`updated_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
-	`user_added_at` text,
-	`user_modified_at` text,
 	`workflow_step_id` integer NOT NULL,
 	FOREIGN KEY (`workflow_step_id`) REFERENCES `workflow_steps`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE INDEX `discovered_files_priority_idx` ON `discovered_files` (`priority`);--> statement-breakpoint
 CREATE INDEX `discovered_files_workflow_step_id_idx` ON `discovered_files` (`workflow_step_id`);--> statement-breakpoint
-CREATE TABLE `implementation_plan_step_files` (
-	`action` text DEFAULT 'modify' NOT NULL,
-	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
-	`description` text,
-	`file_path` text NOT NULL,
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`order_index` integer DEFAULT 0 NOT NULL,
-	`plan_step_id` integer NOT NULL,
-	`updated_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
-	FOREIGN KEY (`plan_step_id`) REFERENCES `implementation_plan_steps`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
-CREATE INDEX `impl_plan_step_files_plan_step_id_idx` ON `implementation_plan_step_files` (`plan_step_id`);--> statement-breakpoint
-CREATE TABLE `implementation_plan_steps` (
-	`agent_id` integer,
-	`agent_override_id` integer,
-	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
-	`description` text,
-	`estimated_duration_ms` integer,
-	`gemini_review_at` text,
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`order_index` integer DEFAULT 0 NOT NULL,
-	`plan_id` integer NOT NULL,
-	`quality_gate_at` text,
-	`step_number` integer NOT NULL,
-	`title` text NOT NULL,
-	`updated_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
-	FOREIGN KEY (`agent_id`) REFERENCES `agents`(`id`) ON UPDATE no action ON DELETE set null,
-	FOREIGN KEY (`agent_override_id`) REFERENCES `agents`(`id`) ON UPDATE no action ON DELETE set null,
-	FOREIGN KEY (`plan_id`) REFERENCES `implementation_plans`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
-CREATE INDEX `implementation_plan_steps_agent_id_idx` ON `implementation_plan_steps` (`agent_id`);--> statement-breakpoint
-CREATE INDEX `implementation_plan_steps_plan_id_idx` ON `implementation_plan_steps` (`plan_id`);--> statement-breakpoint
-CREATE UNIQUE INDEX `implementation_plan_steps_unique_idx` ON `implementation_plan_steps` (`plan_id`,`step_number`);--> statement-breakpoint
 CREATE TABLE `implementation_plans` (
 	`approved_at` text,
 	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
@@ -146,12 +128,14 @@ CREATE TABLE `projects` (
 	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`description` text,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`is_favorite` integer DEFAULT false NOT NULL,
 	`name` text NOT NULL,
 	`updated_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL
 );
 --> statement-breakpoint
 CREATE INDEX `projects_archived_at_idx` ON `projects` (`archived_at`);--> statement-breakpoint
 CREATE INDEX `projects_created_at_idx` ON `projects` (`created_at`);--> statement-breakpoint
+CREATE INDEX `projects_is_favorite_idx` ON `projects` (`is_favorite`);--> statement-breakpoint
 CREATE TABLE `repositories` (
 	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`default_branch` text DEFAULT 'main' NOT NULL,
@@ -230,8 +214,6 @@ CREATE INDEX `workflow_repositories_workflow_id_idx` ON `workflow_repositories` 
 CREATE UNIQUE INDEX `workflow_repositories_unique_idx` ON `workflow_repositories` (`workflow_id`,`repository_id`);--> statement-breakpoint
 CREATE TABLE `workflow_steps` (
 	`agent_id` integer,
-	`cli_exit_code` integer,
-	`cli_output` text,
 	`completed_at` text,
 	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`description` text,
@@ -239,7 +221,6 @@ CREATE TABLE `workflow_steps` (
 	`error_message` text,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`input_text` text,
-	`original_output_text` text,
 	`output_edited_at` text,
 	`output_structured` text,
 	`output_text` text,
@@ -260,6 +241,7 @@ CREATE INDEX `workflow_steps_status_idx` ON `workflow_steps` (`status`);--> stat
 CREATE INDEX `workflow_steps_workflow_id_idx` ON `workflow_steps` (`workflow_id`);--> statement-breakpoint
 CREATE INDEX `workflow_steps_workflow_id_step_number_idx` ON `workflow_steps` (`workflow_id`,`step_number`);--> statement-breakpoint
 CREATE TABLE `workflows` (
+	`clarification_agent_id` integer,
 	`completed_at` text,
 	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`current_step_number` integer DEFAULT 0,
@@ -268,20 +250,19 @@ CREATE TABLE `workflows` (
 	`feature_name` text NOT NULL,
 	`feature_request` text NOT NULL,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`parent_workflow_id` integer,
 	`pause_behavior` text DEFAULT 'auto_pause' NOT NULL,
 	`project_id` integer NOT NULL,
+	`skip_clarification` integer DEFAULT false NOT NULL,
 	`started_at` text,
 	`status` text DEFAULT 'created' NOT NULL,
 	`total_steps` integer,
 	`type` text NOT NULL,
 	`updated_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`worktree_id` integer,
-	FOREIGN KEY (`parent_workflow_id`) REFERENCES `workflows`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`clarification_agent_id`) REFERENCES `agents`(`id`) ON UPDATE no action ON DELETE set null,
 	FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `workflows_parent_workflow_id_idx` ON `workflows` (`parent_workflow_id`);--> statement-breakpoint
 CREATE INDEX `workflows_project_id_idx` ON `workflows` (`project_id`);--> statement-breakpoint
 CREATE INDEX `workflows_status_idx` ON `workflows` (`status`);--> statement-breakpoint
 CREATE INDEX `workflows_status_type_created_idx` ON `workflows` (`status`,`type`,`created_at`);--> statement-breakpoint

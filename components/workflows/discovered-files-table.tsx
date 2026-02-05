@@ -223,13 +223,7 @@ const InclusionCell = memo(function InclusionCell({ file }: InclusionCellProps) 
  * />
  * ```
  */
-export const DiscoveredFilesTable = ({
-  className,
-  files,
-  onFileToggle,
-  ref,
-  ...props
-}: DiscoveredFilesTableProps) => {
+export const DiscoveredFilesTable = ({ className, files, onFileToggle, ref, ...props }: DiscoveredFilesTableProps) => {
   const toggleMutation = useToggleDiscoveredFile();
   const { filters, searchTerm } = useDiscoveryStore();
 

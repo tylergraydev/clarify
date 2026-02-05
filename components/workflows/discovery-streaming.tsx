@@ -85,8 +85,7 @@ export const discoveryStreamingVariants = cva(
 );
 
 interface DiscoveryStreamingProps
-  extends Omit<ComponentPropsWithRef<'div'>, 'onError'>,
-    VariantProps<typeof discoveryStreamingVariants> {
+  extends Omit<ComponentPropsWithRef<'div'>, 'onError'>, VariantProps<typeof discoveryStreamingVariants> {
   /** Active tool calls in progress */
   activeTools?: Array<DiscoveryActiveTool>;
   /** Name of the agent being used */
@@ -168,10 +167,7 @@ export const DiscoveryStreaming = memo(
 
     // Compute past tools (tools in history that are no longer active)
     const activeToolIds = useMemo(() => new Set(activeTools.map((t) => t.id)), [activeTools]);
-    const pastTools = useMemo(
-      () => toolHistory.filter((t) => !activeToolIds.has(t.id)),
-      [toolHistory, activeToolIds]
-    );
+    const pastTools = useMemo(() => toolHistory.filter((t) => !activeToolIds.has(t.id)), [toolHistory, activeToolIds]);
     const hasPastTools = pastTools.length > 0;
     const isErrorWithDetails = isError && (error || outcome?.type === 'ERROR' || outcome?.type === 'TIMEOUT');
     const isEmptyState = !isRunning && !streamingText && !isError && phase === 'idle';
@@ -245,9 +241,7 @@ export const DiscoveryStreaming = memo(
               </span>
               <span className={'text-xs text-muted-foreground'}>
                 {PHASE_LABELS[phase] ?? phase}
-                {shouldShowElapsedTime && (
-                  <Fragment> - {formatElapsedTime(extendedThinkingElapsedMs)}</Fragment>
-                )}
+                {shouldShowElapsedTime && <Fragment> - {formatElapsedTime(extendedThinkingElapsedMs)}</Fragment>}
               </span>
             </div>
           </div>
@@ -425,9 +419,7 @@ export const DiscoveryStreaming = memo(
               )}
 
               {/* Empty State */}
-              {isEmptyState && (
-                <div className={'text-sm text-muted-foreground'}>Ready to start file discovery...</div>
-              )}
+              {isEmptyState && <div className={'text-sm text-muted-foreground'}>Ready to start file discovery...</div>}
             </StickToBottom.Content>
             <StreamingScrollButton />
           </StickToBottom>
@@ -470,9 +462,7 @@ const ToolIndicator = memo(({ tool, variant = 'active' }: ToolIndicatorProps): R
       )}
     >
       <Icon className={'size-3.5'} />
-      <span className={cn('font-medium', isHistory ? 'text-foreground/70' : 'text-foreground')}>
-        {config.label}
-      </span>
+      <span className={cn('font-medium', isHistory ? 'text-foreground/70' : 'text-foreground')}>{config.label}</span>
       <span
         className={cn(
           'rounded-full px-1.5 py-0.5 text-[10px] tracking-wide uppercase',
