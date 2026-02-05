@@ -14,7 +14,6 @@ export const discoveredFiles = sqliteTable(
       .default(sql`(CURRENT_TIMESTAMP)`)
       .notNull(),
     description: text('description'),
-    fileExistsAt: text('file_exists_at'),
     filePath: text('file_path').notNull(),
     id: integer('id').primaryKey({ autoIncrement: true }),
     includedAt: text('included_at'),

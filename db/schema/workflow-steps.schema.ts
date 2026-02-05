@@ -22,8 +22,6 @@ export const workflowSteps = sqliteTable(
     agentId: integer('agent_id').references(() => agents.id, {
       onDelete: 'set null',
     }),
-    cliExitCode: integer('cli_exit_code'),
-    cliOutput: text('cli_output'),
     completedAt: text('completed_at'),
     createdAt: text('created_at')
       .default(sql`(CURRENT_TIMESTAMP)`)

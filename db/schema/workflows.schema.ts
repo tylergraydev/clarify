@@ -1,5 +1,3 @@
-import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
-
 import { sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
@@ -34,9 +32,6 @@ export const workflows = sqliteTable(
     featureName: text('feature_name').notNull(),
     featureRequest: text('feature_request').notNull(),
     id: integer('id').primaryKey({ autoIncrement: true }),
-    parentWorkflowId: integer('parent_workflow_id').references((): AnySQLiteColumn => workflows.id, {
-      onDelete: 'set null',
-    }),
     pauseBehavior: text('pause_behavior').notNull().default('auto_pause'),
     projectId: integer('project_id')
       .notNull()
@@ -52,7 +47,6 @@ export const workflows = sqliteTable(
     worktreeId: integer('worktree_id'), // Will reference worktrees.id but can't use FK due to circular dependency
   },
   (table) => [
-    index('workflows_parent_workflow_id_idx').on(table.parentWorkflowId),
     index('workflows_project_id_idx').on(table.projectId),
     index('workflows_status_idx').on(table.status),
     index('workflows_status_type_created_idx').on(table.status, table.type, table.createdAt),
