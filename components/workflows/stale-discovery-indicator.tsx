@@ -33,6 +33,8 @@ interface StaleDiscoveryIndicatorProps
     VariantProps<typeof staleDiscoveryIndicatorVariants> {
   /** Timestamp when the discovery was completed */
   discoveryCompletedAt?: Date | null | string;
+  /** Timestamp when the discovery was started */
+  discoveryStartedAt?: Date | null | string;
   /** Whether a rediscovery operation is in progress */
   isRediscovering?: boolean;
   /** Callback when the user clicks to re-discover files */
@@ -59,6 +61,7 @@ interface StaleDiscoveryIndicatorProps
 export const StaleDiscoveryIndicator = ({
   className,
   discoveryCompletedAt,
+  discoveryStartedAt,
   isRediscovering = false,
   onRediscover,
   ref,
@@ -67,27 +70,31 @@ export const StaleDiscoveryIndicator = ({
   ...props
 }: StaleDiscoveryIndicatorProps): null | ReactElement => {
   const isStale = useMemo(() => {
-    // If no discovery completed yet, not stale (nothing to be stale)
-    if (!discoveryCompletedAt) {
-      return false;
-    }
-
     // If no refinement updated timestamp, not stale
     if (!refinementUpdatedAt) {
       return false;
     }
 
+    // Use completedAt if available, otherwise use startedAt as fallback
+    // This handles the case when discovery is in progress (completedAt is null)
+    const discoveryTimestamp = discoveryCompletedAt ?? discoveryStartedAt;
+
+    // If no discovery timestamp at all, not stale (discovery hasn't started)
+    if (!discoveryTimestamp) {
+      return false;
+    }
+
     // Convert to Date objects if strings
-    const discoveryDate = discoveryCompletedAt instanceof Date
-      ? discoveryCompletedAt
-      : new Date(discoveryCompletedAt);
+    const discoveryDate = discoveryTimestamp instanceof Date
+      ? discoveryTimestamp
+      : new Date(discoveryTimestamp);
     const refinementDate = refinementUpdatedAt instanceof Date
       ? refinementUpdatedAt
       : new Date(refinementUpdatedAt);
 
-    // Stale if refinement was updated after discovery completed
+    // Stale if refinement was updated after discovery started/completed
     return refinementDate.getTime() > discoveryDate.getTime();
-  }, [discoveryCompletedAt, refinementUpdatedAt]);
+  }, [discoveryCompletedAt, discoveryStartedAt, refinementUpdatedAt]);
 
   // Don't render if not stale
   if (!isStale) {

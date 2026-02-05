@@ -11,6 +11,7 @@ import {
   Lightbulb,
   Loader2,
   MessageSquare,
+  Play,
   RotateCcw,
   Search,
   Sparkles,
@@ -104,6 +105,8 @@ export const pipelineStepVariants = cva(
 
 interface PipelineStepProps
   extends Omit<ComponentPropsWithRef<'div'>, 'title'>, VariantProps<typeof pipelineStepVariants> {
+  /** Whether the step can be started manually */
+  canStart?: boolean;
   /** Active tools for clarification streaming */
   clarificationActiveTools?: Array<ActiveTool>;
   /** Agent name for clarification streaming */
@@ -154,6 +157,8 @@ interface PipelineStepProps
   onSkipStep?: () => void;
   /** Callback when clarification form is submitted */
   onSubmitClarification?: (answers: ClarificationAnswers) => void;
+  /** Callback when start button is clicked */
+  onStart?: () => void;
   /** Callback when expand/collapse is toggled */
   onToggle: () => void;
   /** Output content to display when expanded */
@@ -167,6 +172,7 @@ interface PipelineStepProps
 }
 
 export const PipelineStep = ({
+  canStart = false,
   clarificationActiveTools,
   clarificationAgentName,
   clarificationError,
@@ -193,6 +199,7 @@ export const PipelineStep = ({
   onSkipReady,
   onSkipStep,
   onSubmitClarification,
+  onStart,
   onToggle,
   output,
   outputStructured,
@@ -241,6 +248,7 @@ export const PipelineStep = ({
   const canGenerateMore = Boolean(onGenerateClarifications && answeredCount > 0);
   const canRerun = Boolean(onRerunClarification);
   const isClarificationActionPending = isGeneratingClarification || isRerunningClarification;
+  const showStartButton = canStart && isPending && Boolean(onStart);
 
   const renderClarificationSummary = () => {
     if (!showClarificationSummary || !outputStructured) {
@@ -358,9 +366,7 @@ export const PipelineStep = ({
               );
             } else if (answer.type === 'text') {
               // Text answer: open-ended response
-              answerDisplay = (
-                <div className={'mt-1 text-sm whitespace-pre-wrap text-foreground'}>{answer.text}</div>
-              );
+              answerDisplay = <div className={'mt-1 text-sm whitespace-pre-wrap text-foreground'}>{answer.text}</div>;
             }
 
             return (
@@ -423,44 +429,63 @@ export const PipelineStep = ({
     <BaseCollapsible.Root onOpenChange={onToggle} open={isExpanded}>
       <div className={cn(pipelineStepVariants({ status }), className)} ref={ref} {...props}>
         {/* Step Header */}
-        <BaseCollapsible.Trigger
-          aria-expanded={isExpanded}
-          aria-label={`${title} - ${statusLabels[status ?? 'pending']}. ${isExpanded ? 'Click to collapse' : 'Click to expand'}`}
-          className={`
-            flex w-full cursor-pointer items-center gap-3 p-4
-            transition-colors hover:bg-muted/50
-            focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0
-            focus-visible:outline-none
-          `}
-          onKeyDown={handleKeyDown}
-        >
-          {/* Step Icon */}
-          <div
-            className={cn(
-              'flex size-8 shrink-0 items-center justify-center rounded-full',
-              isCompleted && 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
-              isRunning && 'bg-accent/20 text-accent',
-              isPending && 'bg-muted text-muted-foreground'
-            )}
+        <div className={'relative flex items-center'}>
+          <BaseCollapsible.Trigger
+            aria-expanded={isExpanded}
+            aria-label={`${title} - ${statusLabels[status ?? 'pending']}. ${isExpanded ? 'Click to collapse' : 'Click to expand'}`}
+            className={`
+              flex w-full cursor-pointer items-center gap-3 p-4
+              transition-colors hover:bg-muted/50
+              focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0
+              focus-visible:outline-none
+            `}
+            onKeyDown={handleKeyDown}
           >
-            <Icon aria-hidden={'true'} className={'size-4'} />
-          </div>
+            {/* Step Icon */}
+            <div
+              className={cn(
+                'flex size-8 shrink-0 items-center justify-center rounded-full',
+                isCompleted && 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
+                isRunning && 'bg-accent/20 text-accent',
+                isPending && 'bg-muted text-muted-foreground'
+              )}
+            >
+              <Icon aria-hidden={'true'} className={'size-4'} />
+            </div>
 
-          {/* Title */}
-          <span className={'flex-1 text-left text-sm font-medium'}>{title}</span>
+            {/* Title */}
+            <span className={'flex-1 text-left text-sm font-medium'}>{title}</span>
 
-          {/* Step Metrics Badge (collapsed header) */}
-          {metrics && status && <PipelineStepMetrics metrics={metrics} status={status} stepType={stepType} />}
+            {/* Step Metrics Badge (collapsed header) */}
+            {metrics && status && <PipelineStepMetrics metrics={metrics} status={status} stepType={stepType} />}
 
-          {/* Status Indicator */}
-          <div className={'flex items-center gap-2'}>
-            {isCompleted && (
-              <CircleCheck aria-label={'Completed'} className={'size-5 text-green-600 dark:text-green-400'} />
-            )}
-            {isRunning && <Loader2 aria-label={'Running'} className={'size-5 animate-spin text-accent'} />}
-            {isPending && <CircleDashed aria-label={'Pending'} className={'size-5 text-muted-foreground'} />}
-          </div>
-        </BaseCollapsible.Trigger>
+            {/* Spacer for start button to prevent layout shift */}
+            {showStartButton && <span className={'w-[85px]'} />}
+
+            {/* Status Indicator */}
+            <div className={'flex items-center gap-2'}>
+              {isCompleted && (
+                <CircleCheck aria-label={'Completed'} className={'size-5 text-green-600 dark:text-green-400'} />
+              )}
+              {isRunning && <Loader2 aria-label={'Running'} className={'size-5 animate-spin text-accent'} />}
+              {isPending && <CircleDashed aria-label={'Pending'} className={'size-5 text-muted-foreground'} />}
+            </div>
+          </BaseCollapsible.Trigger>
+
+          {/* Start Button - positioned outside trigger to avoid nested button issue */}
+          {showStartButton && (
+            <Button
+              className={'absolute right-12'}
+              onClick={onStart}
+              size={'sm'}
+              type={'button'}
+              variant={'outline'}
+            >
+              <Play aria-hidden={'true'} className={'size-3.5'} />
+              Start
+            </Button>
+          )}
+        </div>
 
         {/* Expanded Content */}
         <BaseCollapsible.Panel

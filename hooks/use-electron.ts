@@ -132,6 +132,10 @@ export function useElectronDb() {
         const electronApi = throwIfNoApi('step.skip');
         return electronApi.step.skip(id);
       },
+      start: async (id: number) => {
+        const electronApi = throwIfNoApi('step.start');
+        return electronApi.step.start(id);
+      },
       update: async (id: number, data: Parameters<NonNullable<ElectronAPI>['step']['update']>[1]) => {
         const electronApi = throwIfNoApi('step.update');
         return electronApi.step.update(id, data);

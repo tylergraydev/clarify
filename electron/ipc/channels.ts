@@ -128,6 +128,15 @@ export const IpcChannels = {
     unarchive: 'project:unarchive',
     update: 'project:update',
   },
+  refinement: {
+    cancel: 'refinement:cancel',
+    getResult: 'refinement:getResult',
+    getState: 'refinement:getState',
+    regenerate: 'refinement:regenerate',
+    retry: 'refinement:retry',
+    start: 'refinement:start',
+    stream: 'refinement:stream',
+  },
   repository: {
     clearDefault: 'repository:clearDefault',
     create: 'repository:create',
@@ -156,6 +165,7 @@ export const IpcChannels = {
     list: 'step:list',
     regenerate: 'step:regenerate',
     skip: 'step:skip',
+    start: 'step:start',
     update: 'step:update',
   },
   store: {

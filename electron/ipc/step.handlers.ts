@@ -5,13 +5,14 @@
  * - Getting step by ID
  * - Listing steps by workflow ID
  * - Editing step output text
+ * - Starting steps
  * - Completing steps with output
  * - Failing steps with error messages
  * - Marking steps for regeneration
  */
 import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 
-import type { WorkflowStepsRepository } from '../../db/repositories';
+import type { WorkflowStepsRepository, WorkflowsRepository } from '../../db/repositories';
 import type { NewWorkflowStep, WorkflowStep } from '../../db/schema';
 
 import { IpcChannels } from './channels';
@@ -28,8 +29,51 @@ interface StepListFilters {
  * Register all step-related IPC handlers.
  *
  * @param workflowStepsRepository - The workflow steps repository for database operations
+ * @param workflowsRepository - The workflows repository for pause behavior and status
  */
-export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepository): void {
+export function registerStepHandlers(
+  workflowStepsRepository: WorkflowStepsRepository,
+  workflowsRepository: WorkflowsRepository
+): void {
+  type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
+  const RUNNING_STATUSES = ['running', 'paused', 'editing'] as const;
+
+  const shouldAutoAdvance = (pauseBehavior: PauseBehavior, nextStepType: string): boolean => {
+    if (pauseBehavior === 'continuous') return true;
+    if (pauseBehavior === 'gates_only') return nextStepType !== 'quality_gate';
+    return false;
+  };
+
+  const maybeStartNextStep = (step: WorkflowStep): void => {
+    const workflow = workflowsRepository.findById(step.workflowId);
+    if (!workflow || workflow.status !== 'running') {
+      return;
+    }
+
+    const pauseBehavior = (workflow.pauseBehavior ?? 'auto_pause') as PauseBehavior;
+
+    const steps = workflowStepsRepository.findByWorkflowId(step.workflowId);
+    const hasRunningStep = steps.some((existing) =>
+      RUNNING_STATUSES.includes(existing.status as (typeof RUNNING_STATUSES)[number])
+    );
+    if (hasRunningStep) {
+      return;
+    }
+
+    const nextStep = steps
+      .filter((existing) => existing.status === 'pending' && existing.stepNumber > step.stepNumber)
+      .sort((a, b) => a.stepNumber - b.stepNumber)[0];
+
+    if (!nextStep) {
+      return;
+    }
+
+    if (!shouldAutoAdvance(pauseBehavior, nextStep.stepType)) {
+      return;
+    }
+
+    workflowStepsRepository.start(nextStep.id);
+  };
   // Get a step by ID
   ipcMain.handle(IpcChannels.step.get, (_event: IpcMainInvokeEvent, id: number): undefined | WorkflowStep => {
     try {
@@ -53,6 +97,16 @@ export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepos
     }
   );
 
+  // Start a step (transition to running)
+  ipcMain.handle(IpcChannels.step.start, (_event: IpcMainInvokeEvent, id: number): undefined | WorkflowStep => {
+    try {
+      return workflowStepsRepository.start(id);
+    } catch (error) {
+      console.error('[IPC Error] step:start:', error);
+      throw error;
+    }
+  });
+
   // Edit step output text (marks as edited with timestamp)
   ipcMain.handle(
     IpcChannels.step.edit,
@@ -71,7 +125,11 @@ export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepos
     IpcChannels.step.complete,
     (_event: IpcMainInvokeEvent, id: number, outputText?: string, durationMs?: number): undefined | WorkflowStep => {
       try {
-        return workflowStepsRepository.complete(id, outputText ?? '', durationMs ?? 0);
+        const step = workflowStepsRepository.complete(id, outputText ?? '', durationMs ?? 0);
+        if (step) {
+          maybeStartNextStep(step);
+        }
+        return step;
       } catch (error) {
         console.error('[IPC Error] step:complete:', error);
         throw error;
@@ -105,7 +163,11 @@ export function registerStepHandlers(workflowStepsRepository: WorkflowStepsRepos
   // Skip a step (mark as skipped)
   ipcMain.handle(IpcChannels.step.skip, (_event: IpcMainInvokeEvent, id: number): undefined | WorkflowStep => {
     try {
-      return workflowStepsRepository.skip(id);
+      const step = workflowStepsRepository.skip(id);
+      if (step) {
+        maybeStartNextStep(step);
+      }
+      return step;
     } catch (error) {
       console.error('[IPC Error] step:skip:', error);
       throw error;

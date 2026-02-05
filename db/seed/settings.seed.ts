@@ -8,10 +8,12 @@
  * - logging: Logging and audit settings
  * - ui: User interface settings
  */
+import { eq } from 'drizzle-orm';
+
 import type { DrizzleDatabase } from '../index';
 import type { NewSetting } from '../schema';
 
-import { settings } from '../schema';
+import { agents, settings } from '../schema';
 
 /**
  * Setting definition for seeding
@@ -37,6 +39,15 @@ const DEFAULT_SETTINGS: Array<SettingDefinition> = [
     description: 'The planning agent used by default for the clarification step in new workflows',
     displayName: 'Default Clarification Agent',
     key: 'defaultClarificationAgentId',
+    value: '',
+    valueType: 'number',
+  },
+  {
+    category: 'workflow',
+    defaultValue: null,
+    description: 'The planning agent used by default for the refinement step in new workflows',
+    displayName: 'Default Refinement Agent',
+    key: 'defaultRefinementAgentId',
     value: '',
     valueType: 'number',
   },
@@ -71,5 +82,46 @@ export function seedDefaultSettings(db: DrizzleDatabase): void {
         valueType: settingDef.valueType,
       } satisfies NewSetting)
       .run();
+  }
+}
+
+// ============================================================================
+// Agent Setting Links
+// ============================================================================
+
+/**
+ * Mapping of built-in agent names to their corresponding default setting keys.
+ * Used to auto-populate agent ID settings after seeding.
+ */
+const AGENT_SETTING_LINKS = [
+  { agentName: 'refinement-agent', settingKey: 'defaultRefinementAgentId' },
+  { agentName: 'clarification-agent', settingKey: 'defaultClarificationAgentId' },
+] as const;
+
+/**
+ * Link built-in agents to their default settings.
+ * This function runs after agents and settings are seeded to populate
+ * the agent ID settings with the actual IDs from the database.
+ *
+ * Only updates settings that have empty values (not manually configured).
+ *
+ * @param db - The Drizzle database instance
+ */
+export function linkAgentSettings(db: DrizzleDatabase): void {
+  for (const { agentName, settingKey } of AGENT_SETTING_LINKS) {
+    // Find the agent by name
+    const agent = db.select().from(agents).where(eq(agents.name, agentName)).get();
+
+    if (!agent) continue;
+
+    // Find the setting
+    const setting = db.select().from(settings).where(eq(settings.key, settingKey)).get();
+
+    if (!setting) continue;
+
+    // Only update if setting value is empty (not manually configured)
+    if (!setting.value) {
+      db.update(settings).set({ value: agent.id.toString() }).where(eq(settings.key, settingKey)).run();
+    }
   }
 }

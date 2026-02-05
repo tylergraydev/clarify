@@ -55,6 +55,8 @@ interface DiscoveryWorkspaceProps extends Omit<ComponentPropsWithRef<'section'>,
   agentId: number;
   /** Timestamp when the discovery was completed */
   discoveryCompletedAt?: Date | null | string;
+  /** Timestamp when the discovery was started */
+  discoveryStartedAt?: Date | null | string;
   /** Callback when step completes */
   onComplete: () => void;
   /** The refined feature request text from the refinement step */
@@ -113,6 +115,7 @@ export const DiscoveryWorkspace = ({
   agentId,
   className,
   discoveryCompletedAt,
+  discoveryStartedAt,
   onComplete,
   ref,
   refinedFeatureRequest,
@@ -433,6 +436,7 @@ export const DiscoveryWorkspace = ({
       <StaleDiscoveryIndicator
         className={'mt-4'}
         discoveryCompletedAt={discoveryCompletedAt}
+        discoveryStartedAt={discoveryStartedAt}
         isRediscovering={isMutating}
         onRediscover={handleOpenRediscoverDialog}
         refinementUpdatedAt={refinementUpdatedAt}

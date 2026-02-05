@@ -336,7 +336,7 @@ export interface ClarificationUsageStats {
 }
 
 // =============================================================================
-// File Discovery Types
+// Refinement Types
 // =============================================================================
 
 export interface ElectronAPI {
@@ -457,6 +457,7 @@ export interface ElectronAPI {
       data: Partial<import('../db/schema').NewProject>
     ): Promise<import('../db/schema').Project | undefined>;
   };
+  refinement: RefinementAPI;
   repository: {
     clearDefault(id: number): Promise<import('../db/schema').Repository | undefined>;
     create(data: import('../db/schema').NewRepository): Promise<import('../db/schema').Repository>;
@@ -492,6 +493,7 @@ export interface ElectronAPI {
     list(workflowId: number): Promise<Array<import('../db/schema').WorkflowStep>>;
     regenerate(id: number): Promise<import('../db/schema').WorkflowStep | undefined>;
     skip(id: number): Promise<import('../db/schema').WorkflowStep | undefined>;
+    start(id: number): Promise<import('../db/schema').WorkflowStep | undefined>;
     update(
       id: number,
       data: Partial<import('../db/schema').NewWorkflowStep>
@@ -603,7 +605,12 @@ export interface FileDiscoveryAPI {
  * Discriminated union of all possible file discovery outcomes.
  */
 export type FileDiscoveryOutcome =
-  | { discoveredFiles: Array<{ filePath: string; id: number; priority: string }>; summary: string; totalCount: number; type: 'SUCCESS' }
+  | {
+      discoveredFiles: Array<{ filePath: string; id: number; priority: string }>;
+      summary: string;
+      totalCount: number;
+      type: 'SUCCESS';
+    }
   | { elapsedSeconds: number; error: string; partialCount?: number; type: 'TIMEOUT' }
   | { error: string; partialCount?: number; stack?: string; type: 'ERROR' }
   | { partialCount: number; reason?: string; type: 'CANCELLED' };
@@ -673,6 +680,10 @@ export interface FileDiscoveryStartInput {
   workflowId: number;
 }
 
+// =============================================================================
+// File Discovery Types
+// =============================================================================
+
 /**
  * Discriminated union of all file discovery stream message types.
  */
@@ -693,6 +704,127 @@ export type FileDiscoveryStreamMessage =
  * Usage statistics for file discovery.
  */
 export interface FileDiscoveryUsageStats {
+  costUsd: number;
+  durationMs: number;
+  inputTokens: number;
+  numTurns: number;
+  outputTokens: number;
+}
+
+/**
+ * Agent configuration for refinement.
+ */
+export interface RefinementAgentConfig {
+  extendedThinkingEnabled: boolean;
+  hooks: Array<{ body: string; eventType: string; matcher: null | string }>;
+  id: number;
+  maxThinkingTokens: null | number;
+  model: null | string;
+  name: string;
+  permissionMode: null | string;
+  skills: Array<{ isRequired: boolean; skillName: string }>;
+  systemPrompt: string;
+  tools: Array<{ toolName: string; toolPattern: string }>;
+}
+
+/**
+ * Refinement API interface.
+ */
+export interface RefinementAPI {
+  cancel(sessionId: string): Promise<RefinementOutcome>;
+  getResult(sessionId: string): Promise<null | RefinementOutcomeWithPause>;
+  getState(sessionId: string): Promise<null | RefinementServiceState>;
+  /** Subscribe to streaming events during refinement. Returns unsubscribe function. */
+  onStreamMessage(callback: (message: RefinementStreamMessage) => void): () => void;
+  regenerate(input: RefinementRegenerateInput): Promise<RefinementOutcomeWithPause>;
+  retry(sessionId: string, input: RefinementStartInput): Promise<RefinementOutcomeWithPause>;
+  start(input: RefinementStartInput): Promise<RefinementOutcomeWithPause>;
+}
+
+/**
+ * Discriminated union of all possible refinement outcomes.
+ */
+export type RefinementOutcome =
+  | { elapsedSeconds: number; error: string; type: 'TIMEOUT' }
+  | { error: string; stack?: string; type: 'ERROR' }
+  | { reason?: string; type: 'CANCELLED' }
+  | { refinedText: string; type: 'SUCCESS' };
+
+/**
+ * Extended outcome with pause/retry information.
+ */
+export interface RefinementOutcomeWithPause {
+  isPaused: boolean;
+  outcome: RefinementOutcome;
+  retryCount: number;
+}
+
+/**
+ * Input for regenerating with additional guidance.
+ */
+export interface RefinementRegenerateInput {
+  guidance: string;
+  stepId: number;
+  workflowId: number;
+}
+
+/**
+ * Phase type for refinement service.
+ */
+export type RefinementServicePhase =
+  | 'cancelled'
+  | 'complete'
+  | 'error'
+  | 'executing'
+  | 'executing_extended_thinking'
+  | 'idle'
+  | 'loading_agent'
+  | 'processing_response'
+  | 'timeout';
+
+/**
+ * State of the refinement service during execution.
+ */
+export interface RefinementServiceState {
+  agentConfig: null | RefinementAgentConfig;
+  phase: RefinementServicePhase;
+  refinedText: null | string;
+}
+
+/**
+ * Input for starting a refinement session.
+ */
+export interface RefinementStartInput {
+  agentId: number;
+  clarificationContext: {
+    answers: Record<string, string>;
+    assessment?: { reason: string; score: number };
+    questions: Array<{ header: string; options: Array<{ description: string; label: string }>; question: string }>;
+  };
+  featureRequest: string;
+  repositoryPath: string;
+  stepId: number;
+  timeoutSeconds?: number;
+  workflowId: number;
+}
+
+/**
+ * Discriminated union of all refinement stream message types.
+ */
+export type RefinementStreamMessage =
+  | RefinementStreamExtendedThinkingHeartbeat
+  | RefinementStreamPhaseChange
+  | RefinementStreamTextDelta
+  | RefinementStreamThinkingDelta
+  | RefinementStreamThinkingStart
+  | RefinementStreamToolStart
+  | RefinementStreamToolStop
+  | RefinementStreamToolUpdate;
+
+/**
+ * Usage statistics from SDK result.
+ */
+export interface RefinementUsageStats {
   costUsd: number;
   durationMs: number;
   inputTokens: number;
@@ -968,6 +1100,98 @@ interface FileDiscoveryStreamToolStart extends FileDiscoveryStreamMessageBase {
  * Stream message for tool input updates.
  */
 interface FileDiscoveryStreamToolUpdate extends FileDiscoveryStreamMessageBase {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
+}
+
+// =============================================================================
+// Refinement Streaming Types
+// =============================================================================
+
+/**
+ * Heartbeat message during extended thinking execution.
+ */
+interface RefinementStreamExtendedThinkingHeartbeat extends RefinementStreamMessageBase {
+  elapsedMs: number;
+  estimatedProgress: null | number;
+  maxThinkingTokens: number;
+  type: 'extended_thinking_heartbeat';
+}
+
+/**
+ * Base interface for all refinement stream messages.
+ */
+interface RefinementStreamMessageBase {
+  sessionId: string;
+  timestamp: number;
+  type:
+    | 'extended_thinking_heartbeat'
+    | 'phase_change'
+    | 'text_delta'
+    | 'thinking_delta'
+    | 'thinking_start'
+    | 'tool_start'
+    | 'tool_stop'
+    | 'tool_update';
+}
+
+/**
+ * Stream message for phase transitions.
+ */
+interface RefinementStreamPhaseChange extends RefinementStreamMessageBase {
+  phase: RefinementServicePhase;
+  type: 'phase_change';
+}
+
+/**
+ * Stream message for text delta.
+ */
+interface RefinementStreamTextDelta extends RefinementStreamMessageBase {
+  delta: string;
+  type: 'text_delta';
+}
+
+/**
+ * Stream message for thinking delta.
+ */
+interface RefinementStreamThinkingDelta extends RefinementStreamMessageBase {
+  blockIndex: number;
+  delta: string;
+  type: 'thinking_delta';
+}
+
+/**
+ * Stream message for thinking block start.
+ */
+interface RefinementStreamThinkingStart extends RefinementStreamMessageBase {
+  blockIndex: number;
+  type: 'thinking_start';
+}
+
+/**
+ * Stream message for tool start.
+ */
+interface RefinementStreamToolStart extends RefinementStreamMessageBase {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_start';
+}
+
+/**
+ * Stream message for tool stop.
+ */
+interface RefinementStreamToolStop extends RefinementStreamMessageBase {
+  toolUseId: string;
+  type: 'tool_stop';
+}
+
+/**
+ * Stream message for tool input updates.
+ */
+interface RefinementStreamToolUpdate extends RefinementStreamMessageBase {
   toolInput: Record<string, unknown>;
   toolName: string;
   toolUseId: string;

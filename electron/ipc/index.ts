@@ -44,6 +44,7 @@ import { registerDialogHandlers } from './dialog.handlers';
 import { registerDiscoveryHandlers } from './discovery.handlers';
 import { registerFsHandlers } from './fs.handlers';
 import { registerProjectHandlers } from './project.handlers';
+import { registerRefinementHandlers } from './refinement.handlers';
 import { registerRepositoryHandlers } from './repository.handlers';
 import { registerSettingsHandlers } from './settings.handlers';
 import { registerStepHandlers } from './step.handlers';
@@ -161,16 +162,20 @@ export function registerAllHandlers(
   // Workflow steps - individual steps within workflows
   // Note: Created before workflows because registerWorkflowHandlers needs steps repository
   const workflowStepsRepository = createWorkflowStepsRepository(db);
-  registerStepHandlers(workflowStepsRepository);
+  const workflowsRepository = createWorkflowsRepository(db);
+  registerStepHandlers(workflowStepsRepository, workflowsRepository);
 
   // Clarification handlers - need steps repository to look up agentId from step
   // Also needs getMainWindow for streaming events to renderer
   registerClarificationHandlers(workflowStepsRepository, getMainWindow);
 
+  // Refinement handlers - need steps repository to look up agentId from step
+  // Also needs getMainWindow for streaming events to renderer
+  registerRefinementHandlers(workflowStepsRepository, getMainWindow);
+
   // Workflows - orchestration runs
   // Needs workflowStepsRepository for creating planning steps on start
   // Also needs settingsRepository and agentsRepository for clarification agent fallback logic
-  const workflowsRepository = createWorkflowsRepository(db);
   registerWorkflowHandlers(workflowsRepository, workflowStepsRepository, settingsRepository, agentsRepository);
 
   // Workflow repositories - repository associations for workflows
