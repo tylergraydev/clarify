@@ -21,16 +21,34 @@ export function registerDebugLogHandlers(createDebugWindow?: () => Promise<Brows
   ipcMain.handle(
     IpcChannels.debugLog.getLogs,
     async (_event: IpcMainInvokeEvent, filters?: DebugLogFilters): Promise<Array<DebugLogEntry>> => {
-      return debugLoggerService.readLogs(filters);
+      try {
+        return debugLoggerService.readLogs(filters);
+      } catch (error) {
+        console.error('[IPC Error] debugLog:getLogs:', error);
+        throw error;
+      }
     }
   );
 
   ipcMain.handle(IpcChannels.debugLog.getLogPath, (): string => {
-    return debugLoggerService.getLogFilePath();
+    try {
+      return debugLoggerService.getLogFilePath();
+    } catch (error) {
+      console.error('[IPC Error] debugLog:getLogPath:', error);
+      throw error;
+    }
   });
 
   ipcMain.handle(IpcChannels.debugLog.clearLogs, async (): Promise<{ error?: string; success: boolean }> => {
-    return debugLoggerService.clearLogs();
+    try {
+      return debugLoggerService.clearLogs();
+    } catch (error) {
+      console.error('[IPC Error] debugLog:clearLogs:', error);
+      return {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        success: false,
+      };
+    }
   });
 
   ipcMain.handle(IpcChannels.debugLog.openLogFile, async (): Promise<{ error?: string; success: boolean }> => {
@@ -52,7 +70,12 @@ export function registerDebugLogHandlers(createDebugWindow?: () => Promise<Brows
   });
 
   ipcMain.handle(IpcChannels.debugLog.getSessionIds, async (): Promise<Array<string>> => {
-    return debugLoggerService.getSessionIds();
+    try {
+      return debugLoggerService.getSessionIds();
+    } catch (error) {
+      console.error('[IPC Error] debugLog:getSessionIds:', error);
+      throw error;
+    }
   });
 
   ipcMain.handle(IpcChannels.debugLog.openDebugWindow, async (): Promise<{ error?: string; success: boolean }> => {

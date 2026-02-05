@@ -34,7 +34,8 @@ export function registerStoreHandlers(): void {
     try {
       store.set(key, value);
       return true;
-    } catch {
+    } catch (error) {
+      console.error('[IPC Error] store:set:', error);
       return false;
     }
   });
@@ -43,7 +44,8 @@ export function registerStoreHandlers(): void {
     try {
       store.delete(key);
       return true;
-    } catch {
+    } catch (error) {
+      console.error('[IPC Error] store:delete:', error);
       return false;
     }
   });

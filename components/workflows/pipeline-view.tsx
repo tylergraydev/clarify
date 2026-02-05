@@ -5,16 +5,14 @@ import type { ComponentPropsWithRef } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { WorkflowStep } from '@/db/schema/workflow-steps.schema';
-import type { RefinementActiveTool } from '@/lib/stores/refinement-store';
 import type {
   ClarificationAnswers,
   ClarificationOutcome,
   ClarificationOutcomeQuestions,
   ClarificationQuestion,
-  ClarificationServicePhase,
   ClarificationStepOutput,
 } from '@/lib/validations/clarification';
-import type { RefinementServicePhase, RefinementStreamMessage } from '@/types/electron';
+import type { RefinementStreamMessage } from '@/types/electron';
 
 import { useAgent, useAgents } from '@/hooks/queries/use-agents';
 import { useDefaultClarificationAgent } from '@/hooks/queries/use-default-clarification-agent';
@@ -29,7 +27,9 @@ import {
   useUpdateStep,
 } from '@/hooks/queries/use-steps';
 import { useWorkflow } from '@/hooks/queries/use-workflows';
+import { useClarificationStore } from '@/lib/stores/clarification-store';
 import { usePipelineStore } from '@/lib/stores/pipeline-store';
+import { useRefinementStore } from '@/lib/stores/refinement-store';
 import { cn } from '@/lib/utils';
 
 import type { StepMetrics } from './pipeline-step-metrics';
@@ -41,91 +41,6 @@ import { PipelineStep, type PipelineStepStatus, type PipelineStepType } from './
 import { RefinementWorkspace } from './refinement-workspace';
 import { VerticalConnector, type VerticalConnectorState } from './vertical-connector';
 import { WorkflowEmptyState } from './workflow-empty-state';
-
-/**
- * Active tool indicator for displaying current tool operations.
- */
-interface ActiveTool {
-  toolInput: Record<string, unknown>;
-  toolName: string;
-  toolUseId: string;
-}
-
-/**
- * State for clarification streaming during exploration phase.
- */
-interface ClarificationSessionState {
-  activeTools: Array<ActiveTool>;
-  agentName: string;
-  error: null | string;
-  extendedThinkingElapsedMs?: number;
-  isStreaming: boolean;
-  maxThinkingTokens?: null | number;
-  outcome: ClarificationOutcome | null;
-  phase: ClarificationServicePhase;
-  sessionId: null | string;
-  stepId: null | number;
-  text: string;
-  thinking: Array<string>;
-  toolHistory: Array<ActiveTool>;
-}
-
-/**
- * Initial state for clarification session.
- */
-const INITIAL_CLARIFICATION_STATE: ClarificationSessionState = {
-  activeTools: [],
-  agentName: 'Clarification Agent',
-  error: null,
-  extendedThinkingElapsedMs: undefined,
-  isStreaming: false,
-  maxThinkingTokens: null,
-  outcome: null,
-  phase: 'idle',
-  sessionId: null,
-  stepId: null,
-  text: '',
-  thinking: [],
-  toolHistory: [],
-};
-
-/**
- * State for refinement streaming during execution phase.
- */
-interface RefinementSessionState {
-  activeTools: Array<RefinementActiveTool>;
-  agentName: string;
-  error: null | string;
-  extendedThinkingElapsedMs?: number;
-  isStreaming: boolean;
-  maxThinkingTokens?: null | number;
-  phase: RefinementServicePhase;
-  refinedText: null | string;
-  sessionId: null | string;
-  stepId: null | number;
-  text: string;
-  thinking: Array<string>;
-  toolHistory: Array<RefinementActiveTool>;
-}
-
-/**
- * Initial state for refinement session.
- */
-const INITIAL_REFINEMENT_STATE: RefinementSessionState = {
-  activeTools: [],
-  agentName: 'Refinement Agent',
-  error: null,
-  extendedThinkingElapsedMs: undefined,
-  isStreaming: false,
-  maxThinkingTokens: null,
-  phase: 'idle',
-  refinedText: null,
-  sessionId: null,
-  stepId: null,
-  text: '',
-  thinking: [],
-  toolHistory: [],
-};
 
 /**
  * Default step type used when step.stepType is not a valid PipelineStepType.
@@ -278,13 +193,17 @@ function sortStepsByNumber(steps: Array<WorkflowStep>): Array<WorkflowStep> {
  */
 export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineViewProps) => {
   const [submittingStepId, setSubmittingStepId] = useState<null | number>(null);
-  const [clarificationState, setClarificationState] = useState<ClarificationSessionState>(INITIAL_CLARIFICATION_STATE);
+  const [clarificationStepId, setClarificationStepId] = useState<null | number>(null);
   const [clarificationAction, setClarificationAction] = useState<null | { stepId: number; type: 'more' | 'rerun' }>(
     null
   );
   const clarificationStartedRef = useRef<null | number>(null);
-  const [refinementState, setRefinementState] = useState<RefinementSessionState>(INITIAL_REFINEMENT_STATE);
+  const [refinementStepId, setRefinementStepId] = useState<null | number>(null);
   const refinementStartedRef = useRef<null | number>(null);
+
+  // Zustand stores for streaming state
+  const clarificationStore = useClarificationStore();
+  const refinementStore = useRefinementStore();
 
   const { data: steps, isLoading: isLoadingSteps } = useStepsByWorkflow(workflowId);
   const { data: workflow, isLoading: isLoadingWorkflow } = useWorkflow(workflowId);
@@ -462,7 +381,8 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
   const resetClarificationStep = useCallback(
     async (step: WorkflowStep, action: 'more' | 'rerun', inputText: null | string) => {
       setClarificationAction({ stepId: step.id, type: action });
-      setClarificationState(INITIAL_CLARIFICATION_STATE);
+      useClarificationStore.getState().reset();
+      setClarificationStepId(null);
       clarificationStartedRef.current = null;
 
       try {
@@ -584,12 +504,8 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         id: activeClarificationStepId,
       });
 
-      // Update local state to stop streaming phase
-      setClarificationState((prev) => ({
-        ...prev,
-        isStreaming: false,
-        phase: 'waiting_for_user',
-      }));
+      // Update store state to stop streaming phase
+      useClarificationStore.getState().updatePhase('waiting_for_user');
     },
     [activeClarificationStepId, updateStep]
   );
@@ -617,7 +533,8 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
       await skipStep.mutateAsync(activeClarificationStepId);
 
       // Reset clarification state
-      setClarificationState(INITIAL_CLARIFICATION_STATE);
+      useClarificationStore.getState().reset();
+      setClarificationStepId(null);
       clarificationStartedRef.current = null;
     },
     [activeClarificationStepId, updateStep, skipStep]
@@ -627,12 +544,9 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
    * Handles clarification errors from the streaming component.
    */
   const handleClarificationError = useCallback((error: string) => {
-    setClarificationState((prev) => ({
-      ...prev,
-      error,
-      isStreaming: false,
-      phase: 'error',
-    }));
+    const store = useClarificationStore.getState();
+    store.setError(error);
+    store.updatePhase('error');
   }, []);
 
   /**
@@ -641,16 +555,17 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
   const handleClarificationCancel = useCallback(async () => {
     // Call the skip IPC to cancel the session
     if (typeof window !== 'undefined' && window.electronAPI?.clarification) {
-      const sessionId = clarificationState.sessionId;
+      const { sessionId } = useClarificationStore.getState();
       if (sessionId) {
         await window.electronAPI.clarification.skip(sessionId, 'User cancelled');
       }
     }
 
     // Reset state
-    setClarificationState(INITIAL_CLARIFICATION_STATE);
+    useClarificationStore.getState().reset();
+    setClarificationStepId(null);
     clarificationStartedRef.current = null;
-  }, [clarificationState.sessionId]);
+  }, []);
 
   /**
    * Handles completion of the discovery step.
@@ -769,14 +684,12 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         await completeStep.mutateAsync({ id: activeRefinementStepId });
 
         // Reset refinement state
-        setRefinementState(INITIAL_REFINEMENT_STATE);
+        useRefinementStore.getState().reset();
+        setRefinementStepId(null);
         refinementStartedRef.current = null;
       } catch (error) {
         console.error('Failed to save refinement:', error);
-        setRefinementState((prev) => ({
-          ...prev,
-          error: error instanceof Error ? error.message : 'Failed to save refinement',
-        }));
+        useRefinementStore.getState().setError(error instanceof Error ? error.message : 'Failed to save refinement');
       }
     },
     [activeRefinementStepId, completeStep, updateStep]
@@ -786,11 +699,7 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
    * Handles reverting to the original refined text.
    */
   const handleRevertRefinement = useCallback(() => {
-    // Reset the refinement state text to original refined text
-    setRefinementState((prev) => ({
-      ...prev,
-      refinedText: prev.refinedText, // Keep the original
-    }));
+    // No-op: the store's outcome already holds the original refinedText
   }, []);
 
   /**
@@ -800,18 +709,12 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
     async (guidance: string) => {
       if (!activeRefinementStepId) return;
 
+      const previousOutcome = useRefinementStore.getState().outcome;
+
       try {
-        // Reset streaming state for regeneration
-        setRefinementState((prev) => ({
-          ...prev,
-          activeTools: [],
-          error: null,
-          isStreaming: true,
-          phase: 'loading_agent',
-          text: '',
-          thinking: [],
-          toolHistory: [],
-        }));
+        // Reset streaming state for regeneration via store
+        const store = useRefinementStore.getState();
+        store.startSession(store.sessionId ?? '');
 
         await regenerateRefinement.mutateAsync({
           guidance,
@@ -820,12 +723,10 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         });
       } catch (error) {
         console.error('Failed to regenerate refinement:', error);
-        setRefinementState((prev) => ({
-          ...prev,
-          error: error instanceof Error ? error.message : 'Failed to regenerate',
-          isStreaming: false,
-          phase: 'error',
-        }));
+        const storeOnError = useRefinementStore.getState();
+        storeOnError.setOutcome(previousOutcome);
+        storeOnError.setError(error instanceof Error ? error.message : 'Failed to regenerate');
+        storeOnError.updatePhase('error');
       }
     },
     [activeRefinementStepId, regenerateRefinement, workflowId]
@@ -843,7 +744,8 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
       await skipStep.mutateAsync(activeRefinementStepId);
 
       // Reset refinement state
-      setRefinementState(INITIAL_REFINEMENT_STATE);
+      useRefinementStore.getState().reset();
+      setRefinementStepId(null);
       refinementStartedRef.current = null;
     } catch (error) {
       console.error('Failed to skip refinement:', error);
@@ -856,33 +758,32 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
    * Handles cancelling the active refinement session.
    */
   const handleCancelRefinement = useCallback(async () => {
-    if (!refinementState.sessionId || !activeRefinementStepId) return;
+    const store = useRefinementStore.getState();
+    if (!store.sessionId || !activeRefinementStepId) return;
 
     try {
       await cancelRefinement.mutateAsync({
-        sessionId: refinementState.sessionId,
+        sessionId: store.sessionId,
         stepId: activeRefinementStepId,
         workflowId,
       });
 
       // Reset state
-      setRefinementState(INITIAL_REFINEMENT_STATE);
+      useRefinementStore.getState().reset();
+      setRefinementStepId(null);
       refinementStartedRef.current = null;
     } catch (error) {
       console.error('Failed to cancel refinement:', error);
     }
-  }, [activeRefinementStepId, cancelRefinement, refinementState.sessionId, workflowId]);
+  }, [activeRefinementStepId, cancelRefinement, workflowId]);
 
   /**
    * Handles refinement errors.
    */
   const handleRefinementError = useCallback((error: string) => {
-    setRefinementState((prev) => ({
-      ...prev,
-      error,
-      isStreaming: false,
-      phase: 'error',
-    }));
+    const store = useRefinementStore.getState();
+    store.setError(error);
+    store.updatePhase('error');
   }, []);
 
   // Effect to start clarification when a clarification step becomes active
@@ -912,120 +813,55 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
       // Mark as started
       clarificationStartedRef.current = activeClarificationStep.id;
 
-      // Set initial streaming state
-      setClarificationState({
-        activeTools: [],
-        agentName: clarificationAgent?.displayName ?? clarificationAgent?.name ?? 'Clarification Agent',
-        error: null,
-        extendedThinkingElapsedMs: undefined,
-        isStreaming: true,
-        maxThinkingTokens: clarificationAgent?.maxThinkingTokens ?? null,
-        outcome: null,
-        phase: 'loading_agent',
-        sessionId: null,
-        stepId: activeClarificationStep.id,
-        text: '',
-        thinking: [],
-        toolHistory: [],
-      });
+      // Set initial streaming state via store
+      const cStore = useClarificationStore.getState();
+      cStore.reset();
+      cStore.setAgentName(clarificationAgent?.displayName ?? clarificationAgent?.name ?? 'Clarification Agent');
+      cStore.setMaxThinkingTokens(clarificationAgent?.maxThinkingTokens ?? null);
+      cStore.updatePhase('loading_agent');
+      setClarificationStepId(activeClarificationStep.id);
 
       // Subscribe to streaming events BEFORE starting
       const unsubscribe = window.electronAPI.clarification.onStreamMessage((message) => {
+        const store = useClarificationStore.getState();
         // Update state based on message type
         switch (message.type) {
           case 'extended_thinking_heartbeat':
-            setClarificationState((prev) => ({
-              ...prev,
-              extendedThinkingElapsedMs: message.elapsedMs,
-              maxThinkingTokens: message.maxThinkingTokens,
-              phase: 'executing_extended_thinking',
-            }));
+            store.setExtendedThinkingElapsedMs(message.elapsedMs);
+            store.setMaxThinkingTokens(message.maxThinkingTokens);
+            store.updatePhase('executing_extended_thinking');
             break;
 
           case 'phase_change':
-            setClarificationState((prev) => ({
-              ...prev,
-              phase: message.phase,
-            }));
+            store.updatePhase(message.phase);
             break;
 
           case 'text_delta':
-            setClarificationState((prev) => ({
-              ...prev,
-              text: prev.text + message.delta,
-            }));
+            store.appendText(message.delta);
             break;
 
           case 'thinking_delta':
-            setClarificationState((prev) => {
-              const thinking = [...prev.thinking];
-              thinking[message.blockIndex] = (thinking[message.blockIndex] || '') + message.delta;
-              return { ...prev, thinking };
-            });
+            store.appendThinking(message.blockIndex, message.delta);
             break;
 
           case 'thinking_start':
-            setClarificationState((prev) => ({
-              ...prev,
-              thinking: [...prev.thinking, ''],
-            }));
+            store.startThinkingBlock(message.blockIndex);
             break;
 
           case 'tool_start':
-            setClarificationState((prev) => {
-              const newTool: ActiveTool = {
-                toolInput: message.toolInput,
-                toolName: message.toolName,
-                toolUseId: message.toolUseId,
-              };
-              return {
-                ...prev,
-                activeTools: [...prev.activeTools, newTool],
-                toolHistory: [...prev.toolHistory, newTool],
-              };
+            store.addTool({
+              id: message.toolUseId,
+              name: message.toolName,
+              startedAt: new Date(),
+              toolInput: message.toolInput,
             });
             break;
           case 'tool_stop':
-            setClarificationState((prev) => ({
-              ...prev,
-              activeTools: prev.activeTools.filter((t) => t.toolUseId !== message.toolUseId),
-            }));
+            store.removeTool(message.toolUseId);
             break;
 
           case 'tool_update':
-            setClarificationState((prev) => {
-              const updatedTool: ActiveTool = {
-                toolInput: message.toolInput,
-                toolName: message.toolName,
-                toolUseId: message.toolUseId,
-              };
-
-              // Update activeTools
-              const activeIndex = prev.activeTools.findIndex((tool) => tool.toolUseId === message.toolUseId);
-              let newActiveTools: Array<ActiveTool>;
-              if (activeIndex === -1) {
-                newActiveTools = [...prev.activeTools, updatedTool];
-              } else {
-                newActiveTools = [...prev.activeTools];
-                newActiveTools[activeIndex] = updatedTool;
-              }
-
-              // Update toolHistory
-              const historyIndex = prev.toolHistory.findIndex((tool) => tool.toolUseId === message.toolUseId);
-              let newToolHistory: Array<ActiveTool>;
-              if (historyIndex === -1) {
-                newToolHistory = [...prev.toolHistory, updatedTool];
-              } else {
-                newToolHistory = [...prev.toolHistory];
-                newToolHistory[historyIndex] = updatedTool;
-              }
-
-              return {
-                ...prev,
-                activeTools: newActiveTools,
-                toolHistory: newToolHistory,
-              };
-            });
+            store.updateToolInput(message.toolUseId, message.toolInput);
             break;
         }
       });
@@ -1068,13 +904,12 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
           normalizedOutcome = outcome as ClarificationOutcome;
         }
 
-        // Update state with outcome
-        setClarificationState((prev) => ({
-          ...prev,
-          isStreaming: false,
-          outcome: normalizedOutcome,
-          phase: outcome.type === 'QUESTIONS_FOR_USER' || outcome.type === 'SKIP_CLARIFICATION' ? 'complete' : 'error',
-        }));
+        // Update store with outcome
+        const storeAfter = useClarificationStore.getState();
+        storeAfter.setOutcome(normalizedOutcome);
+        storeAfter.updatePhase(
+          outcome.type === 'QUESTIONS_FOR_USER' || outcome.type === 'SKIP_CLARIFICATION' ? 'complete' : 'error'
+        );
 
         // Handle outcome directly here since ClarificationStreaming will unmount
         // when isStreaming becomes false, so its useEffect won't fire
@@ -1092,11 +927,8 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
             id: activeClarificationStep.id,
           });
 
-          // Update local state to show the form
-          setClarificationState((prev) => ({
-            ...prev,
-            phase: 'waiting_for_user',
-          }));
+          // Update store state to show the form
+          useClarificationStore.getState().updatePhase('waiting_for_user');
         } else if (outcome.type === 'SKIP_CLARIFICATION') {
           // Update the step's outputStructured with skip info
           const stepOutput: ClarificationStepOutput = {
@@ -1114,19 +946,17 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
           await skipStep.mutateAsync(activeClarificationStep.id);
 
           // Reset clarification state
-          setClarificationState(INITIAL_CLARIFICATION_STATE);
+          useClarificationStore.getState().reset();
+          setClarificationStepId(null);
           clarificationStartedRef.current = null;
         }
       } catch (error) {
         // Cleanup subscription on error
         unsubscribe();
 
-        setClarificationState((prev) => ({
-          ...prev,
-          error: error instanceof Error ? error.message : 'Unknown error occurred',
-          isStreaming: false,
-          phase: 'error',
-        }));
+        const storeOnError = useClarificationStore.getState();
+        storeOnError.setError(error instanceof Error ? error.message : 'Unknown error occurred');
+        storeOnError.updatePhase('error');
       }
     };
 
@@ -1143,11 +973,12 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
   // Reset clarification state when step changes or completes
   useEffect(() => {
-    if (!activeClarificationStep && clarificationState.stepId !== null) {
-      setClarificationState(INITIAL_CLARIFICATION_STATE);
+    if (!activeClarificationStep && clarificationStepId !== null) {
+      useClarificationStore.getState().reset();
+      setClarificationStepId(null);
       clarificationStartedRef.current = null;
     }
-  }, [activeClarificationStep, clarificationState.stepId]);
+  }, [activeClarificationStep, clarificationStepId]);
 
   // Effect to start refinement when a refinement step becomes active
   useEffect(() => {
@@ -1185,120 +1016,55 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
       // Mark as started
       refinementStartedRef.current = activeRefinementStep.id;
 
-      // Set initial streaming state
-      setRefinementState({
-        activeTools: [],
-        agentName: refinementAgent?.displayName ?? refinementAgent?.name ?? 'Refinement Agent',
-        error: null,
-        extendedThinkingElapsedMs: undefined,
-        isStreaming: true,
-        maxThinkingTokens: refinementAgent?.maxThinkingTokens ?? null,
-        phase: 'loading_agent',
-        refinedText: null,
-        sessionId: null,
-        stepId: activeRefinementStep.id,
-        text: '',
-        thinking: [],
-        toolHistory: [],
-      });
+      // Set initial streaming state via store
+      const rStore = useRefinementStore.getState();
+      rStore.reset();
+      rStore.setAgentName(refinementAgent?.displayName ?? refinementAgent?.name ?? 'Refinement Agent');
+      rStore.setMaxThinkingTokens(refinementAgent?.maxThinkingTokens ?? null);
+      rStore.updatePhase('loading_agent');
+      setRefinementStepId(activeRefinementStep.id);
 
       // Subscribe to streaming events BEFORE starting
       const unsubscribe = window.electronAPI.refinement.onStreamMessage((message: RefinementStreamMessage) => {
+        const store = useRefinementStore.getState();
         switch (message.type) {
           case 'extended_thinking_heartbeat':
-            setRefinementState((prev) => ({
-              ...prev,
-              extendedThinkingElapsedMs: message.elapsedMs,
-              maxThinkingTokens: message.maxThinkingTokens,
-              phase: 'executing_extended_thinking',
-            }));
+            store.setExtendedThinkingElapsedMs(message.elapsedMs);
+            store.setMaxThinkingTokens(message.maxThinkingTokens);
+            store.updatePhase('executing_extended_thinking');
             break;
 
           case 'phase_change':
-            setRefinementState((prev) => ({
-              ...prev,
-              phase: message.phase,
-            }));
+            store.updatePhase(message.phase);
             break;
 
           case 'text_delta':
-            setRefinementState((prev) => ({
-              ...prev,
-              text: prev.text + message.delta,
-            }));
+            store.appendText(message.delta);
             break;
 
           case 'thinking_delta':
-            setRefinementState((prev) => {
-              const thinking = [...prev.thinking];
-              thinking[message.blockIndex] = (thinking[message.blockIndex] || '') + message.delta;
-              return { ...prev, thinking };
-            });
+            store.appendThinking(message.blockIndex, message.delta);
             break;
 
           case 'thinking_start':
-            setRefinementState((prev) => ({
-              ...prev,
-              thinking: [...prev.thinking, ''],
-            }));
+            store.startThinkingBlock(message.blockIndex);
             break;
 
           case 'tool_start':
-            setRefinementState((prev) => {
-              const newTool: RefinementActiveTool = {
-                id: message.toolUseId,
-                name: message.toolName,
-                startedAt: new Date(),
-                toolInput: message.toolInput,
-              };
-              return {
-                ...prev,
-                activeTools: [...prev.activeTools, newTool],
-                toolHistory: [...prev.toolHistory, newTool],
-              };
+            store.addTool({
+              id: message.toolUseId,
+              name: message.toolName,
+              startedAt: new Date(),
+              toolInput: message.toolInput,
             });
             break;
 
           case 'tool_stop':
-            setRefinementState((prev) => ({
-              ...prev,
-              activeTools: prev.activeTools.filter((t) => t.id !== message.toolUseId),
-            }));
+            store.removeTool(message.toolUseId);
             break;
 
           case 'tool_update':
-            setRefinementState((prev) => {
-              const updatedTool: RefinementActiveTool = {
-                id: message.toolUseId,
-                name: message.toolName,
-                startedAt: new Date(),
-                toolInput: message.toolInput,
-              };
-
-              const activeIndex = prev.activeTools.findIndex((tool) => tool.id === message.toolUseId);
-              let newActiveTools: Array<RefinementActiveTool>;
-              if (activeIndex === -1) {
-                newActiveTools = [...prev.activeTools, updatedTool];
-              } else {
-                newActiveTools = [...prev.activeTools];
-                newActiveTools[activeIndex] = updatedTool;
-              }
-
-              const historyIndex = prev.toolHistory.findIndex((tool) => tool.id === message.toolUseId);
-              let newToolHistory: Array<RefinementActiveTool>;
-              if (historyIndex === -1) {
-                newToolHistory = [...prev.toolHistory, updatedTool];
-              } else {
-                newToolHistory = [...prev.toolHistory];
-                newToolHistory[historyIndex] = updatedTool;
-              }
-
-              return {
-                ...prev,
-                activeTools: newActiveTools,
-                toolHistory: newToolHistory,
-              };
-            });
+            store.updateToolInput(message.toolUseId, message.toolInput);
             break;
         }
       });
@@ -1325,16 +1091,12 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
         unsubscribe();
 
         // Handle outcome
+        const storeAfter = useRefinementStore.getState();
         const { outcome } = result;
         if (outcome.type === 'SUCCESS') {
           const { refinedText } = outcome;
-          // Update state with refined text
-          setRefinementState((prev) => ({
-            ...prev,
-            isStreaming: false,
-            phase: 'complete',
-            refinedText,
-          }));
+          storeAfter.setOutcome({ refinedText, type: 'SUCCESS' });
+          storeAfter.updatePhase('complete');
 
           // Update step output
           await updateStep.mutateAsync({
@@ -1342,40 +1104,22 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
             id: activeRefinementStep.id,
           });
         } else if (outcome.type === 'CANCELLED') {
-          const errorMsg = outcome.reason ?? 'Refinement was cancelled';
-          setRefinementState((prev) => ({
-            ...prev,
-            error: errorMsg,
-            isStreaming: false,
-            phase: 'cancelled',
-          }));
+          storeAfter.setError(outcome.reason ?? 'Refinement was cancelled');
+          storeAfter.updatePhase('cancelled');
         } else if (outcome.type === 'TIMEOUT') {
-          const errorMsg = `Refinement timed out after ${outcome.elapsedSeconds}s: ${outcome.error}`;
-          setRefinementState((prev) => ({
-            ...prev,
-            error: errorMsg,
-            isStreaming: false,
-            phase: 'timeout',
-          }));
+          storeAfter.setError(`Refinement timed out after ${outcome.elapsedSeconds}s: ${outcome.error}`);
+          storeAfter.updatePhase('timeout');
         } else if (outcome.type === 'ERROR') {
-          const errorMsg = outcome.error;
-          setRefinementState((prev) => ({
-            ...prev,
-            error: errorMsg,
-            isStreaming: false,
-            phase: 'error',
-          }));
+          storeAfter.setError(outcome.error);
+          storeAfter.updatePhase('error');
         }
       } catch (error) {
         // Cleanup subscription on error
         unsubscribe();
 
-        setRefinementState((prev) => ({
-          ...prev,
-          error: error instanceof Error ? error.message : 'Unknown error occurred',
-          isStreaming: false,
-          phase: 'error',
-        }));
+        const storeOnError = useRefinementStore.getState();
+        storeOnError.setError(error instanceof Error ? error.message : 'Unknown error occurred');
+        storeOnError.updatePhase('error');
       }
     };
 
@@ -1394,11 +1138,12 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
 
   // Reset refinement state when step changes or completes
   useEffect(() => {
-    if (!activeRefinementStep && refinementState.stepId !== null) {
-      setRefinementState(INITIAL_REFINEMENT_STATE);
+    if (!activeRefinementStep && refinementStepId !== null) {
+      useRefinementStore.getState().reset();
+      setRefinementStepId(null);
       refinementStartedRef.current = null;
     }
-  }, [activeRefinementStep, refinementState.stepId]);
+  }, [activeRefinementStep, refinementStepId]);
 
   const isLoading = isLoadingSteps || isLoadingWorkflow;
   const isStepsEmpty = visibleSteps.length === 0;
@@ -1430,9 +1175,9 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
           <div className={'w-full max-w-6xl px-4'}>
             <ClarificationWorkspace
               existingAnswers={activeClarificationOutput?.answers}
-              extendedThinkingElapsedMs={clarificationState.extendedThinkingElapsedMs}
+              extendedThinkingElapsedMs={clarificationStore.extendedThinkingElapsedMs}
               featureRequest={workflow?.featureRequest}
-              isStreaming={clarificationState.isStreaming}
+              isStreaming={clarificationStore.isStreaming}
               isSubmitting={submittingStepId === activeClarificationStep.id}
               onSkip={() => handleSkipClarification(activeClarificationStep.id)}
               onSubmit={
@@ -1441,25 +1186,33 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
                       handleSubmitClarification(activeClarificationStep.id, activeClarificationOutput, answers)
                   : undefined
               }
-              phase={clarificationState.phase}
+              phase={clarificationStore.phase}
               questions={activeClarificationOutput?.questions ?? []}
               streamingProps={{
-                activeTools: clarificationState.activeTools,
-                agentName: clarificationState.agentName,
-                error: clarificationState.error,
-                extendedThinkingElapsedMs: clarificationState.extendedThinkingElapsedMs,
-                isStreaming: clarificationState.isStreaming,
-                maxThinkingTokens: clarificationState.maxThinkingTokens,
+                activeTools: clarificationStore.activeTools.map((tool) => ({
+                  toolInput: tool.toolInput,
+                  toolName: tool.name,
+                  toolUseId: tool.id,
+                })),
+                agentName: clarificationStore.agentName,
+                error: clarificationStore.error,
+                extendedThinkingElapsedMs: clarificationStore.extendedThinkingElapsedMs,
+                isStreaming: clarificationStore.isStreaming,
+                maxThinkingTokens: clarificationStore.maxThinkingTokens,
                 onCancel: handleClarificationCancel,
                 onClarificationError: handleClarificationError,
                 onQuestionsReady: handleQuestionsReady,
                 onSkipReady: handleSkipReady,
-                outcome: clarificationState.outcome,
-                phase: clarificationState.phase,
-                sessionId: clarificationState.sessionId,
-                text: clarificationState.text,
-                thinking: clarificationState.thinking,
-                toolHistory: clarificationState.toolHistory,
+                outcome: clarificationStore.outcome,
+                phase: clarificationStore.phase,
+                sessionId: clarificationStore.sessionId,
+                text: clarificationStore.text,
+                thinking: clarificationStore.thinking,
+                toolHistory: clarificationStore.toolHistory.map((tool) => ({
+                  toolInput: tool.toolInput,
+                  toolName: tool.name,
+                  toolUseId: tool.id,
+                })),
               }}
             />
           </div>
@@ -1470,33 +1223,33 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
           <div className={'w-full max-w-6xl px-4'}>
             <RefinementWorkspace
               clarificationContext={clarificationContextForDisplay}
-              extendedThinkingElapsedMs={refinementState.extendedThinkingElapsedMs}
+              extendedThinkingElapsedMs={refinementStore.extendedThinkingElapsedMs}
               featureRequest={workflow?.featureRequest ?? null}
-              isStreaming={refinementState.isStreaming}
+              isStreaming={refinementStore.isStreaming}
               isSubmitting={submittingStepId === activeRefinementStep.id}
               onRegenerate={handleRegenerateRefinement}
               onRevert={handleRevertRefinement}
               onSave={handleSaveRefinement}
               onSkip={handleSkipRefinement}
-              phase={refinementState.phase}
-              refinedText={refinementState.refinedText}
+              phase={refinementStore.phase}
+              refinedText={refinementStore.outcome?.type === 'SUCCESS' ? refinementStore.outcome.refinedText : null}
               streamingProps={{
-                activeTools: refinementState.activeTools.map((tool) => ({
+                activeTools: refinementStore.activeTools.map((tool) => ({
                   toolInput: tool.toolInput,
                   toolName: tool.name,
                   toolUseId: tool.id,
                 })),
-                agentName: refinementState.agentName,
-                error: refinementState.error,
-                extendedThinkingElapsedMs: refinementState.extendedThinkingElapsedMs,
-                isStreaming: refinementState.isStreaming,
-                maxThinkingTokens: refinementState.maxThinkingTokens,
+                agentName: refinementStore.agentName,
+                error: refinementStore.error,
+                extendedThinkingElapsedMs: refinementStore.extendedThinkingElapsedMs,
+                isStreaming: refinementStore.isStreaming,
+                maxThinkingTokens: refinementStore.maxThinkingTokens,
                 onCancel: handleCancelRefinement,
                 onRefinementError: handleRefinementError,
-                phase: refinementState.phase,
-                text: refinementState.text,
-                thinking: refinementState.thinking,
-                toolHistory: refinementState.toolHistory.map((tool) => ({
+                phase: refinementStore.phase,
+                text: refinementStore.text,
+                thinking: refinementStore.thinking,
+                toolHistory: refinementStore.toolHistory.map((tool) => ({
                   toolInput: tool.toolInput,
                   toolName: tool.name,
                   toolUseId: tool.id,
@@ -1576,21 +1329,29 @@ export const PipelineView = ({ className, ref, workflowId, ...props }: PipelineV
             const metrics = computeStepMetrics(step);
 
             // Determine clarification streaming props for this step
-            const isActiveClarification = isClarificationStep && clarificationState.stepId === step.id;
+            const isActiveClarification = isClarificationStep && clarificationStepId === step.id;
             const clarificationStreamingProps = isActiveClarification
               ? {
-                  clarificationActiveTools: clarificationState.activeTools,
-                  clarificationAgentName: clarificationState.agentName,
-                  clarificationError: clarificationState.error,
-                  clarificationOutcome: clarificationState.outcome,
-                  clarificationPhase: clarificationState.phase,
-                  clarificationSessionId: clarificationState.sessionId,
-                  clarificationText: clarificationState.text,
-                  clarificationThinking: clarificationState.thinking,
-                  clarificationToolHistory: clarificationState.toolHistory,
-                  extendedThinkingElapsedMs: clarificationState.extendedThinkingElapsedMs,
-                  isClarificationStreaming: clarificationState.isStreaming,
-                  maxThinkingTokens: clarificationState.maxThinkingTokens,
+                  clarificationActiveTools: clarificationStore.activeTools.map((tool) => ({
+                    toolInput: tool.toolInput,
+                    toolName: tool.name,
+                    toolUseId: tool.id,
+                  })),
+                  clarificationAgentName: clarificationStore.agentName,
+                  clarificationError: clarificationStore.error,
+                  clarificationOutcome: clarificationStore.outcome,
+                  clarificationPhase: clarificationStore.phase,
+                  clarificationSessionId: clarificationStore.sessionId,
+                  clarificationText: clarificationStore.text,
+                  clarificationThinking: clarificationStore.thinking,
+                  clarificationToolHistory: clarificationStore.toolHistory.map((tool) => ({
+                    toolInput: tool.toolInput,
+                    toolName: tool.name,
+                    toolUseId: tool.id,
+                  })),
+                  extendedThinkingElapsedMs: clarificationStore.extendedThinkingElapsedMs,
+                  isClarificationStreaming: clarificationStore.isStreaming,
+                  maxThinkingTokens: clarificationStore.maxThinkingTokens,
                   onClarificationCancel: handleClarificationCancel,
                   onClarificationError: handleClarificationError,
                   onQuestionsReady: handleQuestionsReady,

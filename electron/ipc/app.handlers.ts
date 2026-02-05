@@ -13,7 +13,12 @@ import { IpcChannels } from './channels';
  */
 export function registerAppHandlers(): void {
   ipcMain.handle(IpcChannels.app.getVersion, (): string => {
-    return app.getVersion();
+    try {
+      return app.getVersion();
+    } catch (error) {
+      console.error('[IPC Error] app:getVersion:', error);
+      throw error;
+    }
   });
 
   ipcMain.handle(
@@ -22,7 +27,12 @@ export function registerAppHandlers(): void {
       _event: IpcMainInvokeEvent,
       name: 'appData' | 'desktop' | 'documents' | 'downloads' | 'home' | 'temp' | 'userData'
     ): string => {
-      return app.getPath(name);
+      try {
+        return app.getPath(name);
+      } catch (error) {
+        console.error('[IPC Error] app:getPath:', error);
+        throw error;
+      }
     }
   );
 }
