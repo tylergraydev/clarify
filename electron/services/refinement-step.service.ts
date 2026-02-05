@@ -26,7 +26,6 @@ import type { Options, SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
 
 import { randomUUID } from 'crypto';
 
-import type { NewAuditLog, Workflow } from '../../db/schema';
 import type {
   RefinementAgentConfig,
   RefinementOutcome,
@@ -36,6 +35,7 @@ import type {
   RefinementStreamMessage,
   RefinementUsageStats,
 } from '../../lib/validations/refinement';
+import type { ActiveToolInfo, OutcomePauseInfo } from './agent-step/step-types';
 
 import { getDatabase } from '../../db';
 import {
@@ -43,54 +43,29 @@ import {
   createAgentSkillsRepository,
   createAgentsRepository,
   createAgentToolsRepository,
-  createAuditLogsRepository,
-  createWorkflowsRepository,
 } from '../../db/repositories';
 import { refinementAgentOutputFlatSchema, refinementAgentOutputJSONSchema } from '../../lib/validations/refinement';
+import { getQueryFunction, parseToolInputJson } from './agent-step/agent-sdk';
+import { MAX_RETRY_ATTEMPTS, STEP_TIMEOUTS } from './agent-step/agent-step-constants';
+import { CLAUDE_CODE_TOOL_NAMES } from './agent-step/agent-tools';
+import { logAuditEntry } from './agent-step/audit-log';
+import { startHeartbeat, stopHeartbeat } from './agent-step/heartbeat';
+import { calculateBackoffDelay, isTransientError, RetryTracker } from './agent-step/retry-backoff';
+import { extractUsageStats } from './agent-step/usage-stats';
+import { isPauseRequested } from './agent-step/workflow-pause';
 import { debugLoggerService } from './debug-logger.service';
 
 /**
  * Default timeout for refinement operations in seconds.
  * Longer than clarification (120s) to allow for deeper codebase exploration.
  */
-const DEFAULT_TIMEOUT_SECONDS = 180;
-
-/**
- * Maximum number of retry attempts for transient errors.
- */
-const MAX_RETRY_ATTEMPTS = 3;
-
-/**
- * Base delay for exponential backoff in milliseconds.
- */
-const BASE_RETRY_DELAY_MS = 1000;
-
-/**
- * Heartbeat interval for extended thinking progress updates in milliseconds.
- * Sends periodic status updates to UI when partial streaming is disabled.
- */
-const EXTENDED_THINKING_HEARTBEAT_INTERVAL_MS = 2000; // 2 seconds
-
-/**
- * Cached SDK query function to avoid repeated dynamic imports.
- */
-let cachedQueryFn: (typeof import('@anthropic-ai/claude-agent-sdk'))['query'] | null = null;
+const DEFAULT_TIMEOUT_SECONDS = STEP_TIMEOUTS.refinement;
 
 /**
  * Extended outcome fields for pause and retry information.
+ * Uses shared OutcomePauseInfo type with refinement-specific usage stats.
  */
-export interface RefinementOutcomePauseInfo {
-  /** Whether the workflow should pause after this step */
-  pauseRequested?: boolean;
-  /** Current retry count for this session */
-  retryCount?: number;
-  /** SDK session ID for potential resumption */
-  sdkSessionId?: string;
-  /** Whether skip fallback is available */
-  skipFallbackAvailable?: boolean;
-  /** Usage statistics from SDK result */
-  usage?: RefinementUsageStats;
-}
+export type RefinementOutcomePauseInfo = OutcomePauseInfo<RefinementUsageStats>;
 
 /**
  * Extended outcome that includes pause information.
@@ -114,15 +89,6 @@ interface ActiveRefinementSession {
 }
 
 /**
- * Active tool being used by the agent.
- */
-interface ActiveToolInfo {
-  toolInput: Record<string, unknown>;
-  toolName: string;
-  toolUseId: string;
-}
-
-/**
  * Internal result from executeAgent including usage metadata.
  */
 interface ExecuteAgentResult {
@@ -130,11 +96,6 @@ interface ExecuteAgentResult {
   sdkSessionId?: string;
   usage?: RefinementUsageStats;
 }
-
-/**
- * Pause behaviors supported by workflows.
- */
-type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
 
 /**
  * Refinement Step Service
@@ -146,7 +107,7 @@ type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
  */
 class RefinementStepService {
   private activeSessions = new Map<string, ActiveRefinementSession>();
-  private retryCountBySession = new Map<string, number>();
+  private retryTracker = new RetryTracker();
 
   /**
    * Cancel an active refinement session.
@@ -169,7 +130,7 @@ class RefinementStepService {
     });
 
     // Audit log: refinement cancelled
-    this.logAuditEntry('refinement_cancelled', 'Refinement step cancelled by user', {
+    logAuditEntry('refinement_cancelled', 'Refinement step cancelled by user', {
       agentId: session.agentConfig?.id,
       agentName: session.agentConfig?.name,
       eventData: {
@@ -207,7 +168,7 @@ class RefinementStepService {
    * @returns The current retry count (0 if not retried)
    */
   getRetryCount(sessionId: string): number {
-    return this.retryCountBySession.get(sessionId) ?? 0;
+    return this.retryTracker.getRetryCount(sessionId);
   }
 
   /**
@@ -228,43 +189,13 @@ class RefinementStepService {
   }
 
   /**
-   * Get the workflow's pause behavior from the database.
-   *
-   * @param workflowId - The workflow ID to query
-   * @returns The workflow record or undefined if not found
-   */
-  getWorkflow(workflowId: number): undefined | Workflow {
-    const db = getDatabase();
-    const workflowsRepo = createWorkflowsRepository(db);
-    return workflowsRepo.findById(workflowId);
-  }
-
-  /**
-   * Check if a pause is requested based on workflow's pause behavior.
-   *
-   * @param workflowId - The workflow ID
-   * @returns Whether pause is requested
-   */
-  isPauseRequested(workflowId: number): boolean {
-    const workflow = this.getWorkflow(workflowId);
-    if (!workflow) return false;
-
-    const pauseBehavior = (workflow.pauseBehavior ?? 'auto_pause') as PauseBehavior;
-
-    // AUTO_PAUSE pauses after each step
-    // CONTINUOUS never pauses
-    // GATES_ONLY only pauses at gate steps (refinement is not a gate)
-    return pauseBehavior === 'auto_pause';
-  }
-
-  /**
-   * Check if retry limit has been reached.
+   * Check if retry limit has been reached for a session.
    *
    * @param sessionId - The session ID
    * @returns Whether the max retry limit has been reached
    */
   isRetryLimitReached(sessionId: string): boolean {
-    return this.getRetryCount(sessionId) >= MAX_RETRY_ATTEMPTS;
+    return this.retryTracker.isRetryLimitReached(sessionId);
   }
 
   /**
@@ -340,13 +271,13 @@ class RefinementStepService {
     onStreamMessage?: (message: RefinementStreamMessage) => void
   ): Promise<RefinementOutcomeWithPause> {
     // Check if retry limit reached
-    if (this.isRetryLimitReached(previousSessionId)) {
+    if (this.retryTracker.isRetryLimitReached(previousSessionId)) {
       debugLoggerService.logSdkEvent(previousSessionId, 'Retry limit reached', {
         maxRetries: MAX_RETRY_ATTEMPTS,
       });
 
       // Audit log: retry limit reached
-      this.logAuditEntry('refinement_retry_limit_reached', 'Maximum retry attempts reached', {
+      logAuditEntry('refinement_retry_limit_reached', 'Maximum retry attempts reached', {
         eventData: {
           maxRetries: MAX_RETRY_ATTEMPTS,
           sessionId: previousSessionId,
@@ -365,10 +296,10 @@ class RefinementStepService {
     }
 
     // Increment retry count
-    const newRetryCount = this.incrementRetryCount(previousSessionId);
+    const newRetryCount = this.retryTracker.incrementRetryCount(previousSessionId);
 
     // Calculate and apply backoff delay
-    const backoffDelay = this.calculateBackoffDelay(newRetryCount);
+    const backoffDelay = calculateBackoffDelay(newRetryCount);
 
     debugLoggerService.logSdkEvent(previousSessionId, 'Retrying refinement with backoff', {
       backoffDelayMs: backoffDelay,
@@ -376,20 +307,16 @@ class RefinementStepService {
     });
 
     // Audit log: retrying refinement
-    this.logAuditEntry(
-      'refinement_retry_started',
-      `Retrying refinement (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS})`,
-      {
-        eventData: {
-          backoffDelayMs: backoffDelay,
-          retryCount: newRetryCount,
-          sessionId: previousSessionId,
-        },
-        severity: 'info',
-        workflowId: options.workflowId,
-        workflowStepId: options.stepId,
-      }
-    );
+    logAuditEntry('refinement_retry_started', `Retrying refinement (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS})`, {
+      eventData: {
+        backoffDelayMs: backoffDelay,
+        retryCount: newRetryCount,
+        sessionId: previousSessionId,
+      },
+      severity: 'info',
+      workflowId: options.workflowId,
+      workflowStepId: options.stepId,
+    });
 
     // Wait for backoff delay
     await new Promise((resolve) => setTimeout(resolve, backoffDelay));
@@ -398,7 +325,7 @@ class RefinementStepService {
     const outcome = await this.startRefinement(options, onStreamMessage);
 
     // Clean up previous session's retry count to prevent memory leak
-    this.clearRetryCount(previousSessionId);
+    this.retryTracker.clearRetryCount(previousSessionId);
 
     // Update the outcome with the correct retry count
     return {
@@ -454,7 +381,7 @@ class RefinementStepService {
     });
 
     // Audit log: refinement started
-    this.logAuditEntry('refinement_started', 'Refinement step started', {
+    logAuditEntry('refinement_started', 'Refinement step started', {
       agentId: options.agentId,
       eventData: {
         clarificationQuestionCount: options.clarificationContext.questions.length,
@@ -485,7 +412,7 @@ class RefinementStepService {
       });
 
       // Audit log: agent configuration loaded
-      this.logAuditEntry('refinement_agent_loaded', `Loaded refinement agent: ${agentConfig.name}`, {
+      logAuditEntry('refinement_agent_loaded', `Loaded refinement agent: ${agentConfig.name}`, {
         agentId: agentConfig.id,
         agentName: agentConfig.name,
         eventData: {
@@ -518,7 +445,7 @@ class RefinementStepService {
             });
 
             // Audit log: refinement timeout
-            this.logAuditEntry('refinement_timeout', `Refinement timed out after ${timeoutSeconds} seconds`, {
+            logAuditEntry('refinement_timeout', `Refinement timed out after ${timeoutSeconds} seconds`, {
               agentId: agentConfig.id,
               agentName: agentConfig.name,
               eventData: {
@@ -554,10 +481,10 @@ class RefinementStepService {
 
       // Clean up session on success
       this.activeSessions.delete(sessionId);
-      this.clearRetryCount(sessionId);
+      this.retryTracker.clearRetryCount(sessionId);
 
       // Add pause information and usage to successful outcomes
-      const pauseRequested = this.isPauseRequested(options.workflowId);
+      const pauseRequested = isPauseRequested(options.workflowId, false); // refinement is not a gate step
       const outcomeWithPause: RefinementOutcomeWithPause = {
         ...result.outcome,
         pauseRequested,
@@ -585,9 +512,9 @@ class RefinementStepService {
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       const errorStack = error instanceof Error ? error.stack : undefined;
-      const retryCount = this.getRetryCount(sessionId);
-      const isRetryable = this.isTransientError(errorMessage);
-      const retryLimitReached = this.isRetryLimitReached(sessionId);
+      const retryCount = this.retryTracker.getRetryCount(sessionId);
+      const isRetryable = isTransientError(errorMessage);
+      const retryLimitReached = this.retryTracker.isRetryLimitReached(sessionId);
 
       debugLoggerService.logSdkEvent(sessionId, 'Refinement error', {
         error: errorMessage,
@@ -597,7 +524,7 @@ class RefinementStepService {
       });
 
       // Audit log: refinement error
-      this.logAuditEntry('refinement_error', `Refinement step failed: ${errorMessage}`, {
+      logAuditEntry('refinement_error', `Refinement step failed: ${errorMessage}`, {
         agentId: session.agentConfig?.id,
         agentName: session.agentConfig?.name,
         eventData: {
@@ -702,26 +629,6 @@ The refined text should be a prose narrative that reads as if the user had provi
   }
 
   /**
-   * Calculate exponential backoff delay for a retry attempt.
-   *
-   * @param retryCount - The current retry count (1-based)
-   * @returns The delay in milliseconds
-   */
-  private calculateBackoffDelay(retryCount: number): number {
-    // Exponential backoff: 1s, 2s, 4s, ...
-    return BASE_RETRY_DELAY_MS * Math.pow(2, retryCount - 1);
-  }
-
-  /**
-   * Clear the retry count for a session.
-   *
-   * @param sessionId - The session ID
-   */
-  private clearRetryCount(sessionId: string): void {
-    this.retryCountBySession.delete(sessionId);
-  }
-
-  /**
    * Emit a phase change message to the stream callback.
    *
    * @param sessionId - The session ID
@@ -782,29 +689,8 @@ The refined text should be a prose narrative that reads as if the user had provi
     const allowedToolNames = agentConfig.tools.length > 0 ? agentConfig.tools.map((t) => t.toolName) : [];
     sdkOptions.allowedTools = allowedToolNames;
 
-    // All built-in Claude Code tools that should be blocked if not in the allowed list
-    const allBuiltInTools = [
-      'Task',
-      'AskUserQuestion',
-      'Bash',
-      'BashOutput',
-      'Edit',
-      'Read',
-      'Write',
-      'Glob',
-      'Grep',
-      'KillBash',
-      'NotebookEdit',
-      'WebFetch',
-      'WebSearch',
-      'TodoWrite',
-      'ExitPlanMode',
-      'ListMcpResources',
-      'ReadMcpResource',
-    ];
-
     // Explicitly disallow tools NOT in the allowed list
-    sdkOptions.disallowedTools = allBuiltInTools.filter((tool) => !allowedToolNames.includes(tool));
+    sdkOptions.disallowedTools = CLAUDE_CODE_TOOL_NAMES.filter((tool) => !allowedToolNames.includes(tool));
 
     // Configure permission mode
     if (agentConfig.permissionMode) {
@@ -841,19 +727,16 @@ The refined text should be a prose narrative that reads as if the user had provi
 
     // Start heartbeat for extended thinking mode
     let heartbeatInterval: NodeJS.Timeout | null = null;
-    const startTime = Date.now();
 
     if (agentConfig.extendedThinkingEnabled && agentConfig.maxThinkingTokens) {
-      heartbeatInterval = setInterval(() => {
-        const elapsedMs = Date.now() - startTime;
-
+      heartbeatInterval = startHeartbeat(({ elapsedMs, timestamp }) => {
         if (onStreamMessage) {
           onStreamMessage({
             elapsedMs,
             estimatedProgress: null,
             maxThinkingTokens: agentConfig.maxThinkingTokens!,
             sessionId: session.sessionId,
-            timestamp: Date.now(),
+            timestamp,
             type: 'extended_thinking_heartbeat',
           });
         }
@@ -862,7 +745,7 @@ The refined text should be a prose narrative that reads as if the user had provi
           elapsedMs,
           elapsedSeconds: Math.floor(elapsedMs / 1000),
         });
-      }, EXTENDED_THINKING_HEARTBEAT_INTERVAL_MS);
+      });
     }
 
     // Build the prompt for refinement
@@ -877,7 +760,7 @@ The refined text should be a prose narrative that reads as if the user had provi
     });
 
     // Audit log: refinement exploring
-    this.logAuditEntry('refinement_exploring', 'Refinement agent is processing feature request with clarifications', {
+    logAuditEntry('refinement_exploring', 'Refinement agent is processing feature request with clarifications', {
       agentId: agentConfig.id,
       agentName: agentConfig.name,
       eventData: {
@@ -965,7 +848,7 @@ The refined text should be a prose narrative that reads as if the user had provi
 
       // Audit log: refinement completed with specific outcome
       if (outcome.type === 'SUCCESS') {
-        this.logAuditEntry('refinement_completed', 'Refinement completed successfully', {
+        logAuditEntry('refinement_completed', 'Refinement completed successfully', {
           afterState: { phase: 'complete', refinedTextLength: outcome.refinedText.length },
           agentId: agentConfig.id,
           agentName: agentConfig.name,
@@ -980,7 +863,7 @@ The refined text should be a prose narrative that reads as if the user had provi
           workflowStepId: session.options.stepId,
         });
       } else if (outcome.type === 'ERROR') {
-        this.logAuditEntry('refinement_error', `Refinement error: ${outcome.error}`, {
+        logAuditEntry('refinement_error', `Refinement error: ${outcome.error}`, {
           agentId: agentConfig.id,
           agentName: agentConfig.name,
           eventData: {
@@ -995,16 +878,9 @@ The refined text should be a prose narrative that reads as if the user had provi
       }
 
       // Extract usage statistics from successful result
-      let usage: RefinementUsageStats | undefined;
-      if (resultMessage.subtype === 'success') {
-        usage = {
-          costUsd: resultMessage.total_cost_usd,
-          durationMs: resultMessage.duration_ms,
-          inputTokens: resultMessage.usage.input_tokens,
-          numTurns: resultMessage.num_turns,
-          outputTokens: resultMessage.usage.output_tokens,
-        };
+      const usage = extractUsageStats(resultMessage);
 
+      if (usage) {
         debugLoggerService.logSdkEvent(session.sessionId, 'Usage statistics extracted', {
           costUsd: usage.costUsd,
           durationMs: usage.durationMs,
@@ -1033,100 +909,10 @@ The refined text should be a prose narrative that reads as if the user had provi
       throw error;
     } finally {
       // Clean up heartbeat interval
+      stopHeartbeat(heartbeatInterval);
       if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        debugLoggerService.logSdkEvent(session.sessionId, 'Extended thinking heartbeat stopped', {
-          elapsedMs: Date.now() - startTime,
-        });
+        debugLoggerService.logSdkEvent(session.sessionId, 'Extended thinking heartbeat stopped', {});
       }
-    }
-  }
-
-  /**
-   * Increment the retry count for a session.
-   *
-   * @param sessionId - The session ID
-   * @returns The new retry count
-   */
-  private incrementRetryCount(sessionId: string): number {
-    const currentCount = this.getRetryCount(sessionId);
-    const newCount = currentCount + 1;
-    this.retryCountBySession.set(sessionId, newCount);
-    return newCount;
-  }
-
-  /**
-   * Check if an error is transient and should be retried.
-   *
-   * @param error - The error message
-   * @returns Whether the error is likely transient
-   */
-  private isTransientError(error: string): boolean {
-    const transientPatterns = [
-      /timeout/i,
-      /network/i,
-      /connection/i,
-      /ECONNRESET/i,
-      /ETIMEDOUT/i,
-      /rate.?limit/i,
-      /503/i,
-      /502/i,
-      /overloaded/i,
-      /temporarily.?unavailable/i,
-    ];
-
-    return transientPatterns.some((pattern) => pattern.test(error));
-  }
-
-  /**
-   * Create an audit log entry for refinement events.
-   *
-   * @param eventType - The type of refinement event
-   * @param message - Human-readable description of the event
-   * @param options - Additional audit log options
-   */
-  private logAuditEntry(
-    eventType: string,
-    message: string,
-    options: {
-      afterState?: Record<string, unknown>;
-      agentId?: number;
-      agentName?: string;
-      beforeState?: Record<string, unknown>;
-      eventData?: Record<string, unknown>;
-      severity?: 'debug' | 'error' | 'info' | 'warning';
-      workflowId?: number;
-      workflowStepId?: number;
-    } = {}
-  ): void {
-    try {
-      const db = getDatabase();
-      const auditLogsRepo = createAuditLogsRepository(db);
-
-      const auditEntry: NewAuditLog = {
-        afterState: options.afterState ?? null,
-        beforeState: options.beforeState ?? null,
-        eventCategory: 'step',
-        eventData: {
-          agentId: options.agentId,
-          agentName: options.agentName,
-          ...options.eventData,
-        },
-        eventType,
-        message,
-        severity: options.severity ?? 'info',
-        source: 'system',
-        workflowId: options.workflowId ?? null,
-        workflowStepId: options.workflowStepId ?? null,
-      };
-
-      auditLogsRepo.create(auditEntry);
-    } catch (error) {
-      // Log to debug logger but don't throw - audit failures shouldn't break refinement
-      debugLoggerService.logSdkEvent('system', 'Failed to create audit log entry', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        eventType,
-      });
     }
   }
 
@@ -1358,47 +1144,6 @@ The refined text should be a prose narrative that reads as if the user had provi
       type: 'SUCCESS',
     };
   }
-}
-
-/**
- * Get the SDK query function, loading it once and caching for subsequent calls.
- *
- * @returns The SDK query function
- * @throws Error if the SDK is not available
- */
-async function getQueryFunction(): Promise<(typeof import('@anthropic-ai/claude-agent-sdk'))['query']> {
-  if (!cachedQueryFn) {
-    try {
-      const sdk = await import('@anthropic-ai/claude-agent-sdk');
-      cachedQueryFn = sdk.query;
-    } catch (error) {
-      throw new Error(
-        `Claude Agent SDK not available. Ensure @anthropic-ai/claude-agent-sdk is installed. ` +
-          `Original error: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-  return cachedQueryFn;
-}
-
-/**
- * Safely parse a tool input JSON payload.
- */
-function parseToolInputJson(payload: string): null | Record<string, unknown> {
-  if (!payload) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(payload);
-    if (parsed && typeof parsed === 'object') {
-      return parsed as Record<string, unknown>;
-    }
-  } catch {
-    // Ignore partial JSON parsing failures.
-  }
-
-  return null;
 }
 
 // Export singleton instance
