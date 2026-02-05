@@ -20,7 +20,6 @@ import type { WorkflowStepsRepository } from '../../db/repositories';
 import type {
   ClarificationOutcome,
   ClarificationRefinementInput,
-  ClarificationServiceState,
   ClarificationStreamMessage,
 } from '../../lib/validations/clarification';
 
@@ -246,20 +245,17 @@ export function registerClarificationHandlers(
   // Submit manual edits to clarification
   ipcMain.handle(
     IpcChannels.clarification.submitEdits,
-    (_event: IpcMainInvokeEvent, sessionId: unknown, editedText: unknown): ClarificationOutcome => {
+    (_event: IpcMainInvokeEvent, workflowId: unknown, editedText: unknown): ClarificationOutcome => {
       try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
-
+        const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
         const validatedText = validateString(editedText, 'editedText');
 
         console.log('[IPC] clarification:submitEdits', {
           editedTextLength: validatedText.length,
-          sessionId,
+          workflowId: validatedWorkflowId,
         });
 
-        return clarificationStepService.submitEdits(sessionId, validatedText);
+        return clarificationStepService.submitEdits(validatedWorkflowId, validatedText);
       } catch (error) {
         console.error('[IPC Error] clarification:submitEdits:', error);
         throw error;
@@ -270,20 +266,17 @@ export function registerClarificationHandlers(
   // Skip clarification with optional reason
   ipcMain.handle(
     IpcChannels.clarification.skip,
-    (_event: IpcMainInvokeEvent, sessionId: unknown, reason?: unknown): ClarificationOutcome => {
+    (_event: IpcMainInvokeEvent, workflowId: unknown, reason?: unknown): ClarificationOutcome => {
       try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
-
+        const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
         const validatedReason = reason !== undefined && reason !== null ? validateString(reason, 'reason') : undefined;
 
         console.log('[IPC] clarification:skip', {
           reason: validatedReason,
-          sessionId,
+          workflowId: validatedWorkflowId,
         });
 
-        return clarificationStepService.skipClarification(sessionId, validatedReason);
+        return clarificationStepService.skipClarification(validatedWorkflowId, validatedReason);
       } catch (error) {
         console.error('[IPC Error] clarification:skip:', error);
         throw error;
@@ -294,15 +287,8 @@ export function registerClarificationHandlers(
   // Retry clarification with exponential backoff
   ipcMain.handle(
     IpcChannels.clarification.retry,
-    async (_event: IpcMainInvokeEvent, sessionId: unknown, input: unknown): Promise<ClarificationOutcomeWithPause> => {
+    async (_event: IpcMainInvokeEvent, input: unknown): Promise<ClarificationOutcomeWithPause> => {
       try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
-
-        // Cancel the existing session first if it's still active
-        clarificationStepService.cancelClarification(sessionId);
-
         // Validate input for restart
         if (!input || typeof input !== 'object') {
           throw new Error('Invalid input: expected object for retry');
@@ -316,6 +302,9 @@ export function registerClarificationHandlers(
         const featureRequest = validateString(typedInput.featureRequest, 'featureRequest');
         const repositoryPath = validateString(typedInput.repositoryPath, 'repositoryPath');
 
+        // Cancel the existing session first if it's still active
+        clarificationStepService.cancelClarification(workflowId);
+
         // Look up the workflow step to get the agentId
         const step = workflowStepsRepository.findById(stepId);
         if (!step) {
@@ -327,30 +316,26 @@ export function registerClarificationHandlers(
           throw new Error(`No agent assigned to clarification step ${stepId}`);
         }
 
-        const retryCount = clarificationStepService.getRetryCount(sessionId);
-        const isRetryLimitReached = clarificationStepService.isRetryLimitReached(sessionId);
+        const retryCount = clarificationStepService.getRetryCount(workflowId);
+        const isRetryLimitReached = clarificationStepService.isRetryLimitReached(workflowId);
 
         console.log('[IPC] clarification:retry', {
           agentId,
           isRetryLimitReached,
-          previousSessionId: sessionId,
           retryCount,
           stepId,
           workflowId,
         });
 
         // Use the new retry method with exponential backoff
-        return clarificationStepService.retryClarification(
-          {
-            agentId,
-            featureRequest,
-            repositoryPath,
-            stepId,
-            timeoutSeconds: typedInput.timeoutSeconds,
-            workflowId,
-          },
-          sessionId
-        );
+        return clarificationStepService.retryClarification({
+          agentId,
+          featureRequest,
+          repositoryPath,
+          stepId,
+          timeoutSeconds: typedInput.timeoutSeconds,
+          workflowId,
+        });
       } catch (error) {
         console.error('[IPC Error] clarification:retry:', error);
         throw error;
@@ -361,31 +346,19 @@ export function registerClarificationHandlers(
   // Get current session state
   ipcMain.handle(
     IpcChannels.clarification.getState,
-    (_event: IpcMainInvokeEvent, sessionId: unknown): ClarificationServiceState | null => {
+    (_event: IpcMainInvokeEvent, workflowId: unknown) => {
       try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
+        const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
 
-        console.log('[IPC] clarification:getState', { sessionId });
+        console.log('[IPC] clarification:getState', { workflowId: validatedWorkflowId });
 
-        return clarificationStepService.getState(sessionId);
+        return clarificationStepService.getState(validatedWorkflowId);
       } catch (error) {
         console.error('[IPC Error] clarification:getState:', error);
         throw error;
       }
     }
   );
-}
-
-/**
- * Validates that a value is a valid session ID.
- *
- * @param value - The value to validate
- * @returns True if valid session ID
- */
-function isValidSessionId(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0;
 }
 
 /**

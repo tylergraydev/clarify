@@ -20,34 +20,38 @@
  * idle -> loading_agent -> executing -> processing_response -> complete | error
  *                                                           -> cancelled | timeout
  *
+ * Extends BaseAgentStepService to leverage shared abstractions:
+ * - AgentSdkExecutor for SDK query execution
+ * - StepAuditLogger for consistent audit logging
+ * - StructuredOutputValidator for output validation
+ * - AgentTimeoutManager for timeout handling
+ * - OutcomeBuilder for pause information
+ *
  * @see {@link ../../lib/validations/file-discovery.ts File Discovery Types}
- * @see {@link ./clarification-step.service.ts Clarification Service (reference pattern)}
  */
 
-import type { Options, SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
+import type { SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
+import type { Options } from '@anthropic-ai/claude-agent-sdk';
 
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
 import type { NewDiscoveredFile } from '../../db/schema';
-import type { ActiveToolInfo, OutcomePauseInfo } from './agent-step/step-types';
+import type { ActiveToolInfo, ExecuteAgentResult, OutcomePauseInfo } from './agent-step/step-types';
 
 import { getDatabase } from '../../db';
-import {
-  createAgentHooksRepository,
-  createAgentSkillsRepository,
-  createAgentsRepository,
-  createAgentToolsRepository,
-  createDiscoveredFilesRepository,
-} from '../../db/repositories';
+import { createDiscoveredFilesRepository } from '../../db/repositories';
 import { getQueryFunction, parseToolInputJson } from './agent-step/agent-sdk';
 import { MAX_RETRY_ATTEMPTS, STEP_TIMEOUTS } from './agent-step/agent-step-constants';
+import { createTimeoutPromise } from './agent-step/agent-timeout-manager';
 import { CLAUDE_CODE_TOOL_NAMES } from './agent-step/agent-tools';
-import { logAuditEntry } from './agent-step/audit-log';
+import { BaseAgentStepService } from './agent-step/base-agent-step-service';
 import { startHeartbeat, stopHeartbeat } from './agent-step/heartbeat';
-import { calculateBackoffDelay, RetryTracker } from './agent-step/retry-backoff';
+import { buildErrorOutcomeWithRetry, buildOutcomeWithPauseInfo } from './agent-step/outcome-builder';
+import { calculateBackoffDelay, isTransientError } from './agent-step/retry-backoff';
+import { StepAuditLogger } from './agent-step/step-audit-logger';
+import { StructuredOutputValidator } from './agent-step/structured-output-validator';
 import { extractUsageStats } from './agent-step/usage-stats';
-import { isPauseRequested } from './agent-step/workflow-pause';
 import { debugLoggerService } from './debug-logger.service';
 
 // =============================================================================
@@ -479,15 +483,6 @@ interface ActiveFileDiscoverySession {
   timeoutId: null | ReturnType<typeof setTimeout>;
 }
 
-/**
- * Internal result from executeAgent including usage metadata.
- */
-interface ExecuteAgentResult {
-  outcome: FileDiscoveryOutcome;
-  sdkSessionId?: string;
-  usage?: FileDiscoveryUsageStats;
-}
-
 // =============================================================================
 // Service Class
 // =============================================================================
@@ -498,19 +493,33 @@ interface ExecuteAgentResult {
  * Manages the file discovery step of workflow pipelines.
  * Loads agent configuration from the database and executes
  * the file discovery agent to identify relevant files.
+ *
+ * Extends BaseAgentStepService to leverage shared abstractions:
+ * - AgentSdkExecutor for SDK query execution
+ * - StepAuditLogger for consistent audit logging
+ * - StructuredOutputValidator for output validation
+ * - AgentTimeoutManager for timeout handling
+ * - OutcomeBuilder for pause information
  */
-class FileDiscoveryStepService {
-  private activeSessions = new Map<string, ActiveFileDiscoverySession>();
-  private retryTracker = new RetryTracker();
+class FileDiscoveryStepService extends BaseAgentStepService<
+  FileDiscoveryAgentConfig,
+  ActiveFileDiscoverySession,
+  FileDiscoveryServiceOptions,
+  FileDiscoveryServicePhase,
+  FileDiscoveryOutcome,
+  FileDiscoveryStreamMessage
+> {
+  private auditLogger = new StepAuditLogger('file_discovery');
+  private structuredValidator = new StructuredOutputValidator(fileDiscoveryAgentOutputSchema);
 
   /**
    * Cancel an active file discovery session.
    *
-   * @param sessionId - The session ID to cancel
+   * @param workflowId - The workflow ID to cancel
    * @returns The cancelled outcome
    */
-  cancelDiscovery(sessionId: string): FileDiscoveryOutcome {
-    const session = this.activeSessions.get(sessionId);
+  cancelDiscovery(workflowId: number): FileDiscoveryOutcome {
+    const session = this.activeSessions.get(workflowId);
     if (!session) {
       return {
         error: 'Session not found',
@@ -518,26 +527,25 @@ class FileDiscoveryStepService {
       };
     }
 
-    debugLoggerService.logSession(sessionId, 'cancel', {
+    debugLoggerService.logSession(session.sessionId, 'cancel', {
       discoveredCount: session.discoveredFiles.length,
       phase: session.phase,
       reason: 'User cancelled',
     });
 
     // Audit log: discovery cancelled
-    logAuditEntry('file_discovery_cancelled', 'File discovery step cancelled by user', {
-      agentId: session.agentConfig?.id,
-      agentName: session.agentConfig?.name,
-      eventData: {
+    this.auditLogger.logStepCancelled(
+      workflowId,
+      session.options.stepId,
+      session.agentConfig?.id,
+      session.agentConfig?.name,
+      {
         discoveredCount: session.discoveredFiles.length,
         phase: session.phase,
         reason: 'User cancelled',
-        sessionId,
-      },
-      severity: 'info',
-      workflowId: session.options.workflowId,
-      workflowStepId: session.options.stepId,
-    });
+        sessionId: session.sessionId,
+      }
+    );
 
     // Clear timeout if active
     if (session.timeoutId) {
@@ -555,7 +563,7 @@ class FileDiscoveryStepService {
     }
 
     // Clean up
-    this.activeSessions.delete(sessionId);
+    this.cleanupSession(workflowId);
 
     return {
       partialCount,
@@ -565,117 +573,36 @@ class FileDiscoveryStepService {
   }
 
   /**
-   * Get the current retry count for a session.
-   *
-   * @param sessionId - The session ID
-   * @returns The current retry count (0 if not retried)
-   */
-  getRetryCount(sessionId: string): number {
-    return this.retryTracker.getRetryCount(sessionId);
-  }
-
-  /**
    * Get the current state of a file discovery session.
    *
-   * @param sessionId - The session ID to query
+   * @param workflowId - The workflow ID to query
    * @returns The current service state, or null if not found
    */
-  getState(sessionId: string): FileDiscoveryServiceState | null {
-    const session = this.activeSessions.get(sessionId);
+  getState(workflowId: number): FileDiscoveryServiceState | null {
+    const session = this.activeSessions.get(workflowId);
     if (!session) return null;
 
-    return {
-      agentConfig: session.agentConfig,
-      discoveredCount: session.discoveredFiles.length,
-      phase: session.phase,
-      summary: session.summary,
-    };
-  }
-
-  /**
-   * Check if retry limit has been reached.
-   *
-   * @param sessionId - The session ID
-   * @returns Whether the max retry limit has been reached
-   */
-  isRetryLimitReached(sessionId: string): boolean {
-    return this.retryTracker.isRetryLimitReached(sessionId);
-  }
-
-  /**
-   * Load full agent configuration from database.
-   *
-   * @param agentId - The agent ID to load
-   * @returns The complete agent configuration
-   * @throws Error if agent is not found
-   */
-  async loadAgentConfig(agentId: number): Promise<FileDiscoveryAgentConfig> {
-    const db = getDatabase();
-    const agentsRepo = createAgentsRepository(db);
-    const toolsRepo = createAgentToolsRepository(db);
-    const skillsRepo = createAgentSkillsRepository(db);
-    const hooksRepo = createAgentHooksRepository(db);
-
-    const agent = await agentsRepo.findById(agentId);
-    if (!agent) {
-      throw new Error(`Agent with ID ${agentId} not found`);
-    }
-
-    const tools = await toolsRepo.findByAgentId(agentId);
-    const skills = await skillsRepo.findByAgentId(agentId);
-    const hooks = await hooksRepo.findByAgentId(agentId);
-
-    return {
-      extendedThinkingEnabled: agent.extendedThinkingEnabled ?? false,
-      hooks: hooks.map((h) => ({
-        body: h.body,
-        eventType: h.eventType,
-        matcher: h.matcher,
-      })),
-      id: agent.id,
-      maxThinkingTokens: agent.maxThinkingTokens,
-      model: agent.model,
-      name: agent.name,
-      permissionMode: agent.permissionMode,
-      skills: skills.map((s) => ({
-        isRequired: s.requiredAt !== null,
-        skillName: s.skillName,
-      })),
-      systemPrompt: agent.systemPrompt,
-      tools: tools
-        .filter((t) => !t.disallowedAt)
-        .map((t) => ({
-          toolName: t.toolName,
-          toolPattern: t.toolPattern ?? '',
-        })),
-    } satisfies FileDiscoveryAgentConfig;
+    return this.extractState(session);
   }
 
   /**
    * Retry a failed file discovery with exponential backoff.
    *
    * @param options - The file discovery service options
-   * @param previousSessionId - The previous session ID for tracking retry count
    * @returns Promise resolving to the discovery outcome
    */
-  async retryDiscovery(
-    options: FileDiscoveryServiceOptions,
-    previousSessionId: string
-  ): Promise<FileDiscoveryOutcomeWithPause> {
+  async retryDiscovery(options: FileDiscoveryServiceOptions): Promise<FileDiscoveryOutcomeWithPause> {
+    const workflowId = options.workflowId;
+
     // Check if retry limit reached
-    if (this.isRetryLimitReached(previousSessionId)) {
-      debugLoggerService.logSdkEvent(previousSessionId, 'Retry limit reached', {
+    if (this.isRetryLimitReached(workflowId)) {
+      debugLoggerService.logSdkEvent(workflowId.toString(), 'Retry limit reached', {
         maxRetries: MAX_RETRY_ATTEMPTS,
       });
 
-      logAuditEntry('file_discovery_retry_limit_reached', 'Maximum retry attempts reached', {
-        eventData: {
-          maxRetries: MAX_RETRY_ATTEMPTS,
-          sessionId: previousSessionId,
-        },
-        severity: 'warning',
-        workflowId: options.workflowId,
-        workflowStepId: options.stepId,
+      // Audit log: retry limit reached
+      this.auditLogger.logRetryLimitReached(workflowId, options.stepId, MAX_RETRY_ATTEMPTS, {
+        workflowId,
       });
 
       return {
@@ -687,30 +614,21 @@ class FileDiscoveryStepService {
     }
 
     // Increment retry count
-    const newRetryCount = this.retryTracker.incrementRetryCount(previousSessionId);
+    const newRetryCount = this.retryTracker.incrementRetryCount(workflowId.toString());
 
     // Calculate and apply backoff delay
     const backoffDelay = calculateBackoffDelay(newRetryCount);
 
-    debugLoggerService.logSdkEvent(previousSessionId, 'Retrying file discovery with backoff', {
+    debugLoggerService.logSdkEvent(workflowId.toString(), 'Retrying file discovery with backoff', {
       backoffDelayMs: backoffDelay,
       retryCount: newRetryCount,
     });
 
-    logAuditEntry(
-      'file_discovery_retry_started',
-      `Retrying file discovery (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS})`,
-      {
-        eventData: {
-          backoffDelayMs: backoffDelay,
-          retryCount: newRetryCount,
-          sessionId: previousSessionId,
-        },
-        severity: 'info',
-        workflowId: options.workflowId,
-        workflowStepId: options.stepId,
-      }
-    );
+    // Audit log: retrying file discovery
+    this.auditLogger.logRetryStarted(workflowId, options.stepId, newRetryCount, MAX_RETRY_ATTEMPTS, {
+      backoffDelayMs: backoffDelay,
+      workflowId,
+    });
 
     // Wait for backoff delay
     await new Promise((resolve) => setTimeout(resolve, backoffDelay));
@@ -718,9 +636,7 @@ class FileDiscoveryStepService {
     // Start new discovery session
     const outcome = await this.startDiscovery(options);
 
-    // Clean up previous session's retry count
-    this.retryTracker.clearRetryCount(previousSessionId);
-
+    // Update the outcome with the correct retry count
     return {
       ...outcome,
       retryCount: newRetryCount,
@@ -738,8 +654,7 @@ class FileDiscoveryStepService {
     options: FileDiscoveryServiceOptions,
     onStreamMessage?: (message: FileDiscoveryStreamMessage) => void
   ): Promise<FileDiscoveryOutcomeWithPause> {
-    const sessionId = randomUUID();
-    const abortController = new AbortController();
+    const workflowId = options.workflowId;
     const timeoutSeconds = options.timeoutSeconds ?? DEFAULT_TIMEOUT_SECONDS;
 
     // Handle re-discovery mode: clear existing files if replace mode
@@ -747,55 +662,37 @@ class FileDiscoveryStepService {
       await this.clearExistingDiscoveredFiles(options.stepId);
     }
 
-    // Initialize session
-    const session: ActiveFileDiscoverySession = {
-      abortController,
-      activeTools: [],
-      agentConfig: null,
-      discoveredFiles: [],
-      options,
-      phase: 'idle',
-      sessionId,
-      streamingText: '',
-      summary: null,
-      thinkingBlocks: [],
-      timeoutId: null,
-    };
+    // Initialize session using createSession template method
+    const session = this.createSession(workflowId, options);
+    this.activeSessions.set(workflowId, session);
 
-    this.activeSessions.set(sessionId, session);
-
-    debugLoggerService.logSession(sessionId, 'start', {
+    debugLoggerService.logSession(session.sessionId, 'start', {
       agentId: options.agentId,
       rediscoveryMode: options.rediscoveryMode ?? 'none',
       repositoryPath: options.repositoryPath,
       stepId: options.stepId,
       timeoutSeconds,
-      workflowId: options.workflowId,
+      workflowId,
     });
 
-    logAuditEntry('file_discovery_started', 'File discovery step started', {
-      agentId: options.agentId,
-      eventData: {
-        rediscoveryMode: options.rediscoveryMode ?? 'none',
-        refinedFeatureRequestLength: options.refinedFeatureRequest.length,
-        repositoryPath: options.repositoryPath,
-        sessionId,
-        timeoutSeconds,
-      },
-      severity: 'info',
-      workflowId: options.workflowId,
-      workflowStepId: options.stepId,
+    // Audit log: file discovery started
+    this.auditLogger.logStepStarted(workflowId, options.stepId, options.agentId, {
+      rediscoveryMode: options.rediscoveryMode ?? 'none',
+      refinedFeatureRequestLength: options.refinedFeatureRequest.length,
+      repositoryPath: options.repositoryPath,
+      sessionId: session.sessionId,
+      timeoutSeconds,
     });
 
     try {
       // Phase: Loading agent
       session.phase = 'loading_agent';
-      this.emitPhaseChange(sessionId, session.phase, onStreamMessage);
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
-      const agentConfig = await this.loadAgentConfig(options.agentId);
+      const agentConfig = await this.loadAgentConfig(workflowId, options.agentId);
       session.agentConfig = agentConfig;
 
-      debugLoggerService.logSdkEvent(sessionId, 'Agent configuration loaded', {
+      debugLoggerService.logSdkEvent(session.sessionId, 'Agent configuration loaded', {
         agentName: agentConfig.name,
         hooksCount: agentConfig.hooks.length,
         model: agentConfig.model,
@@ -803,67 +700,62 @@ class FileDiscoveryStepService {
         toolsCount: agentConfig.tools.length,
       });
 
-      logAuditEntry('file_discovery_agent_loaded', `Loaded file discovery agent: ${agentConfig.name}`, {
-        agentId: agentConfig.id,
-        agentName: agentConfig.name,
-        eventData: {
-          hooksCount: agentConfig.hooks.length,
-          model: agentConfig.model,
-          permissionMode: agentConfig.permissionMode,
-          sessionId,
-          skillsCount: agentConfig.skills.length,
-          toolsCount: agentConfig.tools.length,
-        },
-        severity: 'info',
-        workflowId: options.workflowId,
-        workflowStepId: options.stepId,
+      // Audit log: agent configuration loaded
+      this.auditLogger.logAgentLoaded(workflowId, options.stepId, agentConfig.id, agentConfig.name, {
+        hooksCount: agentConfig.hooks.length,
+        model: agentConfig.model,
+        permissionMode: agentConfig.permissionMode,
+        sessionId: session.sessionId,
+        skillsCount: agentConfig.skills.length,
+        toolsCount: agentConfig.tools.length,
       });
 
       // Phase: Executing
       session.phase = 'executing';
-      this.emitPhaseChange(sessionId, session.phase, onStreamMessage);
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
-      // Set up timeout
-      const timeoutPromise = new Promise<ExecuteAgentResult>((resolve) => {
-        session.timeoutId = setTimeout(() => {
-          if (!abortController.signal.aborted) {
-            abortController.abort();
-            session.phase = 'timeout';
-            this.emitPhaseChange(sessionId, session.phase, onStreamMessage);
+      // Set up timeout using AgentTimeoutManager
+      const { cleanup: cleanupTimeout, promise: timeoutPromise } = createTimeoutPromise<
+        ExecuteAgentResult<FileDiscoveryOutcome, FileDiscoveryUsageStats>
+      >({
+        abortController: session.abortController,
+        onTimeout: () => {
+          session.phase = 'timeout';
+          this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
-            debugLoggerService.logSdkEvent(sessionId, 'File discovery timed out', {
+          debugLoggerService.logSdkEvent(session.sessionId, 'File discovery timed out', {
+            discoveredCount: session.discoveredFiles.length,
+            elapsedSeconds: timeoutSeconds,
+          });
+
+          // Audit log: file discovery timeout
+          this.auditLogger.logStepTimeout(
+            workflowId,
+            options.stepId,
+            agentConfig.id,
+            agentConfig.name,
+            timeoutSeconds,
+            {
               discoveredCount: session.discoveredFiles.length,
-              elapsedSeconds: timeoutSeconds,
-            });
-
-            logAuditEntry('file_discovery_timeout', `File discovery timed out after ${timeoutSeconds} seconds`, {
-              agentId: agentConfig.id,
-              agentName: agentConfig.name,
-              eventData: {
-                discoveredCount: session.discoveredFiles.length,
-                elapsedSeconds: timeoutSeconds,
-                sessionId,
-              },
-              severity: 'warning',
-              workflowId: options.workflowId,
-              workflowStepId: options.stepId,
-            });
-
-            // Save partial results on timeout
-            if (session.discoveredFiles.length > 0) {
-              void this.saveDiscoveredFiles(session);
+              sessionId: session.sessionId,
             }
+          );
 
-            resolve({
-              outcome: {
-                elapsedSeconds: timeoutSeconds,
-                error: `File discovery timed out after ${timeoutSeconds} seconds`,
-                partialCount: session.discoveredFiles.length,
-                type: 'TIMEOUT',
-              },
-            });
+          // Save partial results on timeout
+          if (session.discoveredFiles.length > 0) {
+            void this.saveDiscoveredFiles(session);
           }
-        }, timeoutSeconds * 1000);
+
+          return {
+            outcome: {
+              elapsedSeconds: timeoutSeconds,
+              error: `File discovery timed out after ${timeoutSeconds} seconds`,
+              partialCount: session.discoveredFiles.length,
+              type: 'TIMEOUT',
+            },
+          };
+        },
+        timeoutSeconds,
       });
 
       // Execute the agent
@@ -873,93 +765,92 @@ class FileDiscoveryStepService {
       const result = await Promise.race([executionPromise, timeoutPromise]);
 
       // Clear timeout if execution completed first
-      if (session.timeoutId) {
-        clearTimeout(session.timeoutId);
-      }
+      cleanupTimeout();
 
       // Clean up session on success
-      this.activeSessions.delete(sessionId);
-      this.retryTracker.clearRetryCount(sessionId);
+      this.cleanupSession(workflowId);
 
-      // Add pause information and usage to successful outcomes
-      const pauseRequested = isPauseRequested(options.workflowId, false); // discovery is not a gate step
-      const outcomeWithPause: FileDiscoveryOutcomeWithPause = {
-        ...result.outcome,
-        pauseRequested,
-        retryCount: 0,
-        sdkSessionId: result.sdkSessionId,
-        skipFallbackAvailable: true,
-        usage: result.usage,
-      };
+      // Add pause information and usage to successful outcomes using OutcomeBuilder
+      const outcomeWithPause = buildOutcomeWithPauseInfo(
+        result.outcome,
+        workflowId,
+        false, // file discovery is not a gate step
+        result,
+        true // skipFallbackAvailable
+      );
 
-      debugLoggerService.logSdkEvent(sessionId, 'File discovery completed with pause info', {
+      debugLoggerService.logSdkEvent(session.sessionId, 'File discovery completed with pause info', {
         hasSdkSessionId: !!result.sdkSessionId,
         hasUsage: !!result.usage,
         outcomeType: result.outcome.type,
-        pauseRequested,
+        pauseRequested: outcomeWithPause.pauseRequested,
       });
 
       return outcomeWithPause;
     } catch (error) {
-      // Clear timeout on error
-      if (session.timeoutId) {
-        clearTimeout(session.timeoutId);
-      }
-
       session.phase = 'error';
-      this.emitPhaseChange(sessionId, session.phase, onStreamMessage);
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       const errorStack = error instanceof Error ? error.stack : undefined;
-      const retryCount = this.getRetryCount(sessionId);
+      const retryCount = this.getRetryCount(workflowId);
+      const isRetryable = isTransientError(errorMessage);
+      const retryLimitReached = this.isRetryLimitReached(workflowId);
 
-      debugLoggerService.logSdkEvent(sessionId, 'File discovery error', {
+      debugLoggerService.logSdkEvent(session.sessionId, 'File discovery error', {
         discoveredCount: session.discoveredFiles.length,
         error: errorMessage,
+        isRetryable,
         retryCount,
+        retryLimitReached,
       });
 
-      logAuditEntry('file_discovery_error', `File discovery step failed: ${errorMessage}`, {
-        agentId: session.agentConfig?.id,
-        agentName: session.agentConfig?.name,
-        eventData: {
+      // Audit log: file discovery error
+      this.auditLogger.logStepError(
+        workflowId,
+        options.stepId,
+        session.agentConfig?.id,
+        session.agentConfig?.name,
+        errorMessage,
+        {
           discoveredCount: session.discoveredFiles.length,
           error: errorMessage,
+          isRetryable,
           retryCount,
-          sessionId,
+          retryLimitReached,
+          sessionId: session.sessionId,
           stack: errorStack,
-        },
-        severity: 'error',
-        workflowId: options.workflowId,
-        workflowStepId: options.stepId,
-      });
+        }
+      );
 
       // Save partial results if any files were discovered before error
       if (session.discoveredFiles.length > 0) {
         await this.saveDiscoveredFiles(session);
       }
 
-      // Clean up session
-      this.activeSessions.delete(sessionId);
+      // Clean up session (but keep retry count for potential retry)
+      this.activeSessions.delete(workflowId);
 
+      // Return extended outcome with retry information using OutcomeBuilder
       return {
-        error: errorMessage,
+        ...buildErrorOutcomeWithRetry(errorMessage, retryCount, true, errorStack),
         partialCount: session.discoveredFiles.length,
-        retryCount,
-        skipFallbackAvailable: true,
-        stack: errorStack,
-        type: 'ERROR',
-      };
+      } as FileDiscoveryOutcomeWithPause;
     }
   }
+
+  // ===========================================================================
+  // Protected Template Method Implementations
+  // ===========================================================================
 
   /**
    * Build the file discovery prompt for the agent.
    *
-   * @param refinedFeatureRequest - The refined feature request text
+   * @param options - The file discovery service options
    * @returns The formatted prompt
    */
-  private buildDiscoveryPrompt(refinedFeatureRequest: string): string {
+  protected buildPrompt(options: FileDiscoveryServiceOptions): string {
+    const refinedFeatureRequest = options.refinedFeatureRequest;
     return `Analyze the following refined feature request and discover all files in this codebase that are relevant to implementing it.
 
 ## Refined Feature Request
@@ -1005,6 +896,104 @@ Focus on actionable discovery that will help create a comprehensive implementati
   }
 
   /**
+   * Create a new session for the given options.
+   *
+   * Initializes file-discovery-specific session state (discoveredFiles array, summary).
+   *
+   * @param _workflowId - The workflow ID (unused in this implementation)
+   * @param options - The service options
+   * @returns The initialized session
+   */
+  protected createSession(_workflowId: number, options: FileDiscoveryServiceOptions): ActiveFileDiscoverySession {
+    return {
+      abortController: new AbortController(),
+      activeTools: [],
+      agentConfig: null,
+      discoveredFiles: [],
+      options,
+      phase: 'idle',
+      sessionId: randomUUID(),
+      streamingText: '',
+      summary: null,
+      thinkingBlocks: [],
+      timeoutId: null,
+    };
+  }
+
+  /**
+   * Extract step-specific state from a session.
+   *
+   * Returns only the relevant state fields for the file discovery state type,
+   * excluding internal tracking fields like abortController.
+   *
+   * @param session - The active session
+   * @returns The extracted state object
+   */
+  protected extractState(session: ActiveFileDiscoverySession): FileDiscoveryServiceState {
+    return {
+      agentConfig: session.agentConfig,
+      discoveredCount: session.discoveredFiles.length,
+      phase: session.phase,
+      summary: session.summary,
+    };
+  }
+
+  /**
+   * Process structured output from the SDK result message.
+   *
+   * For file discovery, the output includes an array of discovered files with metadata.
+   * This method validates the output and transforms it to the proper outcome type.
+   *
+   * @param result - The SDK result message
+   * @param sessionId - The session ID for logging
+   * @returns The file discovery outcome
+   */
+  protected processStructuredOutput(result: SDKResultMessage, sessionId: string): FileDiscoveryOutcome {
+    // Use StructuredOutputValidator to validate with the schema
+    const validationResult = this.structuredValidator.validate(result, sessionId);
+
+    if (!validationResult.success) {
+      return {
+        error: validationResult.error,
+        type: 'ERROR',
+      };
+    }
+
+    const output = validationResult.data;
+
+    // Validate that discoveredFiles is present
+    const filesCheck = this.structuredValidator.validateField(output, 'discoveredFiles', sessionId);
+    if (!filesCheck.success) {
+      return {
+        error: 'Agent output missing required "discoveredFiles" field or field is empty',
+        type: 'ERROR',
+      };
+    }
+
+    // Validate that summary is present
+    const summaryCheck = this.structuredValidator.validateField(output, 'summary', sessionId);
+    if (!summaryCheck.success) {
+      return {
+        error: 'Agent output missing required "summary" field or field is empty',
+        type: 'ERROR',
+      };
+    }
+
+    // Return placeholder SUCCESS outcome (actual files saved separately)
+    // This is different from other steps since we need to save to DB
+    return {
+      discoveredFiles: [], // Will be populated by saveDiscoveredFiles
+      summary: output.summary!,
+      totalCount: output.discoveredFiles!.length,
+      type: 'SUCCESS',
+    };
+  }
+
+  // ===========================================================================
+  // Private Helper Methods
+  // ===========================================================================
+
+  /**
    * Clear existing discovered files for a workflow step (replace mode).
    *
    * @param stepId - The workflow step ID
@@ -1027,29 +1016,12 @@ Focus on actionable discovery that will help create a comprehensive implementati
   }
 
   /**
-   * Emit a phase change message to the stream callback.
-   *
-   * @param sessionId - The session ID
-   * @param phase - The new phase
-   * @param onStreamMessage - Optional callback for streaming events
-   */
-  private emitPhaseChange(
-    sessionId: string,
-    phase: FileDiscoveryServicePhase,
-    onStreamMessage?: (message: FileDiscoveryStreamMessage) => void
-  ): void {
-    if (onStreamMessage) {
-      onStreamMessage({
-        phase,
-        sessionId,
-        timestamp: Date.now(),
-        type: 'phase_change',
-      });
-    }
-  }
-
-  /**
    * Execute the file discovery agent and collect output.
+   *
+   * NOTE: This method uses manual SDK query execution instead of AgentSdkExecutor
+   * because file discovery has unique requirements:
+   * - Emits file_discovered messages during execution (not just at the end)
+   * - Stores discovered files incrementally during stream processing
    *
    * @param session - The active session
    * @param agentConfig - The loaded agent configuration
@@ -1060,8 +1032,28 @@ Focus on actionable discovery that will help create a comprehensive implementati
     session: ActiveFileDiscoverySession,
     agentConfig: FileDiscoveryAgentConfig,
     onStreamMessage?: (message: FileDiscoveryStreamMessage) => void
-  ): Promise<ExecuteAgentResult> {
+  ): Promise<ExecuteAgentResult<FileDiscoveryOutcome, FileDiscoveryUsageStats>> {
+    // Build the prompt using template method
+    const prompt = this.buildPrompt(session.options);
     const query = await getQueryFunction();
+
+    debugLoggerService.logSdkEvent(session.sessionId, 'Starting file discovery agent', {
+      promptLength: prompt.length,
+    });
+
+    // Audit log: file discovery exploring
+    this.auditLogger.logStepExploring(
+      session.options.workflowId,
+      session.options.stepId,
+      agentConfig.id,
+      agentConfig.name,
+      {
+        model: agentConfig.model,
+        promptLength: prompt.length,
+        sessionId: session.sessionId,
+        toolsCount: agentConfig.tools.length,
+      }
+    );
 
     // Build SDK options with structured output format
     const sdkOptions: Options = {
@@ -1078,8 +1070,6 @@ Focus on actionable discovery that will help create a comprehensive implementati
     // Configure tools from agent config
     const allowedToolNames = agentConfig.tools.length > 0 ? agentConfig.tools.map((t) => t.toolName) : [];
     sdkOptions.allowedTools = allowedToolNames;
-
-    // Explicitly disallow tools NOT in the allowed list
     sdkOptions.disallowedTools = CLAUDE_CODE_TOOL_NAMES.filter((tool) => !allowedToolNames.includes(tool));
 
     // Configure permission mode
@@ -1135,30 +1125,6 @@ Focus on actionable discovery that will help create a comprehensive implementati
       });
     }
 
-    // Build the prompt
-    const prompt = this.buildDiscoveryPrompt(session.options.refinedFeatureRequest);
-
-    debugLoggerService.logSdkEvent(session.sessionId, 'Starting file discovery agent', {
-      allowedTools: sdkOptions.allowedTools,
-      model: sdkOptions.model,
-      permissionMode: sdkOptions.permissionMode,
-      promptLength: prompt.length,
-    });
-
-    logAuditEntry('file_discovery_exploring', 'File discovery agent is analyzing codebase', {
-      agentId: agentConfig.id,
-      agentName: agentConfig.name,
-      eventData: {
-        model: sdkOptions.model,
-        promptLength: prompt.length,
-        sessionId: session.sessionId,
-        toolsCount: agentConfig.tools.length,
-      },
-      severity: 'debug',
-      workflowId: session.options.workflowId,
-      workflowStepId: session.options.stepId,
-    });
-
     try {
       let resultMessage: null | SDKResultMessage = null;
 
@@ -1175,9 +1141,9 @@ Focus on actionable discovery that will help create a comprehensive implementati
           };
         }
 
-        // Process streaming events for real-time UI updates
+        // Process streaming events for real-time UI updates (including file_discovered messages)
         if (message.type === 'stream_event') {
-          this.processStreamEvent(session, message, onStreamMessage);
+          this.processStreamEventForFileDiscovery(session, message, onStreamMessage);
         }
 
         // Capture the result message for structured output extraction
@@ -1190,13 +1156,13 @@ Focus on actionable discovery that will help create a comprehensive implementati
       session.phase = 'processing_response';
       this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
-      // Handle missing result message
+      // Handle missing result message (cancelled or null)
       if (!resultMessage) {
         return {
           outcome: {
-            error: 'No result message received from agent',
             partialCount: session.discoveredFiles.length,
-            type: 'ERROR',
+            reason: 'File discovery was cancelled',
+            type: 'CANCELLED',
           },
         };
       }
@@ -1206,79 +1172,100 @@ Focus on actionable discovery that will help create a comprehensive implementati
         resultSubtype: resultMessage.subtype,
       });
 
-      // Extract and validate structured output
-      const parseResult = this.processStructuredOutput(resultMessage, session.sessionId);
+      // Log raw agent text for debugging structured output issues
+      debugLoggerService.logSdkEvent(session.sessionId, 'Raw agent output for debugging', {
+        streamingTextLength: session.streamingText.length,
+        streamingTextPreview: session.streamingText.slice(0, 500),
+        thinkingBlockCount: session.thinkingBlocks.length,
+      });
 
-      if (parseResult.success) {
-        session.discoveredFiles = parseResult.files;
-        session.summary = parseResult.summary;
+      // Extract and validate structured output using template method
+      const outcome = this.processStructuredOutput(resultMessage, session.sessionId);
 
-        // Phase: Saving results
-        session.phase = 'saving_results';
-        this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
+      // Update session state based on outcome and save files
+      if (outcome.type === 'SUCCESS') {
+      // Extract files from structured output for saving
+      const validationResult = this.structuredValidator.validate(resultMessage, session.sessionId);
+      if (validationResult.success && validationResult.data.discoveredFiles) {
+        session.discoveredFiles = validationResult.data.discoveredFiles;
+        session.summary = validationResult.data.summary;
+      }
 
-        // Save discovered files to database
-        const savedFiles = await this.saveDiscoveredFiles(session);
+      // Phase: Saving results
+      session.phase = 'saving_results';
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
-        session.phase = 'complete';
-        this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
+      // Save discovered files to database
+      const savedFiles = await this.saveDiscoveredFiles(session);
 
-        debugLoggerService.logSdkEvent(session.sessionId, 'File discovery outcome determined', {
+      session.phase = 'complete';
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
+
+      debugLoggerService.logSdkEvent(session.sessionId, 'File discovery outcome determined', {
+        fileCount: savedFiles.length,
+        outcomeType: 'SUCCESS',
+        phase: session.phase,
+      });
+
+      // Audit log: file discovery completed
+      this.auditLogger.logStepCompleted(
+        session.options.workflowId,
+        session.options.stepId,
+        agentConfig.id,
+        agentConfig.name,
+        `File discovery completed: discovered ${savedFiles.length} files`,
+        {
           fileCount: savedFiles.length,
-          outcomeType: 'SUCCESS',
-          phase: session.phase,
-        });
+          sessionId: session.sessionId,
+          summary: session.summary,
+        },
+        { discoveredCount: savedFiles.length, phase: 'complete' }
+      );
 
-        logAuditEntry('file_discovery_completed', `File discovery completed: discovered ${savedFiles.length} files`, {
-          afterState: { discoveredCount: savedFiles.length, phase: 'complete' },
-          agentId: agentConfig.id,
-          agentName: agentConfig.name,
-          eventData: {
-            fileCount: savedFiles.length,
+      // Extract usage statistics
+      const usage = extractUsageStats(resultMessage);
+
+      return {
+        outcome: {
+          discoveredFiles: savedFiles,
+          summary: session.summary ?? 'Discovery completed',
+          totalCount: savedFiles.length,
+          type: 'SUCCESS',
+        },
+        sdkSessionId: resultMessage.session_id,
+        usage,
+      };
+    } else {
+      session.phase = outcome.type === 'ERROR' ? 'error' : 'complete';
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
+
+      // Audit log: file discovery error
+      if (outcome.type === 'ERROR') {
+        this.auditLogger.logStepError(
+          session.options.workflowId,
+          session.options.stepId,
+          agentConfig.id,
+          agentConfig.name,
+          outcome.error ?? 'Unknown error',
+          {
+            error: outcome.error,
+            outcomeType: outcome.type,
             sessionId: session.sessionId,
-            summary: session.summary,
-          },
-          severity: 'info',
-          workflowId: session.options.workflowId,
-          workflowStepId: session.options.stepId,
-        });
+          }
+        );
+      }
 
-        // Extract usage statistics
-        const usage = extractUsageStats(resultMessage);
+      // Extract usage statistics
+      const usage = extractUsageStats(resultMessage);
 
-        return {
-          outcome: {
-            discoveredFiles: savedFiles,
-            summary: session.summary ?? 'Discovery completed',
-            totalCount: savedFiles.length,
-            type: 'SUCCESS',
-          },
-          sdkSessionId: resultMessage.session_id,
-          usage,
-        };
-      } else {
-        session.phase = 'error';
-        this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
-
-        logAuditEntry('file_discovery_error', `File discovery error: ${parseResult.error}`, {
-          agentId: agentConfig.id,
-          agentName: agentConfig.name,
-          eventData: {
-            error: parseResult.error,
-            sessionId: session.sessionId,
-          },
-          severity: 'error',
-          workflowId: session.options.workflowId,
-          workflowStepId: session.options.stepId,
-        });
-
-        return {
-          outcome: {
-            error: parseResult.error,
-            partialCount: session.discoveredFiles.length,
-            type: 'ERROR',
-          },
-        };
+      return {
+        outcome: {
+          ...outcome,
+          partialCount: session.discoveredFiles.length,
+        },
+        sdkSessionId: resultMessage.session_id,
+        usage,
+      };
       }
     } catch (error) {
       // Check if it was an abort
@@ -1305,11 +1292,14 @@ Focus on actionable discovery that will help create a comprehensive implementati
   /**
    * Process streaming events from the SDK for real-time UI updates.
    *
+   * This method is file-discovery-specific and cannot use the base class stream processing
+   * because it needs to emit file_discovered messages during execution.
+   *
    * @param session - The active session
    * @param message - The SDK stream event message
    * @param onStreamMessage - Optional callback for streaming events
    */
-  private processStreamEvent(
+  private processStreamEventForFileDiscovery(
     session: ActiveFileDiscoverySession,
     message: { event: Record<string, unknown>; type: 'stream_event' },
     onStreamMessage?: (message: FileDiscoveryStreamMessage) => void
@@ -1441,66 +1431,6 @@ Focus on actionable discovery that will help create a comprehensive implementati
         }
       }
     }
-  }
-
-  /**
-   * Process the structured output from the SDK result message.
-   *
-   * @param resultMessage - The SDK result message
-   * @param sessionId - The session ID for logging
-   * @returns Parsed result with files or error
-   */
-  private processStructuredOutput(
-    resultMessage: SDKResultMessage,
-    sessionId: string
-  ):
-    | { error: string; files?: undefined; success: false; summary?: undefined }
-    | { error?: undefined; files: Array<DiscoveredFileFromAgent>; success: true; summary: string } {
-    // Check for structured output validation failure
-    if (resultMessage.subtype === 'error_max_structured_output_retries') {
-      const errors = 'errors' in resultMessage ? resultMessage.errors : [];
-      return {
-        error: `Agent could not produce valid structured output: ${errors.join(', ')}`,
-        success: false,
-      };
-    }
-
-    // Check for other error subtypes
-    if (resultMessage.subtype !== 'success') {
-      const errors = 'errors' in resultMessage ? resultMessage.errors : [];
-      return {
-        error: `Agent execution failed: ${resultMessage.subtype} - ${errors.join(', ')}`,
-        success: false,
-      };
-    }
-
-    // Extract structured output
-    const structuredOutput = resultMessage.structured_output;
-    if (!structuredOutput) {
-      return {
-        error: 'Agent completed successfully but no structured output was returned',
-        success: false,
-      };
-    }
-
-    // Validate with schema
-    const parsed = fileDiscoveryAgentOutputSchema.safeParse(structuredOutput);
-    if (!parsed.success) {
-      debugLoggerService.logSdkEvent(sessionId, 'Structured output validation failed', {
-        error: parsed.error.message,
-        structuredOutput,
-      });
-      return {
-        error: `Structured output validation failed: ${parsed.error.message}`,
-        success: false,
-      };
-    }
-
-    return {
-      files: parsed.data.discoveredFiles,
-      success: true,
-      summary: parsed.data.summary,
-    };
   }
 
   /**

@@ -21,7 +21,6 @@ import type {
   RefinementOutcome,
   RefinementRegenerateInput,
   RefinementServiceOptions,
-  RefinementServiceState,
   RefinementStreamMessage,
 } from '../../lib/validations/refinement';
 
@@ -143,15 +142,13 @@ export function registerRefinementHandlers(
   );
 
   // Cancel an active refinement session
-  ipcMain.handle(IpcChannels.refinement.cancel, (_event: IpcMainInvokeEvent, sessionId: unknown): RefinementOutcome => {
+  ipcMain.handle(IpcChannels.refinement.cancel, (_event: IpcMainInvokeEvent, workflowId: unknown): RefinementOutcome => {
     try {
-      if (!isValidSessionId(sessionId)) {
-        throw new Error(`Invalid session ID: ${String(sessionId)}`);
-      }
+      const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
 
-      console.log('[IPC] refinement:cancel', { sessionId });
+      console.log('[IPC] refinement:cancel', { workflowId: validatedWorkflowId });
 
-      return refinementStepService.cancelRefinement(sessionId);
+      return refinementStepService.cancelRefinement(validatedWorkflowId);
     } catch (error) {
       console.error('[IPC Error] refinement:cancel:', error);
       throw error;
@@ -161,15 +158,13 @@ export function registerRefinementHandlers(
   // Get current session state
   ipcMain.handle(
     IpcChannels.refinement.getState,
-    (_event: IpcMainInvokeEvent, sessionId: unknown): null | RefinementServiceState => {
+    (_event: IpcMainInvokeEvent, workflowId: unknown) => {
       try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
+        const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
 
-        console.log('[IPC] refinement:getState', { sessionId });
+        console.log('[IPC] refinement:getState', { workflowId: validatedWorkflowId });
 
-        return refinementStepService.getState(sessionId);
+        return refinementStepService.getState(validatedWorkflowId);
       } catch (error) {
         console.error('[IPC Error] refinement:getState:', error);
         throw error;
@@ -180,15 +175,8 @@ export function registerRefinementHandlers(
   // Retry refinement with exponential backoff
   ipcMain.handle(
     IpcChannels.refinement.retry,
-    async (_event: IpcMainInvokeEvent, sessionId: unknown, input: unknown): Promise<RefinementOutcomeWithPause> => {
+    async (_event: IpcMainInvokeEvent, input: unknown): Promise<RefinementOutcomeWithPause> => {
       try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
-
-        // Cancel the existing session first if it's still active
-        refinementStepService.cancelRefinement(sessionId);
-
         // Validate input for restart
         if (!input || typeof input !== 'object') {
           throw new Error('Invalid input: expected object for retry');
@@ -218,40 +206,27 @@ export function registerRefinementHandlers(
           throw new Error(`No agent assigned to refinement step ${stepId}`);
         }
 
-        const retryCount = refinementStepService.getRetryCount(sessionId);
-        const isRetryLimitReached = refinementStepService.isRetryLimitReached(sessionId);
+        const retryCount = refinementStepService.getRetryCount(workflowId);
+        const isRetryLimitReached = refinementStepService.isRetryLimitReached(workflowId);
 
         console.log('[IPC] refinement:retry', {
           agentId,
           isRetryLimitReached,
-          previousSessionId: sessionId,
           retryCount,
           stepId,
           workflowId,
         });
 
-        // Create stream message handler
-        const handleStreamMessage = (message: RefinementStreamMessage): void => {
-          const mainWindow = getMainWindow();
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send(IpcChannels.refinement.stream, message);
-          }
-        };
-
         // Use the retry method with exponential backoff
-        return refinementStepService.retryRefinement(
-          {
-            agentId,
-            clarificationContext: typedInput.clarificationContext,
-            featureRequest,
-            repositoryPath,
-            stepId,
-            timeoutSeconds: typedInput.timeoutSeconds,
-            workflowId,
-          },
-          sessionId,
-          handleStreamMessage
-        );
+        return refinementStepService.retryRefinement({
+          agentId,
+          clarificationContext: typedInput.clarificationContext,
+          featureRequest,
+          repositoryPath,
+          stepId,
+          timeoutSeconds: typedInput.timeoutSeconds,
+          workflowId,
+        });
       } catch (error) {
         console.error('[IPC Error] refinement:retry:', error);
         throw error;
@@ -349,32 +324,20 @@ ${guidance}`;
   // This channel exists for parity with the channel definition but delegates to getState
   ipcMain.handle(
     IpcChannels.refinement.getResult,
-    (_event: IpcMainInvokeEvent, sessionId: unknown): null | RefinementServiceState => {
+    (_event: IpcMainInvokeEvent, workflowId: unknown) => {
       try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
+        const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
 
-        console.log('[IPC] refinement:getResult', { sessionId });
+        console.log('[IPC] refinement:getResult', { workflowId: validatedWorkflowId });
 
         // Return the same state as getState - the caller can extract the result
-        return refinementStepService.getState(sessionId);
+        return refinementStepService.getState(validatedWorkflowId);
       } catch (error) {
         console.error('[IPC Error] refinement:getResult:', error);
         throw error;
       }
     }
   );
-}
-
-/**
- * Validates that a value is a valid session ID.
- *
- * @param value - The value to validate
- * @returns True if valid session ID
- */
-function isValidSessionId(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0;
 }
 
 /**

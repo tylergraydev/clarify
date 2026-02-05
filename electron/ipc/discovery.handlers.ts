@@ -155,15 +155,13 @@ export function registerDiscoveryHandlers(
   // Cancel an active discovery session
   ipcMain.handle(
     IpcChannels.discovery.cancel,
-    (_event: IpcMainInvokeEvent, sessionId: unknown): FileDiscoveryOutcome => {
+    (_event: IpcMainInvokeEvent, workflowId: unknown): FileDiscoveryOutcome => {
       try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
+        const validWorkflowId = validateNumberId(workflowId, 'workflowId');
 
-        console.log('[IPC] discovery:cancel', { sessionId });
+        console.log('[IPC] discovery:cancel', { workflowId: validWorkflowId });
 
-        return fileDiscoveryStepService.cancelDiscovery(sessionId);
+        return fileDiscoveryStepService.cancelDiscovery(validWorkflowId);
       } catch (error) {
         console.error('[IPC Error] discovery:cancel:', error);
         throw error;
@@ -174,15 +172,13 @@ export function registerDiscoveryHandlers(
   // Get current discovery session state
   ipcMain.handle(
     IpcChannels.discovery.getState,
-    (_event: IpcMainInvokeEvent, sessionId: unknown): FileDiscoveryServiceState | null => {
+    (_event: IpcMainInvokeEvent, workflowId: unknown): FileDiscoveryServiceState | null => {
       try {
-        if (!isValidSessionId(sessionId)) {
-          throw new Error(`Invalid session ID: ${String(sessionId)}`);
-        }
+        const validWorkflowId = validateNumberId(workflowId, 'workflowId');
 
-        console.log('[IPC] discovery:getState', { sessionId });
+        console.log('[IPC] discovery:getState', { workflowId: validWorkflowId });
 
-        return fileDiscoveryStepService.getState(sessionId);
+        return fileDiscoveryStepService.getState(validWorkflowId);
       } catch (error) {
         console.error('[IPC Error] discovery:getState:', error);
         throw error;
@@ -369,16 +365,6 @@ export function registerDiscoveryHandlers(
 // =============================================================================
 // Validation Helpers
 // =============================================================================
-
-/**
- * Validates that a value is a valid session ID.
- *
- * @param value - The value to validate
- * @returns True if valid session ID
- */
-function isValidSessionId(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0;
-}
 
 /**
  * Validates that a value is a valid number ID.
