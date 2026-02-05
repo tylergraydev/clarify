@@ -25,7 +25,6 @@ import type { Options, SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
 
 import { randomUUID } from 'crypto';
 
-import type { NewAuditLog, Workflow } from '../../db/schema';
 import type {
   ClarificationAgentConfig,
   ClarificationOutcome,
@@ -37,6 +36,7 @@ import type {
   ClarificationStreamMessage,
   ClarificationUsageStats,
 } from '../../lib/validations/clarification';
+import type { ActiveToolInfo, OutcomePauseInfo } from './agent-step/step-types';
 
 import { getDatabase } from '../../db';
 import {
@@ -44,56 +44,31 @@ import {
   createAgentSkillsRepository,
   createAgentsRepository,
   createAgentToolsRepository,
-  createAuditLogsRepository,
-  createWorkflowsRepository,
 } from '../../db/repositories';
 import {
   clarificationAgentOutputFlatSchema,
   clarificationAgentOutputJSONSchema,
 } from '../../lib/validations/clarification';
+import { getQueryFunction, parseToolInputJson } from './agent-step/agent-sdk';
+import { MAX_RETRY_ATTEMPTS, STEP_TIMEOUTS } from './agent-step/agent-step-constants';
+import { CLAUDE_CODE_TOOL_NAMES } from './agent-step/agent-tools';
+import { logAuditEntry } from './agent-step/audit-log';
+import { startHeartbeat, stopHeartbeat } from './agent-step/heartbeat';
+import { calculateBackoffDelay, isTransientError, RetryTracker } from './agent-step/retry-backoff';
+import { extractUsageStats } from './agent-step/usage-stats';
+import { isPauseRequested } from './agent-step/workflow-pause';
 import { debugLoggerService } from './debug-logger.service';
 
 /**
  * Default timeout for clarification operations in seconds.
  */
-const DEFAULT_TIMEOUT_SECONDS = 120;
-
-/**
- * Maximum number of retry attempts for transient errors.
- */
-const MAX_RETRY_ATTEMPTS = 3;
-
-/**
- * Base delay for exponential backoff in milliseconds.
- */
-const BASE_RETRY_DELAY_MS = 1000;
-
-/**
- * Heartbeat interval for extended thinking progress updates in milliseconds.
- * Sends periodic status updates to UI when partial streaming is disabled.
- */
-const EXTENDED_THINKING_HEARTBEAT_INTERVAL_MS = 2000; // 2 seconds
-
-/**
- * Cached SDK query function to avoid repeated dynamic imports.
- */
-let cachedQueryFn: (typeof import('@anthropic-ai/claude-agent-sdk'))['query'] | null = null;
+const DEFAULT_TIMEOUT_SECONDS = STEP_TIMEOUTS.clarification;
 
 /**
  * Extended outcome fields for pause and retry information.
+ * Uses shared OutcomePauseInfo type with clarification-specific usage stats.
  */
-export interface ClarificationOutcomePauseInfo {
-  /** Whether the workflow should pause after this step */
-  pauseRequested?: boolean;
-  /** Current retry count for this session */
-  retryCount?: number;
-  /** SDK session ID for potential resumption */
-  sdkSessionId?: string;
-  /** Whether skip fallback is available */
-  skipFallbackAvailable?: boolean;
-  /** Usage statistics from SDK result */
-  usage?: ClarificationUsageStats;
-}
+export type ClarificationOutcomePauseInfo = OutcomePauseInfo<ClarificationUsageStats>;
 
 /**
  * Extended outcome that includes pause information.
@@ -118,15 +93,6 @@ interface ActiveClarificationSession {
 }
 
 /**
- * Active tool being used by the agent.
- */
-interface ActiveToolInfo {
-  toolInput: Record<string, unknown>;
-  toolName: string;
-  toolUseId: string;
-}
-
-/**
  * Internal result from executeAgent including usage metadata.
  */
 interface ExecuteAgentResult {
@@ -134,11 +100,6 @@ interface ExecuteAgentResult {
   sdkSessionId?: string;
   usage?: ClarificationUsageStats;
 }
-
-/**
- * Pause behaviors supported by workflows.
- */
-type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
 
 /**
  * Clarification Step Service
@@ -149,7 +110,7 @@ type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
  */
 class ClarificationStepService {
   private activeSessions = new Map<string, ActiveClarificationSession>();
-  private retryCountBySession = new Map<string, number>();
+  private retryTracker = new RetryTracker();
 
   /**
    * Cancel an active clarification session.
@@ -172,7 +133,7 @@ class ClarificationStepService {
     });
 
     // Audit log: clarification cancelled
-    this.logAuditEntry('clarification_cancelled', 'Clarification step cancelled by user', {
+    logAuditEntry('clarification_cancelled', 'Clarification step cancelled by user', {
       agentId: session.agentConfig?.id,
       agentName: session.agentConfig?.name,
       eventData: {
@@ -210,7 +171,7 @@ class ClarificationStepService {
    * @returns The current retry count (0 if not retried)
    */
   getRetryCount(sessionId: string): number {
-    return this.retryCountBySession.get(sessionId) ?? 0;
+    return this.retryTracker.getRetryCount(sessionId);
   }
 
   /**
@@ -232,43 +193,13 @@ class ClarificationStepService {
   }
 
   /**
-   * Get the workflow's pause behavior from the database.
-   *
-   * @param workflowId - The workflow ID to query
-   * @returns The workflow record or undefined if not found
-   */
-  getWorkflow(workflowId: number): undefined | Workflow {
-    const db = getDatabase();
-    const workflowsRepo = createWorkflowsRepository(db);
-    return workflowsRepo.findById(workflowId);
-  }
-
-  /**
-   * Check if a pause is requested based on workflow's pause behavior.
-   *
-   * @param workflowId - The workflow ID
-   * @returns Whether pause is requested
-   */
-  isPauseRequested(workflowId: number): boolean {
-    const workflow = this.getWorkflow(workflowId);
-    if (!workflow) return false;
-
-    const pauseBehavior = (workflow.pauseBehavior ?? 'auto_pause') as PauseBehavior;
-
-    // AUTO_PAUSE pauses after each step
-    // CONTINUOUS never pauses
-    // GATES_ONLY only pauses at gate steps (clarification is not a gate)
-    return pauseBehavior === 'auto_pause';
-  }
-
-  /**
    * Check if retry limit has been reached.
    *
    * @param sessionId - The session ID
    * @returns Whether the max retry limit has been reached
    */
   isRetryLimitReached(sessionId: string): boolean {
-    return this.getRetryCount(sessionId) >= MAX_RETRY_ATTEMPTS;
+    return this.retryTracker.isRetryLimitReached(sessionId);
   }
 
   /**
@@ -348,7 +279,7 @@ class ClarificationStepService {
       });
 
       // Audit log: retry limit reached
-      this.logAuditEntry('clarification_retry_limit_reached', 'Maximum retry attempts reached', {
+      logAuditEntry('clarification_retry_limit_reached', 'Maximum retry attempts reached', {
         eventData: {
           maxRetries: MAX_RETRY_ATTEMPTS,
           sessionId: previousSessionId,
@@ -367,10 +298,10 @@ class ClarificationStepService {
     }
 
     // Increment retry count
-    const newRetryCount = this.incrementRetryCount(previousSessionId);
+    const newRetryCount = this.retryTracker.incrementRetryCount(previousSessionId);
 
     // Calculate and apply backoff delay
-    const backoffDelay = this.calculateBackoffDelay(newRetryCount);
+    const backoffDelay = calculateBackoffDelay(newRetryCount);
 
     debugLoggerService.logSdkEvent(previousSessionId, 'Retrying clarification with backoff', {
       backoffDelayMs: backoffDelay,
@@ -378,7 +309,7 @@ class ClarificationStepService {
     });
 
     // Audit log: retrying clarification
-    this.logAuditEntry(
+    logAuditEntry(
       'clarification_retry_started',
       `Retrying clarification (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS})`,
       {
@@ -400,7 +331,7 @@ class ClarificationStepService {
     const outcome = await this.startClarification(options);
 
     // Clean up previous session's retry count to prevent memory leak
-    this.clearRetryCount(previousSessionId);
+    this.retryTracker.clearRetryCount(previousSessionId);
 
     // Update the outcome with the correct retry count
     return {
@@ -435,7 +366,7 @@ class ClarificationStepService {
     const skipReason = reason ?? 'User skipped clarification';
 
     // Audit log: clarification skipped
-    this.logAuditEntry('clarification_skipped', 'Clarification step skipped by user', {
+    logAuditEntry('clarification_skipped', 'Clarification step skipped by user', {
       agentId: session.agentConfig?.id,
       agentName: session.agentConfig?.name,
       eventData: {
@@ -518,7 +449,7 @@ class ClarificationStepService {
     });
 
     // Audit log: clarification started
-    this.logAuditEntry('clarification_started', 'Clarification step started', {
+    logAuditEntry('clarification_started', 'Clarification step started', {
       agentId: options.agentId,
       eventData: {
         featureRequestLength: options.featureRequest.length,
@@ -548,7 +479,7 @@ class ClarificationStepService {
       });
 
       // Audit log: agent configuration loaded
-      this.logAuditEntry('clarification_agent_loaded', `Loaded clarification agent: ${agentConfig.name}`, {
+      logAuditEntry('clarification_agent_loaded', `Loaded clarification agent: ${agentConfig.name}`, {
         agentId: agentConfig.id,
         agentName: agentConfig.name,
         eventData: {
@@ -581,7 +512,7 @@ class ClarificationStepService {
             });
 
             // Audit log: clarification timeout
-            this.logAuditEntry('clarification_timeout', `Clarification timed out after ${timeoutSeconds} seconds`, {
+            logAuditEntry('clarification_timeout', `Clarification timed out after ${timeoutSeconds} seconds`, {
               agentId: agentConfig.id,
               agentName: agentConfig.name,
               eventData: {
@@ -617,10 +548,10 @@ class ClarificationStepService {
 
       // Clean up session on success
       this.activeSessions.delete(sessionId);
-      this.clearRetryCount(sessionId);
+      this.retryTracker.clearRetryCount(sessionId);
 
       // Add pause information and usage to successful outcomes
-      const pauseRequested = this.isPauseRequested(options.workflowId);
+      const pauseRequested = isPauseRequested(options.workflowId, false); // clarification is not a gate step
       const outcomeWithPause: ClarificationOutcomeWithPause = {
         ...result.outcome,
         pauseRequested,
@@ -650,7 +581,7 @@ class ClarificationStepService {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       const errorStack = error instanceof Error ? error.stack : undefined;
       const retryCount = this.getRetryCount(sessionId);
-      const isRetryable = this.isTransientError(errorMessage);
+      const isRetryable = isTransientError(errorMessage);
       const retryLimitReached = this.isRetryLimitReached(sessionId);
 
       debugLoggerService.logSdkEvent(sessionId, 'Clarification error', {
@@ -661,7 +592,7 @@ class ClarificationStepService {
       });
 
       // Audit log: clarification error
-      this.logAuditEntry('clarification_error', `Clarification step failed: ${errorMessage}`, {
+      logAuditEntry('clarification_error', `Clarification step failed: ${errorMessage}`, {
         agentId: session.agentConfig?.id,
         agentName: session.agentConfig?.name,
         eventData: {
@@ -775,7 +706,7 @@ class ClarificationStepService {
     });
 
     // Audit log: clarification answers submitted
-    this.logAuditEntry('clarification_answers_submitted', 'User submitted answers to clarifying questions', {
+    logAuditEntry('clarification_answers_submitted', 'User submitted answers to clarifying questions', {
       eventData: {
         answeredCount: Object.keys(selectedOptions).length,
         questionCount: questions.length,
@@ -811,7 +742,7 @@ class ClarificationStepService {
     });
 
     // Audit log: clarification questions edited
-    this.logAuditEntry('clarification_questions_edited', 'User provided manual clarification text', {
+    logAuditEntry('clarification_questions_edited', 'User provided manual clarification text', {
       agentId: session?.agentConfig?.id,
       agentName: session?.agentConfig?.name,
       eventData: {
@@ -893,25 +824,6 @@ ${featureRequest}
 Focus on understanding what the user wants to build and gathering just enough information to enable high-quality implementation planning.`;
   }
 
-  /**
-   * Calculate exponential backoff delay for a retry attempt.
-   *
-   * @param retryCount - The current retry count (1-based)
-   * @returns The delay in milliseconds
-   */
-  private calculateBackoffDelay(retryCount: number): number {
-    // Exponential backoff: 1s, 2s, 4s, ...
-    return BASE_RETRY_DELAY_MS * Math.pow(2, retryCount - 1);
-  }
-
-  /**
-   * Clear the retry count for a session.
-   *
-   * @param sessionId - The session ID
-   */
-  private clearRetryCount(sessionId: string): void {
-    this.retryCountBySession.delete(sessionId);
-  }
 
   /**
    * Emit a phase change message to the stream callback.
@@ -974,29 +886,8 @@ Focus on understanding what the user wants to build and gathering just enough in
     const allowedToolNames = agentConfig.tools.length > 0 ? agentConfig.tools.map((t) => t.toolName) : [];
     sdkOptions.allowedTools = allowedToolNames;
 
-    // All built-in Claude Code tools that should be blocked if not in the allowed list
-    const allBuiltInTools = [
-      'Task',
-      'AskUserQuestion',
-      'Bash',
-      'BashOutput',
-      'Edit',
-      'Read',
-      'Write',
-      'Glob',
-      'Grep',
-      'KillBash',
-      'NotebookEdit',
-      'WebFetch',
-      'WebSearch',
-      'TodoWrite',
-      'ExitPlanMode',
-      'ListMcpResources',
-      'ReadMcpResource',
-    ];
-
     // Explicitly disallow tools NOT in the allowed list
-    sdkOptions.disallowedTools = allBuiltInTools.filter((tool) => !allowedToolNames.includes(tool));
+    sdkOptions.disallowedTools = CLAUDE_CODE_TOOL_NAMES.filter((tool) => !allowedToolNames.includes(tool));
 
     // Configure permission mode
     if (agentConfig.permissionMode) {
@@ -1033,19 +924,16 @@ Focus on understanding what the user wants to build and gathering just enough in
 
     // Start heartbeat for extended thinking mode
     let heartbeatInterval: NodeJS.Timeout | null = null;
-    const startTime = Date.now();
 
     if (agentConfig.extendedThinkingEnabled && agentConfig.maxThinkingTokens) {
-      heartbeatInterval = setInterval(() => {
-        const elapsedMs = Date.now() - startTime;
-
+      heartbeatInterval = startHeartbeat(({ elapsedMs, timestamp }) => {
         if (onStreamMessage) {
           onStreamMessage({
             elapsedMs,
             estimatedProgress: null,
             maxThinkingTokens: agentConfig.maxThinkingTokens!,
             sessionId: session.sessionId,
-            timestamp: Date.now(),
+            timestamp,
             type: 'extended_thinking_heartbeat',
           });
         }
@@ -1054,7 +942,7 @@ Focus on understanding what the user wants to build and gathering just enough in
           elapsedMs,
           elapsedSeconds: Math.floor(elapsedMs / 1000),
         });
-      }, EXTENDED_THINKING_HEARTBEAT_INTERVAL_MS);
+      });
     }
 
     // Build the prompt for clarification
@@ -1068,7 +956,7 @@ Focus on understanding what the user wants to build and gathering just enough in
     });
 
     // Audit log: clarification exploring
-    this.logAuditEntry('clarification_exploring', 'Clarification agent is analyzing feature request', {
+    logAuditEntry('clarification_exploring', 'Clarification agent is analyzing feature request', {
       agentId: agentConfig.id,
       agentName: agentConfig.name,
       eventData: {
@@ -1158,7 +1046,7 @@ Focus on understanding what the user wants to build and gathering just enough in
 
       // Audit log: clarification completed with specific outcome
       if (outcome.type === 'QUESTIONS_FOR_USER') {
-        this.logAuditEntry(
+        logAuditEntry(
           'clarification_questions_generated',
           `Clarification agent generated ${outcome.questions.length} questions`,
           {
@@ -1176,7 +1064,7 @@ Focus on understanding what the user wants to build and gathering just enough in
           }
         );
       } else if (outcome.type === 'SKIP_CLARIFICATION') {
-        this.logAuditEntry(
+        logAuditEntry(
           'clarification_completed',
           `Clarification completed: feature request is clear (score: ${outcome.assessment?.score ?? 'N/A'}/5)`,
           {
@@ -1195,7 +1083,7 @@ Focus on understanding what the user wants to build and gathering just enough in
           }
         );
       } else if (outcome.type === 'ERROR') {
-        this.logAuditEntry('clarification_error', `Clarification error: ${outcome.error}`, {
+        logAuditEntry('clarification_error', `Clarification error: ${outcome.error}`, {
           agentId: agentConfig.id,
           agentName: agentConfig.name,
           eventData: {
@@ -1210,16 +1098,9 @@ Focus on understanding what the user wants to build and gathering just enough in
       }
 
       // Extract usage statistics from successful result
-      let usage: ClarificationUsageStats | undefined;
-      if (resultMessage.subtype === 'success') {
-        usage = {
-          costUsd: resultMessage.total_cost_usd,
-          durationMs: resultMessage.duration_ms,
-          inputTokens: resultMessage.usage.input_tokens,
-          numTurns: resultMessage.num_turns,
-          outputTokens: resultMessage.usage.output_tokens,
-        };
+      const usage = extractUsageStats(resultMessage);
 
+      if (usage) {
         debugLoggerService.logSdkEvent(session.sessionId, 'Usage statistics extracted', {
           costUsd: usage.costUsd,
           durationMs: usage.durationMs,
@@ -1248,102 +1129,13 @@ Focus on understanding what the user wants to build and gathering just enough in
       throw error;
     } finally {
       // Clean up heartbeat interval
+      stopHeartbeat(heartbeatInterval);
       if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        debugLoggerService.logSdkEvent(session.sessionId, 'Extended thinking heartbeat stopped', {
-          elapsedMs: Date.now() - startTime,
-        });
+        debugLoggerService.logSdkEvent(session.sessionId, 'Extended thinking heartbeat stopped', {});
       }
     }
   }
 
-  /**
-   * Increment the retry count for a session.
-   *
-   * @param sessionId - The session ID
-   * @returns The new retry count
-   */
-  private incrementRetryCount(sessionId: string): number {
-    const currentCount = this.getRetryCount(sessionId);
-    const newCount = currentCount + 1;
-    this.retryCountBySession.set(sessionId, newCount);
-    return newCount;
-  }
-
-  /**
-   * Check if an error is transient and should be retried.
-   *
-   * @param error - The error message
-   * @returns Whether the error is likely transient
-   */
-  private isTransientError(error: string): boolean {
-    const transientPatterns = [
-      /timeout/i,
-      /network/i,
-      /connection/i,
-      /ECONNRESET/i,
-      /ETIMEDOUT/i,
-      /rate.?limit/i,
-      /503/i,
-      /502/i,
-      /overloaded/i,
-      /temporarily.?unavailable/i,
-    ];
-
-    return transientPatterns.some((pattern) => pattern.test(error));
-  }
-
-  /**
-   * Create an audit log entry for clarification events.
-   *
-   * @param eventType - The type of clarification event
-   * @param message - Human-readable description of the event
-   * @param options - Additional audit log options
-   */
-  private logAuditEntry(
-    eventType: string,
-    message: string,
-    options: {
-      afterState?: Record<string, unknown>;
-      agentId?: number;
-      agentName?: string;
-      beforeState?: Record<string, unknown>;
-      eventData?: Record<string, unknown>;
-      severity?: 'debug' | 'error' | 'info' | 'warning';
-      workflowId?: number;
-      workflowStepId?: number;
-    } = {}
-  ): void {
-    try {
-      const db = getDatabase();
-      const auditLogsRepo = createAuditLogsRepository(db);
-
-      const auditEntry: NewAuditLog = {
-        afterState: options.afterState ?? null,
-        beforeState: options.beforeState ?? null,
-        eventCategory: 'step',
-        eventData: {
-          agentId: options.agentId,
-          agentName: options.agentName,
-          ...options.eventData,
-        },
-        eventType,
-        message,
-        severity: options.severity ?? 'info',
-        source: 'system',
-        workflowId: options.workflowId ?? null,
-        workflowStepId: options.workflowStepId ?? null,
-      };
-
-      auditLogsRepo.create(auditEntry);
-    } catch (error) {
-      // Log to debug logger but don't throw - audit failures shouldn't break clarification
-      debugLoggerService.logSdkEvent('system', 'Failed to create audit log entry', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        eventType,
-      });
-    }
-  }
 
   /**
    * Process streaming events from the SDK for real-time UI updates.
@@ -1619,47 +1411,6 @@ Focus on understanding what the user wants to build and gathering just enough in
       type: 'QUESTIONS_FOR_USER',
     };
   }
-}
-
-/**
- * Get the SDK query function, loading it once and caching for subsequent calls.
- *
- * @returns The SDK query function
- * @throws Error if the SDK is not available
- */
-async function getQueryFunction(): Promise<(typeof import('@anthropic-ai/claude-agent-sdk'))['query']> {
-  if (!cachedQueryFn) {
-    try {
-      const sdk = await import('@anthropic-ai/claude-agent-sdk');
-      cachedQueryFn = sdk.query;
-    } catch (error) {
-      throw new Error(
-        `Claude Agent SDK not available. Ensure @anthropic-ai/claude-agent-sdk is installed. ` +
-          `Original error: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-  return cachedQueryFn;
-}
-
-/**
- * Safely parse a tool input JSON payload.
- */
-function parseToolInputJson(payload: string): null | Record<string, unknown> {
-  if (!payload) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(payload);
-    if (parsed && typeof parsed === 'object') {
-      return parsed as Record<string, unknown>;
-    }
-  } catch {
-    // Ignore partial JSON parsing failures.
-  }
-
-  return null;
 }
 
 // Export singleton instance

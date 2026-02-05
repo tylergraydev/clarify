@@ -29,7 +29,8 @@ import type { Options, SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
-import type { NewAuditLog, NewDiscoveredFile, Workflow } from '../../db/schema';
+import type { NewDiscoveredFile } from '../../db/schema';
+import type { ActiveToolInfo, OutcomePauseInfo } from './agent-step/step-types';
 
 import { getDatabase } from '../../db';
 import {
@@ -37,10 +38,16 @@ import {
   createAgentSkillsRepository,
   createAgentsRepository,
   createAgentToolsRepository,
-  createAuditLogsRepository,
   createDiscoveredFilesRepository,
-  createWorkflowsRepository,
 } from '../../db/repositories';
+import { getQueryFunction, parseToolInputJson } from './agent-step/agent-sdk';
+import { MAX_RETRY_ATTEMPTS, STEP_TIMEOUTS } from './agent-step/agent-step-constants';
+import { CLAUDE_CODE_TOOL_NAMES } from './agent-step/agent-tools';
+import { logAuditEntry } from './agent-step/audit-log';
+import { startHeartbeat, stopHeartbeat } from './agent-step/heartbeat';
+import { calculateBackoffDelay, RetryTracker } from './agent-step/retry-backoff';
+import { extractUsageStats } from './agent-step/usage-stats';
+import { isPauseRequested } from './agent-step/workflow-pause';
 import { debugLoggerService } from './debug-logger.service';
 
 // =============================================================================
@@ -50,28 +57,7 @@ import { debugLoggerService } from './debug-logger.service';
 /**
  * Default timeout for file discovery operations in seconds.
  */
-const DEFAULT_TIMEOUT_SECONDS = 300; // 5 minutes - discovery may take longer than clarification
-
-/**
- * Maximum number of retry attempts for transient errors.
- */
-const MAX_RETRY_ATTEMPTS = 3;
-
-/**
- * Base delay for exponential backoff in milliseconds.
- */
-const BASE_RETRY_DELAY_MS = 1000;
-
-/**
- * Heartbeat interval for extended thinking progress updates in milliseconds.
- * Sends periodic status updates to UI when partial streaming is disabled.
- */
-const EXTENDED_THINKING_HEARTBEAT_INTERVAL_MS = 2000;
-
-/**
- * Cached SDK query function to avoid repeated dynamic imports.
- */
-let cachedQueryFn: (typeof import('@anthropic-ai/claude-agent-sdk'))['query'] | null = null;
+const DEFAULT_TIMEOUT_SECONDS = STEP_TIMEOUTS.fileDiscovery;
 
 // =============================================================================
 // Zod Schemas for Structured Output
@@ -202,19 +188,9 @@ export interface FileDiscoveryOutcomeError {
 
 /**
  * Extended outcome fields for pause and retry information.
+ * Uses shared OutcomePauseInfo type with file discovery-specific usage stats.
  */
-export interface FileDiscoveryOutcomePauseInfo {
-  /** Whether the workflow should pause after this step */
-  pauseRequested?: boolean;
-  /** Current retry count for this session */
-  retryCount?: number;
-  /** SDK session ID for potential resumption */
-  sdkSessionId?: string;
-  /** Whether skip fallback is available */
-  skipFallbackAvailable?: boolean;
-  /** Usage statistics from SDK result */
-  usage?: FileDiscoveryUsageStats;
-}
+export type FileDiscoveryOutcomePauseInfo = OutcomePauseInfo<FileDiscoveryUsageStats>;
 
 /**
  * Outcome when discovery completes successfully.
@@ -504,15 +480,6 @@ interface ActiveFileDiscoverySession {
 }
 
 /**
- * Active tool being used by the agent.
- */
-interface ActiveToolInfo {
-  toolInput: Record<string, unknown>;
-  toolName: string;
-  toolUseId: string;
-}
-
-/**
  * Internal result from executeAgent including usage metadata.
  */
 interface ExecuteAgentResult {
@@ -520,11 +487,6 @@ interface ExecuteAgentResult {
   sdkSessionId?: string;
   usage?: FileDiscoveryUsageStats;
 }
-
-/**
- * Pause behaviors supported by workflows.
- */
-type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
 
 // =============================================================================
 // Service Class
@@ -539,7 +501,7 @@ type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
  */
 class FileDiscoveryStepService {
   private activeSessions = new Map<string, ActiveFileDiscoverySession>();
-  private retryCountBySession = new Map<string, number>();
+  private retryTracker = new RetryTracker();
 
   /**
    * Cancel an active file discovery session.
@@ -563,7 +525,7 @@ class FileDiscoveryStepService {
     });
 
     // Audit log: discovery cancelled
-    this.logAuditEntry('file_discovery_cancelled', 'File discovery step cancelled by user', {
+    logAuditEntry('file_discovery_cancelled', 'File discovery step cancelled by user', {
       agentId: session.agentConfig?.id,
       agentName: session.agentConfig?.name,
       eventData: {
@@ -609,7 +571,7 @@ class FileDiscoveryStepService {
    * @returns The current retry count (0 if not retried)
    */
   getRetryCount(sessionId: string): number {
-    return this.retryCountBySession.get(sessionId) ?? 0;
+    return this.retryTracker.getRetryCount(sessionId);
   }
 
   /**
@@ -631,43 +593,13 @@ class FileDiscoveryStepService {
   }
 
   /**
-   * Get the workflow's pause behavior from the database.
-   *
-   * @param workflowId - The workflow ID to query
-   * @returns The workflow record or undefined if not found
-   */
-  getWorkflow(workflowId: number): undefined | Workflow {
-    const db = getDatabase();
-    const workflowsRepo = createWorkflowsRepository(db);
-    return workflowsRepo.findById(workflowId);
-  }
-
-  /**
-   * Check if a pause is requested based on workflow's pause behavior.
-   *
-   * @param workflowId - The workflow ID
-   * @returns Whether pause is requested
-   */
-  isPauseRequested(workflowId: number): boolean {
-    const workflow = this.getWorkflow(workflowId);
-    if (!workflow) return false;
-
-    const pauseBehavior = (workflow.pauseBehavior ?? 'auto_pause') as PauseBehavior;
-
-    // AUTO_PAUSE pauses after each step
-    // CONTINUOUS never pauses
-    // GATES_ONLY only pauses at gate steps (discovery is not a gate)
-    return pauseBehavior === 'auto_pause';
-  }
-
-  /**
    * Check if retry limit has been reached.
    *
    * @param sessionId - The session ID
    * @returns Whether the max retry limit has been reached
    */
   isRetryLimitReached(sessionId: string): boolean {
-    return this.getRetryCount(sessionId) >= MAX_RETRY_ATTEMPTS;
+    return this.retryTracker.isRetryLimitReached(sessionId);
   }
 
   /**
@@ -736,7 +668,7 @@ class FileDiscoveryStepService {
         maxRetries: MAX_RETRY_ATTEMPTS,
       });
 
-      this.logAuditEntry('file_discovery_retry_limit_reached', 'Maximum retry attempts reached', {
+      logAuditEntry('file_discovery_retry_limit_reached', 'Maximum retry attempts reached', {
         eventData: {
           maxRetries: MAX_RETRY_ATTEMPTS,
           sessionId: previousSessionId,
@@ -755,17 +687,17 @@ class FileDiscoveryStepService {
     }
 
     // Increment retry count
-    const newRetryCount = this.incrementRetryCount(previousSessionId);
+    const newRetryCount = this.retryTracker.incrementRetryCount(previousSessionId);
 
     // Calculate and apply backoff delay
-    const backoffDelay = this.calculateBackoffDelay(newRetryCount);
+    const backoffDelay = calculateBackoffDelay(newRetryCount);
 
     debugLoggerService.logSdkEvent(previousSessionId, 'Retrying file discovery with backoff', {
       backoffDelayMs: backoffDelay,
       retryCount: newRetryCount,
     });
 
-    this.logAuditEntry(
+    logAuditEntry(
       'file_discovery_retry_started',
       `Retrying file discovery (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS})`,
       {
@@ -787,7 +719,7 @@ class FileDiscoveryStepService {
     const outcome = await this.startDiscovery(options);
 
     // Clean up previous session's retry count
-    this.clearRetryCount(previousSessionId);
+    this.retryTracker.clearRetryCount(previousSessionId);
 
     return {
       ...outcome,
@@ -841,7 +773,7 @@ class FileDiscoveryStepService {
       workflowId: options.workflowId,
     });
 
-    this.logAuditEntry('file_discovery_started', 'File discovery step started', {
+    logAuditEntry('file_discovery_started', 'File discovery step started', {
       agentId: options.agentId,
       eventData: {
         rediscoveryMode: options.rediscoveryMode ?? 'none',
@@ -871,7 +803,7 @@ class FileDiscoveryStepService {
         toolsCount: agentConfig.tools.length,
       });
 
-      this.logAuditEntry('file_discovery_agent_loaded', `Loaded file discovery agent: ${agentConfig.name}`, {
+      logAuditEntry('file_discovery_agent_loaded', `Loaded file discovery agent: ${agentConfig.name}`, {
         agentId: agentConfig.id,
         agentName: agentConfig.name,
         eventData: {
@@ -904,7 +836,7 @@ class FileDiscoveryStepService {
               elapsedSeconds: timeoutSeconds,
             });
 
-            this.logAuditEntry('file_discovery_timeout', `File discovery timed out after ${timeoutSeconds} seconds`, {
+            logAuditEntry('file_discovery_timeout', `File discovery timed out after ${timeoutSeconds} seconds`, {
               agentId: agentConfig.id,
               agentName: agentConfig.name,
               eventData: {
@@ -947,10 +879,10 @@ class FileDiscoveryStepService {
 
       // Clean up session on success
       this.activeSessions.delete(sessionId);
-      this.clearRetryCount(sessionId);
+      this.retryTracker.clearRetryCount(sessionId);
 
       // Add pause information and usage to successful outcomes
-      const pauseRequested = this.isPauseRequested(options.workflowId);
+      const pauseRequested = isPauseRequested(options.workflowId, false); // discovery is not a gate step
       const outcomeWithPause: FileDiscoveryOutcomeWithPause = {
         ...result.outcome,
         pauseRequested,
@@ -987,7 +919,7 @@ class FileDiscoveryStepService {
         retryCount,
       });
 
-      this.logAuditEntry('file_discovery_error', `File discovery step failed: ${errorMessage}`, {
+      logAuditEntry('file_discovery_error', `File discovery step failed: ${errorMessage}`, {
         agentId: session.agentConfig?.id,
         agentName: session.agentConfig?.name,
         eventData: {
@@ -1073,16 +1005,6 @@ Focus on actionable discovery that will help create a comprehensive implementati
   }
 
   /**
-   * Calculate exponential backoff delay for a retry attempt.
-   *
-   * @param retryCount - The current retry count (1-based)
-   * @returns The delay in milliseconds
-   */
-  private calculateBackoffDelay(retryCount: number): number {
-    return BASE_RETRY_DELAY_MS * Math.pow(2, retryCount - 1);
-  }
-
-  /**
    * Clear existing discovered files for a workflow step (replace mode).
    *
    * @param stepId - The workflow step ID
@@ -1102,15 +1024,6 @@ Focus on actionable discovery that will help create a comprehensive implementati
         stepId,
       });
     }
-  }
-
-  /**
-   * Clear the retry count for a session.
-   *
-   * @param sessionId - The session ID
-   */
-  private clearRetryCount(sessionId: string): void {
-    this.retryCountBySession.delete(sessionId);
   }
 
   /**
@@ -1166,29 +1079,8 @@ Focus on actionable discovery that will help create a comprehensive implementati
     const allowedToolNames = agentConfig.tools.length > 0 ? agentConfig.tools.map((t) => t.toolName) : [];
     sdkOptions.allowedTools = allowedToolNames;
 
-    // All built-in Claude Code tools
-    const allBuiltInTools = [
-      'Task',
-      'AskUserQuestion',
-      'Bash',
-      'BashOutput',
-      'Edit',
-      'Read',
-      'Write',
-      'Glob',
-      'Grep',
-      'KillBash',
-      'NotebookEdit',
-      'WebFetch',
-      'WebSearch',
-      'TodoWrite',
-      'ExitPlanMode',
-      'ListMcpResources',
-      'ReadMcpResource',
-    ];
-
     // Explicitly disallow tools NOT in the allowed list
-    sdkOptions.disallowedTools = allBuiltInTools.filter((tool) => !allowedToolNames.includes(tool));
+    sdkOptions.disallowedTools = CLAUDE_CODE_TOOL_NAMES.filter((tool) => !allowedToolNames.includes(tool));
 
     // Configure permission mode
     if (agentConfig.permissionMode) {
@@ -1222,19 +1114,16 @@ Focus on actionable discovery that will help create a comprehensive implementati
 
     // Start heartbeat for extended thinking mode
     let heartbeatInterval: NodeJS.Timeout | null = null;
-    const startTime = Date.now();
 
     if (agentConfig.extendedThinkingEnabled && agentConfig.maxThinkingTokens) {
-      heartbeatInterval = setInterval(() => {
-        const elapsedMs = Date.now() - startTime;
-
+      heartbeatInterval = startHeartbeat(({ elapsedMs, timestamp }) => {
         if (onStreamMessage) {
           onStreamMessage({
             elapsedMs,
             estimatedProgress: null,
             maxThinkingTokens: agentConfig.maxThinkingTokens!,
             sessionId: session.sessionId,
-            timestamp: Date.now(),
+            timestamp,
             type: 'extended_thinking_heartbeat',
           });
         }
@@ -1243,7 +1132,7 @@ Focus on actionable discovery that will help create a comprehensive implementati
           elapsedMs,
           elapsedSeconds: Math.floor(elapsedMs / 1000),
         });
-      }, EXTENDED_THINKING_HEARTBEAT_INTERVAL_MS);
+      });
     }
 
     // Build the prompt
@@ -1256,7 +1145,7 @@ Focus on actionable discovery that will help create a comprehensive implementati
       promptLength: prompt.length,
     });
 
-    this.logAuditEntry('file_discovery_exploring', 'File discovery agent is analyzing codebase', {
+    logAuditEntry('file_discovery_exploring', 'File discovery agent is analyzing codebase', {
       agentId: agentConfig.id,
       agentName: agentConfig.name,
       eventData: {
@@ -1340,35 +1229,22 @@ Focus on actionable discovery that will help create a comprehensive implementati
           phase: session.phase,
         });
 
-        this.logAuditEntry(
-          'file_discovery_completed',
-          `File discovery completed: discovered ${savedFiles.length} files`,
-          {
-            afterState: { discoveredCount: savedFiles.length, phase: 'complete' },
-            agentId: agentConfig.id,
-            agentName: agentConfig.name,
-            eventData: {
-              fileCount: savedFiles.length,
-              sessionId: session.sessionId,
-              summary: session.summary,
-            },
-            severity: 'info',
-            workflowId: session.options.workflowId,
-            workflowStepId: session.options.stepId,
-          }
-        );
+        logAuditEntry('file_discovery_completed', `File discovery completed: discovered ${savedFiles.length} files`, {
+          afterState: { discoveredCount: savedFiles.length, phase: 'complete' },
+          agentId: agentConfig.id,
+          agentName: agentConfig.name,
+          eventData: {
+            fileCount: savedFiles.length,
+            sessionId: session.sessionId,
+            summary: session.summary,
+          },
+          severity: 'info',
+          workflowId: session.options.workflowId,
+          workflowStepId: session.options.stepId,
+        });
 
         // Extract usage statistics
-        let usage: FileDiscoveryUsageStats | undefined;
-        if (resultMessage.subtype === 'success') {
-          usage = {
-            costUsd: resultMessage.total_cost_usd,
-            durationMs: resultMessage.duration_ms,
-            inputTokens: resultMessage.usage.input_tokens,
-            numTurns: resultMessage.num_turns,
-            outputTokens: resultMessage.usage.output_tokens,
-          };
-        }
+        const usage = extractUsageStats(resultMessage);
 
         return {
           outcome: {
@@ -1384,7 +1260,7 @@ Focus on actionable discovery that will help create a comprehensive implementati
         session.phase = 'error';
         this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
 
-        this.logAuditEntry('file_discovery_error', `File discovery error: ${parseResult.error}`, {
+        logAuditEntry('file_discovery_error', `File discovery error: ${parseResult.error}`, {
           agentId: agentConfig.id,
           agentName: agentConfig.name,
           eventData: {
@@ -1419,76 +1295,10 @@ Focus on actionable discovery that will help create a comprehensive implementati
       throw error;
     } finally {
       // Clean up heartbeat interval
+      stopHeartbeat(heartbeatInterval);
       if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        debugLoggerService.logSdkEvent(session.sessionId, 'Extended thinking heartbeat stopped', {
-          elapsedMs: Date.now() - startTime,
-        });
+        debugLoggerService.logSdkEvent(session.sessionId, 'Extended thinking heartbeat stopped', {});
       }
-    }
-  }
-
-  /**
-   * Increment the retry count for a session.
-   *
-   * @param sessionId - The session ID
-   * @returns The new retry count
-   */
-  private incrementRetryCount(sessionId: string): number {
-    const currentCount = this.getRetryCount(sessionId);
-    const newCount = currentCount + 1;
-    this.retryCountBySession.set(sessionId, newCount);
-    return newCount;
-  }
-
-  /**
-   * Create an audit log entry for file discovery events.
-   *
-   * @param eventType - The type of event
-   * @param message - Human-readable description of the event
-   * @param options - Additional audit log options
-   */
-  private logAuditEntry(
-    eventType: string,
-    message: string,
-    options: {
-      afterState?: Record<string, unknown>;
-      agentId?: number;
-      agentName?: string;
-      beforeState?: Record<string, unknown>;
-      eventData?: Record<string, unknown>;
-      severity?: 'debug' | 'error' | 'info' | 'warning';
-      workflowId?: number;
-      workflowStepId?: number;
-    } = {}
-  ): void {
-    try {
-      const db = getDatabase();
-      const auditLogsRepo = createAuditLogsRepository(db);
-
-      const auditEntry: NewAuditLog = {
-        afterState: options.afterState ?? null,
-        beforeState: options.beforeState ?? null,
-        eventCategory: 'step',
-        eventData: {
-          agentId: options.agentId,
-          agentName: options.agentName,
-          ...options.eventData,
-        },
-        eventType,
-        message,
-        severity: options.severity ?? 'info',
-        source: 'system',
-        workflowId: options.workflowId ?? null,
-        workflowStepId: options.workflowStepId ?? null,
-      };
-
-      auditLogsRepo.create(auditEntry);
-    } catch (error) {
-      debugLoggerService.logSdkEvent('system', 'Failed to create audit log entry', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        eventType,
-      });
     }
   }
 
@@ -1766,51 +1576,6 @@ Focus on actionable discovery that will help create a comprehensive implementati
 
     return savedFiles;
   }
-}
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-/**
- * Get the SDK query function, loading it once and caching for subsequent calls.
- *
- * @returns The SDK query function
- * @throws Error if the SDK is not available
- */
-async function getQueryFunction(): Promise<(typeof import('@anthropic-ai/claude-agent-sdk'))['query']> {
-  if (!cachedQueryFn) {
-    try {
-      const sdk = await import('@anthropic-ai/claude-agent-sdk');
-      cachedQueryFn = sdk.query;
-    } catch (error) {
-      throw new Error(
-        `Claude Agent SDK not available. Ensure @anthropic-ai/claude-agent-sdk is installed. ` +
-          `Original error: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-  return cachedQueryFn;
-}
-
-/**
- * Safely parse a tool input JSON payload.
- */
-function parseToolInputJson(payload: string): null | Record<string, unknown> {
-  if (!payload) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(payload);
-    if (parsed && typeof parsed === 'object') {
-      return parsed as Record<string, unknown>;
-    }
-  } catch {
-    // Ignore partial JSON parsing failures
-  }
-
-  return null;
 }
 
 // Export singleton instance
