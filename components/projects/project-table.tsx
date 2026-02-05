@@ -3,9 +3,8 @@
 import type { Row } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, MouseEvent, ReactNode } from 'react';
 
-import { format } from 'date-fns';
 import { ExternalLink, Pencil, Star, Trash2 } from 'lucide-react';
-import { Fragment, memo, useCallback, useMemo, useState } from 'react';
+import { Fragment, memo, useCallback, useMemo } from 'react';
 
 import type { Project } from '@/types/electron';
 
@@ -20,8 +19,10 @@ import {
   type DataTableRowAction,
   DataTableRowActions,
   type DataTableRowStyleCallback,
+  TableNameButton,
 } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import { useDialogItem } from '@/hooks/use-dialog-item';
+import { cn, formatDate } from '@/lib/utils';
 
 interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
   /** Set of project IDs currently being archived/unarchived */
@@ -47,15 +48,6 @@ interface ProjectTableProps extends ComponentPropsWithRef<'div'> {
   /** Custom toolbar content (e.g., filters) */
   toolbarContent?: ReactNode;
 }
-
-const formatDate = (dateString: null | string | undefined): string => {
-  if (!dateString) return '-';
-  try {
-    return format(new Date(dateString), 'MMM d, yyyy');
-  } catch {
-    return '-';
-  }
-};
 
 const columnHelper = createColumnHelper<Project>();
 
@@ -219,79 +211,35 @@ export const ProjectTable = ({
   toolbarContent,
   ...props
 }: ProjectTableProps) => {
-  // State for archive dialog
-  const [archiveProject, setArchiveProject] = useState<null | Project>(null);
-  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
-
-  // State for delete dialog
-  const [deleteProject, setDeleteProject] = useState<null | Project>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  // State for edit dialog
-  const [editProject, setEditProject] = useState<null | Project>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  const handleOpenArchiveDialog = useCallback((project: Project) => {
-    setArchiveProject(project);
-    setIsArchiveDialogOpen(true);
-  }, []);
-
-  const handleArchiveDialogChange = useCallback((isOpen: boolean) => {
-    setIsArchiveDialogOpen(isOpen);
-    if (!isOpen) {
-      setArchiveProject(null);
-    }
-  }, []);
+  const archiveDialog = useDialogItem<Project>();
+  const deleteDialog = useDialogItem<Project>();
+  const editDialog = useDialogItem<Project>();
 
   const handleArchiveConfirm = useCallback(async () => {
-    if (!archiveProject) return;
+    if (!archiveDialog.item) return;
     try {
-      if (archiveProject.archivedAt !== null) {
-        await onUnarchive?.(archiveProject.id);
+      if (archiveDialog.item.archivedAt !== null) {
+        await onUnarchive?.(archiveDialog.item.id);
       } else {
-        await onArchive?.(archiveProject.id);
+        await onArchive?.(archiveDialog.item.id);
       }
-      setIsArchiveDialogOpen(false);
+      archiveDialog.handleOpenChange(false);
     } catch {
       // Error is handled by the mutation's onError callback (toast)
       // Dialog remains open so user can retry or cancel
     }
-  }, [archiveProject, onArchive, onUnarchive]);
-
-  const handleOpenDeleteDialog = useCallback((project: Project) => {
-    setDeleteProject(project);
-    setIsDeleteDialogOpen(true);
-  }, []);
-
-  const handleDeleteDialogChange = useCallback((isOpen: boolean) => {
-    setIsDeleteDialogOpen(isOpen);
-    if (!isOpen) {
-      setDeleteProject(null);
-    }
-  }, []);
+  }, [archiveDialog, onArchive, onUnarchive]);
 
   const handleDeleteConfirm = useCallback(async () => {
-    if (!deleteProject) return;
+    if (!deleteDialog.item) return;
     try {
-      await onDelete?.(deleteProject.id);
-      setIsDeleteDialogOpen(false);
+      await onDelete?.(deleteDialog.item.id);
+      deleteDialog.handleOpenChange(false);
     } catch {
       // Error is handled by the mutation's onError callback (toast)
       // Dialog remains open so user can retry or cancel
     }
-  }, [deleteProject, onDelete]);
-
-  const handleOpenEditDialog = useCallback((project: Project) => {
-    setEditProject(project);
-    setIsEditDialogOpen(true);
-  }, []);
-
-  const handleEditDialogChange = useCallback((isOpen: boolean) => {
-    setIsEditDialogOpen(isOpen);
-    if (!isOpen) {
-      setEditProject(null);
-    }
-  }, []);
+  }, [deleteDialog, onDelete]);
 
   const handleRowClick = useCallback(
     (row: Row<Project>) => {
@@ -335,8 +283,8 @@ export const ProjectTable = ({
           <ActionsCell
             isArchiving={archivingIds.has(row.original.id)}
             isDeleting={deletingIds.has(row.original.id)}
-            onOpenDeleteDialog={handleOpenDeleteDialog}
-            onOpenEditDialog={handleOpenEditDialog}
+            onOpenDeleteDialog={deleteDialog.open}
+            onOpenEditDialog={editDialog.open}
             onViewDetails={onViewDetails}
             row={row}
           />
@@ -357,22 +305,7 @@ export const ProjectTable = ({
       columnHelper.accessor('name', {
         cell: ({ row }) => {
           const project = row.original;
-          return (
-            <button
-              className={cn(
-                'cursor-pointer text-left font-medium text-foreground hover:text-accent',
-                'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
-                'focus-visible:outline-none'
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewDetails?.(project.id);
-              }}
-              type={'button'}
-            >
-              {project.name}
-            </button>
-          );
+          return <TableNameButton onClick={() => onViewDetails?.(project.id)}>{project.name}</TableNameButton>;
         },
         enableHiding: false,
         header: ({ column }) => <DataTableColumnHeader column={column} title={'Name'} />,
@@ -394,7 +327,7 @@ export const ProjectTable = ({
         cell: ({ row }) => (
           <StatusCell
             isArchiving={archivingIds.has(row.original.id)}
-            onOpenArchiveDialog={handleOpenArchiveDialog}
+            onOpenArchiveDialog={archiveDialog.open}
             row={row}
           />
         ),
@@ -428,9 +361,9 @@ export const ProjectTable = ({
     [
       archivingIds,
       deletingIds,
-      handleOpenArchiveDialog,
-      handleOpenDeleteDialog,
-      handleOpenEditDialog,
+      archiveDialog.open,
+      deleteDialog.open,
+      editDialog.open,
       onToggleFavorite,
       onViewDetails,
       togglingFavoriteIds,
@@ -482,31 +415,35 @@ export const ProjectTable = ({
       />
 
       {/* Archive/Unarchive Dialog */}
-      {archiveProject && (
+      {archiveDialog.item && (
         <ConfirmArchiveDialog
-          isArchived={archiveProject.archivedAt !== null}
-          isLoading={archivingIds.has(archiveProject.id)}
-          isOpen={isArchiveDialogOpen}
+          isArchived={archiveDialog.item.archivedAt !== null}
+          isLoading={archivingIds.has(archiveDialog.item.id)}
+          isOpen={archiveDialog.isOpen}
           onConfirm={handleArchiveConfirm}
-          onOpenChange={handleArchiveDialogChange}
-          projectName={archiveProject.name}
+          onOpenChange={archiveDialog.handleOpenChange}
+          projectName={archiveDialog.item.name}
         />
       )}
 
       {/* Delete Dialog */}
-      {deleteProject && (
+      {deleteDialog.item && (
         <ConfirmDeleteProjectDialog
-          isLoading={deletingIds.has(deleteProject.id)}
-          isOpen={isDeleteDialogOpen}
+          isLoading={deletingIds.has(deleteDialog.item.id)}
+          isOpen={deleteDialog.isOpen}
           onConfirm={handleDeleteConfirm}
-          onOpenChange={handleDeleteDialogChange}
-          projectName={deleteProject.name}
+          onOpenChange={deleteDialog.handleOpenChange}
+          projectName={deleteDialog.item.name}
         />
       )}
 
       {/* Edit Dialog */}
-      {editProject && (
-        <EditProjectDialog isOpen={isEditDialogOpen} onOpenChange={handleEditDialogChange} project={editProject} />
+      {editDialog.item && (
+        <EditProjectDialog
+          isOpen={editDialog.isOpen}
+          onOpenChange={editDialog.handleOpenChange}
+          project={editDialog.item}
+        />
       )}
     </Fragment>
   );

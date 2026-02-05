@@ -427,11 +427,7 @@ export function registerAgentHandlers(
    */
   ipcMain.handle(
     IpcChannels.agent.update,
-    (
-      _event: IpcMainInvokeEvent,
-      id: number,
-      data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>
-    ): Agent => {
+    (_event: IpcMainInvokeEvent, id: number, data: Partial<Omit<NewAgent, 'createdAt' | 'id'>>): Agent => {
       try {
         // Get the agent to check if it's built-in
         const agent = agentsRepository.findById(id);
@@ -474,65 +470,56 @@ export function registerAgentHandlers(
   /**
    * Reset an agent to built-in defaults by deleting custom overrides and activating the parent.
    */
-  ipcMain.handle(
-    IpcChannels.agent.reset,
-    (_event: IpcMainInvokeEvent, id: number): Agent | undefined => {
-      try {
-        // Get the current agent to find its parent (built-in version)
-        const agent = agentsRepository.findById(id);
-        if (!agent) {
-          return undefined;
-        }
-
-        // If this is a custom agent with a parent, delete it entirely and activate the parent
-        // This prevents orphaned records from accumulating in the database
-        if (agent.parentAgentId !== null) {
-          // Store the parent ID before deletion
-          const parentId = agent.parentAgentId;
-          // Delete the custom agent entirely (not just deactivate)
-          agentsRepository.delete(id);
-          // Activate the parent (built-in) agent
-          return agentsRepository.activate(parentId);
-        }
-
-        // If this is a built-in agent, just ensure it's active
-        return agentsRepository.activate(id);
-      } catch (error) {
-        console.error('[IPC Error] agent:reset:', error);
-        throw error;
+  ipcMain.handle(IpcChannels.agent.reset, (_event: IpcMainInvokeEvent, id: number): Agent | undefined => {
+    try {
+      // Get the current agent to find its parent (built-in version)
+      const agent = agentsRepository.findById(id);
+      if (!agent) {
+        return undefined;
       }
+
+      // If this is a custom agent with a parent, delete it entirely and activate the parent
+      // This prevents orphaned records from accumulating in the database
+      if (agent.parentAgentId !== null) {
+        // Store the parent ID before deletion
+        const parentId = agent.parentAgentId;
+        // Delete the custom agent entirely (not just deactivate)
+        agentsRepository.delete(id);
+        // Activate the parent (built-in) agent
+        return agentsRepository.activate(parentId);
+      }
+
+      // If this is a built-in agent, just ensure it's active
+      return agentsRepository.activate(id);
+    } catch (error) {
+      console.error('[IPC Error] agent:reset:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Activate an agent (set deactivatedAt to null).
    */
-  ipcMain.handle(
-    IpcChannels.agent.activate,
-    (_event: IpcMainInvokeEvent, id: number): Agent | undefined => {
-      try {
-        return agentsRepository.activate(id);
-      } catch (error) {
-        console.error('[IPC Error] agent:activate:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agent.activate, (_event: IpcMainInvokeEvent, id: number): Agent | undefined => {
+    try {
+      return agentsRepository.activate(id);
+    } catch (error) {
+      console.error('[IPC Error] agent:activate:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Deactivate an agent (set deactivatedAt to current timestamp).
    */
-  ipcMain.handle(
-    IpcChannels.agent.deactivate,
-    (_event: IpcMainInvokeEvent, id: number): Agent | undefined => {
-      try {
-        return agentsRepository.deactivate(id);
-      } catch (error) {
-        console.error('[IPC Error] agent:deactivate:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agent.deactivate, (_event: IpcMainInvokeEvent, id: number): Agent | undefined => {
+    try {
+      return agentsRepository.deactivate(id);
+    } catch (error) {
+      console.error('[IPC Error] agent:deactivate:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Move an agent to a different project by reassigning its projectId.

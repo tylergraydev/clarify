@@ -344,21 +344,18 @@ export function registerClarificationHandlers(
   );
 
   // Get current session state
-  ipcMain.handle(
-    IpcChannels.clarification.getState,
-    (_event: IpcMainInvokeEvent, workflowId: unknown) => {
-      try {
-        const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
+  ipcMain.handle(IpcChannels.clarification.getState, (_event: IpcMainInvokeEvent, workflowId: unknown) => {
+    try {
+      const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
 
-        console.log('[IPC] clarification:getState', { workflowId: validatedWorkflowId });
+      console.log('[IPC] clarification:getState', { workflowId: validatedWorkflowId });
 
-        return clarificationStepService.getState(validatedWorkflowId);
-      } catch (error) {
-        console.error('[IPC Error] clarification:getState:', error);
-        throw error;
-      }
+      return clarificationStepService.getState(validatedWorkflowId);
+    } catch (error) {
+      console.error('[IPC Error] clarification:getState:', error);
+      throw error;
     }
-  );
+  });
 }
 
 /**

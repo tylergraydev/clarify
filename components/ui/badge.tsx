@@ -171,6 +171,8 @@ export const badgeVariants = cva(
   }
 );
 
+export type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
+
 type BadgeProps = ComponentPropsWithRef<'span'> & VariantProps<typeof badgeVariants>;
 
 export const Badge = ({ className, ref, size, variant, ...props }: BadgeProps) => {

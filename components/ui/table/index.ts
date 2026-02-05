@@ -90,6 +90,8 @@ export {
 
 export { DataTableToolbar, dataTableToolbarButtonVariants, dataTableToolbarVariants } from './data-table-toolbar';
 
+export { TableNameButton } from './table-name-button';
+
 // =============================================================================
 // Types
 // =============================================================================

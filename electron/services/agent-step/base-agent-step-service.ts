@@ -332,11 +332,17 @@ export abstract class BaseAgentStepService<
     });
 
     // Audit log: step cancelled
-    auditLogger.logStepCancelled(workflowId, session.options.stepId, session.agentConfig?.id, session.agentConfig?.name, {
-      phase: session.phase,
-      reason: 'User cancelled',
-      sessionId: session.sessionId,
-    });
+    auditLogger.logStepCancelled(
+      workflowId,
+      session.options.stepId,
+      session.agentConfig?.id,
+      session.agentConfig?.name,
+      {
+        phase: session.phase,
+        reason: 'User cancelled',
+        sessionId: session.sessionId,
+      }
+    );
 
     // Clear timeout if active
     if (session.timeoutId) {

@@ -126,5 +126,4 @@ export type StepOutcomePauseInfo<TUsage = unknown> = OutcomePauseInfo<TUsage>;
  * @template TOutcome - Step-specific outcome type
  * @template TUsage - Step-specific usage statistics type
  */
-export type StepOutcomeWithPause<TOutcome, TUsage = unknown> =
-  OutcomePauseInfo<TUsage> & TOutcome;
+export type StepOutcomeWithPause<TOutcome, TUsage = unknown> = OutcomePauseInfo<TUsage> & TOutcome;

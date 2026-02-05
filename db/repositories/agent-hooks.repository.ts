@@ -38,7 +38,12 @@ export function createAgentHooksRepository(db: DrizzleDatabase): AgentHooksRepos
     },
 
     findByAgentId(agentId: number): Array<AgentHook> {
-      return db.select().from(agentHooks).where(eq(agentHooks.agentId, agentId)).orderBy(asc(agentHooks.orderIndex)).all();
+      return db
+        .select()
+        .from(agentHooks)
+        .where(eq(agentHooks.agentId, agentId))
+        .orderBy(asc(agentHooks.orderIndex))
+        .all();
     },
 
     findByEventType(agentId: number, eventType: string): Array<AgentHook> {

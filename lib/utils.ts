@@ -1,5 +1,8 @@
 import { type ClassValue, clsx } from 'clsx';
+import { format } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
+
+type WorkflowBadgeVariant = 'clarifying' | 'completed' | 'default' | 'draft' | 'failed' | 'planning' | 'stale';
 
 /**
  * Capitalizes the first letter of a string.
@@ -23,6 +26,49 @@ export function cn(...inputs: Array<ClassValue>) {
 }
 
 /**
+ * Formats a date string to a short date format (e.g., "Jan 15, 2025").
+ * Returns '-' if the date is null, undefined, or invalid.
+ */
+export function formatDate(dateString: null | string | undefined): string {
+  if (!dateString) return '-';
+  try {
+    return format(new Date(dateString), 'MMM d, yyyy');
+  } catch {
+    return '-';
+  }
+}
+
+/**
+ * Formats a date string to a date-time format (e.g., "Jan 15, 2025 3:30 PM").
+ * Returns '-' if the date is null, undefined, or invalid.
+ */
+export function formatDateTime(dateString: null | string | undefined): string {
+  if (!dateString) return '-';
+  try {
+    return format(new Date(dateString), 'MMM d, yyyy h:mm a');
+  } catch {
+    return '-';
+  }
+}
+
+/**
+ * Formats a duration in milliseconds to a human-readable string.
+ * Examples: "2h 30m", "45m 12s", "3s", "-"
+ */
+export function formatDuration(durationMs: null | number | undefined): string {
+  if (durationMs === null || durationMs === undefined) return '-';
+  const totalSeconds = Math.floor(durationMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts: Array<string> = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+  return parts.join(' ');
+}
+
+/**
  * Gets the appropriate badge variant based on agent type.
  *
  * @param type - The agent type string
@@ -39,6 +85,23 @@ export function getBadgeVariantForType(type: string): 'default' | 'planning' | '
     default:
       return 'default';
   }
+}
+
+/**
+ * Maps workflow status to badge variant for consistent status styling across tables and widgets.
+ */
+const WORKFLOW_STATUS_VARIANT_MAP: Record<string, WorkflowBadgeVariant> = {
+  cancelled: 'stale',
+  completed: 'completed',
+  created: 'default',
+  editing: 'clarifying',
+  failed: 'failed',
+  paused: 'draft',
+  running: 'planning',
+};
+
+export function getWorkflowStatusVariant(status: string): WorkflowBadgeVariant {
+  return WORKFLOW_STATUS_VARIANT_MAP[status] ?? 'default';
 }
 
 /**

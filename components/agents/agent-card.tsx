@@ -7,32 +7,13 @@ import { Fragment } from 'react';
 
 import type { Agent } from '@/db/schema';
 
-import { Badge, type badgeVariants } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip } from '@/components/ui/tooltip';
 import { getAgentColorClass } from '@/lib/colors/agent-colors';
-import { cn } from '@/lib/utils';
-
-type AgentType = Agent['type'];
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
-
-const getTypeVariant = (type: AgentType): BadgeVariant => {
-  const typeVariantMap: Record<string, BadgeVariant> = {
-    planning: 'planning',
-    review: 'review',
-    specialist: 'specialist',
-    utility: 'default',
-  };
-
-  return typeVariantMap[type ?? ''] ?? 'default';
-};
-
-const formatTypeLabel = (type: AgentType): string => {
-  if (!type) return 'Unknown';
-  return type.charAt(0).toUpperCase() + type.slice(1);
-};
+import { capitalizeFirstLetter, cn, getBadgeVariantForType } from '@/lib/utils';
 
 interface AgentCardProps extends Omit<ComponentPropsWithRef<'div'>, 'onClick' | 'onReset'> {
   agent: Agent;
@@ -135,11 +116,11 @@ export const AgentCard = ({
             )}
           </div>
           <Badge
-            aria-label={`Type: ${formatTypeLabel(agent.type)}`}
+            aria-label={`Type: ${agent.type ? capitalizeFirstLetter(agent.type) : 'Unknown'}`}
             className={'shrink-0'}
-            variant={getTypeVariant(agent.type)}
+            variant={getBadgeVariantForType(agent.type ?? '')}
           >
-            {formatTypeLabel(agent.type)}
+            {agent.type ? capitalizeFirstLetter(agent.type) : 'Unknown'}
           </Badge>
         </div>
         {agent.description && <CardDescription className={'line-clamp-2'}>{agent.description}</CardDescription>}

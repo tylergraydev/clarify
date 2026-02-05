@@ -17,7 +17,7 @@ import {
 import { Tooltip } from '@/components/ui/tooltip';
 import { useToggleDiscoveredFile } from '@/hooks/queries/use-discovered-files';
 import { useDiscoveryStore } from '@/lib/stores/discovery-store';
-import { cn } from '@/lib/utils';
+import { capitalizeFirstLetter, cn } from '@/lib/utils';
 
 // ============================================================================
 // Types
@@ -29,9 +29,6 @@ export interface DiscoveredFilesTableProps extends Omit<ComponentPropsWithRef<'d
   /** Callback when a file's inclusion status is toggled */
   onFileToggle?: (file: DiscoveredFile) => void;
 }
-
-type FileAction = 'create' | 'delete' | 'modify' | 'reference';
-type FilePriority = 'high' | 'low' | 'medium';
 
 // ============================================================================
 // Helper Functions
@@ -62,20 +59,6 @@ const getPriorityBadgeClass = (priority: string): string => {
   };
 
   return priorityClassMap[priority] ?? '';
-};
-
-/**
- * Format action label for display
- */
-const formatActionLabel = (action: FileAction): string => {
-  return action.charAt(0).toUpperCase() + action.slice(1);
-};
-
-/**
- * Format priority label for display
- */
-const formatPriorityLabel = (priority: FilePriority): string => {
-  return priority.charAt(0).toUpperCase() + priority.slice(1);
 };
 
 // ============================================================================
@@ -129,7 +112,7 @@ const PriorityCell = memo(function PriorityCell({ priority }: PriorityCellProps)
         priorityClass
       )}
     >
-      {formatPriorityLabel(priority as FilePriority)}
+      {capitalizeFirstLetter(priority)}
     </span>
   );
 });
@@ -144,7 +127,7 @@ interface ActionCellProps {
 const ActionCell = memo(function ActionCell({ action }: ActionCellProps) {
   return (
     <Badge size={'sm'} variant={getActionBadgeVariant(action)}>
-      {formatActionLabel(action as FileAction)}
+      {capitalizeFirstLetter(action)}
     </Badge>
   );
 });

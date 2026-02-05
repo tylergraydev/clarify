@@ -52,17 +52,14 @@ export function registerProjectHandlers(
   });
 
   // Get a project by ID
-  ipcMain.handle(
-    IpcChannels.project.get,
-    (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
-      try {
-        return projectsRepository.findById(id);
-      } catch (error) {
-        console.error('[IPC Error] project:get:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.project.get, (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
+    try {
+      return projectsRepository.findById(id);
+    } catch (error) {
+      console.error('[IPC Error] project:get:', error);
+      throw error;
     }
-  );
+  });
 
   // List all projects with optional archive inclusion
   ipcMain.handle(
@@ -95,17 +92,14 @@ export function registerProjectHandlers(
   );
 
   // Archive a project (set archivedAt timestamp)
-  ipcMain.handle(
-    IpcChannels.project.archive,
-    (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
-      try {
-        return projectsRepository.archive(id);
-      } catch (error) {
-        console.error('[IPC Error] project:archive:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.project.archive, (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
+    try {
+      return projectsRepository.archive(id);
+    } catch (error) {
+      console.error('[IPC Error] project:archive:', error);
+      throw error;
     }
-  );
+  });
 
   // Soft delete a project (calls archive for backwards compatibility)
   ipcMain.handle(IpcChannels.project.delete, (_event: IpcMainInvokeEvent, id: number): boolean => {
@@ -119,17 +113,14 @@ export function registerProjectHandlers(
   });
 
   // Unarchive a project (clear archivedAt timestamp)
-  ipcMain.handle(
-    IpcChannels.project.unarchive,
-    (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
-      try {
-        return projectsRepository.unarchive(id);
-      } catch (error) {
-        console.error('[IPC Error] project:unarchive:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.project.unarchive, (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
+    try {
+      return projectsRepository.unarchive(id);
+    } catch (error) {
+      console.error('[IPC Error] project:unarchive:', error);
+      throw error;
     }
-  );
+  });
 
   // Permanently delete a project and all associated data
   ipcMain.handle(IpcChannels.project.deleteHard, (_event: IpcMainInvokeEvent, id: number): void => {
@@ -164,17 +155,14 @@ export function registerProjectHandlers(
   );
 
   // Toggle favorite status for a project
-  ipcMain.handle(
-    IpcChannels.project.toggleFavorite,
-    (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
-      try {
-        return projectsRepository.toggleFavorite(id);
-      } catch (error) {
-        console.error('[IPC Error] project:toggleFavorite:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.project.toggleFavorite, (_event: IpcMainInvokeEvent, id: number): Project | undefined => {
+    try {
+      return projectsRepository.toggleFavorite(id);
+    } catch (error) {
+      console.error('[IPC Error] project:toggleFavorite:', error);
+      throw error;
     }
-  );
+  });
 
   // List all favorite projects
   ipcMain.handle(IpcChannels.project.listFavorites, (): Array<Project> => {

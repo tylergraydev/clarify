@@ -24,32 +24,26 @@ export function registerAgentSkillHandlers(agentSkillsRepository: AgentSkillsRep
   /**
    * List all skills for a specific agent by agent ID.
    */
-  ipcMain.handle(
-    IpcChannels.agentSkill.list,
-    (_event: IpcMainInvokeEvent, agentId: number): Array<AgentSkill> => {
-      try {
-        return agentSkillsRepository.findByAgentId(agentId);
-      } catch (error) {
-        console.error('[IPC Error] agentSkill:list:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agentSkill.list, (_event: IpcMainInvokeEvent, agentId: number): Array<AgentSkill> => {
+    try {
+      return agentSkillsRepository.findByAgentId(agentId);
+    } catch (error) {
+      console.error('[IPC Error] agentSkill:list:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Create a new skill for an agent.
    */
-  ipcMain.handle(
-    IpcChannels.agentSkill.create,
-    (_event: IpcMainInvokeEvent, data: NewAgentSkill): AgentSkill => {
-      try {
-        return agentSkillsRepository.create(data);
-      } catch (error) {
-        console.error('[IPC Error] agentSkill:create:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agentSkill.create, (_event: IpcMainInvokeEvent, data: NewAgentSkill): AgentSkill => {
+    try {
+      return agentSkillsRepository.create(data);
+    } catch (error) {
+      console.error('[IPC Error] agentSkill:create:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Update a skill's configuration (name, order index, etc.).

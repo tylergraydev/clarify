@@ -24,32 +24,26 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
   /**
    * List all tools for a specific agent by agent ID.
    */
-  ipcMain.handle(
-    IpcChannels.agentTool.list,
-    (_event: IpcMainInvokeEvent, agentId: number): Array<AgentTool> => {
-      try {
-        return agentToolsRepository.findByAgentId(agentId);
-      } catch (error) {
-        console.error('[IPC Error] agentTool:list:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agentTool.list, (_event: IpcMainInvokeEvent, agentId: number): Array<AgentTool> => {
+    try {
+      return agentToolsRepository.findByAgentId(agentId);
+    } catch (error) {
+      console.error('[IPC Error] agentTool:list:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Create a new tool for an agent.
    */
-  ipcMain.handle(
-    IpcChannels.agentTool.create,
-    (_event: IpcMainInvokeEvent, data: NewAgentTool): AgentTool => {
-      try {
-        return agentToolsRepository.create(data);
-      } catch (error) {
-        console.error('[IPC Error] agentTool:create:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agentTool.create, (_event: IpcMainInvokeEvent, data: NewAgentTool): AgentTool => {
+    try {
+      return agentToolsRepository.create(data);
+    } catch (error) {
+      console.error('[IPC Error] agentTool:create:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Update a tool's configuration (name, pattern, order index, etc.).
@@ -73,32 +67,26 @@ export function registerAgentToolHandlers(agentToolsRepository: AgentToolsReposi
   /**
    * Allow a tool by clearing its disallowedAt timestamp.
    */
-  ipcMain.handle(
-    IpcChannels.agentTool.allow,
-    (_event: IpcMainInvokeEvent, id: number): AgentTool | undefined => {
-      try {
-        return agentToolsRepository.allow(id);
-      } catch (error) {
-        console.error('[IPC Error] agentTool:allow:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agentTool.allow, (_event: IpcMainInvokeEvent, id: number): AgentTool | undefined => {
+    try {
+      return agentToolsRepository.allow(id);
+    } catch (error) {
+      console.error('[IPC Error] agentTool:allow:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Disallow a tool by setting its disallowedAt timestamp.
    */
-  ipcMain.handle(
-    IpcChannels.agentTool.disallow,
-    (_event: IpcMainInvokeEvent, id: number): AgentTool | undefined => {
-      try {
-        return agentToolsRepository.disallow(id);
-      } catch (error) {
-        console.error('[IPC Error] agentTool:disallow:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agentTool.disallow, (_event: IpcMainInvokeEvent, id: number): AgentTool | undefined => {
+    try {
+      return agentToolsRepository.disallow(id);
+    } catch (error) {
+      console.error('[IPC Error] agentTool:disallow:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Delete a tool by ID.

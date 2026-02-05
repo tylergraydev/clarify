@@ -3,14 +3,13 @@
 import type { Row } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
-import { format } from 'date-fns';
 import { Copy, Eye, Pencil, Power, PowerOff, Trash2 } from 'lucide-react';
-import { Fragment, memo, useCallback, useMemo, useState } from 'react';
+import { Fragment, memo, useCallback, useMemo } from 'react';
 
 import type { Template } from '@/db/schema';
 import type { TemplateCategory } from '@/db/schema/templates.schema';
 
-import { Badge, type badgeVariants } from '@/components/ui/badge';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import {
   createColumnHelper,
@@ -19,17 +18,17 @@ import {
   type DataTableRowAction,
   DataTableRowActions,
   type DataTableRowStyleCallback,
+  TableNameButton,
 } from '@/components/ui/table';
 import { Tooltip } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { useDialogItem } from '@/hooks/use-dialog-item';
+import { capitalizeFirstLetter, formatDate } from '@/lib/utils';
 
 import { TemplateEditorDialog } from './template-editor-dialog';
 
 // ============================================================================
 // Types
 // ============================================================================
-
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
 interface TemplateTableProps extends ComponentPropsWithRef<'div'> {
   /** Whether the deactivation mutation is in progress */
@@ -72,21 +71,8 @@ const getCategoryVariant = (category: TemplateCategory): BadgeVariant => {
   return categoryVariantMap[category] ?? 'default';
 };
 
-const formatCategoryLabel = (category: TemplateCategory): string => {
-  return category.charAt(0).toUpperCase() + category.slice(1);
-};
-
 const getStatusLabel = (template: Template): string => {
   return template.deactivatedAt === null ? 'Active' : 'Inactive';
-};
-
-const formatDate = (dateString: null | string | undefined): string => {
-  if (!dateString) return '-';
-  try {
-    return format(new Date(dateString), 'MMM d, yyyy');
-  } catch {
-    return '-';
-  }
 };
 
 // ============================================================================
@@ -255,31 +241,18 @@ export const TemplateTable = ({
   toolbarContent,
   ...props
 }: TemplateTableProps) => {
-  const [editDialogTemplate, setEditDialogTemplate] = useState<null | Template>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const editDialog = useDialogItem<Template>();
 
   const isActionDisabled = useMemo(
     () => isDeactivating || isDeleting || isDuplicating || isToggling,
     [isDeactivating, isDeleting, isDuplicating, isToggling]
   );
 
-  const handleEditClick = useCallback((template: Template) => {
-    setEditDialogTemplate(template);
-    setIsEditDialogOpen(true);
-  }, []);
-
-  const handleEditDialogChange = useCallback((isOpen: boolean) => {
-    setIsEditDialogOpen(isOpen);
-    if (!isOpen) {
-      setEditDialogTemplate(null);
-    }
-  }, []);
-
   const handleRowClick = useCallback(
     (row: Row<Template>) => {
-      handleEditClick(row.original);
+      editDialog.open(row.original);
     },
-    [handleEditClick]
+    [editDialog]
   );
 
   const rowStyleCallback: DataTableRowStyleCallback<Template> = useCallback((row) => {
@@ -306,7 +279,7 @@ export const TemplateTable = ({
             isActionDisabled={isActionDisabled}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
-            onEditClick={handleEditClick}
+            onEditClick={editDialog.open}
             onToggleActive={onToggleActive}
             row={row}
           />
@@ -334,36 +307,10 @@ export const TemplateTable = ({
               {/* Template Name */}
               {template.description ? (
                 <Tooltip content={template.description} side={'bottom'}>
-                  <button
-                    className={cn(
-                      'cursor-pointer text-left font-medium text-foreground hover:text-accent',
-                      'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
-                      'focus-visible:outline-none'
-                    )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditClick(template);
-                    }}
-                    type={'button'}
-                  >
-                    {template.name}
-                  </button>
+                  <TableNameButton onClick={() => editDialog.open(template)}>{template.name}</TableNameButton>
                 </Tooltip>
               ) : (
-                <button
-                  className={cn(
-                    'cursor-pointer text-left font-medium text-foreground hover:text-accent',
-                    'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
-                    'focus-visible:outline-none'
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditClick(template);
-                  }}
-                  type={'button'}
-                >
-                  {template.name}
-                </button>
+                <TableNameButton onClick={() => editDialog.open(template)}>{template.name}</TableNameButton>
               )}
 
               {/* Origin Badges */}
@@ -393,7 +340,7 @@ export const TemplateTable = ({
           const template = row.original;
           return (
             <Badge size={'sm'} variant={getCategoryVariant(template.category)}>
-              {formatCategoryLabel(template.category)}
+              {capitalizeFirstLetter(template.category)}
             </Badge>
           );
         },
@@ -469,11 +416,11 @@ export const TemplateTable = ({
         size: 110,
       }),
     ],
-    [handleEditClick, isActionDisabled, isToggling, onDelete, onDuplicate, onToggleActive]
+    [editDialog, isActionDisabled, isToggling, onDelete, onDuplicate, onToggleActive]
   );
 
   // Determine editor mode based on template type
-  const editorMode = editDialogTemplate?.builtInAt !== null ? 'view' : 'edit';
+  const editorMode = editDialog.item?.builtInAt !== null ? 'view' : 'edit';
 
   return (
     <Fragment>
@@ -511,12 +458,12 @@ export const TemplateTable = ({
       />
 
       {/* Edit Dialog */}
-      {editDialogTemplate && (
+      {editDialog.item && (
         <TemplateEditorDialog
-          isOpen={isEditDialogOpen}
+          isOpen={editDialog.isOpen}
           mode={editorMode}
-          onOpenChange={handleEditDialogChange}
-          template={editDialogTemplate}
+          onOpenChange={editDialog.handleOpenChange}
+          template={editDialog.item}
         />
       )}
     </Fragment>

@@ -8,11 +8,10 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Fragment, useState } from 'react';
 
-import type { badgeVariants } from '@/components/ui/badge';
 import type { Workflow } from '@/types/electron';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   ConfirmCancelWorkflowDialog,
@@ -28,6 +27,7 @@ import {
   useStartWorkflow,
   useWorkflow,
 } from '@/hooks/queries/use-workflows';
+import { capitalizeFirstLetter } from '@/lib/utils';
 
 import { Route } from './route-type';
 
@@ -35,11 +35,7 @@ import { Route } from './route-type';
 // Types
 // ============================================================================
 
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
-
 type WorkflowStatus = Workflow['status'];
-
-type WorkflowType = Workflow['type'];
 
 // ============================================================================
 // Helpers
@@ -77,20 +73,6 @@ const getStatusVariant = (status: WorkflowStatus): BadgeVariant => {
   };
 
   return statusVariantMap[status] ?? 'default';
-};
-
-/**
- * Formats a workflow status string for display by capitalizing the first letter.
- */
-const formatStatusLabel = (status: WorkflowStatus): string => {
-  return status.charAt(0).toUpperCase() + status.slice(1);
-};
-
-/**
- * Formats a workflow type string for display by capitalizing the first letter.
- */
-const formatTypeLabel = (type: WorkflowType): string => {
-  return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
 /**
@@ -279,8 +261,8 @@ const WorkflowDetailPage = () => {
         <section aria-label={'Workflow header'} aria-live={'polite'} id={'workflow-content'}>
           <div className={'flex items-center gap-3'}>
             <h1 className={'text-3xl font-bold'}>{workflow.featureName}</h1>
-            <Badge variant={getStatusVariant(workflow.status)}>{formatStatusLabel(workflow.status)}</Badge>
-            <Badge variant={'default'}>{formatTypeLabel(workflow.type)}</Badge>
+            <Badge variant={getStatusVariant(workflow.status)}>{capitalizeFirstLetter(workflow.status)}</Badge>
+            <Badge variant={'default'}>{capitalizeFirstLetter(workflow.type)}</Badge>
           </div>
 
           {/* Metadata */}

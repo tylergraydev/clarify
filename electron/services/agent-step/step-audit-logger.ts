@@ -99,16 +99,12 @@ export class StepAuditLogger {
     maxRetries: number,
     eventData: Record<string, unknown>
   ): void {
-    logAuditEntry(
-      `${this.stepName}_retry_started`,
-      `Retrying ${this.stepName} (attempt ${retryCount}/${maxRetries})`,
-      {
-        eventData,
-        severity: 'info',
-        workflowId,
-        workflowStepId: stepId,
-      }
-    );
+    logAuditEntry(`${this.stepName}_retry_started`, `Retrying ${this.stepName} (attempt ${retryCount}/${maxRetries})`, {
+      eventData,
+      severity: 'info',
+      workflowId,
+      workflowStepId: stepId,
+    });
   }
 
   /**

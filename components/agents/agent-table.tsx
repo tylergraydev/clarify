@@ -3,7 +3,6 @@
 import type { OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
-import { format } from 'date-fns';
 import {
   Check,
   Copy,
@@ -17,12 +16,12 @@ import {
   Star,
   Trash2,
 } from 'lucide-react';
-import { Fragment, memo, useCallback, useMemo, useState } from 'react';
+import { Fragment, memo, useCallback, useMemo } from 'react';
 
 import type { Agent, AgentHook, AgentSkill, AgentTool, Project } from '@/db/schema';
 
 import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
-import { Badge, type badgeVariants } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import {
   createColumnHelper,
@@ -31,15 +30,17 @@ import {
   type DataTableRowAction,
   DataTableRowActions,
   type DataTableRowStyleCallback,
+  TableNameButton,
 } from '@/components/ui/table';
 import { Tooltip } from '@/components/ui/tooltip';
 import {
   useDefaultClarificationAgent,
   useSetDefaultClarificationAgent,
 } from '@/hooks/queries/use-default-clarification-agent';
+import { useDialogItem } from '@/hooks/use-dialog-item';
 import { useToast } from '@/hooks/use-toast';
 import { getAgentColorClass } from '@/lib/colors/agent-colors';
-import { cn } from '@/lib/utils';
+import { capitalizeFirstLetter, cn, formatDate, getBadgeVariantForType } from '@/lib/utils';
 
 // ============================================================================
 // Types
@@ -87,29 +88,9 @@ interface AgentTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onReset'> 
   toolbarContent?: ReactNode;
 }
 
-type AgentType = Agent['type'];
-
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
-
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-const getTypeVariant = (type: AgentType): BadgeVariant => {
-  const typeVariantMap: Record<string, BadgeVariant> = {
-    planning: 'planning',
-    review: 'review',
-    specialist: 'specialist',
-    utility: 'default',
-  };
-
-  return typeVariantMap[type ?? ''] ?? 'default';
-};
-
-const formatTypeLabel = (type: AgentType): string => {
-  if (!type) return 'Unknown';
-  return type.charAt(0).toUpperCase() + type.slice(1);
-};
 
 const getScopeLabel = (agent: Agent, projects?: Array<Project>): string => {
   if (agent.projectId === null) {
@@ -121,15 +102,6 @@ const getScopeLabel = (agent: Agent, projects?: Array<Project>): string => {
 
 const getStatusLabel = (agent: Agent): string => {
   return agent.deactivatedAt === null ? 'Active' : 'Inactive';
-};
-
-const formatDate = (dateString: null | string | undefined): string => {
-  if (!dateString) return '-';
-  try {
-    return format(new Date(dateString), 'MMM d, yyyy');
-  } catch {
-    return '-';
-  }
 };
 
 // ============================================================================
@@ -396,8 +368,7 @@ export const AgentTable = ({
   toolbarContent,
   ...props
 }: AgentTableProps) => {
-  const [editDialogAgent, setEditDialogAgent] = useState<AgentWithRelations | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const editDialog = useDialogItem<AgentWithRelations>();
 
   const toast = useToast();
   const { agentId: defaultClarificationAgentId } = useDefaultClarificationAgent();
@@ -442,23 +413,11 @@ export const AgentTable = ({
     ]
   );
 
-  const handleEditClick = useCallback((agent: AgentWithRelations) => {
-    setEditDialogAgent(agent);
-    setIsEditDialogOpen(true);
-  }, []);
-
-  const handleEditDialogChange = useCallback((isOpen: boolean) => {
-    setIsEditDialogOpen(isOpen);
-    if (!isOpen) {
-      setEditDialogAgent(null);
-    }
-  }, []);
-
   const handleRowClick = useCallback(
     (row: Row<AgentWithRelations>) => {
-      handleEditClick(row.original);
+      editDialog.open(row.original);
     },
-    [handleEditClick]
+    [editDialog]
   );
 
   const rowStyleCallback: DataTableRowStyleCallback<AgentWithRelations> = useCallback((row) => {
@@ -489,7 +448,7 @@ export const AgentTable = ({
             onCreateOverride={onCreateOverride}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
-            onEditClick={handleEditClick}
+            onEditClick={editDialog.open}
             onExport={onExport}
             onMakeDefault={handleMakeDefault}
             onMoveToProject={onMoveToProject}
@@ -528,36 +487,10 @@ export const AgentTable = ({
               {/* Agent Name */}
               {agent.description ? (
                 <Tooltip content={agent.description} side={'bottom'}>
-                  <button
-                    className={cn(
-                      'cursor-pointer text-left font-medium text-foreground hover:text-accent',
-                      'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
-                      'focus-visible:outline-none'
-                    )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditClick(agent);
-                    }}
-                    type={'button'}
-                  >
-                    {agent.displayName}
-                  </button>
+                  <TableNameButton onClick={() => editDialog.open(agent)}>{agent.displayName}</TableNameButton>
                 </Tooltip>
               ) : (
-                <button
-                  className={cn(
-                    'cursor-pointer text-left font-medium text-foreground hover:text-accent',
-                    'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
-                    'focus-visible:outline-none'
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditClick(agent);
-                  }}
-                  type={'button'}
-                >
-                  {agent.displayName}
-                </button>
+                <TableNameButton onClick={() => editDialog.open(agent)}>{agent.displayName}</TableNameButton>
               )}
 
               {/* Origin Badges */}
@@ -605,8 +538,8 @@ export const AgentTable = ({
         cell: ({ row }) => {
           const agent = row.original;
           return (
-            <Badge size={'sm'} variant={getTypeVariant(agent.type)}>
-              {formatTypeLabel(agent.type)}
+            <Badge size={'sm'} variant={getBadgeVariantForType(agent.type ?? '')}>
+              {agent.type ? capitalizeFirstLetter(agent.type) : 'Unknown'}
             </Badge>
           );
         },
@@ -703,7 +636,7 @@ export const AgentTable = ({
     ],
     [
       defaultClarificationAgentId,
-      handleEditClick,
+      editDialog,
       handleMakeDefault,
       isActionDisabled,
       isSettingDefault,
@@ -758,12 +691,12 @@ export const AgentTable = ({
       />
 
       {/* Edit Dialog */}
-      {editDialogAgent && (
+      {editDialog.item && (
         <AgentEditorDialog
-          agent={editDialogAgent}
-          isOpen={isEditDialogOpen}
+          agent={editDialog.item}
+          isOpen={editDialog.isOpen}
           mode={'edit'}
-          onOpenChange={handleEditDialogChange}
+          onOpenChange={editDialog.handleOpenChange}
         />
       )}
     </Fragment>

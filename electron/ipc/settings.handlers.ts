@@ -43,43 +43,34 @@ export function registerSettingsHandlers(settingsRepository: SettingsRepository)
   );
 
   // Get a setting by ID
-  ipcMain.handle(
-    IpcChannels.settings.get,
-    (_event: IpcMainInvokeEvent, id: number): Setting | undefined => {
-      try {
-        return settingsRepository.findById(id);
-      } catch (error) {
-        console.error('[IPC Error] settings:get:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.settings.get, (_event: IpcMainInvokeEvent, id: number): Setting | undefined => {
+    try {
+      return settingsRepository.findById(id);
+    } catch (error) {
+      console.error('[IPC Error] settings:get:', error);
+      throw error;
     }
-  );
+  });
 
   // Get a setting by key
-  ipcMain.handle(
-    IpcChannels.settings.getByKey,
-    (_event: IpcMainInvokeEvent, key: string): Setting | undefined => {
-      try {
-        return settingsRepository.findByKey(key);
-      } catch (error) {
-        console.error('[IPC Error] settings:getByKey:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.settings.getByKey, (_event: IpcMainInvokeEvent, key: string): Setting | undefined => {
+    try {
+      return settingsRepository.findByKey(key);
+    } catch (error) {
+      console.error('[IPC Error] settings:getByKey:', error);
+      throw error;
     }
-  );
+  });
 
   // Get settings by category
-  ipcMain.handle(
-    IpcChannels.settings.getByCategory,
-    (_event: IpcMainInvokeEvent, category: string): Array<Setting> => {
-      try {
-        return settingsRepository.findByCategory(category);
-      } catch (error) {
-        console.error('[IPC Error] settings:getByCategory:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.settings.getByCategory, (_event: IpcMainInvokeEvent, category: string): Array<Setting> => {
+    try {
+      return settingsRepository.findByCategory(category);
+    } catch (error) {
+      console.error('[IPC Error] settings:getByCategory:', error);
+      throw error;
     }
-  );
+  });
 
   // Set a setting value by key
   ipcMain.handle(

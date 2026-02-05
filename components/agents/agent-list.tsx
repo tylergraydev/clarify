@@ -8,11 +8,11 @@ import { useState } from 'react';
 import type { Agent } from '@/db/schema';
 
 import { AgentEditorDialog } from '@/components/agents/agent-editor-dialog';
-import { Badge, type badgeVariants } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { IconButton } from '@/components/ui/icon-button';
 import { Switch } from '@/components/ui/switch';
 import { getAgentColorClass } from '@/lib/colors/agent-colors';
-import { cn } from '@/lib/utils';
+import { capitalizeFirstLetter, cn, getBadgeVariantForType } from '@/lib/utils';
 
 interface AgentListItemProps extends Omit<ComponentPropsWithRef<'li'>, 'onClick' | 'onReset'> {
   agent: Agent;
@@ -37,26 +37,6 @@ interface AgentListProps extends Omit<ComponentPropsWithRef<'ul'>, 'onReset'> {
   onReset?: (agentId: number) => void;
   onToggleActive?: (agentId: number, isActive: boolean) => void;
 }
-
-type AgentType = Agent['type'];
-
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
-
-const getTypeVariant = (type: AgentType): BadgeVariant => {
-  const typeVariantMap: Record<string, BadgeVariant> = {
-    planning: 'planning',
-    review: 'review',
-    specialist: 'specialist',
-    utility: 'default',
-  };
-
-  return typeVariantMap[type ?? ''] ?? 'default';
-};
-
-const formatTypeLabel = (type: AgentType): string => {
-  if (!type) return 'Unknown';
-  return type.charAt(0).toUpperCase() + type.slice(1);
-};
 
 const AgentListItem = ({
   agent,
@@ -120,8 +100,8 @@ const AgentListItem = ({
       </div>
 
       {/* Type Badge */}
-      <Badge className={'shrink-0'} size={'sm'} variant={getTypeVariant(agent.type)}>
-        {formatTypeLabel(agent.type)}
+      <Badge className={'shrink-0'} size={'sm'} variant={getBadgeVariantForType(agent.type ?? '')}>
+        {agent.type ? capitalizeFirstLetter(agent.type) : 'Unknown'}
       </Badge>
 
       {/* Origin Badges */}

@@ -66,7 +66,12 @@ export function createAgentToolsRepository(db: DrizzleDatabase): AgentToolsRepos
     },
 
     findByAgentId(agentId: number): Array<AgentTool> {
-      return db.select().from(agentTools).where(eq(agentTools.agentId, agentId)).orderBy(asc(agentTools.orderIndex)).all();
+      return db
+        .select()
+        .from(agentTools)
+        .where(eq(agentTools.agentId, agentId))
+        .orderBy(asc(agentTools.orderIndex))
+        .all();
     },
 
     findById: base.findById,

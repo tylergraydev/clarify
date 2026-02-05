@@ -42,14 +42,14 @@ The agent step shared module provides foundational abstractions that:
 
 ### When to Use Each Utility
 
-| Utility                      | Use When...                                                                                      |
-| ---------------------------- | ------------------------------------------------------------------------------------------------ |
-| BaseAgentStepService         | Creating a new agent step service (extend as base class)                                         |
-| AgentSdkExecutor             | Executing Claude Agent SDK queries with streaming                                                |
-| StepAuditLogger              | Logging audit events for workflow tracking                                                       |
-| StructuredOutputValidator    | Validating SDK structured output against Zod schemas                                             |
-| AgentTimeoutManager          | Setting up timeouts for agent operations                                                         |
-| OutcomeBuilder               | Building outcomes with pause information and retry context                                       |
+| Utility                   | Use When...                                                |
+| ------------------------- | ---------------------------------------------------------- |
+| BaseAgentStepService      | Creating a new agent step service (extend as base class)   |
+| AgentSdkExecutor          | Executing Claude Agent SDK queries with streaming          |
+| StepAuditLogger           | Logging audit events for workflow tracking                 |
+| StructuredOutputValidator | Validating SDK structured output against Zod schemas       |
+| AgentTimeoutManager       | Setting up timeouts for agent operations                   |
+| OutcomeBuilder            | Building outcomes with pause information and retry context |
 
 ## BaseAgentStepService Usage
 
@@ -90,11 +90,13 @@ abstract class BaseAgentStepService<
 Build the step-specific prompt for the agent based on service options.
 
 **Purpose**: Each step has a unique prompt structure based on its purpose:
+
 - Clarification: Analyzes feature request clarity
 - Refinement: Combines feature request with clarification context
 - File Discovery: Identifies relevant files for implementation
 
 **Example**:
+
 ```typescript
 protected buildPrompt(options: ClarificationServiceOptions): string {
   return `Analyze the following feature request for clarity...
@@ -115,11 +117,13 @@ ${options.featureRequest}
 Validate and transform the SDK's structured_output field into the step's outcome type.
 
 **Purpose**: Each step has unique validation logic:
+
 - Clarification: Validates SKIP/QUESTIONS discriminated union
 - Refinement: Validates refinedText field
 - File Discovery: Validates discoveredFiles array
 
 **Example**:
+
 ```typescript
 protected processStructuredOutput(result: SDKResultMessage, sessionId: string): ClarificationOutcome {
   const validationResult = this.structuredValidator.validate(result, sessionId);
@@ -151,11 +155,13 @@ protected processStructuredOutput(result: SDKResultMessage, sessionId: string): 
 Initialize step-specific session state.
 
 **Purpose**: Each step tracks different state:
+
 - Clarification: questions array, skipReason
 - Refinement: refinedFeatureRequest
 - File Discovery: discoveredFiles array
 
 **Example**:
+
 ```typescript
 protected createSession(_workflowId: number, options: ClarificationServiceOptions): ActiveClarificationSession {
   return {
@@ -182,6 +188,7 @@ Extract step-specific state from a session for external monitoring.
 **Purpose**: Returns only relevant state fields for the step's state type, excluding internal tracking fields like abortController.
 
 **Example**:
+
 ```typescript
 protected extractState(session: ActiveClarificationSession): ClarificationServiceState {
   return {
@@ -258,8 +265,22 @@ export type MyStreamMessage =
   | { type: 'text_delta'; sessionId: string; delta: string; timestamp: number }
   | { type: 'thinking_start'; sessionId: string; blockIndex: number; timestamp: number }
   | { type: 'thinking_delta'; sessionId: string; blockIndex: number; delta: string; timestamp: number }
-  | { type: 'tool_start'; sessionId: string; toolName: string; toolUseId: string; toolInput: Record<string, unknown>; timestamp: number }
-  | { type: 'tool_update'; sessionId: string; toolName: string; toolUseId: string; toolInput: Record<string, unknown>; timestamp: number }
+  | {
+      type: 'tool_start';
+      sessionId: string;
+      toolName: string;
+      toolUseId: string;
+      toolInput: Record<string, unknown>;
+      timestamp: number;
+    }
+  | {
+      type: 'tool_update';
+      sessionId: string;
+      toolName: string;
+      toolUseId: string;
+      toolInput: Record<string, unknown>;
+      timestamp: number;
+    }
   | { type: 'tool_stop'; sessionId: string; toolUseId: string; timestamp: number };
 
 // Zod schema for structured output validation
@@ -576,6 +597,7 @@ class AgentSdkExecutor<TAgentConfig, TSession, TStreamMessage> {
 ```
 
 **Example**:
+
 ```typescript
 const executor = new AgentSdkExecutor<MyAgentConfig, MySession, MyStreamMessage>();
 
@@ -688,6 +710,7 @@ class StepAuditLogger {
 ```
 
 **Example**:
+
 ```typescript
 const logger = new StepAuditLogger('clarification');
 
@@ -735,6 +758,7 @@ type ValidationResult<TSchema> =
 ```
 
 **Example**:
+
 ```typescript
 const validator = new StructuredOutputValidator(mySchema);
 
@@ -765,9 +789,7 @@ Centralizes timeout promise creation and cleanup logic for agent step services.
 
 ```typescript
 // Creates a timeout promise that resolves after the specified duration
-function createTimeoutPromise<TOutcome>(
-  config: TimeoutPromiseConfig<TOutcome>
-): TimeoutPromiseResult<TOutcome>;
+function createTimeoutPromise<TOutcome>(config: TimeoutPromiseConfig<TOutcome>): TimeoutPromiseResult<TOutcome>;
 
 interface TimeoutPromiseConfig<TOutcome> {
   timeoutSeconds: number;
@@ -786,6 +808,7 @@ function clearTimeoutSafely(timeoutId: ReturnType<typeof setTimeout> | null | un
 ```
 
 **Example**:
+
 ```typescript
 const { promise, cleanup } = createTimeoutPromise({
   timeoutSeconds: 60,
@@ -841,6 +864,7 @@ function buildErrorOutcomeWithRetry(
 ```
 
 **Example**:
+
 ```typescript
 // Successful outcome with pause info
 const outcomeWithPause = buildOutcomeWithPauseInfo(
@@ -869,6 +893,7 @@ This refactoring consolidated ~1,200 lines of duplicate code across clarificatio
 ### Before/After Comparison
 
 **Before** (per service):
+
 - 600-700 lines of code
 - Duplicated SDK execution logic
 - Duplicated validation logic
@@ -877,6 +902,7 @@ This refactoring consolidated ~1,200 lines of duplicate code across clarificatio
 - Duplicated outcome building
 
 **After** (per service):
+
 - 150-200 lines of code
 - Extends BaseAgentStepService
 - Uses shared utilities for common operations
@@ -884,12 +910,12 @@ This refactoring consolidated ~1,200 lines of duplicate code across clarificatio
 
 ### Line Count Reductions
 
-| Service              | Before | After | Reduction |
-| -------------------- | ------ | ----- | --------- |
-| Clarification        | ~650   | ~200  | 69%       |
-| Refinement           | ~600   | ~180  | 70%       |
-| File Discovery       | ~650   | ~200  | 69%       |
-| **Total**            | ~1,900 | ~1,180| 62%       |
+| Service        | Before | After  | Reduction |
+| -------------- | ------ | ------ | --------- |
+| Clarification  | ~650   | ~200   | 69%       |
+| Refinement     | ~600   | ~180   | 70%       |
+| File Discovery | ~650   | ~200   | 69%       |
+| **Total**      | ~1,900 | ~1,180 | 62%       |
 
 ### Benefits Realized
 

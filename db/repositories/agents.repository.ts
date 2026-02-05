@@ -127,15 +127,7 @@ export function createAgentsRepository(db: DrizzleDatabase): AgentsRepository {
       return db
         .select()
         .from(agents)
-        .where(
-          and(
-            isNull(agents.deactivatedAt),
-            or(
-              eq(agents.projectId, projectId),
-              isNull(agents.projectId)
-            )
-          )
-        )
+        .where(and(isNull(agents.deactivatedAt), or(eq(agents.projectId, projectId), isNull(agents.projectId))))
         .all();
     },
 

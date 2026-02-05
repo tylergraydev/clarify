@@ -23,32 +23,26 @@ export function registerAgentHookHandlers(agentHooksRepository: AgentHooksReposi
   /**
    * List all hooks for a specific agent by agent ID.
    */
-  ipcMain.handle(
-    IpcChannels.agentHook.list,
-    (_event: IpcMainInvokeEvent, agentId: number): Array<AgentHook> => {
-      try {
-        return agentHooksRepository.findByAgentId(agentId);
-      } catch (error) {
-        console.error('[IPC Error] agentHook:list:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agentHook.list, (_event: IpcMainInvokeEvent, agentId: number): Array<AgentHook> => {
+    try {
+      return agentHooksRepository.findByAgentId(agentId);
+    } catch (error) {
+      console.error('[IPC Error] agentHook:list:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Create a new hook for an agent.
    */
-  ipcMain.handle(
-    IpcChannels.agentHook.create,
-    (_event: IpcMainInvokeEvent, data: NewAgentHook): AgentHook => {
-      try {
-        return agentHooksRepository.create(data);
-      } catch (error) {
-        console.error('[IPC Error] agentHook:create:', error);
-        throw error;
-      }
+  ipcMain.handle(IpcChannels.agentHook.create, (_event: IpcMainInvokeEvent, data: NewAgentHook): AgentHook => {
+    try {
+      return agentHooksRepository.create(data);
+    } catch (error) {
+      console.error('[IPC Error] agentHook:create:', error);
+      throw error;
     }
-  );
+  });
 
   /**
    * Update a hook's configuration (body, matcher, order index, etc.).

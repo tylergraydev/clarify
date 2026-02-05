@@ -1,6 +1,5 @@
 'use client';
 
-import { format } from 'date-fns';
 import { Archive, Building2, Calendar, ChevronRight, FolderGit2, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { useRouteParams } from 'next-typesafe-url/app';
@@ -20,17 +19,11 @@ import { WorkflowsTabContent } from '@/components/workflows/workflows-tab-conten
 import { useProject } from '@/hooks/queries/use-projects';
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useWorkflowsByProject } from '@/hooks/queries/use-workflows';
+import { formatDate } from '@/lib/utils';
 
 import { type ProjectTabValue, projectTabValues, Route } from './route-type';
 
 type ProjectWithDates = Pick<Project, 'archivedAt' | 'createdAt' | 'updatedAt'>;
-
-/**
- * Formats a date to a readable string (e.g., "Jan 15, 2025")
- */
-const formatDate = (date: Date | string): string => {
-  return format(new Date(date), 'MMM d, yyyy');
-};
 
 /**
  * Formats project dates for display in the metadata card

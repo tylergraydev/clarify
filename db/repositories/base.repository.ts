@@ -19,15 +19,18 @@ type TableWithIdAndTimestamps = SQLiteTableWithColumns<any> & {
   updatedAt: any;
 };
 
-export function createBaseRepository<
-  TTable extends TableWithIdAndTimestamps,
-  TSelect,
-  TInsert,
->(db: DrizzleDatabase, table: TTable): BaseRepository<TSelect, TInsert> {
+export function createBaseRepository<TTable extends TableWithIdAndTimestamps, TSelect, TInsert>(
+  db: DrizzleDatabase,
+  table: TTable
+): BaseRepository<TSelect, TInsert> {
   return {
     create(data: TInsert): TSelect {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return db.insert(table).values(data as any).returning().get() as TSelect;
+      return db
+        .insert(table)
+        .values(data as any)
+        .returning()
+        .get() as TSelect;
     },
 
     delete(id: number): boolean {
@@ -40,13 +43,15 @@ export function createBaseRepository<
     },
 
     update(id: number, data: Partial<TInsert>): TSelect | undefined {
-      return db
-        .update(table)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` } as any)
-        .where(eq(table.id, id))
-        .returning()
-        .get() as TSelect | undefined;
+      return (
+        db
+          .update(table)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .set({ ...data, updatedAt: sql`(CURRENT_TIMESTAMP)` } as any)
+          .where(eq(table.id, id))
+          .returning()
+          .get() as TSelect | undefined
+      );
     },
   };
 }

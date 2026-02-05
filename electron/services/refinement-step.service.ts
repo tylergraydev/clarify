@@ -109,11 +109,7 @@ class RefinementStepService extends BaseAgentStepService<
   RefinementStreamMessage
 > {
   private auditLogger = new StepAuditLogger('refinement');
-  private sdkExecutor = new AgentSdkExecutor<
-    RefinementAgentConfig,
-    ActiveRefinementSession,
-    RefinementStreamMessage
-  >();
+  private sdkExecutor = new AgentSdkExecutor<RefinementAgentConfig, ActiveRefinementSession, RefinementStreamMessage>();
   private structuredValidator = new StructuredOutputValidator(refinementAgentOutputFlatSchema);
 
   /**

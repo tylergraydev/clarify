@@ -106,9 +106,7 @@ export function clearTimeoutSafely(timeoutId: null | ReturnType<typeof setTimeou
  * @param config - Configuration for the timeout promise
  * @returns Object containing the promise, timeoutId, and cleanup function
  */
-export function createTimeoutPromise<TOutcome>(
-  config: TimeoutPromiseConfig<TOutcome>
-): TimeoutPromiseResult<TOutcome> {
+export function createTimeoutPromise<TOutcome>(config: TimeoutPromiseConfig<TOutcome>): TimeoutPromiseResult<TOutcome> {
   const { abortController, onTimeout, timeoutSeconds } = config;
 
   let timeoutId: null | ReturnType<typeof setTimeout> = null;

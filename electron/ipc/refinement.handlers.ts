@@ -159,21 +159,18 @@ export function registerRefinementHandlers(
   );
 
   // Get current session state
-  ipcMain.handle(
-    IpcChannels.refinement.getState,
-    (_event: IpcMainInvokeEvent, workflowId: unknown) => {
-      try {
-        const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
+  ipcMain.handle(IpcChannels.refinement.getState, (_event: IpcMainInvokeEvent, workflowId: unknown) => {
+    try {
+      const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
 
-        console.log('[IPC] refinement:getState', { workflowId: validatedWorkflowId });
+      console.log('[IPC] refinement:getState', { workflowId: validatedWorkflowId });
 
-        return refinementStepService.getState(validatedWorkflowId);
-      } catch (error) {
-        console.error('[IPC Error] refinement:getState:', error);
-        throw error;
-      }
+      return refinementStepService.getState(validatedWorkflowId);
+    } catch (error) {
+      console.error('[IPC Error] refinement:getState:', error);
+      throw error;
     }
-  );
+  });
 
   // Retry refinement with exponential backoff
   ipcMain.handle(
@@ -325,22 +322,19 @@ ${guidance}`;
 
   // Get the result of a completed refinement session
   // This channel exists for parity with the channel definition but delegates to getState
-  ipcMain.handle(
-    IpcChannels.refinement.getResult,
-    (_event: IpcMainInvokeEvent, workflowId: unknown) => {
-      try {
-        const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
+  ipcMain.handle(IpcChannels.refinement.getResult, (_event: IpcMainInvokeEvent, workflowId: unknown) => {
+    try {
+      const validatedWorkflowId = validateNumberId(workflowId, 'workflowId');
 
-        console.log('[IPC] refinement:getResult', { workflowId: validatedWorkflowId });
+      console.log('[IPC] refinement:getResult', { workflowId: validatedWorkflowId });
 
-        // Return the same state as getState - the caller can extract the result
-        return refinementStepService.getState(validatedWorkflowId);
-      } catch (error) {
-        console.error('[IPC Error] refinement:getResult:', error);
-        throw error;
-      }
+      // Return the same state as getState - the caller can extract the result
+      return refinementStepService.getState(validatedWorkflowId);
+    } catch (error) {
+      console.error('[IPC Error] refinement:getResult:', error);
+      throw error;
     }
-  );
+  });
 }
 
 /**

@@ -38,7 +38,12 @@ export function createAgentSkillsRepository(db: DrizzleDatabase): AgentSkillsRep
     },
 
     findByAgentId(agentId: number): Array<AgentSkill> {
-      return db.select().from(agentSkills).where(eq(agentSkills.agentId, agentId)).orderBy(asc(agentSkills.orderIndex)).all();
+      return db
+        .select()
+        .from(agentSkills)
+        .where(eq(agentSkills.agentId, agentId))
+        .orderBy(asc(agentSkills.orderIndex))
+        .all();
     },
 
     findById: base.findById,

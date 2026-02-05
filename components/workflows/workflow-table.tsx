@@ -3,13 +3,12 @@
 import type { Row } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
-import { format } from 'date-fns';
 import { Eye, Pause, Pencil, Play, X } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo } from 'react';
 
 import type { Workflow } from '@/types/electron';
 
-import { Badge, type badgeVariants } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import {
   createColumnHelper,
   DataTable,
@@ -17,14 +16,13 @@ import {
   type DataTableRowAction,
   DataTableRowActions,
   type DataTableRowStyleCallback,
+  TableNameButton,
 } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import { capitalizeFirstLetter, formatDate, getWorkflowStatusVariant } from '@/lib/utils';
 
 // ============================================================================
 // Types
 // ============================================================================
-
-type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
 type WorkflowStatus = Workflow['status'];
 
@@ -55,8 +53,6 @@ interface WorkflowTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onPause
   workflows: Array<Workflow>;
 }
 
-type WorkflowType = Workflow['type'];
-
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -64,37 +60,6 @@ type WorkflowType = Workflow['type'];
 const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'running', 'paused'];
 const PAUSABLE_STATUSES: Array<WorkflowStatus> = ['running'];
 const RESUMABLE_STATUSES: Array<WorkflowStatus> = ['paused'];
-
-const getStatusVariant = (status: WorkflowStatus): BadgeVariant => {
-  const statusVariantMap: Record<WorkflowStatus, BadgeVariant> = {
-    cancelled: 'stale',
-    completed: 'completed',
-    created: 'default',
-    editing: 'clarifying',
-    failed: 'failed',
-    paused: 'draft',
-    running: 'planning',
-  };
-
-  return statusVariantMap[status] ?? 'default';
-};
-
-const formatStatusLabel = (status: WorkflowStatus): string => {
-  return status.charAt(0).toUpperCase() + status.slice(1);
-};
-
-const formatTypeLabel = (type: WorkflowType): string => {
-  return type.charAt(0).toUpperCase() + type.slice(1);
-};
-
-const formatDate = (dateString: null | string | undefined): string => {
-  if (!dateString) return '-';
-  try {
-    return format(new Date(dateString), 'MMM d, yyyy');
-  } catch {
-    return '-';
-  }
-};
 
 // ============================================================================
 // Column Helper
@@ -289,22 +254,7 @@ export const WorkflowTable = ({
       columnHelper.accessor('featureName', {
         cell: ({ row }) => {
           const workflow = row.original;
-          return (
-            <button
-              className={cn(
-                'cursor-pointer text-left font-medium text-foreground hover:text-accent',
-                'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
-                'focus-visible:outline-none'
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewDetails?.(workflow.id);
-              }}
-              type={'button'}
-            >
-              {workflow.featureName}
-            </button>
-          );
+          return <TableNameButton onClick={() => onViewDetails?.(workflow.id)}>{workflow.featureName}</TableNameButton>;
         },
         enableHiding: false,
         header: ({ column }) => <DataTableColumnHeader column={column} title={'Feature Name'} />,
@@ -327,7 +277,7 @@ export const WorkflowTable = ({
       columnHelper.accessor('type', {
         cell: ({ row }) => (
           <Badge size={'sm'} variant={'default'}>
-            {formatTypeLabel(row.original.type as WorkflowType)}
+            {capitalizeFirstLetter(row.original.type)}
           </Badge>
         ),
         header: ({ column }) => <DataTableColumnHeader column={column} title={'Type'} />,
@@ -337,8 +287,8 @@ export const WorkflowTable = ({
       // Status column
       columnHelper.accessor('status', {
         cell: ({ row }) => (
-          <Badge size={'sm'} variant={getStatusVariant(row.original.status as WorkflowStatus)}>
-            {formatStatusLabel(row.original.status as WorkflowStatus)}
+          <Badge size={'sm'} variant={getWorkflowStatusVariant(row.original.status)}>
+            {capitalizeFirstLetter(row.original.status)}
           </Badge>
         ),
         header: ({ column }) => <DataTableColumnHeader column={column} title={'Status'} />,
