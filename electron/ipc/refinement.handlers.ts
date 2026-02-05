@@ -16,7 +16,6 @@
  */
 import { type BrowserWindow, ipcMain, type IpcMainInvokeEvent } from 'electron';
 
-import type { WorkflowStepsRepository } from '../../db/repositories';
 import type {
   RefinementOutcome,
   RefinementRegenerateInput,
@@ -31,6 +30,8 @@ import { IpcChannels } from './channels';
  * Input for starting a refinement session.
  */
 interface RefinementStartInput {
+  /** The agent ID to use for refinement */
+  agentId: number;
   /** Context from the clarification step (questions and answers) */
   clarificationContext: RefinementServiceOptions['clarificationContext'];
   /** The feature request text to refine */
@@ -48,13 +49,9 @@ interface RefinementStartInput {
 /**
  * Register all refinement-related IPC handlers.
  *
- * @param workflowStepsRepository - The workflow steps repository for looking up step data
  * @param getMainWindow - Function to get the main BrowserWindow for streaming events
  */
-export function registerRefinementHandlers(
-  workflowStepsRepository: WorkflowStepsRepository,
-  getMainWindow: () => BrowserWindow | null
-): void {
+export function registerRefinementHandlers(getMainWindow: () => BrowserWindow | null): void {
   // Start a new refinement session
   ipcMain.handle(
     IpcChannels.refinement.start,
@@ -70,6 +67,7 @@ export function registerRefinementHandlers(
         // Validate required parameters
         const workflowId = validateNumberId(typedInput.workflowId, 'workflowId');
         const stepId = validateNumberId(typedInput.stepId, 'stepId');
+        const agentId = validateNumberId(typedInput.agentId, 'agentId');
         const featureRequest = validateString(typedInput.featureRequest, 'featureRequest');
         const repositoryPath = validateString(typedInput.repositoryPath, 'repositoryPath');
 
@@ -84,22 +82,6 @@ export function registerRefinementHandlers(
 
         if (!typedInput.clarificationContext.answers || typeof typedInput.clarificationContext.answers !== 'object') {
           throw new Error('Invalid input: expected clarificationContext.answers object');
-        }
-
-        // Look up the workflow step to get the agentId
-        const step = workflowStepsRepository.findById(stepId);
-        if (!step) {
-          throw new Error(`Workflow step not found: ${stepId}`);
-        }
-
-        if (step.workflowId !== workflowId) {
-          throw new Error(`Step ${stepId} does not belong to workflow ${workflowId}`);
-        }
-
-        // Get agentId from the step
-        const agentId = step.agentId;
-        if (!agentId) {
-          throw new Error(`No agent assigned to refinement step ${stepId}`);
         }
 
         console.log('[IPC] refinement:start', {
@@ -187,23 +169,13 @@ export function registerRefinementHandlers(
         // Validate required parameters
         const workflowId = validateNumberId(typedInput.workflowId, 'workflowId');
         const stepId = validateNumberId(typedInput.stepId, 'stepId');
+        const agentId = validateNumberId(typedInput.agentId, 'agentId');
         const featureRequest = validateString(typedInput.featureRequest, 'featureRequest');
         const repositoryPath = validateString(typedInput.repositoryPath, 'repositoryPath');
 
         // Validate clarification context
         if (!typedInput.clarificationContext || typeof typedInput.clarificationContext !== 'object') {
           throw new Error('Invalid input: expected clarificationContext object');
-        }
-
-        // Look up the workflow step to get the agentId
-        const step = workflowStepsRepository.findById(stepId);
-        if (!step) {
-          throw new Error(`Workflow step not found: ${stepId}`);
-        }
-
-        const agentId = step.agentId;
-        if (!agentId) {
-          throw new Error(`No agent assigned to refinement step ${stepId}`);
         }
 
         const retryCount = refinementStepService.getRetryCount(workflowId);
@@ -245,6 +217,7 @@ export function registerRefinementHandlers(
         }
 
         const typedInput = input as RefinementRegenerateInput & {
+          agentId: number;
           clarificationContext: RefinementServiceOptions['clarificationContext'];
           featureRequest: string;
           repositoryPath: string;
@@ -254,6 +227,7 @@ export function registerRefinementHandlers(
         // Validate required parameters
         const workflowId = validateNumberId(typedInput.workflowId, 'workflowId');
         const stepId = validateNumberId(typedInput.stepId, 'stepId');
+        const agentId = validateNumberId(typedInput.agentId, 'agentId');
         const guidance = validateString(typedInput.guidance, 'guidance');
         const featureRequest = validateString(typedInput.featureRequest, 'featureRequest');
         const repositoryPath = validateString(typedInput.repositoryPath, 'repositoryPath');
@@ -261,17 +235,6 @@ export function registerRefinementHandlers(
         // Validate clarification context
         if (!typedInput.clarificationContext || typeof typedInput.clarificationContext !== 'object') {
           throw new Error('Invalid input: expected clarificationContext object');
-        }
-
-        // Look up the workflow step to get the agentId
-        const step = workflowStepsRepository.findById(stepId);
-        if (!step) {
-          throw new Error(`Workflow step not found: ${stepId}`);
-        }
-
-        const agentId = step.agentId;
-        if (!agentId) {
-          throw new Error(`No agent assigned to refinement step ${stepId}`);
         }
 
         console.log('[IPC] refinement:regenerate', {

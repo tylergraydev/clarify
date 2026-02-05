@@ -169,9 +169,8 @@ export function registerAllHandlers(
   // Also needs getMainWindow for streaming events to renderer
   registerClarificationHandlers(workflowStepsRepository, getMainWindow);
 
-  // Refinement handlers - need steps repository to look up agentId from step
-  // Also needs getMainWindow for streaming events to renderer
-  registerRefinementHandlers(workflowStepsRepository, getMainWindow);
+  // Refinement handlers - needs getMainWindow for streaming events to renderer
+  registerRefinementHandlers(getMainWindow);
 
   // Workflows - orchestration runs
   // Needs workflowStepsRepository for creating planning steps on start
