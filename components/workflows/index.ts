@@ -20,6 +20,7 @@ export { PipelineConnector, pipelineConnectorVariants } from './pipeline-connect
 export { PipelineProgressBar } from './pipeline-progress-bar';
 export { PipelineStep, type PipelineStepStatus, type PipelineStepType, pipelineStepVariants } from './pipeline-step';
 export { PipelineStepMetrics, type StepMetrics } from './pipeline-step-metrics';
+export { PipelineStepsList } from './pipeline-steps-list';
 export { PipelineView } from './pipeline-view';
 // Field components
 export {
