@@ -133,7 +133,7 @@ const WorkflowDetailContent = () => {
       <ClarificationStreamProvider isEnabled={isClarificationEnabled} workflowId={workflowId}>
         <main aria-label={'Workflow detail'} className={'flex h-(--workflow-content-height) flex-col'}>
           {/* Top Bar */}
-          <WorkflowTopBar />
+          <WorkflowTopBar workflowId={workflowId} />
 
           {/* Step Accordion */}
           <div className={'flex-1 overflow-auto'}>
