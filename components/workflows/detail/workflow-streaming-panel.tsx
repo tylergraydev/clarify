@@ -7,7 +7,6 @@ import { Fragment, useCallback, useRef } from 'react';
 
 import type { WorkflowDetailStepTab } from '@/lib/stores/workflow-detail-store';
 
-import { IconButton } from '@/components/ui/icon-button';
 import { Separator } from '@/components/ui/separator';
 import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTrigger } from '@/components/ui/tabs';
 import { useWorkflowDetailStore } from '@/lib/stores/workflow-detail-store';
@@ -135,22 +134,29 @@ export const WorkflowStreamingPanel = ({ className, ref, ...props }: WorkflowStr
       {...props}
     >
       {/* Collapsed bar - always visible */}
-      <div className={'flex min-h-(--workflow-streaming-panel-collapsed-height) items-center justify-between px-4'}>
+      <div className={'relative flex min-h-(--workflow-streaming-panel-collapsed-height) items-center px-4'}>
         <div className={'flex items-center gap-2'}>
           <Activity aria-hidden={'true'} className={'size-3.5 text-muted-foreground'} />
           <span className={'text-xs font-medium text-muted-foreground'}>Agent Activity</span>
         </div>
-        <IconButton
-          aria-label={isStreamingPanelCollapsed ? 'Expand streaming panel' : 'Collapse streaming panel'}
-          className={'size-6'}
-          onClick={handleToggleClick}
-        >
-          {isStreamingPanelCollapsed ? (
-            <ChevronUp aria-hidden={'true'} className={'size-4'} />
-          ) : (
-            <ChevronDown aria-hidden={'true'} className={'size-4'} />
-          )}
-        </IconButton>
+        <div className={'absolute inset-x-0 flex justify-center'}>
+          <button
+            aria-label={isStreamingPanelCollapsed ? 'Expand streaming panel' : 'Collapse streaming panel'}
+            className={cn(
+              'inline-flex h-8 items-center justify-center rounded-md px-6',
+              'text-muted-foreground transition-colors',
+              'hover:bg-muted hover:text-foreground',
+              'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0 focus-visible:outline-none'
+            )}
+            onClick={handleToggleClick}
+          >
+            {isStreamingPanelCollapsed ? (
+              <ChevronUp aria-hidden={'true'} className={'size-5'} />
+            ) : (
+              <ChevronDown aria-hidden={'true'} className={'size-5'} />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Expanded content */}
