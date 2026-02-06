@@ -2,8 +2,9 @@
 
 import type { ComponentPropsWithRef, PointerEvent as ReactPointerEvent } from 'react';
 
-import { Activity, ChevronDown, ChevronUp, Loader2, Wrench } from 'lucide-react';
-import { Fragment, useCallback, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Activity, ChevronDown, ChevronUp, Coins, Loader2, Wrench } from 'lucide-react';
+import { Fragment, useCallback, useMemo, useRef } from 'react';
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 
 import type { WorkflowDetailStepTab } from '@/lib/stores/workflow-detail-store';
@@ -13,51 +14,20 @@ import type { StreamToolEvent } from '@/types/workflow-stream';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTrigger } from '@/components/ui/tabs';
+import { useAgentActivityByStepId } from '@/hooks/queries/use-agent-activity';
+import { useElectronDb } from '@/hooks/use-electron';
 import { useTick } from '@/hooks/use-tick';
 import { PHASE_LABELS } from '@/lib/constants/clarification';
+import { stepKeys } from '@/lib/queries/steps';
 import { useWorkflowDetailStore } from '@/lib/stores/workflow-detail-store';
 import { cn, formatElapsed } from '@/lib/utils';
+import { type ActivityUsageSummary, transformActivityToStreamState } from '@/lib/utils/agent-activity-transform';
 
 import { useClarificationStreamContext } from './clarification-stream-provider';
 
 // =============================================================================
 // Constants
 // =============================================================================
-
-const PLACEHOLDER_LOGS: Record<Exclude<WorkflowDetailStepTab, 'clarification'>, Array<string>> = {
-  discovery: [
-    '[00:00:01] Starting file discovery agent...',
-    '[00:00:02] Scanning repository structure...',
-    '[00:00:03] Analyzing imports and dependencies...',
-    '[00:00:04] Found 12 relevant files across 4 directories.',
-    '[00:00:05] Mapping file relationships...',
-    '[00:00:06] Identified 3 schema files, 4 components, 2 services.',
-    '[00:00:07] Ranking files by relevance score...',
-    '[00:00:08] File discovery complete. 12 files catalogued.',
-  ],
-  planning: [
-    '[00:00:01] Starting implementation planning agent...',
-    '[00:00:02] Loading refined feature request and discovered files...',
-    '[00:00:03] Generating implementation steps...',
-    '[00:00:04] Step 1: Create database schema migration.',
-    '[00:00:05] Step 2: Implement repository layer.',
-    '[00:00:06] Step 3: Add IPC handlers.',
-    '[00:00:07] Step 4: Build UI components.',
-    '[00:00:08] Step 5: Add validation and error handling.',
-    '[00:00:09] Defining quality gates for each step...',
-    '[00:00:10] Implementation plan complete. 5 steps generated.',
-  ],
-  refinement: [
-    '[00:00:01] Starting refinement agent...',
-    '[00:00:02] Loading clarification responses...',
-    '[00:00:03] Enriching feature request with project context...',
-    '[00:00:04] Analyzing existing codebase patterns...',
-    '[00:00:05] Adding technical constraints and requirements...',
-    '[00:00:06] Incorporating team conventions...',
-    '[00:00:07] Refined feature request generated.',
-    '[00:00:08] Refinement complete. Ready for file discovery.',
-  ],
-};
 
 /**
  * Phases considered terminal (agent is no longer active).
@@ -77,9 +47,21 @@ const TAB_ORDER: Array<{ label: string; value: WorkflowDetailStepTab }> = [
   { label: 'Planning', value: 'planning' },
 ];
 
-type WorkflowStreamingPanelProps = ComponentPropsWithRef<'div'>;
+/**
+ * Maps a tab value to the corresponding workflow step type.
+ */
+const TAB_TO_STEP_TYPE: Record<WorkflowDetailStepTab, string> = {
+  clarification: 'clarification',
+  discovery: 'discovery',
+  planning: 'planning',
+  refinement: 'refinement',
+};
 
-export const WorkflowStreamingPanel = ({ className, ref, ...props }: WorkflowStreamingPanelProps) => {
+interface WorkflowStreamingPanelProps extends ComponentPropsWithRef<'div'> {
+  workflowId: number;
+}
+
+export const WorkflowStreamingPanel = ({ className, ref, workflowId, ...props }: WorkflowStreamingPanelProps) => {
   const {
     activeStreamingTab,
     isStreamingPanelCollapsed,
@@ -90,9 +72,31 @@ export const WorkflowStreamingPanel = ({ className, ref, ...props }: WorkflowStr
   } = useWorkflowDetailStore();
 
   const clarificationStream = useClarificationStreamContext();
+  const { isElectron, steps } = useElectronDb();
 
   const startYRef = useRef<number>(0);
   const startHeightRef = useRef<number>(0);
+
+  // Fetch workflow steps to resolve step IDs for each tab
+  const { data: workflowSteps } = useQuery({
+    ...stepKeys.listByWorkflow(workflowId),
+    enabled: isElectron && workflowId > 0,
+    queryFn: () => steps.list(workflowId),
+  });
+
+  const stepIdByTab = useMemo(() => {
+    const map: Partial<Record<WorkflowDetailStepTab, number>> = {};
+    if (workflowSteps) {
+      for (const step of workflowSteps) {
+        for (const [tab, stepType] of Object.entries(TAB_TO_STEP_TYPE)) {
+          if (step.stepType === stepType) {
+            map[tab as WorkflowDetailStepTab] = step.id;
+          }
+        }
+      }
+    }
+    return map;
+  }, [workflowSteps]);
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -139,6 +143,9 @@ export const WorkflowStreamingPanel = ({ className, ref, ...props }: WorkflowStr
   const isTerminal = clarificationStream.currentPhase
     ? TERMINAL_DISPLAY_PHASES.has(clarificationStream.currentPhase)
     : false;
+
+  // Determine whether clarification is actively streaming with live data
+  const isClarificationLive = clarificationStream.isStreaming || clarificationStream.toolEvents.length > 0;
 
   return (
     <div
@@ -216,34 +223,103 @@ export const WorkflowStreamingPanel = ({ className, ref, ...props }: WorkflowStr
 
             {/* Clarification Tab Panel */}
             <TabsPanel className={'min-h-0 flex-1 overflow-hidden'} value={'clarification'}>
-              <StepStreamContent
-                isStreaming={clarificationStream.isStreaming}
-                isTerminal={isTerminal}
-                phaseLabel={phaseLabel}
-                sessionEndedAt={clarificationStream.sessionEndedAt}
-                sessionStartedAt={clarificationStream.sessionStartedAt}
-                textContent={clarificationStream.textContent}
-                thinkingContent={clarificationStream.thinkingContent}
-                toolEvents={clarificationStream.toolEvents}
-              />
+              {isClarificationLive ? (
+                <StepStreamContent
+                  isStreaming={clarificationStream.isStreaming}
+                  isTerminal={isTerminal}
+                  phaseLabel={phaseLabel}
+                  sessionEndedAt={clarificationStream.sessionEndedAt}
+                  sessionStartedAt={clarificationStream.sessionStartedAt}
+                  textContent={clarificationStream.textContent}
+                  thinkingContent={clarificationStream.thinkingContent}
+                  toolEvents={clarificationStream.toolEvents}
+                />
+              ) : (
+                <HistoricalStepContent
+                  isStreaming={clarificationStream.isStreaming}
+                  stepId={stepIdByTab.clarification}
+                />
+              )}
             </TabsPanel>
 
-            {/* Placeholder Tab Panels */}
+            {/* Historical Tab Panels */}
             {TAB_ORDER.filter((tab) => tab.value !== 'clarification').map((tab) => (
-              <TabsPanel className={'min-h-0 flex-1 overflow-auto p-3'} key={tab.value} value={tab.value}>
-                <div className={'font-mono text-xs text-muted-foreground'}>
-                  {PLACEHOLDER_LOGS[tab.value as Exclude<WorkflowDetailStepTab, 'clarification'>].map((line) => (
-                    <div className={'py-0.5'} key={line}>
-                      {line}
-                    </div>
-                  ))}
-                </div>
+              <TabsPanel className={'min-h-0 flex-1 overflow-hidden'} key={tab.value} value={tab.value}>
+                <HistoricalStepContent
+                  isStreaming={false}
+                  stepId={stepIdByTab[tab.value]}
+                />
               </TabsPanel>
             ))}
           </TabsRoot>
         </Fragment>
       )}
     </div>
+  );
+};
+
+// =============================================================================
+// Historical Step Content
+// =============================================================================
+
+interface HistoricalStepContentProps {
+  isStreaming: boolean;
+  stepId: number | undefined;
+}
+
+/**
+ * Loads persisted agent activity for a completed or previously-navigated-away-from
+ * step and renders it via `StepStreamContent`. When `isStreaming` is true, defers
+ * to the live stream by showing a "Streaming live..." indicator. When no data is
+ * available, shows an empty state message.
+ */
+const HistoricalStepContent = ({ isStreaming, stepId }: HistoricalStepContentProps) => {
+  const { data: activities } = useAgentActivityByStepId(stepId ?? 0, {
+    enabled: !isStreaming && stepId !== undefined && stepId > 0,
+  });
+
+  const transformed = useMemo(() => {
+    if (!activities || activities.length === 0) return null;
+    return transformActivityToStreamState(activities);
+  }, [activities]);
+
+  if (isStreaming) {
+    return (
+      <div className={'flex h-full items-center justify-center p-3'}>
+        <Loader2 aria-hidden={'true'} className={'mr-2 size-3 animate-spin text-accent'} />
+        <span className={'text-xs text-muted-foreground'}>Streaming live...</span>
+      </div>
+    );
+  }
+
+  if (!stepId) {
+    return (
+      <div className={'flex h-full items-center justify-center p-3'}>
+        <span className={'text-xs text-muted-foreground'}>No activity recorded</span>
+      </div>
+    );
+  }
+
+  if (!transformed) {
+    return (
+      <div className={'flex h-full items-center justify-center p-3'}>
+        <span className={'text-xs text-muted-foreground'}>No activity recorded</span>
+      </div>
+    );
+  }
+
+  return (
+    <StepStreamContent
+      isStreaming={false}
+      isTerminal={true}
+      phaseLabel={null}
+      sessionEndedAt={null}
+      sessionStartedAt={null}
+      textContent={transformed.textContent}
+      thinkingContent={transformed.thinkingContent}
+      toolEvents={transformed.toolEvents}
+      usageSummary={transformed.usageSummary}
+    />
   );
 };
 
@@ -260,13 +336,14 @@ interface StepStreamContentProps {
   textContent: string;
   thinkingContent: string;
   toolEvents: Array<StreamToolEvent>;
+  usageSummary?: ActivityUsageSummary | null;
 }
 
 /**
  * Renders a workflow step's stream output with auto-scrolling.
  * Shows a phase indicator with elapsed time, streamed text, tool events
- * with per-tool durations, and thinking content.
- * Step-agnostic — works for clarification, refinement, discovery, and planning.
+ * with per-tool durations, thinking content, and an optional usage summary.
+ * Step-agnostic -- works for clarification, refinement, discovery, and planning.
  */
 const StepStreamContent = ({
   isStreaming,
@@ -277,6 +354,7 @@ const StepStreamContent = ({
   textContent,
   thinkingContent,
   toolEvents,
+  usageSummary,
 }: StepStreamContentProps) => {
   const isEmptyState = !phaseLabel && !textContent && !thinkingContent && toolEvents.length === 0;
 
@@ -323,6 +401,9 @@ const StepStreamContent = ({
 
         {/* Streamed Text */}
         {textContent && <pre className={'font-mono text-xs whitespace-pre-wrap text-foreground'}>{textContent}</pre>}
+
+        {/* Usage Summary */}
+        {usageSummary && <UsageSummaryDisplay usageSummary={usageSummary} />}
       </StickToBottom.Content>
       <StreamScrollButton />
     </StickToBottom>
@@ -453,6 +534,65 @@ const StreamScrollButton = () => {
       >
         <ChevronDown aria-hidden={'true'} className={'size-4'} />
       </Button>
+    </div>
+  );
+};
+
+// =============================================================================
+// Usage Summary Display
+// =============================================================================
+
+interface UsageSummaryDisplayProps {
+  usageSummary: ActivityUsageSummary;
+}
+
+/**
+ * Displays token usage and estimated cost from a completed agent step.
+ * Rendered as a compact summary row below tool events.
+ */
+const UsageSummaryDisplay = ({ usageSummary }: UsageSummaryDisplayProps) => {
+  const totalTokens =
+    usageSummary.inputTokens +
+    usageSummary.outputTokens +
+    usageSummary.cacheCreationInputTokens +
+    usageSummary.cacheReadInputTokens;
+
+  if (totalTokens === 0 && usageSummary.estimatedCost === 0) {
+    return null;
+  }
+
+  const formattedCost = usageSummary.estimatedCost > 0 ? `$${usageSummary.estimatedCost.toFixed(4)}` : null;
+  const hasCacheTokens = usageSummary.cacheCreationInputTokens > 0 || usageSummary.cacheReadInputTokens > 0;
+
+  return (
+    <div className={'mt-1 flex items-center gap-3 border-t border-border pt-2 font-mono text-xs text-muted-foreground'}>
+      {/* Cost Icon */}
+      <Coins aria-hidden={'true'} className={'size-3 shrink-0'} />
+
+      {/* Input Tokens */}
+      <span>
+        <span className={'font-medium'}>In:</span> {usageSummary.inputTokens.toLocaleString()}
+      </span>
+
+      {/* Output Tokens */}
+      <span>
+        <span className={'font-medium'}>Out:</span> {usageSummary.outputTokens.toLocaleString()}
+      </span>
+
+      {/* Cache Tokens */}
+      {hasCacheTokens && (
+        <span>
+          <span className={'font-medium'}>Cache:</span>{' '}
+          {(usageSummary.cacheCreationInputTokens + usageSummary.cacheReadInputTokens).toLocaleString()}
+        </span>
+      )}
+
+      {/* Estimated Cost */}
+      {formattedCost && (
+        <span className={'ml-auto font-medium'}>
+          {formattedCost}
+        </span>
+      )}
     </div>
   );
 };

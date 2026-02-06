@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 import type {
   Agent,
+  AgentActivity,
   AgentHook,
   AgentSkill,
   AgentTool,
@@ -450,6 +451,10 @@ export interface ElectronAPI {
     move(agentId: number, targetProjectId: null | number): Promise<Agent>;
     reset(id: number): Promise<Agent | undefined>;
     update(id: number, data: Partial<NewAgent>): Promise<Agent>;
+  };
+  agentActivity: {
+    getByStepId(stepId: number): Promise<Array<AgentActivity>>;
+    getByWorkflowId(workflowId: number): Promise<Array<AgentActivity>>;
   };
   agentHook: {
     create(data: NewAgentHook): Promise<AgentHook>;
@@ -1264,6 +1269,10 @@ const electronAPI: ElectronAPI = {
     move: (agentId, targetProjectId) => ipcRenderer.invoke(IpcChannels.agent.move, agentId, targetProjectId),
     reset: (id) => ipcRenderer.invoke(IpcChannels.agent.reset, id),
     update: (id, data) => ipcRenderer.invoke(IpcChannels.agent.update, id, data),
+  },
+  agentActivity: {
+    getByStepId: (stepId) => ipcRenderer.invoke(IpcChannels.agentActivity.getByStepId, stepId),
+    getByWorkflowId: (workflowId) => ipcRenderer.invoke(IpcChannels.agentActivity.getByWorkflowId, workflowId),
   },
   agentHook: {
     create: (data) => ipcRenderer.invoke(IpcChannels.agentHook.create, data),

@@ -6,6 +6,11 @@
  */
 
 // ============================================================================
+// Agent Activity Hooks
+// ============================================================================
+export { useAgentActivityByStepId, useAgentActivityByWorkflowId } from './use-agent-activity';
+
+// ============================================================================
 // Agent Hook Hooks
 // ============================================================================
 export { useAgentHooks, useCreateAgentHook, useDeleteAgentHook, useUpdateAgentHook } from './use-agent-hooks';
@@ -177,6 +182,7 @@ export {
 // ============================================================================
 // Re-export query keys from lib/queries for convenient access
 export {
+  agentActivityKeys,
   agentHookKeys,
   agentKeys,
   agentSkillKeys,

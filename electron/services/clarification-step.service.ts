@@ -25,6 +25,7 @@ import type { SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
 
 import { randomUUID } from 'crypto';
 
+import type { AgentActivityRepository } from '../../db/repositories/agent-activity.repository';
 import type {
   ClarificationAgentConfig,
   ClarificationOutcome,
@@ -104,6 +105,7 @@ class ClarificationStepService extends BaseAgentStepService<
   ClarificationOutcome,
   ClarificationStreamMessage
 > {
+  private activityRepository: AgentActivityRepository | null = null;
   private auditLogger = new StepAuditLogger('clarification');
   private sdkExecutor = new AgentSdkExecutor<
     ClarificationAgentConfig,
@@ -151,6 +153,17 @@ class ClarificationStepService extends BaseAgentStepService<
       this.auditLogger,
       onStreamMessage
     );
+  }
+
+  /**
+   * Set the agent activity repository for persisting activity events.
+   *
+   * Called during handler registration to inject the repository reference.
+   *
+   * @param repo - The agent activity repository instance
+   */
+  setAgentActivityRepository(repo: AgentActivityRepository): void {
+    this.activityRepository = repo;
   }
 
   /**
@@ -807,9 +820,11 @@ ${options.existingQuestions.map((q, i) => `${i + 1}. [${q.header}] ${q.question}
       session,
       {
         abortController: session.abortController,
+        activityRepository: this.activityRepository ?? undefined,
         agentConfig,
         outputFormatSchema: clarificationAgentOutputJSONSchema,
         repositoryPath: session.options.repositoryPath,
+        stepId: session.options.stepId,
       },
       prompt,
       {

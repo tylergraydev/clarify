@@ -14,6 +14,7 @@ import type { BrowserWindow } from 'electron';
 import type { DrizzleDatabase } from '../../db';
 
 import {
+  createAgentActivityRepository,
   createAgentHooksRepository,
   createAgentSkillsRepository,
   createAgentsRepository,
@@ -30,6 +31,10 @@ import {
   createWorkflowStepsRepository,
   createWorktreesRepository,
 } from '../../db/repositories';
+import { clarificationStepService } from '../services/clarification-step.service';
+import { fileDiscoveryStepService } from '../services/file-discovery.service';
+import { refinementStepService } from '../services/refinement-step.service';
+import { registerAgentActivityHandlers } from './agent-activity.handlers';
 import { registerAgentHookHandlers } from './agent-hook.handlers';
 import { registerAgentSkillHandlers } from './agent-skill.handlers';
 import { registerAgentStreamHandlers } from './agent-stream.handlers';
@@ -184,6 +189,15 @@ export function registerAllHandlers(
   // ============================================
   // Database handlers - Supporting entities
   // ============================================
+
+  // Agent activity - persisted agent activity records for steps and workflows
+  const agentActivityRepository = createAgentActivityRepository(db);
+  registerAgentActivityHandlers(agentActivityRepository);
+
+  // Inject activity repository into step services for persisting agent activity events
+  clarificationStepService.setAgentActivityRepository(agentActivityRepository);
+  refinementStepService.setAgentActivityRepository(agentActivityRepository);
+  fileDiscoveryStepService.setAgentActivityRepository(agentActivityRepository);
 
   // Discovered files - files found during analysis
   // Also needs workflowStepsRepository and getMainWindow for discovery streaming

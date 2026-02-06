@@ -150,7 +150,7 @@ const WorkflowDetailContent = () => {
           </div>
 
           {/* Streaming Panel */}
-          <WorkflowStreamingPanel />
+          <WorkflowStreamingPanel workflowId={workflowId} />
         </main>
       </ClarificationStreamProvider>
     </QueryErrorBoundary>

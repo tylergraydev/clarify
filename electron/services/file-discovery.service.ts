@@ -35,6 +35,7 @@ import type { SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
+import type { AgentActivityRepository } from '../../db/repositories/agent-activity.repository';
 import type { NewDiscoveredFile } from '../../db/schema';
 import type { StepOutcomeWithPause } from './agent-step';
 import type { ActiveToolInfo, ExecuteAgentResult } from './agent-step/step-types';
@@ -502,6 +503,7 @@ class FileDiscoveryStepService extends BaseAgentStepService<
   FileDiscoveryOutcome,
   FileDiscoveryStreamMessage
 > {
+  private activityRepository: AgentActivityRepository | null = null;
   private auditLogger = new StepAuditLogger('file_discovery');
   private sdkExecutor = new AgentSdkExecutor<
     FileDiscoveryAgentConfig,
@@ -560,6 +562,17 @@ class FileDiscoveryStepService extends BaseAgentStepService<
       this.auditLogger,
       onStreamMessage
     );
+  }
+
+  /**
+   * Set the agent activity repository for persisting activity events.
+   *
+   * Called during handler registration to inject the repository reference.
+   *
+   * @param repo - The agent activity repository instance
+   */
+  setAgentActivityRepository(repo: AgentActivityRepository): void {
+    this.activityRepository = repo;
   }
 
   /**
@@ -1013,9 +1026,11 @@ Focus on actionable discovery that will help create a comprehensive implementati
       session,
       {
         abortController: session.abortController,
+        activityRepository: this.activityRepository ?? undefined,
         agentConfig,
         outputFormatSchema: fileDiscoveryAgentOutputJSONSchema,
         repositoryPath: session.options.repositoryPath,
+        stepId: session.options.stepId,
       },
       prompt,
       {

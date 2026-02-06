@@ -1,3 +1,4 @@
+export * from './agent-activity.repository';
 export * from './agent-hooks.repository';
 export * from './agent-skills.repository';
 export * from './agent-tools.repository';
