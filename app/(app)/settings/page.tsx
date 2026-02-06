@@ -101,8 +101,7 @@ function transformSettingsToFormValues(settings: Array<Setting>): SettingsFormVa
       clarificationTimeoutSeconds: getNumber('workflow.clarificationTimeoutSeconds', 60),
       defaultPauseBehavior: getString('workflow.defaultPauseBehavior', 'auto-pause') as
         | 'auto-pause'
-        | 'continuous'
-        | 'quality-gates',
+        | 'continuous',
       discoveryTimeoutSeconds: getNumber('workflow.discoveryTimeoutSeconds', 120),
       implementationTimeoutSeconds: getNumber('workflow.implementationTimeoutSeconds', 300),
       planningTimeoutSeconds: getNumber('workflow.planningTimeoutSeconds', 180),

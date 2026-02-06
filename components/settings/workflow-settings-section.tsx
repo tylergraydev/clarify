@@ -47,11 +47,6 @@ const pauseBehaviorOptions = [
     label: 'Auto-Pause',
     value: 'auto-pause',
   },
-  {
-    description: 'Only pause at quality gate checkpoints',
-    label: 'Quality Gates Only',
-    value: 'quality-gates',
-  },
 ];
 
 export const WorkflowSettingsSection = ({ form }: WorkflowSettingsSectionProps): ReactElement => {

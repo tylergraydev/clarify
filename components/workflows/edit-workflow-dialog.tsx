@@ -48,12 +48,7 @@ const workflowTypeOptions = workflowTypes.map((type) => ({
 }));
 
 const pauseBehaviorOptions = pauseBehaviors.map((behavior) => ({
-  label:
-    behavior === 'continuous'
-      ? 'Continuous (no pauses)'
-      : behavior === 'auto_pause'
-        ? 'Auto Pause (pause after each step)'
-        : 'Gates Only (pause at quality gates)',
+  label: behavior === 'continuous' ? 'Continuous (no pauses)' : 'Auto Pause (pause after each step)',
   value: behavior,
 }));
 

@@ -4,7 +4,7 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { agents } from './agents.schema';
 import { projects } from './projects.schema';
 
-export const pauseBehaviors = ['continuous', 'auto_pause', 'gates_only'] as const;
+export const pauseBehaviors = ['continuous', 'auto_pause'] as const;
 export const workflowStatuses = [
   'created',
   'running',

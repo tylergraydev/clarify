@@ -35,13 +35,11 @@ export function registerStepHandlers(
   workflowStepsRepository: WorkflowStepsRepository,
   workflowsRepository: WorkflowsRepository
 ): void {
-  type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
+  type PauseBehavior = 'auto_pause' | 'continuous';
   const RUNNING_STATUSES = ['running', 'paused', 'editing'] as const;
 
-  const shouldAutoAdvance = (pauseBehavior: PauseBehavior, nextStepType: string): boolean => {
-    if (pauseBehavior === 'continuous') return true;
-    if (pauseBehavior === 'gates_only') return nextStepType !== 'quality_gate';
-    return false;
+  const shouldAutoAdvance = (pauseBehavior: PauseBehavior): boolean => {
+    return pauseBehavior === 'continuous';
   };
 
   const maybeStartNextStep = (step: WorkflowStep): void => {
@@ -68,7 +66,7 @@ export function registerStepHandlers(
       return;
     }
 
-    if (!shouldAutoAdvance(pauseBehavior, nextStep.stepType)) {
+    if (!shouldAutoAdvance(pauseBehavior)) {
       return;
     }
 

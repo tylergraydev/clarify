@@ -20,7 +20,6 @@ import { ConfirmCancelWorkflowDialog } from './confirm-cancel-workflow-dialog';
 const PAUSE_BEHAVIOR_LABELS: Record<string, string> = {
   auto_pause: 'Auto Pause',
   continuous: 'Continuous',
-  gates_only: 'Gates Only',
 };
 
 interface WorkflowTopBarProps extends ComponentPropsWithRef<'div'> {

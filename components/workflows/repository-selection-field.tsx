@@ -172,13 +172,22 @@ export const RepositorySelectionField = ({
               const isOptionDisabled = isDisabled;
 
               return (
-                <div className={cn(repositoryItemVariants({ isSelected, size }))} key={repository.id}>
+                <div
+                  className={cn(repositoryItemVariants({ isSelected, size }), !isOptionDisabled && 'cursor-pointer')}
+                  key={repository.id}
+                  onClick={() => {
+                    if (!isOptionDisabled) {
+                      handleRepositoryToggle(repository.id, !isSelected);
+                    }
+                  }}
+                >
                   {/* Selection Checkbox */}
                   <div className={'flex items-center gap-3'}>
                     <Checkbox
                       aria-label={`Select ${repository.name}`}
                       checked={isSelected}
                       disabled={isOptionDisabled}
+                      onClick={(e) => e.stopPropagation()}
                       onCheckedChange={(isChecked) => handleRepositoryToggle(repository.id, isChecked)}
                       size={size}
                     />
@@ -194,7 +203,7 @@ export const RepositorySelectionField = ({
 
                   {/* Primary Selection Radio - Only show when selected */}
                   {isSelected && (
-                    <div className={'ml-auto flex items-center gap-2'}>
+                    <div className={'ml-auto flex items-center gap-2'} onClick={(e) => e.stopPropagation()}>
                       <RadioGroupItem
                         aria-label={`Make ${repository.name} primary`}
                         disabled={isOptionDisabled}

@@ -35,7 +35,6 @@ interface ViewWorkflowDialogProps {
 const PAUSE_BEHAVIOR_LABELS: Record<string, string> = {
   auto_pause: 'Auto Pause (pause after each step)',
   continuous: 'Continuous (no pauses)',
-  gates_only: 'Gates Only (pause at quality gates)',
 };
 
 const FieldRow = ({ label, value }: { label: string; value: ReactNode }) => {

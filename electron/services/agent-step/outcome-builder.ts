@@ -79,7 +79,6 @@ export function buildErrorOutcomeWithRetry(
  *
  * @param baseOutcome - The base outcome object from agent execution
  * @param workflowId - Workflow ID for pause request checking
- * @param isGateStep - Whether this is a gate step (affects gates_only pause behavior)
  * @param executeResult - Execution result containing SDK session ID and usage stats
  * @param skipFallbackAvailable - Whether skip fallback is available (clarification/refinement only)
  * @returns Outcome with pause information attached
@@ -87,11 +86,10 @@ export function buildErrorOutcomeWithRetry(
 export function buildOutcomeWithPauseInfo<TOutcome, TUsage = unknown>(
   baseOutcome: TOutcome,
   workflowId: number,
-  isGateStep: boolean,
   executeResult: ExecuteAgentResult<TOutcome, TUsage>,
   skipFallbackAvailable?: boolean
 ): OutcomePauseInfo<TUsage> & TOutcome {
-  const pauseRequested = isPauseRequested(workflowId, isGateStep);
+  const pauseRequested = isPauseRequested(workflowId);
 
   const outcomeWithPause: OutcomePauseInfo<TUsage> & TOutcome = {
     ...baseOutcome,

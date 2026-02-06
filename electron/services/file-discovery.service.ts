@@ -678,7 +678,6 @@ class FileDiscoveryStepService extends BaseAgentStepService<
       const outcomeWithPause = buildOutcomeWithPauseInfo(
         result.outcome,
         workflowId,
-        false, // file discovery is not a gate step
         result,
         true // skipFallbackAvailable
       );

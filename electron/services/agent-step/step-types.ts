@@ -91,9 +91,8 @@ export interface OutcomePauseInfo<TUsage = unknown> {
  *
  * - continuous: Run without pausing until completion
  * - auto_pause: Pause after every step
- * - gates_only: Only pause at designated gate steps
  */
-export type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
+export type PauseBehavior = 'auto_pause' | 'continuous';
 
 /**
  * Snapshot of current session state for external monitoring.

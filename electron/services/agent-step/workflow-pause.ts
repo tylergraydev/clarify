@@ -29,13 +29,11 @@ export function getWorkflow(workflowId: number): undefined | Workflow {
  * The pause behavior determines when the workflow should pause:
  * - auto_pause: Pause after every step
  * - continuous: Never pause (run all steps)
- * - gates_only: Only pause at designated gate steps
  *
  * @param workflowId - The workflow ID
- * @param isGateStep - Whether this step is a gate step (e.g., clarification)
  * @returns Whether pause is requested
  */
-export function isPauseRequested(workflowId: number, isGateStep = false): boolean {
+export function isPauseRequested(workflowId: number): boolean {
   const workflow = getWorkflow(workflowId);
   if (!workflow) return false;
 
@@ -43,16 +41,10 @@ export function isPauseRequested(workflowId: number, isGateStep = false): boolea
 
   switch (pauseBehavior) {
     case 'auto_pause':
-      // Pause after every step
       return true;
     case 'continuous':
-      // Never pause
       return false;
-    case 'gates_only':
-      // Only pause at gate steps
-      return isGateStep;
     default:
-      // Default to auto-pause for unknown behaviors
       return true;
   }
 }

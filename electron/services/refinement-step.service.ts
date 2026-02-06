@@ -262,7 +262,6 @@ class RefinementStepService extends BaseAgentStepService<
       const outcomeWithPause = buildOutcomeWithPauseInfo(
         result.outcome,
         workflowId,
-        false, // refinement is not a gate step
         result,
         true // skipFallbackAvailable
       );

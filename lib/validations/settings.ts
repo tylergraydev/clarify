@@ -4,7 +4,7 @@ import { z } from 'zod';
  * Pause behavior options for workflow settings
  * Maps to database pause_behavior column values
  */
-export const pauseBehaviorOptions = ['continuous', 'auto-pause', 'quality-gates'] as const;
+export const pauseBehaviorOptions = ['continuous', 'auto-pause'] as const;
 
 /**
  * Workflow settings schema

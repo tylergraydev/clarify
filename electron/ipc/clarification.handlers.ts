@@ -349,7 +349,7 @@ export function registerClarificationHandlers(
           if (skippedStep) {
             const workflow = workflowsRepository.findById(skippedStep.workflowId);
             if (workflow && workflow.status === 'running') {
-              type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
+              type PauseBehavior = 'auto_pause' | 'continuous';
               const pauseBehavior = (workflow.pauseBehavior ?? 'auto_pause') as PauseBehavior;
               const allSteps = workflowStepsRepository.findByWorkflowId(skippedStep.workflowId);
               const runningStatuses = ['running', 'paused', 'editing'];
@@ -360,14 +360,8 @@ export function registerClarificationHandlers(
                   .filter((s) => s.status === 'pending' && s.stepNumber > skippedStep.stepNumber)
                   .sort((a, b) => a.stepNumber - b.stepNumber)[0];
 
-                if (nextStep) {
-                  const shouldAutoAdvance =
-                    pauseBehavior === 'continuous' ||
-                    (pauseBehavior === 'gates_only' && nextStep.stepType !== 'quality_gate');
-
-                  if (shouldAutoAdvance) {
-                    workflowStepsRepository.start(nextStep.id);
-                  }
+                if (nextStep && pauseBehavior === 'continuous') {
+                  workflowStepsRepository.start(nextStep.id);
                 }
               }
             }

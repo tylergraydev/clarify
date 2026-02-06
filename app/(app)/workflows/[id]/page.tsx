@@ -119,7 +119,16 @@ const WorkflowDetailContent = () => {
     return (
       <QueryErrorBoundary>
         {breadcrumb}
-        <main aria-label={'Workflow setup'} className={'flex h-full flex-col items-center justify-center py-12'}>
+        <main
+          aria-label={'Workflow setup'}
+          className={'relative isolate flex h-full flex-col items-center overflow-hidden px-6 py-10'}
+        >
+          <div
+            aria-hidden={'true'}
+            className={`
+              pointer-events-none absolute inset-x-0 top-0 -z-10 h-56
+            `}
+          />
           <WorkflowPreStartSummary workflowId={workflowId} />
         </main>
       </QueryErrorBoundary>

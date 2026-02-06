@@ -323,7 +323,6 @@ class ClarificationStepService extends BaseAgentStepService<
       const outcomeWithPause = buildOutcomeWithPauseInfo(
         result.outcome,
         workflowId,
-        false, // clarification is not a gate step
         result,
         true // skipFallbackAvailable
       );
