@@ -6,7 +6,6 @@
   "scripts": {
     "build": "next build",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
     "dev": "next dev",
     "electron:compile": "tsc -p electron/tsconfig.json && node scripts/build-preloads.mjs",
     "electron:dev": "concurrently -k \"cross-env NODE_ENV=development pnpm dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
