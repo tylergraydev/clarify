@@ -57,9 +57,7 @@ export const AgentEditorFormFields = ({
                 <div className={'text-sm'}>
                   <span className={'text-muted-foreground'}>{'Internal name: '}</span>
                   <span className={'font-mono text-foreground'}>{agent.name}</span>
-                  <span className={'ml-2 text-xs text-muted-foreground'}>
-                    {'(built-in agents cannot be renamed)'}
-                  </span>
+                  <span className={'ml-2 text-xs text-muted-foreground'}>{'(built-in agents cannot be renamed)'}</span>
                 </div>
               </div>
             </div>

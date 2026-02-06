@@ -608,7 +608,31 @@ ${featureRequest}
 - Checkbox: "Which platforms should this support?" (Windows, macOS, Linux) - user can pick multiple
 - Text: "Describe any specific edge cases or constraints for this feature." - open-ended answer
 
-Focus on understanding what the user wants to build and gathering just enough information to enable high-quality implementation planning.`;
+Focus on understanding what the user wants to build and gathering just enough information to enable high-quality implementation planning.${
+      options.rerunGuidance
+        ? `
+
+## Additional Guidance from User
+
+The user has re-run this step with the following feedback:
+${options.rerunGuidance}
+
+Take this feedback into account when analyzing the feature request and generating questions.`
+        : ''
+    }${
+      options.keepExistingQuestions && options.existingQuestions && options.existingQuestions.length > 0
+        ? `
+
+## Existing Questions (Do Not Duplicate)
+
+The user has chosen to keep the following existing clarification questions.
+Do NOT regenerate these questions or ask about the same topics.
+Generate only NEW complementary questions that cover different aspects.
+
+Existing questions:
+${options.existingQuestions.map((q, i) => `${i + 1}. [${q.header}] ${q.question}`).join('\n')}`
+        : ''
+    }`;
   }
 
   /**

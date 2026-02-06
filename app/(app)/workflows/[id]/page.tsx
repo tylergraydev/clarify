@@ -5,24 +5,19 @@ import { useRouteParams } from 'next-typesafe-url/app';
 import { withParamValidation } from 'next-typesafe-url/app/hoc';
 import { redirect } from 'next/navigation';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
-import { useState } from 'react';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import {
+  ClarificationStreamProvider,
   WorkflowDetailSkeleton,
-  WorkflowPreStartForm,
+  WorkflowPreStartSummary,
   WorkflowStepAccordion,
   WorkflowStreamingPanel,
   WorkflowTopBar,
 } from '@/components/workflows/detail';
+import { useWorkflow } from '@/hooks/queries';
 
 import { Route, workflowStepValues } from './route-type';
-
-// ============================================================================
-// Types
-// ============================================================================
-
-type WorkflowStatus = 'cancelled' | 'completed' | 'created' | 'failed' | 'paused' | 'running';
 
 // ============================================================================
 // Page Content
@@ -32,24 +27,24 @@ type WorkflowStatus = 'cancelled' | 'completed' | 'created' | 'failed' | 'paused
  * Workflow detail page with three-zone layout for active workflows.
  *
  * Features:
+ * - Fetches real workflow data by ID using useWorkflow hook
  * - Pre-start form when workflow status is 'created'
  * - Sticky top bar with workflow name, status, and action buttons
  * - Scrollable step accordion for workflow pipeline phases
  * - Resizable streaming panel for real-time agent logs
  * - Type-safe step query param via nuqs
+ * - ClarificationStreamProvider wraps the active layout to deduplicate
+ *   stream subscriptions between the step content and streaming panel
  */
 const WorkflowDetailContent = () => {
-  const [workflowStatus] = useState<WorkflowStatus>('running');
-
   const routeParams = useRouteParams(Route.routeParams);
 
-  // URL state management for active pipeline step (will be used when wiring real data)
-  const [_step, _setStep] = useQueryState(
-    'step',
-    parseAsStringLiteral(workflowStepValues)
-  );
+  // URL state management for active pipeline step
+  const [_step, _setStep] = useQueryState('step', parseAsStringLiteral(workflowStepValues));
 
-  const workflowId = routeParams.data?.id;
+  const workflowId = routeParams.data?.id ?? 0;
+
+  const { data: workflow, isError: isWorkflowError, isLoading: isWorkflowLoading } = useWorkflow(workflowId);
 
   // Handle route params loading state
   if (routeParams.isLoading) {
@@ -65,37 +60,52 @@ const WorkflowDetailContent = () => {
     redirect($path({ route: '/workflows/history' }));
   }
 
+  // Handle workflow data loading state
+  if (isWorkflowLoading) {
+    return (
+      <div aria-busy={'true'} aria-label={'Loading workflow details'} role={'status'}>
+        <WorkflowDetailSkeleton />
+      </div>
+    );
+  }
+
+  // Handle workflow not found or fetch error
+  if (isWorkflowError || !workflow) {
+    redirect($path({ route: '/workflows/history' }));
+  }
+
+  const workflowStatus = workflow.status;
   const isPreStart = workflowStatus === 'created';
+  const isClarificationEnabled = workflowStatus === 'running' && !workflow.skipClarification;
 
   // Pre-start: show the workflow settings form centered on page
   if (isPreStart) {
     return (
       <QueryErrorBoundary>
-        <main
-          aria-label={'Workflow setup'}
-          className={'flex h-full flex-col items-center justify-center py-12'}
-        >
-          <WorkflowPreStartForm />
+        <main aria-label={'Workflow setup'} className={'flex h-full flex-col items-center justify-center py-12'}>
+          <WorkflowPreStartSummary workflowId={workflowId} />
         </main>
       </QueryErrorBoundary>
     );
   }
 
-  // Active workflow: three-zone layout
+  // Active workflow: three-zone layout wrapped with stream provider
   return (
     <QueryErrorBoundary>
-      <main aria-label={'Workflow detail'} className={'flex h-(--workflow-content-height) flex-col'}>
-        {/* Top Bar */}
-        <WorkflowTopBar />
+      <ClarificationStreamProvider isEnabled={isClarificationEnabled} workflowId={workflowId}>
+        <main aria-label={'Workflow detail'} className={'flex h-(--workflow-content-height) flex-col'}>
+          {/* Top Bar */}
+          <WorkflowTopBar />
 
-        {/* Step Accordion */}
-        <div className={'flex-1 overflow-auto'}>
-          <WorkflowStepAccordion />
-        </div>
+          {/* Step Accordion */}
+          <div className={'flex-1 overflow-auto'}>
+            <WorkflowStepAccordion workflowId={workflowId} />
+          </div>
 
-        {/* Streaming Panel */}
-        <WorkflowStreamingPanel />
-      </main>
+          {/* Streaming Panel */}
+          <WorkflowStreamingPanel />
+        </main>
+      </ClarificationStreamProvider>
     </QueryErrorBoundary>
   );
 };

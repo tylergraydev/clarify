@@ -73,6 +73,18 @@ export {
 } from './use-audit-logs';
 
 // ============================================================================
+// Clarification Hooks
+// ============================================================================
+export {
+  useClarificationState,
+  useClarificationStep,
+  useRetryClarification,
+  useSkipClarification,
+  useStartClarification,
+  useSubmitClarificationAnswers,
+} from './use-clarification';
+
+// ============================================================================
 // Debug Log Hooks
 // ============================================================================
 export {
@@ -170,6 +182,7 @@ export {
   agentSkillKeys,
   agentToolKeys,
   auditLogKeys,
+  clarificationKeys,
   debugLogKeys,
   discoveredFileKeys,
   projectKeys,

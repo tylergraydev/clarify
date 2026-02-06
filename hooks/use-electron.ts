@@ -2,6 +2,7 @@
 
 import { useElectronAgents } from './electron/domains/use-electron-agents';
 import { useElectronAudit } from './electron/domains/use-electron-audit';
+import { useElectronClarification } from './electron/domains/use-electron-clarification';
 import { useElectronDiscovery } from './electron/domains/use-electron-discovery';
 import { useElectronProjects } from './electron/domains/use-electron-projects';
 import { useElectronSettings } from './electron/domains/use-electron-settings';
@@ -25,6 +26,7 @@ export function useElectronDb() {
   const { isElectron } = useElectron();
   const { agentHooks, agents, agentSkills, agentTools } = useElectronAgents();
   const { audit } = useElectronAudit();
+  const { clarification } = useElectronClarification();
   const { discovery } = useElectronDiscovery();
   const { projects, repositories } = useElectronProjects();
   const { settings } = useElectronSettings();
@@ -38,6 +40,7 @@ export function useElectronDb() {
     agentSkills,
     agentTools,
     audit,
+    clarification,
     discovery,
     isElectron,
     projects,

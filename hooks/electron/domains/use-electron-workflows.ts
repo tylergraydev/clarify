@@ -107,6 +107,10 @@ export function useElectronWorkflows() {
         const electronApi = throwIfNoApi(api, 'workflowRepository.addMultiple');
         return electronApi.workflowRepository.addMultiple(workflowId, repositoryIds, primaryRepositoryId);
       },
+      list: async (workflowId: number) => {
+        const electronApi = throwIfNoApi(api, 'workflowRepository.list');
+        return electronApi.workflowRepository.list(workflowId);
+      },
     }),
     [api]
   );

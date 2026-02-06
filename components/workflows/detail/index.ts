@@ -1,9 +1,10 @@
+export { ClarificationStreamProvider } from './clarification-stream-provider';
 export { ClarificationStepContent } from './steps/clarification-step-content';
 export { FileDiscoveryStepContent } from './steps/file-discovery-step-content';
 export { ImplementationPlanningStepContent } from './steps/implementation-planning-step-content';
 export { RefinementStepContent } from './steps/refinement-step-content';
 export { WorkflowDetailSkeleton } from './workflow-detail-skeleton';
-export { WorkflowPreStartForm } from './workflow-pre-start-form';
+export { WorkflowPreStartSummary } from './workflow-pre-start-summary';
 export { WorkflowStepAccordion } from './workflow-step-accordion';
 export { WorkflowStreamingPanel } from './workflow-streaming-panel';
 export { WorkflowTopBar } from './workflow-top-bar';

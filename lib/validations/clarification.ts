@@ -77,54 +77,10 @@ export type ClarificationAnswer = z.infer<typeof clarificationAnswerSchema>;
 /**
  * Schema for clarification answers.
  * Maps question index (as string "0", "1", etc.) to the answer object.
- * Supports both new format (ClarificationAnswer) and old format (string) for backward compatibility.
  */
 export const clarificationAnswersSchema = z.record(z.string(), clarificationAnswerSchema);
 
 export type ClarificationAnswers = z.infer<typeof clarificationAnswersSchema>;
-
-/**
- * Migrates old-format answers to new format for backward compatibility.
- * Old format: Record<string, string> (question index → selected label)
- * New format: Record<string, ClarificationAnswer> (question index → answer object)
- *
- * @param answers - The answers object (old or new format)
- * @param questions - The array of clarification questions
- * @returns Migrated answers in new format
- */
-export function migrateAnswersToNewFormat(
-  answers: unknown,
-  questions: Array<ClarificationQuestion>
-): ClarificationAnswers {
-  if (!answers || typeof answers !== 'object') {
-    return {};
-  }
-
-  const result: ClarificationAnswers = {};
-
-  for (const [key, value] of Object.entries(answers)) {
-    const questionIndex = parseInt(key, 10);
-    const question = questions[questionIndex];
-
-    if (!question) continue;
-
-    // Check if already in new format
-    if (typeof value === 'object' && value !== null && 'type' in value) {
-      result[key] = value as ClarificationAnswer;
-      continue;
-    }
-
-    // Old format: string value (treat as radio selection for backward compatibility)
-    if (typeof value === 'string') {
-      result[key] = {
-        selected: value,
-        type: 'radio',
-      };
-    }
-  }
-
-  return result;
-}
 
 /**
  * Schema for the assessment object in clarification output.
@@ -276,10 +232,16 @@ export interface ClarificationRefinementInput {
 export interface ClarificationServiceOptions {
   /** The selected planning agent to use for clarification */
   agentId: number;
+  /** Existing questions to include in the prompt context (for keep-existing mode) */
+  existingQuestions?: Array<ClarificationQuestion>;
   /** The feature request text to analyze for clarity */
   featureRequest: string;
+  /** Whether to keep existing questions and append new ones instead of replacing */
+  keepExistingQuestions?: boolean;
   /** The path to the repository being analyzed */
   repositoryPath: string;
+  /** Optional guidance text from the user to influence a rerun */
+  rerunGuidance?: string;
   /** The ID of the current workflow step */
   stepId: number;
   /** Optional timeout in seconds for agent operations */
@@ -459,6 +421,8 @@ export interface ClarificationStreamMessageBase {
   timestamp: number;
   /** Message type discriminator */
   type: ClarificationStreamMessageType;
+  /** The workflow ID this message belongs to */
+  workflowId: number;
 }
 
 /**

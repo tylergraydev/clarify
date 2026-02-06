@@ -64,11 +64,7 @@ export const RefinementStepContent = () => {
         </div>
 
         {isEditing ? (
-          <Textarea
-            onChange={handleTextChange}
-            rows={12}
-            value={refinedText}
-          />
+          <Textarea onChange={handleTextChange} rows={12} value={refinedText} />
         ) : (
           <div className={'max-w-none rounded-md border border-border bg-muted/30 p-4 text-sm/relaxed text-foreground'}>
             {refinedText.split('\n\n').map((paragraph, index) => (

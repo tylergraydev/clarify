@@ -45,11 +45,7 @@ const MOCK_IMPLEMENTATION_STEPS: Array<ImplementationStep> = [
   {
     description:
       'Build the user list page with a data table showing all users, including sorting, filtering, and pagination support.',
-    files: [
-      'app/(app)/users/page.tsx',
-      'components/users/user-table.tsx',
-      'components/users/user-table-toolbar.tsx',
-    ],
+    files: ['app/(app)/users/page.tsx', 'components/users/user-table.tsx', 'components/users/user-table-toolbar.tsx'],
     successCriteria: [
       'Page renders user table with mock data',
       'Column sorting works on name and email columns',
@@ -164,10 +160,7 @@ export const ImplementationPlanningStepContent = () => {
               <h4 className={'text-sm font-medium text-foreground'}>Files</h4>
               <div className={'flex flex-wrap gap-1.5'}>
                 {selectedStep.files.map((file) => (
-                  <code
-                    className={'rounded-md bg-muted px-2 py-0.5 text-xs text-foreground'}
-                    key={file}
-                  >
+                  <code className={'rounded-md bg-muted px-2 py-0.5 text-xs text-foreground'} key={file}>
                     {file}
                   </code>
                 ))}
@@ -177,11 +170,7 @@ export const ImplementationPlanningStepContent = () => {
             {/* Validation Commands */}
             <div className={'flex flex-col gap-2'}>
               <h4 className={'text-sm font-medium text-foreground'}>Validation Commands</h4>
-              <pre
-                className={
-                  'overflow-x-auto rounded-md border border-border bg-muted p-3 text-xs text-foreground'
-                }
-              >
+              <pre className={'overflow-x-auto rounded-md border border-border bg-muted p-3 text-xs text-foreground'}>
                 {selectedStep.validationCommands.join('\n')}
               </pre>
             </div>

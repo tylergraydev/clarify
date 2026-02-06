@@ -18,36 +18,26 @@ export const AccordionRoot = Accordion.Root;
 // Item
 // ============================================================================
 
-export const accordionItemVariants = cva(
-  `border-b border-border`,
-  {
-    defaultVariants: {
-      status: 'default',
+export const accordionItemVariants = cva(`border-b border-border`, {
+  defaultVariants: {
+    status: 'default',
+  },
+  variants: {
+    status: {
+      completed: 'border-l-2 border-l-green-500',
+      default: '',
+      paused: 'border-l-2 border-l-orange-500',
+      pending: '',
+      running: 'border-l-2 border-l-blue-500',
+      skipped: 'border-l-2 border-l-yellow-500',
     },
-    variants: {
-      status: {
-        completed: 'border-l-2 border-l-green-500',
-        default: '',
-        paused: 'border-l-2 border-l-orange-500',
-        pending: '',
-        running: 'border-l-2 border-l-blue-500',
-        skipped: 'border-l-2 border-l-yellow-500',
-      },
-    },
-  }
-);
+  },
+});
 
-type AccordionItemProps = ComponentPropsWithRef<typeof Accordion.Item> &
-  VariantProps<typeof accordionItemVariants>;
+type AccordionItemProps = ComponentPropsWithRef<typeof Accordion.Item> & VariantProps<typeof accordionItemVariants>;
 
 export const AccordionItem = ({ className, ref, status, ...props }: AccordionItemProps) => {
-  return (
-    <Accordion.Item
-      className={cn(accordionItemVariants({ className, status }))}
-      ref={ref}
-      {...props}
-    />
-  );
+  return <Accordion.Item className={cn(accordionItemVariants({ className, status }))} ref={ref} {...props} />;
 };
 
 // ============================================================================
@@ -57,13 +47,7 @@ export const AccordionItem = ({ className, ref, status, ...props }: AccordionIte
 type AccordionHeaderProps = ComponentPropsWithRef<typeof Accordion.Header>;
 
 export const AccordionHeader = ({ className, ref, ...props }: AccordionHeaderProps) => {
-  return (
-    <Accordion.Header
-      className={cn('m-0', className)}
-      ref={ref}
-      {...props}
-    />
-  );
+  return <Accordion.Header className={cn('m-0', className)} ref={ref} {...props} />;
 };
 
 // ============================================================================
@@ -106,11 +90,7 @@ export const AccordionTrigger = ({
   ...props
 }: AccordionTriggerProps) => {
   return (
-    <Accordion.Trigger
-      className={cn(accordionTriggerVariants({ className, variant }))}
-      ref={ref}
-      {...props}
-    >
+    <Accordion.Trigger className={cn(accordionTriggerVariants({ className, variant }))} ref={ref} {...props}>
       {children}
       {!isHideChevron && (
         <ChevronRight
@@ -144,21 +124,14 @@ export const accordionPanelVariants = cva(
     variants: {
       variant: {
         default: '',
-        padded: 'px-3 pb-3',
+        padded: 'p-3',
       },
     },
   }
 );
 
-type AccordionPanelProps = ComponentPropsWithRef<typeof Accordion.Panel> &
-  VariantProps<typeof accordionPanelVariants>;
+type AccordionPanelProps = ComponentPropsWithRef<typeof Accordion.Panel> & VariantProps<typeof accordionPanelVariants>;
 
 export const AccordionPanel = ({ className, ref, variant, ...props }: AccordionPanelProps) => {
-  return (
-    <Accordion.Panel
-      className={cn(accordionPanelVariants({ className, variant }))}
-      ref={ref}
-      {...props}
-    />
-  );
+  return <Accordion.Panel className={cn(accordionPanelVariants({ className, variant }))} ref={ref} {...props} />;
 };

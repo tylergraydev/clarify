@@ -48,7 +48,11 @@ export const WorkflowDetailSkeleton = () => {
           </div>
           <div className={'mt-3 space-y-1'}>
             {Array.from({ length: 5 }).map((_, index) => (
-              <div className={'h-4 animate-pulse rounded-sm bg-muted'} key={index} style={{ width: `${70 + index * 5}%` }} />
+              <div
+                className={'h-4 animate-pulse rounded-sm bg-muted'}
+                key={index}
+                style={{ width: `${70 + index * 5}%` }}
+              />
             ))}
           </div>
         </div>

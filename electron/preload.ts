@@ -279,6 +279,14 @@ export interface ClarificationAgentConfig {
 }
 
 /**
+ * Discriminated union for a single answer to a clarification question.
+ */
+export type ClarificationAnswer =
+  | { other?: string; selected: Array<string>; type: 'checkbox' }
+  | { other?: string; selected: string; type: 'radio' }
+  | { text: string; type: 'text' };
+
+/**
  * Assessment of feature request clarity.
  */
 export interface ClarificationAssessment {
@@ -321,16 +329,18 @@ export type ClarificationOutcomeWithPause = ClarificationOutcome & Clarification
  * A single clarification question with options.
  */
 export interface ClarificationQuestion {
+  allowOther?: boolean;
   header: string;
-  options: Array<{ description: string; label: string }>;
+  options?: Array<{ description: string; label: string }>;
   question: string;
+  questionType?: 'checkbox' | 'radio' | 'text';
 }
 
 /**
  * Input for submitting answers to clarification questions.
  */
 export interface ClarificationRefinementInput {
-  answers: Record<string, string>;
+  answers: Record<string, ClarificationAnswer>;
   questions: Array<ClarificationQuestion>;
   stepId: number;
   workflowId: number;
@@ -374,7 +384,9 @@ export interface ClarificationServiceState {
  */
 export interface ClarificationStartInput {
   featureRequest: string;
+  keepExistingQuestions?: boolean;
   repositoryPath: string;
+  rerunGuidance?: string;
   stepId: number;
   timeoutSeconds?: number;
   workflowId: number;
@@ -492,14 +504,14 @@ export interface ElectronAPI {
     list(): Promise<Array<AuditLog>>;
   };
   clarification: {
-    getState(sessionId: string): Promise<ClarificationServiceState | null>;
+    getState(workflowId: number): Promise<ClarificationServiceState | null>;
     /** Subscribe to streaming events during clarification. Returns unsubscribe function. */
     onStreamMessage(callback: (message: ClarificationStreamMessage) => void): () => void;
-    retry(sessionId: string, input: ClarificationStartInput): Promise<ClarificationOutcomeWithPause>;
-    skip(sessionId: string, reason?: string): Promise<ClarificationOutcome>;
+    retry(input: ClarificationStartInput): Promise<ClarificationOutcomeWithPause>;
+    skip(workflowId: number, reason?: string): Promise<ClarificationOutcome>;
     start(input: ClarificationStartInput): Promise<ClarificationOutcomeWithPause>;
     submitAnswers(input: ClarificationRefinementInput): Promise<ClarificationSubmitAnswersResult>;
-    submitEdits(sessionId: string, editedText: string): Promise<ClarificationOutcome>;
+    submitEdits(workflowId: number, editedText: string): Promise<ClarificationOutcome>;
   };
   debugLog: {
     clearLogs(): Promise<{ error?: string; success: boolean }>;
@@ -949,6 +961,7 @@ interface ClarificationStreamMessageBase {
     | 'tool_start'
     | 'tool_stop'
     | 'tool_update';
+  workflowId: number;
 }
 
 /**
@@ -1417,7 +1430,7 @@ const electronAPI: ElectronAPI = {
     });
 
     return {
-      getState: (sessionId: string) => ipcRenderer.invoke(IpcChannels.clarification.getState, sessionId),
+      getState: (workflowId: number) => ipcRenderer.invoke(IpcChannels.clarification.getState, workflowId),
       /**
        * Subscribe to streaming events during clarification.
        * Returns an unsubscribe function to clean up the listener.
@@ -1431,15 +1444,14 @@ const electronAPI: ElectronAPI = {
           streamCallbacks.delete(callback);
         };
       },
-      retry: (sessionId: string, input: ClarificationStartInput) =>
-        ipcRenderer.invoke(IpcChannels.clarification.retry, sessionId, input),
-      skip: (sessionId: string, reason?: string) =>
-        ipcRenderer.invoke(IpcChannels.clarification.skip, sessionId, reason),
+      retry: (input: ClarificationStartInput) => ipcRenderer.invoke(IpcChannels.clarification.retry, input),
+      skip: (workflowId: number, reason?: string) =>
+        ipcRenderer.invoke(IpcChannels.clarification.skip, workflowId, reason),
       start: (input: ClarificationStartInput) => ipcRenderer.invoke(IpcChannels.clarification.start, input),
       submitAnswers: (input: ClarificationRefinementInput) =>
         ipcRenderer.invoke(IpcChannels.clarification.submitAnswers, input),
-      submitEdits: (sessionId: string, editedText: string) =>
-        ipcRenderer.invoke(IpcChannels.clarification.submitEdits, sessionId, editedText),
+      submitEdits: (workflowId: number, editedText: string) =>
+        ipcRenderer.invoke(IpcChannels.clarification.submitEdits, workflowId, editedText),
     };
   })(),
   debugLog: {

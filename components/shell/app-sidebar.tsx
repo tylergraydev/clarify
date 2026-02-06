@@ -265,7 +265,6 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             isCollapsed={isSidebarCollapsed}
             label={'Settings'}
           />
-
         </div>
       </nav>
     </aside>

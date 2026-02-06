@@ -16,9 +16,10 @@
  */
 import { type BrowserWindow, ipcMain, type IpcMainInvokeEvent } from 'electron';
 
-import type { WorkflowStepsRepository } from '../../db/repositories';
+import type { WorkflowsRepository, WorkflowStepsRepository } from '../../db/repositories';
 import type {
   ClarificationOutcome,
+  ClarificationQuestion,
   ClarificationRefinementInput,
   ClarificationStreamMessage,
 } from '../../lib/validations/clarification';
@@ -30,10 +31,16 @@ import { IpcChannels } from './channels';
  * Input for starting a clarification session.
  */
 interface ClarificationStartInput {
+  /** Optional agent ID override. When provided, takes precedence over the step's configured agent. */
+  agentId?: number;
   /** The feature request text to analyze */
   featureRequest: string;
+  /** Whether to keep existing questions and append new ones instead of replacing */
+  keepExistingQuestions?: boolean;
   /** The path to the repository being analyzed */
   repositoryPath: string;
+  /** Optional guidance text from the user to influence a rerun */
+  rerunGuidance?: string;
   /** The ID of the current workflow step */
   stepId: number;
   /** Optional timeout in seconds */
@@ -50,6 +57,7 @@ interface ClarificationStartInput {
  */
 export function registerClarificationHandlers(
   workflowStepsRepository: WorkflowStepsRepository,
+  workflowsRepository: WorkflowsRepository,
   getMainWindow: () => BrowserWindow | null
 ): void {
   // Start a new clarification session
@@ -70,7 +78,7 @@ export function registerClarificationHandlers(
         const featureRequest = validateString(typedInput.featureRequest, 'featureRequest');
         const repositoryPath = validateString(typedInput.repositoryPath, 'repositoryPath');
 
-        // Look up the workflow step to get the agentId
+        // Always validate step exists and belongs to the workflow
         const step = workflowStepsRepository.findById(stepId);
         if (!step) {
           throw new Error(`Workflow step not found: ${stepId}`);
@@ -80,8 +88,9 @@ export function registerClarificationHandlers(
           throw new Error(`Step ${stepId} does not belong to workflow ${workflowId}`);
         }
 
-        // Get agentId from the step
-        const agentId = step.agentId;
+        // Use passed agentId if provided, otherwise look up from the workflow step
+        const agentId = typedInput.agentId ?? step.agentId ?? undefined;
+
         if (!agentId) {
           throw new Error(`No agent assigned to clarification step ${stepId}`);
         }
@@ -94,11 +103,13 @@ export function registerClarificationHandlers(
           workflowId,
         });
 
-        // Create stream message handler to forward events to renderer
+        // Create stream message handler to forward events to renderer.
+        // Injects workflowId into every message so the renderer can filter
+        // by workflow and avoid cross-workflow stream contamination.
         const handleStreamMessage = (message: ClarificationStreamMessage): void => {
           const mainWindow = getMainWindow();
           if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send(IpcChannels.clarification.stream, message);
+            mainWindow.webContents.send(IpcChannels.clarification.stream, { ...message, workflowId });
           }
         };
 
@@ -114,6 +125,8 @@ export function registerClarificationHandlers(
           },
           handleStreamMessage
         );
+
+        persistOutcomeToStep(workflowStepsRepository, stepId, outcome);
 
         return outcome;
       } catch (error) {
@@ -177,8 +190,8 @@ export function registerClarificationHandlers(
               throw new Error(`Invalid answer type for radio question: "${question.header}"`);
             }
 
-            // Validate selected option is valid (if provided)
-            if (answer.selected) {
+            // Validate selected option is valid (if provided and not an "Other" answer)
+            if (answer.selected && !answer.other) {
               const validLabels = question.options?.map((opt) => opt.label) ?? [];
 
               if (validLabels.length > 0 && !validLabels.includes(answer.selected)) {
@@ -202,7 +215,12 @@ export function registerClarificationHandlers(
               const validLabels = question.options?.map((opt) => opt.label) ?? [];
 
               if (validLabels.length > 0) {
-                const invalidSelections = answer.selected.filter((label) => !validLabels.includes(label));
+                // When "Other" is provided, only validate the predefined selections
+                const selectionsToValidate = answer.other
+                  ? answer.selected.filter((label) => label !== answer.other)
+                  : answer.selected;
+
+                const invalidSelections = selectionsToValidate.filter((label) => !validLabels.includes(label));
 
                 if (invalidSelections.length > 0) {
                   throw new Error(
@@ -234,7 +252,27 @@ export function registerClarificationHandlers(
           workflowId: typedInput.workflowId,
         });
 
-        return clarificationStepService.submitAnswers(typedInput);
+        const result = clarificationStepService.submitAnswers(typedInput);
+
+        // Persist the submitted answers into the step's outputStructured so the UI
+        // can derive the "answered" phase from step data after a refetch.
+        const step = workflowStepsRepository.findById(typedInput.stepId);
+        if (step) {
+          const existingOutput = step.outputStructured
+            ? typeof step.outputStructured === 'string'
+              ? JSON.parse(step.outputStructured as string)
+              : step.outputStructured
+            : {};
+
+          workflowStepsRepository.update(typedInput.stepId, {
+            outputStructured: {
+              ...existingOutput,
+              answers: typedInput.answers,
+            },
+          });
+        }
+
+        return result;
       } catch (error) {
         console.error('[IPC Error] clarification:submitAnswers:', error);
         throw error;
@@ -276,7 +314,73 @@ export function registerClarificationHandlers(
           workflowId: validatedWorkflowId,
         });
 
-        return clarificationStepService.skipClarification(validatedWorkflowId, validatedReason);
+        const result = clarificationStepService.skipClarification(validatedWorkflowId, validatedReason);
+
+        // If no active session exists (pending or already-completed step), skip directly via the repository
+        if (result.type === 'ERROR' && result.error === 'Session not found') {
+          const steps = workflowStepsRepository.findByWorkflowId(validatedWorkflowId);
+          const clarificationStep = steps.find((s) => s.stepType === 'clarification');
+
+          if (!clarificationStep) {
+            throw new Error(`No clarification step found for workflow ${validatedWorkflowId}`);
+          }
+
+          const skipReason = validatedReason ?? 'Manually skipped by user';
+
+          // Mark the step as skipped in the database
+          const skippedStep = workflowStepsRepository.skip(clarificationStep.id);
+
+          // Preserve existing output (e.g. questions from a completed run) and add skip info
+          const existingOutput = clarificationStep.outputStructured
+            ? typeof clarificationStep.outputStructured === 'string'
+              ? JSON.parse(clarificationStep.outputStructured as string)
+              : clarificationStep.outputStructured
+            : {};
+
+          workflowStepsRepository.update(clarificationStep.id, {
+            outputStructured: {
+              ...existingOutput,
+              skipped: true,
+              skipReason,
+            },
+          });
+
+          // Auto-advance to the next step based on workflow pause behavior
+          if (skippedStep) {
+            const workflow = workflowsRepository.findById(skippedStep.workflowId);
+            if (workflow && workflow.status === 'running') {
+              type PauseBehavior = 'auto_pause' | 'continuous' | 'gates_only';
+              const pauseBehavior = (workflow.pauseBehavior ?? 'auto_pause') as PauseBehavior;
+              const allSteps = workflowStepsRepository.findByWorkflowId(skippedStep.workflowId);
+              const runningStatuses = ['running', 'paused', 'editing'];
+              const hasRunningStep = allSteps.some((s) => runningStatuses.includes(s.status));
+
+              if (!hasRunningStep) {
+                const nextStep = allSteps
+                  .filter((s) => s.status === 'pending' && s.stepNumber > skippedStep.stepNumber)
+                  .sort((a, b) => a.stepNumber - b.stepNumber)[0];
+
+                if (nextStep) {
+                  const shouldAutoAdvance =
+                    pauseBehavior === 'continuous' ||
+                    (pauseBehavior === 'gates_only' && nextStep.stepType !== 'quality_gate');
+
+                  if (shouldAutoAdvance) {
+                    workflowStepsRepository.start(nextStep.id);
+                  }
+                }
+              }
+            }
+          }
+
+          return {
+            assessment: { reason: skipReason, score: 5 },
+            reason: skipReason,
+            type: 'SKIP_CLARIFICATION',
+          };
+        }
+
+        return result;
       } catch (error) {
         console.error('[IPC Error] clarification:skip:', error);
         throw error;
@@ -305,13 +409,19 @@ export function registerClarificationHandlers(
         // Cancel the existing session first if it's still active
         await clarificationStepService.cancelClarification(workflowId);
 
-        // Look up the workflow step to get the agentId
+        // Always validate step exists and belongs to the workflow
         const step = workflowStepsRepository.findById(stepId);
         if (!step) {
           throw new Error(`Workflow step not found: ${stepId}`);
         }
 
-        const agentId = step.agentId;
+        if (step.workflowId !== workflowId) {
+          throw new Error(`Step ${stepId} does not belong to workflow ${workflowId}`);
+        }
+
+        // Use passed agentId if provided, otherwise look up from the workflow step
+        const agentId = typedInput.agentId ?? step.agentId ?? undefined;
+
         if (!agentId) {
           throw new Error(`No agent assigned to clarification step ${stepId}`);
         }
@@ -327,15 +437,53 @@ export function registerClarificationHandlers(
           workflowId,
         });
 
+        // Create stream message handler to forward events to renderer.
+        // Injects workflowId into every message so the renderer can filter
+        // by workflow and avoid cross-workflow stream contamination.
+        const handleStreamMessage = (message: ClarificationStreamMessage): void => {
+          const mainWindow = getMainWindow();
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send(IpcChannels.clarification.stream, { ...message, workflowId });
+          }
+        };
+
+        // If keepExistingQuestions, load existing questions from the step's outputStructured
+        let existingQuestions: Array<ClarificationQuestion> | undefined;
+        if (typedInput.keepExistingQuestions) {
+          const existingStep = workflowStepsRepository.findById(stepId);
+          if (existingStep?.outputStructured) {
+            const parsed =
+              typeof existingStep.outputStructured === 'string'
+                ? JSON.parse(existingStep.outputStructured as string)
+                : existingStep.outputStructured;
+            existingQuestions = parsed?.questions as Array<ClarificationQuestion> | undefined;
+          }
+        }
+
         // Use the new retry method with exponential backoff
-        return clarificationStepService.retryClarification({
-          agentId,
-          featureRequest,
-          repositoryPath,
-          stepId,
-          timeoutSeconds: typedInput.timeoutSeconds,
-          workflowId,
-        });
+        const outcome = await clarificationStepService.retryClarification(
+          {
+            agentId,
+            existingQuestions,
+            featureRequest,
+            keepExistingQuestions: typedInput.keepExistingQuestions,
+            repositoryPath,
+            rerunGuidance: typedInput.rerunGuidance,
+            stepId,
+            timeoutSeconds: typedInput.timeoutSeconds,
+            workflowId,
+          },
+          handleStreamMessage
+        );
+
+        // Use merged persistence if keeping existing questions, otherwise normal persistence
+        if (typedInput.keepExistingQuestions && outcome.type === 'QUESTIONS_FOR_USER') {
+          persistOutcomeToStepMerged(workflowStepsRepository, stepId, outcome);
+        } else {
+          persistOutcomeToStep(workflowStepsRepository, stepId, outcome);
+        }
+
+        return outcome;
       } catch (error) {
         console.error('[IPC Error] clarification:retry:', error);
         throw error;
@@ -355,6 +503,102 @@ export function registerClarificationHandlers(
       console.error('[IPC Error] clarification:getState:', error);
       throw error;
     }
+  });
+}
+
+/**
+ * Persists a clarification outcome to the workflow step record in the database.
+ *
+ * After the clarification agent completes, the in-memory session is cleaned up.
+ * Without persisting, the UI cannot determine the outcome from the step record
+ * and will remain stuck showing a "running" spinner.
+ *
+ * @param workflowStepsRepository - Repository for updating step records
+ * @param stepId - The workflow step ID to update
+ * @param outcome - The clarification outcome to persist
+ */
+function persistOutcomeToStep(
+  workflowStepsRepository: WorkflowStepsRepository,
+  stepId: number,
+  outcome: ClarificationOutcomeWithPause
+): void {
+  switch (outcome.type) {
+    case 'ERROR':
+      workflowStepsRepository.fail(stepId, outcome.error ?? 'Unknown error');
+      break;
+    case 'QUESTIONS_FOR_USER':
+      workflowStepsRepository.update(stepId, {
+        completedAt: new Date().toISOString(),
+        outputStructured: {
+          assessment: outcome.assessment,
+          questions: outcome.questions,
+        },
+        status: 'completed',
+      });
+      break;
+    case 'SKIP_CLARIFICATION':
+      workflowStepsRepository.update(stepId, {
+        completedAt: new Date().toISOString(),
+        outputStructured: {
+          assessment: outcome.assessment,
+          skipped: true,
+          skipReason: outcome.reason,
+        },
+        status: 'completed',
+      });
+      break;
+    case 'TIMEOUT':
+      workflowStepsRepository.fail(stepId, outcome.error ?? `Timed out after ${outcome.elapsedSeconds}s`);
+      break;
+    // CANCELLED: No persistence needed — user-initiated cancellation is handled separately
+  }
+}
+
+/**
+ * Persists a clarification outcome by merging new questions with existing ones.
+ *
+ * Used when the user has "Keep existing questions" enabled. Concatenates existing
+ * questions with newly generated questions, uses the latest assessment, and omits
+ * answers so the UI renders in the `unanswered` phase (forcing the user to review
+ * and submit answers for all questions together).
+ *
+ * @param workflowStepsRepository - Repository for updating step records
+ * @param stepId - The workflow step ID to update
+ * @param outcome - The clarification outcome containing new questions
+ */
+function persistOutcomeToStepMerged(
+  workflowStepsRepository: WorkflowStepsRepository,
+  stepId: number,
+  outcome: ClarificationOutcomeWithPause
+): void {
+  if (outcome.type !== 'QUESTIONS_FOR_USER') {
+    // Non-question outcomes should never reach here, but handle gracefully
+    persistOutcomeToStep(workflowStepsRepository, stepId, outcome);
+    return;
+  }
+
+  // Load existing questions from the step
+  const existingStep = workflowStepsRepository.findById(stepId);
+  let existingQuestions: Array<ClarificationQuestion> = [];
+  if (existingStep?.outputStructured) {
+    const parsed =
+      typeof existingStep.outputStructured === 'string'
+        ? JSON.parse(existingStep.outputStructured as string)
+        : existingStep.outputStructured;
+    existingQuestions = (parsed?.questions as Array<ClarificationQuestion>) ?? [];
+  }
+
+  // Merge: existing questions first, then new questions
+  const mergedQuestions = [...existingQuestions, ...outcome.questions];
+
+  workflowStepsRepository.update(stepId, {
+    completedAt: new Date().toISOString(),
+    outputStructured: {
+      assessment: outcome.assessment,
+      questions: mergedQuestions,
+      // Deliberately omit `answers` to force `unanswered` UI phase
+    },
+    status: 'completed',
   });
 }
 

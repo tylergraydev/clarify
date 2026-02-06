@@ -69,6 +69,34 @@ export function formatDuration(durationMs: null | number | undefined): string {
 }
 
 /**
+ * Formats a duration in milliseconds to a compact elapsed string for live UI.
+ * - < 10s: "1.2s" (1 decimal)
+ * - 10-59s: "45s" (whole seconds)
+ * - >= 60s: "2m 12s" (minutes + seconds)
+ *
+ * Returns null if elapsedMs is null or negative.
+ */
+export function formatElapsed(elapsedMs: null | number): null | string {
+  if (elapsedMs === null || elapsedMs < 0) return null;
+
+  const totalSeconds = elapsedMs / 1000;
+
+  if (totalSeconds < 10) {
+    return `${totalSeconds.toFixed(1)}s`;
+  }
+
+  const wholeSeconds = Math.floor(totalSeconds);
+
+  if (wholeSeconds < 60) {
+    return `${wholeSeconds}s`;
+  }
+
+  const minutes = Math.floor(wholeSeconds / 60);
+  const seconds = wholeSeconds % 60;
+  return `${minutes}m ${seconds}s`;
+}
+
+/**
  * Gets the appropriate badge variant based on agent type.
  *
  * @param type - The agent type string

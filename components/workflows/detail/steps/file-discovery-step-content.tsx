@@ -142,9 +142,7 @@ export const FileDiscoveryStepContent = () => {
                     {file.priority}
                   </Badge>
                 </td>
-                <td className={'border-b border-border px-4 py-3 text-sm text-muted-foreground'}>
-                  {file.relevance}
-                </td>
+                <td className={'border-b border-border px-4 py-3 text-sm text-muted-foreground'}>{file.relevance}</td>
                 <td className={'border-b border-border px-4 py-3 text-right'}>
                   <IconButton aria-label={'View file'} onClick={handleViewFile}>
                     <Eye aria-hidden={'true'} className={'size-4'} />
@@ -157,9 +155,7 @@ export const FileDiscoveryStepContent = () => {
       </div>
 
       {/* Summary Text */}
-      <p className={'text-sm text-muted-foreground'}>
-        5 files discovered across 3 directories
-      </p>
+      <p className={'text-sm text-muted-foreground'}>5 files discovered across 3 directories</p>
 
       <Separator />
 

@@ -186,17 +186,25 @@ export interface ClarificationAgentConfig {
 }
 
 /**
+ * Discriminated union for a single answer to a clarification question.
+ */
+export type ClarificationAnswer =
+  | { other?: string; selected: Array<string>; type: 'checkbox' }
+  | { other?: string; selected: string; type: 'radio' }
+  | { text: string; type: 'text' };
+
+/**
  * Clarification API interface.
  */
 export interface ClarificationAPI {
-  getState(sessionId: string): Promise<ClarificationServiceState | null>;
+  getState(workflowId: number): Promise<ClarificationServiceState | null>;
   /** Subscribe to streaming events during clarification. Returns unsubscribe function. */
   onStreamMessage(callback: (message: ClarificationStreamMessage) => void): () => void;
-  retry(sessionId: string, input: ClarificationStartInput): Promise<ClarificationOutcomeWithPause>;
-  skip(sessionId: string, reason?: string): Promise<ClarificationOutcome>;
+  retry(input: ClarificationStartInput): Promise<ClarificationOutcomeWithPause>;
+  skip(workflowId: number, reason?: string): Promise<ClarificationOutcome>;
   start(input: ClarificationStartInput): Promise<ClarificationOutcomeWithPause>;
   submitAnswers(input: ClarificationRefinementInput): Promise<ClarificationSubmitAnswersResult>;
-  submitEdits(sessionId: string, editedText: string): Promise<ClarificationOutcome>;
+  submitEdits(workflowId: number, editedText: string): Promise<ClarificationOutcome>;
 }
 
 /**
@@ -242,16 +250,18 @@ export type ClarificationOutcomeWithPause = ClarificationOutcome & Clarification
  * A single clarification question with options.
  */
 export interface ClarificationQuestion {
+  allowOther?: boolean;
   header: string;
-  options: Array<{ description: string; label: string }>;
+  options?: Array<{ description: string; label: string }>;
   question: string;
+  questionType?: 'checkbox' | 'radio' | 'text';
 }
 
 /**
  * Input for submitting answers to clarification questions.
  */
 export interface ClarificationRefinementInput {
-  answers: Record<string, string>;
+  answers: Record<string, ClarificationAnswer>;
   questions: Array<ClarificationQuestion>;
   stepId: number;
   workflowId: number;
@@ -286,8 +296,14 @@ export interface ClarificationServiceState {
  * Input for starting a clarification session.
  */
 export interface ClarificationStartInput {
+  /** Optional agent ID override. When provided, takes precedence over the step's configured agent. */
+  agentId?: number;
   featureRequest: string;
+  /** Whether to keep existing questions and append new ones instead of replacing. */
+  keepExistingQuestions?: boolean;
   repositoryPath: string;
+  /** Optional guidance text from the user to influence the rerun. */
+  rerunGuidance?: string;
   stepId: number;
   timeoutSeconds?: number;
   workflowId: number;
@@ -920,6 +936,7 @@ interface ClarificationStreamMessageBase {
     | 'thinking_start'
     | 'tool_start'
     | 'tool_stop';
+  workflowId: number;
 }
 
 /**
