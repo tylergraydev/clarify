@@ -68,7 +68,7 @@ export function transformActivityToStreamState(activities: Array<AgentActivity>)
           const event: StreamToolEvent = {
             input: (activity.toolInput as Record<string, unknown>) ?? {},
             startedAt: activity.startedAt ?? Date.now(),
-            stoppedAt: null,
+            stoppedAt: activity.stoppedAt ?? null,
             toolName: activity.toolName ?? 'unknown',
             toolUseId: activity.toolUseId,
           };
