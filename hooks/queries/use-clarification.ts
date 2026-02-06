@@ -80,6 +80,9 @@ export function useRetryClarification() {
         queryKey: stepKeys.byWorkflow(input.workflowId).queryKey,
       });
       void queryClient.invalidateQueries({
+        queryKey: stepKeys.listByWorkflow(input.workflowId).queryKey,
+      });
+      void queryClient.invalidateQueries({
         queryKey: clarificationKeys.state(input.workflowId).queryKey,
       });
       void queryClient.invalidateQueries({
@@ -103,6 +106,9 @@ export function useSkipClarification() {
     onSuccess: (_result, { workflowId }) => {
       void queryClient.invalidateQueries({
         queryKey: stepKeys.byWorkflow(workflowId).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: stepKeys.listByWorkflow(workflowId).queryKey,
       });
       void queryClient.invalidateQueries({
         queryKey: clarificationKeys.state(workflowId).queryKey,
@@ -129,6 +135,9 @@ export function useStartClarification() {
         queryKey: stepKeys.byWorkflow(input.workflowId).queryKey,
       });
       void queryClient.invalidateQueries({
+        queryKey: stepKeys.listByWorkflow(input.workflowId).queryKey,
+      });
+      void queryClient.invalidateQueries({
         queryKey: clarificationKeys.state(input.workflowId).queryKey,
       });
       void queryClient.invalidateQueries({
@@ -151,6 +160,9 @@ export function useSubmitClarificationAnswers() {
     onSuccess: (_result, input) => {
       void queryClient.invalidateQueries({
         queryKey: stepKeys.byWorkflow(input.workflowId).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: stepKeys.listByWorkflow(input.workflowId).queryKey,
       });
       void queryClient.invalidateQueries({
         queryKey: clarificationKeys.state(input.workflowId).queryKey,

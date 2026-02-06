@@ -4,4 +4,5 @@ export const stepKeys = createQueryKeys('steps', {
   byWorkflow: (workflowId: number) => [workflowId],
   detail: (id: number) => [id],
   list: (filters?: { status?: string; workflowId?: number }) => [{ filters }],
+  listByWorkflow: (workflowId: number) => [workflowId],
 });

@@ -187,8 +187,8 @@ export const RepositorySelectionField = ({
                       aria-label={`Select ${repository.name}`}
                       checked={isSelected}
                       disabled={isOptionDisabled}
-                      onClick={(e) => e.stopPropagation()}
                       onCheckedChange={(isChecked) => handleRepositoryToggle(repository.id, isChecked)}
+                      onClick={(e) => e.stopPropagation()}
                       size={size}
                     />
                     <div className={'flex min-w-0 flex-1 flex-col gap-0.5'}>

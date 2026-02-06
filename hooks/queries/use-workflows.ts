@@ -244,6 +244,9 @@ export function useStartWorkflow() {
           queryKey: stepKeys.byWorkflow(workflow.id).queryKey,
         });
         void queryClient.invalidateQueries({
+          queryKey: stepKeys.listByWorkflow(workflow.id).queryKey,
+        });
+        void queryClient.invalidateQueries({
           queryKey: stepKeys.list._def,
         });
         if (workflow.projectId) {

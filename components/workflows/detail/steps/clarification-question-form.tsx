@@ -141,10 +141,10 @@ const QuestionCard = ({ children, header, index, question }: QuestionCardProps) 
     <div className={'rounded-lg border border-border bg-card p-4'}>
       {/* Question Header */}
       <div className={'mb-3 flex flex-col gap-1'}>
-        <span className={'text-xs font-medium text-muted-foreground'}>
+        <span className={'text-sm font-medium text-muted-foreground'}>
           Question {index + 1}: {header}
         </span>
-        <p className={'text-sm font-medium text-foreground'}>{question}</p>
+        <p className={'text-base font-medium text-foreground'}>{question}</p>
       </div>
 
       {/* Question Content */}
@@ -180,8 +180,8 @@ const RadioQuestion = ({
           <label className={'flex cursor-pointer items-start gap-2'} key={option.label}>
             <RadioGroupItem value={option.label} />
             <div className={'flex flex-col gap-0.5'}>
-              <span className={'text-sm text-foreground'}>{option.label}</span>
-              {option.description && <span className={'text-xs text-muted-foreground'}>{option.description}</span>}
+              <span className={'text-base text-foreground'}>{option.label}</span>
+              {option.description && <span className={'text-sm text-muted-foreground'}>{option.description}</span>}
             </div>
           </label>
         ))}

@@ -33,7 +33,7 @@ export const WorkflowTopBar = ({ className, ref, workflowId, ...props }: Workflo
   const { isElectron, steps } = useElectronDb();
 
   const { data: workflowSteps } = useQuery({
-    ...stepKeys.byWorkflow(workflowId),
+    ...stepKeys.listByWorkflow(workflowId),
     enabled: isElectron && workflowId > 0,
     queryFn: () => steps.list(workflowId),
   });
