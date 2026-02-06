@@ -18,6 +18,7 @@ export {
   RepositorySelectionField,
   repositorySelectionVariants,
 } from './repository-selection-field';
+export { ViewWorkflowDialog } from './view-workflow-dialog';
 // Layout components
 export { WorkflowHistoryTable } from './workflow-history-table';
 export { WorkflowTable } from './workflow-table';

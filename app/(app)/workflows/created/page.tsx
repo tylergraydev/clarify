@@ -12,6 +12,7 @@ import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DataTableSkeleton } from '@/components/ui/table';
 import { EditWorkflowDialog } from '@/components/workflows/edit-workflow-dialog';
+import { ViewWorkflowDialog } from '@/components/workflows/view-workflow-dialog';
 import { WorkflowTable } from '@/components/workflows/workflow-table';
 import {
   type ProjectFilterOption,
@@ -73,6 +74,7 @@ export default function CreatedWorkflowsPage() {
   const [cancellingIds, setCancellingIds] = useState<Set<number>>(new Set());
   const [workflowToCancel, setWorkflowToCancel] = useState<null | Workflow>(null);
   const [editingWorkflow, setEditingWorkflow] = useState<null | Workflow>(null);
+  const [viewingWorkflow, setViewingWorkflow] = useState<null | Workflow>(null);
   const [statusFilter, setStatusFilter] = useState<WorkflowStatusFilterValue>('created');
 
   // Data fetching with 5-second polling
@@ -192,6 +194,16 @@ export default function CreatedWorkflowsPage() {
     }
   }, []);
 
+  const handleViewInfo = useCallback((workflow: Workflow) => {
+    setViewingWorkflow(workflow);
+  }, []);
+
+  const handleViewInfoDialogOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      setViewingWorkflow(null);
+    }
+  }, []);
+
   const handleStatusFilterChange = useCallback(() => {
     setStatusFilter('created');
   }, []);
@@ -303,6 +315,7 @@ export default function CreatedWorkflowsPage() {
             onEdit={handleEditWorkflow}
             onGlobalFilterChange={setSearchFilter}
             onViewDetails={handleViewDetails}
+            onViewInfo={handleViewInfo}
             projectMap={projectMap}
             toolbarContent={
               <WorkflowTableToolbar
@@ -350,6 +363,13 @@ export default function CreatedWorkflowsPage() {
             workflow={editingWorkflow}
           />
         )}
+
+        {/* View Workflow Dialog */}
+        <ViewWorkflowDialog
+          isOpen={viewingWorkflow !== null}
+          onOpenChange={handleViewInfoDialogOpenChange}
+          workflow={viewingWorkflow}
+        />
       </Fragment>
     );
   }

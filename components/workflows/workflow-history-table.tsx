@@ -33,6 +33,8 @@ interface WorkflowHistoryTableProps extends ComponentPropsWithRef<'div'> {
   onPaginationChange?: OnChangeFn<PaginationState>;
   /** Callback when the user clicks view details on a workflow */
   onViewDetails?: (workflowId: number) => void;
+  /** Callback when the user clicks view info on a workflow */
+  onViewInfo?: (workflow: Workflow) => void;
   /** Total number of pages (for server-side pagination) */
   pageCount?: number;
   /** Current pagination state (for server-side pagination) */
@@ -62,7 +64,7 @@ const columnHelper = createColumnHelper<Workflow>();
 // ============================================================================
 
 interface ActionsCellProps {
-  onViewDetails?: (workflowId: number) => void;
+  onViewInfo?: (workflow: Workflow) => void;
   row: Row<Workflow>;
 }
 
@@ -70,12 +72,12 @@ interface ActionsCellProps {
  * Memoized actions cell component for the history table.
  * Only shows View Details action since historical workflows cannot be modified.
  */
-const ActionsCell = memo(function ActionsCell({ onViewDetails, row }: ActionsCellProps) {
+const ActionsCell = memo(function ActionsCell({ onViewInfo, row }: ActionsCellProps) {
   const actions: Array<DataTableRowAction<Workflow>> = [
     {
       icon: <Eye aria-hidden={'true'} className={'size-4'} />,
-      label: 'View Details',
-      onAction: (r) => onViewDetails?.(r.original.id),
+      label: 'View',
+      onAction: (r) => onViewInfo?.(r.original),
       type: 'button',
     },
   ];
@@ -105,6 +107,7 @@ export const WorkflowHistoryTable = ({
   onGlobalFilterChange,
   onPaginationChange,
   onViewDetails,
+  onViewInfo,
   pageCount,
   pagination,
   projectMap,
@@ -132,7 +135,7 @@ export const WorkflowHistoryTable = ({
     () => [
       // Actions column (first for easy access)
       columnHelper.display({
-        cell: ({ row }) => <ActionsCell onViewDetails={onViewDetails} row={row} />,
+        cell: ({ row }) => <ActionsCell onViewInfo={onViewInfo} row={row} />,
         enableHiding: false,
         enableResizing: false,
         enableSorting: false,
@@ -228,7 +231,7 @@ export const WorkflowHistoryTable = ({
         size: 160,
       }),
     ],
-    [onViewDetails, projectMap]
+    [onViewDetails, onViewInfo, projectMap]
   );
 
   // Build controlled pagination state if provided

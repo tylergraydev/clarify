@@ -41,6 +41,8 @@ interface WorkflowTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onPause
   onResume?: (workflowId: number) => void;
   /** Callback when the user clicks view details on a workflow */
   onViewDetails?: (workflowId: number) => void;
+  /** Callback when the user clicks view info on a workflow */
+  onViewInfo?: (workflow: Workflow) => void;
   /** Set of workflow IDs currently being paused */
   pausingIds?: Set<number>;
   /** Map of project IDs to project names for display */
@@ -79,7 +81,7 @@ interface ActionsCellProps {
   onEdit?: (workflow: Workflow) => void;
   onPause?: (workflowId: number) => void;
   onResume?: (workflowId: number) => void;
-  onViewDetails?: (workflowId: number) => void;
+  onViewInfo?: (workflow: Workflow) => void;
   row: Row<Workflow>;
 }
 
@@ -95,7 +97,7 @@ const ActionsCell = memo(function ActionsCell({
   onEdit,
   onPause,
   onResume,
-  onViewDetails,
+  onViewInfo,
   row,
 }: ActionsCellProps) {
   const workflow = row.original;
@@ -116,7 +118,7 @@ const ActionsCell = memo(function ActionsCell({
     disabled: isActionPending,
     icon: <Eye aria-hidden={'true'} className={'size-4'} />,
     label: 'View',
-    onAction: (r) => onViewDetails?.(r.original.id),
+    onAction: (r) => onViewInfo?.(r.original),
     type: 'button',
   });
 
@@ -196,6 +198,7 @@ export const WorkflowTable = ({
   onPause,
   onResume,
   onViewDetails,
+  onViewInfo,
   pausingIds = new Set(),
   projectMap,
   ref,
@@ -234,7 +237,7 @@ export const WorkflowTable = ({
             onEdit={onEdit}
             onPause={onPause}
             onResume={onResume}
-            onViewDetails={onViewDetails}
+            onViewInfo={onViewInfo}
             row={row}
           />
         ),
@@ -333,7 +336,7 @@ export const WorkflowTable = ({
         size: 110,
       }),
     ],
-    [cancellingIds, onCancel, onEdit, onPause, onResume, onViewDetails, pausingIds, projectMap, resumingIds]
+    [cancellingIds, onCancel, onEdit, onPause, onResume, onViewDetails, onViewInfo, pausingIds, projectMap, resumingIds]
   );
 
   return (

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DataTableSkeleton } from '@/components/ui/table';
+import { ViewWorkflowDialog } from '@/components/workflows/view-workflow-dialog';
 import { WorkflowTable } from '@/components/workflows/workflow-table';
 import {
   ACTIVE_STATUS_FILTER_OPTIONS,
@@ -77,6 +78,7 @@ export default function ActiveWorkflowsPage() {
   const [cancellingIds, setCancellingIds] = useState<Set<number>>(new Set());
   const [pausingIds, setPausingIds] = useState<Set<number>>(new Set());
   const [resumingIds, setResumingIds] = useState<Set<number>>(new Set());
+  const [viewingWorkflow, setViewingWorkflow] = useState<null | Workflow>(null);
   const [workflowToCancel, setWorkflowToCancel] = useState<null | Workflow>(null);
 
   // Data fetching with 5-second polling
@@ -162,6 +164,16 @@ export default function ActiveWorkflowsPage() {
   const handleCancelDialogClose = useCallback((isOpen: boolean) => {
     if (!isOpen) {
       setWorkflowToCancel(null);
+    }
+  }, []);
+
+  const handleViewInfo = useCallback((workflow: Workflow) => {
+    setViewingWorkflow(workflow);
+  }, []);
+
+  const handleViewInfoDialogOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      setViewingWorkflow(null);
     }
   }, []);
 
@@ -364,6 +376,7 @@ export default function ActiveWorkflowsPage() {
             onPause={handlePauseWorkflow}
             onResume={handleResumeWorkflow}
             onViewDetails={handleViewDetails}
+            onViewInfo={handleViewInfo}
             pausingIds={pausingIds}
             projectMap={projectMap}
             resumingIds={resumingIds}
@@ -384,6 +397,13 @@ export default function ActiveWorkflowsPage() {
             workflows={filteredWorkflows}
           />
         </main>
+
+        {/* View Workflow Info Dialog */}
+        <ViewWorkflowDialog
+          isOpen={viewingWorkflow !== null}
+          onOpenChange={handleViewInfoDialogOpenChange}
+          workflow={viewingWorkflow}
+        />
 
         {/* Cancel Confirmation Dialog */}
         <ConfirmActionDialog

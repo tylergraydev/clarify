@@ -1,8 +1,10 @@
 'use client';
 
+import { ChevronRight } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { useRouteParams } from 'next-typesafe-url/app';
 import { withParamValidation } from 'next-typesafe-url/app/hoc';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
@@ -15,7 +17,7 @@ import {
   WorkflowStreamingPanel,
   WorkflowTopBar,
 } from '@/components/workflows/detail';
-import { useWorkflow } from '@/hooks/queries';
+import { useProject, useWorkflow } from '@/hooks/queries';
 
 import { Route, workflowStepValues } from './route-type';
 
@@ -45,6 +47,7 @@ const WorkflowDetailContent = () => {
   const workflowId = routeParams.data?.id ?? 0;
 
   const { data: workflow, isError: isWorkflowError, isLoading: isWorkflowLoading } = useWorkflow(workflowId);
+  const { data: project } = useProject(workflow?.projectId ?? 0);
 
   // Handle route params loading state
   if (routeParams.isLoading) {
@@ -78,10 +81,44 @@ const WorkflowDetailContent = () => {
   const isPreStart = workflowStatus === 'created';
   const isClarificationEnabled = workflowStatus === 'running' && !workflow.skipClarification;
 
+  const breadcrumb = (
+    <div className={'px-6 pt-4'}>
+      <nav aria-label={'Breadcrumb'} className={'flex items-center gap-2'}>
+        <Link
+          className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
+          href={$path({ route: '/dashboard' })}
+        >
+          Home
+        </Link>
+        <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+        <Link
+          className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
+          href={$path({ route: '/projects/[id]', routeParams: { id: workflow.projectId } })}
+        >
+          {project?.name ?? 'Project'}
+        </Link>
+        <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+        <Link
+          className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
+          href={$path({
+            route: '/projects/[id]',
+            routeParams: { id: workflow.projectId },
+            searchParams: { tab: 'workflows' },
+          })}
+        >
+          Workflows
+        </Link>
+        <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+        <span className={'text-sm text-foreground'}>{workflow.featureName}</span>
+      </nav>
+    </div>
+  );
+
   // Pre-start: show the workflow settings form centered on page
   if (isPreStart) {
     return (
       <QueryErrorBoundary>
+        {breadcrumb}
         <main aria-label={'Workflow setup'} className={'flex h-full flex-col items-center justify-center py-12'}>
           <WorkflowPreStartSummary workflowId={workflowId} />
         </main>
@@ -92,6 +129,7 @@ const WorkflowDetailContent = () => {
   // Active workflow: three-zone layout wrapped with stream provider
   return (
     <QueryErrorBoundary>
+      {breadcrumb}
       <ClarificationStreamProvider isEnabled={isClarificationEnabled} workflowId={workflowId}>
         <main aria-label={'Workflow detail'} className={'flex h-(--workflow-content-height) flex-col'}>
           {/* Top Bar */}

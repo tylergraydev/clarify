@@ -6,8 +6,9 @@ import { withParamValidation } from 'next-typesafe-url/app/hoc';
 import { useRouter } from 'next/navigation';
 import { parseAsArrayOf, parseAsInteger, parseAsString, parseAsStringLiteral } from 'nuqs';
 import { useQueryStates } from 'nuqs';
-import { type ReactNode, useCallback, useMemo } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 
+import type { Workflow as WorkflowRecord } from '@/db/schema/workflows.schema';
 import type { WorkflowHistoryFilters, WorkflowHistorySortField, WorkflowHistorySortOrder } from '@/types/electron';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
@@ -19,6 +20,7 @@ import {
   HistoryTableToolbar,
   type HistoryTypeFilterValue,
   type ProjectFilterOption,
+  ViewWorkflowDialog,
   WorkflowHistoryTable,
 } from '@/components/workflows';
 import { useProjects } from '@/hooks/queries/use-projects';
@@ -242,6 +244,8 @@ const StatisticsSection = ({
  * - Error and empty states with appropriate actions
  */
 function WorkflowHistoryContent() {
+  const [viewingWorkflow, setViewingWorkflow] = useState<null | WorkflowRecord>(null);
+
   const router = useRouter();
   const toast = useToast();
 
@@ -453,6 +457,16 @@ function WorkflowHistoryContent() {
     [queryState.page, queryState.pageSize, setQueryState]
   );
 
+  const handleViewInfo = useCallback((workflow: WorkflowRecord) => {
+    setViewingWorkflow(workflow);
+  }, []);
+
+  const handleViewInfoDialogOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      setViewingWorkflow(null);
+    }
+  }, []);
+
   // Derived state
   const isLoading = isHistoryLoading || isProjectsLoading;
   const hasError = !isLoading && historyError;
@@ -574,6 +588,7 @@ function WorkflowHistoryContent() {
             onGlobalFilterChange={handleSearchChange}
             onPaginationChange={handlePaginationChange}
             onViewDetails={handleViewDetails}
+            onViewInfo={handleViewInfo}
             pageCount={pageCount}
             pagination={{
               pageIndex: queryState.page - 1,
@@ -598,6 +613,13 @@ function WorkflowHistoryContent() {
               />
             }
             workflows={workflows}
+          />
+
+          {/* View Workflow Info Dialog */}
+          <ViewWorkflowDialog
+            isOpen={viewingWorkflow !== null}
+            onOpenChange={handleViewInfoDialogOpenChange}
+            workflow={viewingWorkflow}
           />
         </main>
       </QueryErrorBoundary>

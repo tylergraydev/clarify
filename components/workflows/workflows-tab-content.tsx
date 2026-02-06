@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { DataTableSkeleton } from '@/components/ui/table';
 import { CreateWorkflowDialog } from '@/components/workflows/create-workflow-dialog';
 import { EditWorkflowDialog } from '@/components/workflows/edit-workflow-dialog';
+import { ViewWorkflowDialog } from '@/components/workflows/view-workflow-dialog';
 import { WorkflowTable } from '@/components/workflows/workflow-table';
 import {
   type WorkflowStatusFilterValue,
@@ -50,6 +51,9 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
 
   // Edit workflow state
   const [editingWorkflow, setEditingWorkflow] = useState<null | Workflow>(null);
+
+  // View workflow info state
+  const [viewingWorkflow, setViewingWorkflow] = useState<null | Workflow>(null);
 
   // Filtered workflows
   const filteredWorkflows = useMemo(() => {
@@ -106,6 +110,16 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
   const handleEditDialogOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
       setEditingWorkflow(null);
+    }
+  }, []);
+
+  const handleViewInfo = useCallback((workflow: Workflow) => {
+    setViewingWorkflow(workflow);
+  }, []);
+
+  const handleViewInfoDialogOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      setViewingWorkflow(null);
     }
   }, []);
 
@@ -192,6 +206,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
           onEdit={handleEditWorkflow}
           onGlobalFilterChange={setSearchFilter}
           onViewDetails={handleViewDetails}
+          onViewInfo={handleViewInfo}
           projectMap={projectMap}
           toolbarContent={
             <WorkflowTableToolbar
@@ -213,6 +228,13 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
             workflow={editingWorkflow}
           />
         )}
+
+        {/* View Workflow Info Dialog */}
+        <ViewWorkflowDialog
+          isOpen={viewingWorkflow !== null}
+          onOpenChange={handleViewInfoDialogOpenChange}
+          workflow={viewingWorkflow}
+        />
       </div>
     );
   }
