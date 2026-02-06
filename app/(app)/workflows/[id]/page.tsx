@@ -84,7 +84,7 @@ const WorkflowDetailContent = () => {
   // Active workflow: three-zone layout
   return (
     <QueryErrorBoundary>
-      <main aria-label={'Workflow detail'} className={'flex h-full flex-col'}>
+      <main aria-label={'Workflow detail'} className={'flex h-(--workflow-content-height) flex-col'}>
         {/* Top Bar */}
         <WorkflowTopBar />
 

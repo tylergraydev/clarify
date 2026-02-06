@@ -53,6 +53,6 @@ export const WORKFLOW_DETAIL_EXPANDED_STEPS_STORAGE_KEY = 'app:workflow-detail-e
 
 // Workflow detail defaults
 export const DEFAULT_WORKFLOW_DETAIL_STREAMING_PANEL_HEIGHT = 250;
-export const DEFAULT_WORKFLOW_DETAIL_STREAMING_PANEL_COLLAPSED = false;
+export const DEFAULT_WORKFLOW_DETAIL_STREAMING_PANEL_COLLAPSED = true;
 export const DEFAULT_WORKFLOW_DETAIL_ACTIVE_STREAMING_TAB = 'clarification' as const;
 export const DEFAULT_WORKFLOW_DETAIL_EXPANDED_STEPS: Array<string> = [];

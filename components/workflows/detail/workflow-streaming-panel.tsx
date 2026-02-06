@@ -2,8 +2,8 @@
 
 import type { ComponentPropsWithRef, PointerEvent as ReactPointerEvent } from 'react';
 
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useCallback, useRef } from 'react';
+import { Activity, ChevronDown, ChevronUp } from 'lucide-react';
+import { Fragment, useCallback, useRef } from 'react';
 
 import type { WorkflowDetailStepTab } from '@/lib/stores/workflow-detail-store';
 
@@ -121,31 +121,28 @@ export const WorkflowStreamingPanel = ({ className, ref, ...props }: WorkflowStr
 
   return (
     <div
-      className={cn('flex flex-col border-t border-border bg-background', className)}
+      className={cn(
+        'flex flex-col border-t border-border bg-background',
+        'transition-[height] duration-200 ease-out',
+        className
+      )}
       ref={ref}
-      style={{ height: isStreamingPanelCollapsed ? 'auto' : streamingPanelHeight }}
+      style={{
+        height: isStreamingPanelCollapsed
+          ? 'var(--workflow-streaming-panel-collapsed-height)'
+          : streamingPanelHeight,
+      }}
       {...props}
     >
-      {/* Drag Handle and Collapse Toggle */}
-      <div className={'flex items-center'}>
-        {/* Drag Handle */}
-        <div
-          aria-label={'Resize streaming panel'}
-          className={cn(
-            'h-(--workflow-drag-handle-height) flex-1 cursor-row-resize',
-            'flex items-center justify-center',
-            'transition-colors hover:bg-muted'
-          )}
-          onPointerDown={handlePointerDown}
-          role={'separator'}
-        >
-          <div className={'h-0.5 w-8 rounded-full bg-border'} />
+      {/* Collapsed bar - always visible */}
+      <div className={'flex min-h-(--workflow-streaming-panel-collapsed-height) items-center justify-between px-4'}>
+        <div className={'flex items-center gap-2'}>
+          <Activity aria-hidden={'true'} className={'size-3.5 text-muted-foreground'} />
+          <span className={'text-xs font-medium text-muted-foreground'}>Agent Activity</span>
         </div>
-
-        {/* Collapse Toggle */}
         <IconButton
           aria-label={isStreamingPanelCollapsed ? 'Expand streaming panel' : 'Collapse streaming panel'}
-          className={'mx-2 size-6'}
+          className={'size-6'}
           onClick={handleToggleClick}
         >
           {isStreamingPanelCollapsed ? (
@@ -156,39 +153,55 @@ export const WorkflowStreamingPanel = ({ className, ref, ...props }: WorkflowStr
         </IconButton>
       </div>
 
-      {/* Separator */}
-      <Separator />
-
-      {/* Tab Content */}
+      {/* Expanded content */}
       {!isStreamingPanelCollapsed && (
-        <TabsRoot
-          className={'flex min-h-0 flex-1 flex-col'}
-          onValueChange={handleTabChange}
-          value={activeStreamingTab}
-        >
-          {/* Tab List */}
-          <TabsList>
-            {TAB_ORDER.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value}>
-                {tab.label}
-              </TabsTrigger>
-            ))}
-            <TabsIndicator />
-          </TabsList>
+        <Fragment>
+          {/* Drag handle for resizing */}
+          <div
+            aria-label={'Resize streaming panel'}
+            className={cn(
+              'h-(--workflow-drag-handle-height) cursor-row-resize',
+              'flex items-center justify-center',
+              'transition-colors hover:bg-muted'
+            )}
+            onPointerDown={handlePointerDown}
+            role={'separator'}
+          >
+            <div className={'h-0.5 w-8 rounded-full bg-border'} />
+          </div>
 
-          {/* Tab Panels */}
-          {TAB_ORDER.map((tab) => (
-            <TabsPanel className={'min-h-0 flex-1 overflow-auto p-3'} key={tab.value} value={tab.value}>
-              <div className={'font-mono text-xs text-muted-foreground'}>
-                {PLACEHOLDER_LOGS[tab.value].map((line) => (
-                  <div className={'py-0.5'} key={line}>
-                    {line}
-                  </div>
-                ))}
-              </div>
-            </TabsPanel>
-          ))}
-        </TabsRoot>
+          <Separator />
+
+          {/* Tab Content */}
+          <TabsRoot
+            className={'flex min-h-0 flex-1 flex-col'}
+            onValueChange={handleTabChange}
+            value={activeStreamingTab}
+          >
+            {/* Tab List */}
+            <TabsList>
+              {TAB_ORDER.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+              <TabsIndicator />
+            </TabsList>
+
+            {/* Tab Panels */}
+            {TAB_ORDER.map((tab) => (
+              <TabsPanel className={'min-h-0 flex-1 overflow-auto p-3'} key={tab.value} value={tab.value}>
+                <div className={'font-mono text-xs text-muted-foreground'}>
+                  {PLACEHOLDER_LOGS[tab.value].map((line) => (
+                    <div className={'py-0.5'} key={line}>
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              </TabsPanel>
+            ))}
+          </TabsRoot>
+        </Fragment>
       )}
     </div>
   );
