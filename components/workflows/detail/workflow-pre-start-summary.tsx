@@ -15,7 +15,6 @@ import { cn } from '@/lib/utils';
 const pauseBehaviorLabels: Record<string, string> = {
   auto_pause: 'Auto Pause',
   continuous: 'Continuous',
-  gates_only: 'Gates Only',
 };
 
 // ============================================================================
@@ -96,7 +95,12 @@ export const WorkflowPreStartSummary = ({ workflowId }: { workflowId: number }) 
             <SummaryField className={'sm:col-span-2'} label={'Feature Name'} value={workflow.featureName} />
             <SummaryField label={'Pause Behavior'} value={pauseBehaviorLabel} />
             <SummaryField label={'Skip Clarification'} value={skipClarificationLabel} />
-            <SummaryField className={'sm:col-span-2'} label={'Feature Request'} multiline value={workflow.featureRequest} />
+            <SummaryField
+              className={'sm:col-span-2'}
+              label={'Feature Request'}
+              multiline
+              value={workflow.featureRequest}
+            />
           </div>
         </CardContent>
 
@@ -109,7 +113,11 @@ export const WorkflowPreStartSummary = ({ workflowId }: { workflowId: number }) 
           <p className={'text-xs text-muted-foreground'}>
             You can pause or cancel this workflow at any time after it starts.
           </p>
-          <Button className={'w-full sm:w-auto'} disabled={startWorkflow.isPending} onClick={() => startWorkflow.mutate(workflowId)}>
+          <Button
+            className={'w-full sm:w-auto'}
+            disabled={startWorkflow.isPending}
+            onClick={() => startWorkflow.mutate(workflowId)}
+          >
             {startWorkflow.isPending && <Loader2 className={'mr-2 size-4 animate-spin'} />}
             {!startWorkflow.isPending && <Play aria-hidden={'true'} className={'size-4'} />}
             Start Workflow
