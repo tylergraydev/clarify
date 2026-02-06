@@ -1,5 +1,6 @@
 'use client';
 
+import { useElectronAgentActivity } from './electron/domains/use-electron-agent-activity';
 import { useElectronAgents } from './electron/domains/use-electron-agents';
 import { useElectronAudit } from './electron/domains/use-electron-audit';
 import { useElectronClarification } from './electron/domains/use-electron-clarification';
@@ -24,6 +25,7 @@ export { useElectronStore } from './electron/use-electron-store';
  */
 export function useElectronDb() {
   const { isElectron } = useElectron();
+  const { agentActivity } = useElectronAgentActivity();
   const { agentHooks, agents, agentSkills, agentTools } = useElectronAgents();
   const { audit } = useElectronAudit();
   const { clarification } = useElectronClarification();
@@ -35,6 +37,7 @@ export function useElectronDb() {
   const { worktrees } = useElectronWorktrees();
 
   return {
+    agentActivity,
     agentHooks,
     agents,
     agentSkills,

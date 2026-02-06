@@ -41,12 +41,14 @@
 
 import type { Options, SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
 
+import type { AgentActivityRepository } from '../../../db/repositories/agent-activity.repository';
 import type { ActiveToolInfo } from './step-types';
 
 import { debugLoggerService } from '../debug-logger.service';
 import { getQueryFunction, parseToolInputJson } from './agent-sdk';
 import { CLAUDE_CODE_TOOL_NAMES } from './agent-tools';
 import { startHeartbeat, stopHeartbeat } from './heartbeat';
+import { extractUsageStats } from './usage-stats';
 
 // =============================================================================
 // Type Definitions
@@ -97,12 +99,16 @@ export interface BaseSession {
 export interface SdkExecutorConfig<TAgentConfig extends BaseAgentConfig> {
   /** AbortController for cancellation support */
   abortController: AbortController;
+  /** Optional repository for persisting agent activity events to SQLite */
+  activityRepository?: AgentActivityRepository;
   /** The loaded agent configuration */
   agentConfig: TAgentConfig;
   /** JSON schema for structured output validation */
   outputFormatSchema: Record<string, unknown>;
   /** Path to the repository being analyzed */
   repositoryPath: string;
+  /** Workflow step ID for associating activity records */
+  stepId?: number;
 }
 
 /**
@@ -148,6 +154,12 @@ export class AgentSdkExecutor<
   TSession extends BaseSession,
   TStreamMessage extends { sessionId: string; timestamp: number; type: string },
 > {
+  /**
+   * Map of toolUseId to the database row ID for tool_start activity records.
+   * Used to update tool_start records with stoppedAt and durationMs on content_block_stop.
+   */
+  private toolStartActivityIds = new Map<string, { id: number; startedAt: number }>();
+
   /**
    * Build SDK Options from agent configuration.
    *
@@ -260,6 +272,7 @@ export class AgentSdkExecutor<
    * - Stream event processing loop
    * - Cancellation via AbortController
    * - Result message extraction
+   * - Activity persistence to SQLite (when activityRepository is configured)
    *
    * @param session - The active session for state tracking
    * @param config - The SDK executor configuration
@@ -275,6 +288,9 @@ export class AgentSdkExecutor<
   ): Promise<null | SDKResultMessage> {
     const query = await getQueryFunction();
     const sdkOptions = this.buildSdkOptions(config);
+
+    // Clear tool start tracking for this execution
+    this.toolStartActivityIds.clear();
 
     // Start heartbeat for extended thinking mode
     let heartbeatInterval: NodeJS.Timeout | null = null;
@@ -313,13 +329,18 @@ export class AgentSdkExecutor<
 
         // Process streaming events for real-time UI updates
         if (message.type === 'stream_event') {
-          this.processStreamEvent(session, message, handlers);
+          this.processStreamEvent(session, message, handlers, config);
         }
 
         // Capture the result message for structured output extraction
         if (message.type === 'result') {
           resultMessage = message as SDKResultMessage;
         }
+      }
+
+      // Persist usage statistics from the result message
+      if (resultMessage && config.activityRepository && config.stepId !== undefined) {
+        this.persistUsageActivity(resultMessage, config);
       }
 
       return resultMessage;
@@ -337,6 +358,7 @@ export class AgentSdkExecutor<
    *
    * Handles text deltas, thinking deltas, and tool use events to accumulate
    * streaming content in the session state and emit messages to the UI.
+   * When an activityRepository is configured, persists each event to SQLite.
    *
    * This method is 100% identical across all three agent step services
    * (clarification, refinement, file discovery).
@@ -344,11 +366,13 @@ export class AgentSdkExecutor<
    * @param session - The active session for state tracking
    * @param message - The SDK stream event message
    * @param handlers - The event handlers including custom processing hook
+   * @param config - Optional SDK executor config for activity persistence
    */
   processStreamEvent(
     session: TSession,
     message: { event: Record<string, unknown>; type: 'stream_event' },
-    handlers: StreamEventHandlers<TStreamMessage, TSession>
+    handlers: StreamEventHandlers<TStreamMessage, TSession>,
+    config?: SdkExecutorConfig<TAgentConfig>
   ): void {
     const event = message.event;
 
@@ -379,6 +403,12 @@ export class AgentSdkExecutor<
             type: 'text_delta',
           } as unknown as TStreamMessage);
         }
+
+        // Persist text_delta activity
+        this.persistActivity(config, {
+          eventType: 'text_delta',
+          textDelta: text,
+        });
       } else if (deltaType === 'thinking_delta') {
         // Accumulate thinking text into the current block
         const thinking = delta.thinking as string;
@@ -396,6 +426,13 @@ export class AgentSdkExecutor<
               type: 'thinking_delta',
             } as unknown as TStreamMessage);
           }
+
+          // Persist thinking_delta activity
+          this.persistActivity(config, {
+            eventType: 'thinking_delta',
+            textDelta: thinking,
+            thinkingBlockIndex: lastIndex,
+          });
         }
       } else if (deltaType === 'input_json_delta') {
         // Accumulate tool input JSON
@@ -425,6 +462,16 @@ export class AgentSdkExecutor<
               type: 'tool_update',
             } as unknown as TStreamMessage);
           }
+
+          // Persist tool_update activity with accumulated input
+          // Strip the internal _partialJson field before persisting
+          const { _partialJson: _, ...cleanInput } = lastTool.toolInput;
+          this.persistActivity(config, {
+            eventType: 'tool_update',
+            toolInput: cleanInput,
+            toolName: lastTool.toolName,
+            toolUseId: lastTool.toolUseId,
+          });
         }
       }
     } else if (eventType === 'content_block_start') {
@@ -474,6 +521,9 @@ export class AgentSdkExecutor<
             type: 'tool_start',
           } as unknown as TStreamMessage);
         }
+
+        // Persist tool_start activity and track the record ID for later update
+        this.persistToolStartActivity(config, toolName, toolUseId);
       }
     } else if (eventType === 'content_block_stop') {
       // Clear the most recent tool from active list when done
@@ -494,8 +544,166 @@ export class AgentSdkExecutor<
               type: 'tool_stop',
             } as unknown as TStreamMessage);
           }
+
+          // Update the tool_start record with stoppedAt and durationMs
+          this.persistToolStopActivity(config, completedTool.toolUseId);
         }
       }
+    }
+  }
+
+  // =============================================================================
+  // Private Activity Persistence Helpers
+  // =============================================================================
+
+  /**
+   * Persist a generic activity event to SQLite.
+   *
+   * Wraps the repository create call in try/catch to ensure persistence
+   * failures never disrupt the streaming flow.
+   *
+   * @param config - The SDK executor config (may be undefined if not configured)
+   * @param data - Partial activity data to persist (eventType is required)
+   */
+  private persistActivity(
+    config: SdkExecutorConfig<TAgentConfig> | undefined,
+    data: {
+      eventType: string;
+      textDelta?: string;
+      thinkingBlockIndex?: number;
+      toolInput?: Record<string, unknown>;
+      toolName?: string;
+      toolUseId?: string;
+    }
+  ): void {
+    if (!config?.activityRepository || config.stepId === undefined) return;
+
+    try {
+      config.activityRepository.create({
+        eventType: data.eventType,
+        textDelta: data.textDelta ?? null,
+        thinkingBlockIndex: data.thinkingBlockIndex ?? null,
+        toolInput: data.toolInput ?? null,
+        toolName: data.toolName ?? null,
+        toolUseId: data.toolUseId ?? null,
+        workflowStepId: config.stepId,
+      });
+    } catch (error) {
+      debugLoggerService.logSdkEvent('activity-persistence', `Failed to persist ${data.eventType} activity`, {
+        error: error instanceof Error ? error.message : String(error),
+        eventType: data.eventType,
+      });
+    }
+  }
+
+  /**
+   * Persist a tool_start activity event and track the database record ID.
+   *
+   * The record ID is stored in the toolStartActivityIds map so it can be
+   * updated with stoppedAt and durationMs when the tool completes.
+   *
+   * @param config - The SDK executor config
+   * @param toolName - The name of the tool being started
+   * @param toolUseId - The unique tool use identifier
+   */
+  private persistToolStartActivity(
+    config: SdkExecutorConfig<TAgentConfig> | undefined,
+    toolName: string,
+    toolUseId: string
+  ): void {
+    if (!config?.activityRepository || config.stepId === undefined) return;
+
+    const startedAt = Date.now();
+
+    try {
+      const record = config.activityRepository.create({
+        eventType: 'tool_start',
+        startedAt,
+        toolInput: {},
+        toolName,
+        toolUseId,
+        workflowStepId: config.stepId,
+      });
+
+      this.toolStartActivityIds.set(toolUseId, { id: record.id, startedAt });
+    } catch (error) {
+      debugLoggerService.logSdkEvent('activity-persistence', 'Failed to persist tool_start activity', {
+        error: error instanceof Error ? error.message : String(error),
+        toolName,
+        toolUseId,
+      });
+    }
+  }
+
+  /**
+   * Update a tool_start activity record with stop time and duration.
+   *
+   * Looks up the tracked record by toolUseId, computes durationMs,
+   * and updates the record with stoppedAt and durationMs.
+   *
+   * @param config - The SDK executor config
+   * @param toolUseId - The unique tool use identifier to look up
+   */
+  private persistToolStopActivity(
+    config: SdkExecutorConfig<TAgentConfig> | undefined,
+    toolUseId: string
+  ): void {
+    if (!config?.activityRepository || config.stepId === undefined) return;
+
+    const tracked = this.toolStartActivityIds.get(toolUseId);
+    if (!tracked) return;
+
+    const stoppedAt = Date.now();
+    const durationMs = stoppedAt - tracked.startedAt;
+
+    try {
+      config.activityRepository.update(tracked.id, {
+        durationMs,
+        stoppedAt,
+      });
+
+      this.toolStartActivityIds.delete(toolUseId);
+    } catch (error) {
+      debugLoggerService.logSdkEvent('activity-persistence', 'Failed to persist tool_stop activity update', {
+        error: error instanceof Error ? error.message : String(error),
+        toolUseId,
+      });
+    }
+  }
+
+  /**
+   * Persist usage statistics from a successful result message as a usage activity event.
+   *
+   * Extracts token counts, cost, and cache metrics from the SDK result message
+   * and writes them as a single `usage` event type record.
+   *
+   * @param resultMessage - The SDK result message
+   * @param config - The SDK executor config with activity repository
+   */
+  private persistUsageActivity(
+    resultMessage: SDKResultMessage,
+    config: SdkExecutorConfig<TAgentConfig>
+  ): void {
+    if (!config.activityRepository || config.stepId === undefined) return;
+
+    try {
+      const usage = extractUsageStats(resultMessage);
+      if (!usage) return;
+
+      config.activityRepository.create({
+        cacheCreationInputTokens: usage.cacheCreationInputTokens ?? null,
+        cacheReadInputTokens: usage.cacheReadInputTokens ?? null,
+        durationMs: usage.durationMs,
+        estimatedCost: usage.costUsd,
+        eventType: 'usage',
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        workflowStepId: config.stepId,
+      });
+    } catch (error) {
+      debugLoggerService.logSdkEvent('activity-persistence', 'Failed to persist usage activity', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 }

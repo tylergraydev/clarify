@@ -29,6 +29,10 @@ export const IpcChannels = {
     reset: 'agent:reset',
     update: 'agent:update',
   },
+  agentActivity: {
+    getByStepId: 'agentActivity:getByStepId',
+    getByWorkflowId: 'agentActivity:getByWorkflowId',
+  },
   agentHook: {
     create: 'agentHook:create',
     delete: 'agentHook:delete',

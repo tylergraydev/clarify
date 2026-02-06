@@ -1,3 +1,4 @@
+export * from './agent-activity.schema';
 export * from './agent-hooks.schema';
 export * from './agent-skills.schema';
 export * from './agent-tools.schema';

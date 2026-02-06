@@ -1,12 +1,14 @@
 // Re-export database types for renderer use
 export type {
   Agent,
+  AgentActivity,
   AgentHook,
   AgentSkill,
   AgentTool,
   AuditLog,
   DiscoveredFile,
   NewAgent,
+  NewAgentActivity,
   NewAgentHook,
   NewAgentSkill,
   NewAgentTool,
@@ -35,6 +37,14 @@ export type {
  * The canonical definition is in types/agent-stream.d.ts.
  */
 export type { AgentStreamAPI } from './agent-stream';
+
+/**
+ * Agent activity API interface for fetching persisted activity records.
+ */
+export interface AgentActivityAPI {
+  getByStepId(stepId: number): Promise<Array<import('../db/schema').AgentActivity>>;
+  getByWorkflowId(workflowId: number): Promise<Array<import('../db/schema').AgentActivity>>;
+}
 
 /**
  * Item in batch export result
@@ -373,6 +383,7 @@ export interface ElectronAPI {
     reset(id: number): Promise<import('../db/schema').Agent | undefined>;
     update(id: number, data: Partial<import('../db/schema').NewAgent>): Promise<import('../db/schema').Agent>;
   };
+  agentActivity: AgentActivityAPI;
   agentHook: {
     create(data: import('../db/schema').NewAgentHook): Promise<import('../db/schema').AgentHook>;
     delete(id: number): Promise<boolean>;

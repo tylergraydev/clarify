@@ -12,6 +12,10 @@ import type { SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
  * Tracks token consumption, cost, and execution metrics.
  */
 export interface UsageStats {
+  /** Tokens used to create cache entries */
+  cacheCreationInputTokens?: number;
+  /** Tokens read from cache */
+  cacheReadInputTokens?: number;
   /** Total cost in USD */
   costUsd: number;
   /** Total duration in milliseconds */
@@ -35,7 +39,13 @@ export function extractUsageStats(resultMessage: SDKResultMessage): undefined | 
     return undefined;
   }
 
+  const usage = resultMessage.usage as Record<string, unknown>;
+
   return {
+    cacheCreationInputTokens:
+      typeof usage.cache_creation_input_tokens === 'number' ? usage.cache_creation_input_tokens : undefined,
+    cacheReadInputTokens:
+      typeof usage.cache_read_input_tokens === 'number' ? usage.cache_read_input_tokens : undefined,
     costUsd: resultMessage.total_cost_usd,
     durationMs: resultMessage.duration_ms,
     inputTokens: resultMessage.usage.input_tokens,

@@ -15,6 +15,13 @@
       "when": 1770419324247,
       "tag": "0001_purple_vulture",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1770418743725,
+      "tag": "0002_classy_leader",
+      "breakpoints": true
     }
   ]
 }
