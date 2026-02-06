@@ -91,26 +91,6 @@ export type { UseDebugLogsOptions } from './use-debug-logs';
 export { useDefaultClarificationAgent, useSetDefaultClarificationAgent } from './use-default-clarification-agent';
 
 // ============================================================================
-// Discovered File Hooks
-// ============================================================================
-export {
-  useAddDiscoveredFile,
-  useCancelDiscovery,
-  useDeleteDiscoveredFile,
-  useDiscoveredFiles,
-  useDiscoveryStream,
-  useExcludeFile,
-  useIncludedFiles,
-  useIncludeFile,
-  useRediscover,
-  useStartDiscovery,
-  useToggleDiscoveredFile,
-  useUpdateDiscoveredFile,
-} from './use-discovered-files';
-
-export type { DiscoveryStreamState, UseDiscoveryStreamReturn } from './use-discovered-files';
-
-// ============================================================================
 // Project Hooks
 // ============================================================================
 export {
@@ -150,11 +130,6 @@ export {
   useSettingsByCategory,
   useUpdateSetting,
 } from './use-settings';
-
-// ============================================================================
-// Step Hooks
-// ============================================================================
-export { useCompleteStep, useEditStep, useFailStep, useRegenerateStep, useStep, useStepsByWorkflow } from './use-steps';
 
 // ============================================================================
 // Template Hooks
