@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const createProjectSchema = z.object({
-  description: z.string().max(2000, 'Description is too long (max 2000 characters)').optional(),
+  description: z.string().max(2000, 'Description is too long (max 2000 characters)').nullish(),
   name: z
     .string()
     .min(1, 'Project name is required')
@@ -16,7 +16,7 @@ export type CreateProjectFormValues = z.infer<typeof createProjectSchema>;
  * Same validation rules as create, but semantically separate for clarity.
  */
 export const editProjectSchema = z.object({
-  description: z.string().max(2000, 'Description is too long (max 2000 characters)').optional(),
+  description: z.string().max(2000, 'Description is too long (max 2000 characters)').nullish(),
   name: z
     .string()
     .min(1, 'Project name is required')

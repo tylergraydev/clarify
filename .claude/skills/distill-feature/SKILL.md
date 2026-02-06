@@ -1,5 +1,5 @@
 ---
-allowed-tools: Read(*), Glob(*), Grep(*), Task(subagent_type:Explore)
+allowed-tools: Read(*), Glob(*), Grep(*), Task(subagent_type:Explore), AskUserQuestion
 argument-hint: "rambling feature idea or description"
 description: Distill a rambling feature idea into a precise prompt for /plan-feature
 ---
@@ -34,9 +34,30 @@ Take in an informal, rambling, or stream-of-consciousness feature idea and trans
 4. Extract all implied requirements (things the user assumes but didn't state)
 5. Note any specific files, components, patterns, or technologies mentioned
 6. Note any constraints or preferences stated (e.g., "keep the existing X", "don't change Y")
-7. Identify any ambiguities that need resolution through codebase exploration
+7. Identify any ambiguities that need resolution through codebase exploration or user clarification
 
-### Phase 2: Codebase Exploration
+### Phase 2: Clarify Ambiguities with the User
+
+**Do NOT make assumptions.** If the raw idea contains ambiguities, unclear scope, conflicting requirements, or missing details that cannot be resolved through codebase exploration alone, use the `AskUserQuestion` tool to ask the user directly.
+
+Common situations that warrant clarifying questions:
+- **Unclear scope**: The user mentions multiple possible features but it's unclear which are in scope
+- **Missing behavioral details**: How should something behave in edge cases? What happens on error?
+- **Conflicting requirements**: Two stated goals seem to conflict
+- **Vague terms**: The user says "better", "improved", "smarter" without specifying what that means concretely
+- **Architectural ambiguity**: Multiple valid approaches exist and the user hasn't indicated a preference
+- **Unclear priority**: Multiple features mentioned but unclear which are must-haves vs nice-to-haves
+- **Missing context**: References to concepts, features, or decisions that aren't clear from the description alone
+
+Guidelines for asking questions:
+1. **Ask before exploring** — if you can't tell what to explore without clarification, ask first
+2. **Batch questions** — group related questions into a single `AskUserQuestion` call (up to 4 questions) rather than asking one at a time
+3. **Provide options** — when possible, offer concrete choices rather than open-ended questions so the user can quickly select
+4. **Be specific** — don't ask "can you clarify?" — ask exactly what you need to know
+5. **Don't over-ask** — if something can be reasonably inferred from context or resolved through codebase exploration, do that instead of bothering the user
+6. **Incorporate answers** — use the user's responses to refine your understanding before proceeding to codebase exploration
+
+### Phase 3: Codebase Exploration
 
 Use targeted exploration to understand the current state relevant to the feature idea.
 
@@ -56,7 +77,7 @@ Use targeted exploration to understand the current state relevant to the feature
    - Data flow: where data originates, how it moves, where it's consumed
    - What's persisted vs ephemeral today
 
-### Phase 3: Synthesize Requirements
+### Phase 4: Synthesize Requirements
 
 Organize everything discovered into clear categories:
 
@@ -66,7 +87,7 @@ Organize everything discovered into clear categories:
 4. **Constraints**: What should NOT change? What must be preserved?
 5. **Scope Boundaries**: What is explicitly in scope vs out of scope based on the user's description?
 
-### Phase 4: Craft the Prompt
+### Phase 5: Craft the Prompt
 
 Generate a single, dense paragraph (200-500 words) that:
 
@@ -79,7 +100,7 @@ Generate a single, dense paragraph (200-500 words) that:
 7. **Avoids fluff** — no motivational language, no "it would be nice if", no hedging
 8. **Uses precise technical language** matching the project's conventions
 
-### Phase 5: Output
+### Phase 6: Output
 
 Present the distilled prompt to the user in a clear format:
 
@@ -115,7 +136,7 @@ Copy the prompt above and pass it to `/plan-feature` to generate an implementati
 
 A good distilled prompt must:
 
-1. **Be self-contained** — the `/plan-feature` skill should not need to ask clarification questions (target ambiguity score >= 4/5)
+1. **Be self-contained** — ambiguities were resolved with the user via `AskUserQuestion` rather than assumed away, so the `/plan-feature` skill should not need to ask further clarification (target ambiguity score >= 4/5)
 2. **Reference real code** — mention actual file names, type names, hook names, service names found in the codebase
 3. **Be specific about scope** — clearly state what changes at each layer (database, backend services, IPC, hooks, UI components)
 4. **Preserve the user's intent** — don't add features they didn't ask for, don't remove things they mentioned
@@ -131,3 +152,4 @@ A good distilled prompt must:
 - **Over-specification**: Don't prescribe implementation details that should be left to the planner (e.g., exact CSS classes, specific state variable names)
 - **Under-specification**: Don't omit requirements the user clearly stated, even if they were buried in rambling
 - **Ignoring constraints**: If the user said "keep the existing file logging", that must appear in the prompt
+- **Making assumptions**: Don't guess at unclear requirements — use `AskUserQuestion` to ask the user directly rather than filling in gaps with your own assumptions
