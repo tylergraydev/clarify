@@ -554,22 +554,13 @@ export interface ElectronAPI {
     ): Promise<import('../db/schema').Workflow>;
   };
   workflowRepository: {
-    add(
-      workflowId: number,
-      repositoryId: number,
-      isPrimary?: boolean
-    ): Promise<import('../db/schema').WorkflowRepository>;
+    add(workflowId: number, repositoryId: number): Promise<import('../db/schema').WorkflowRepository>;
     addMultiple(
       workflowId: number,
-      repositoryIds: Array<number>,
-      primaryRepositoryId?: number
+      repositoryIds: Array<number>
     ): Promise<Array<import('../db/schema').WorkflowRepository>>;
     list(workflowId: number): Promise<Array<import('../db/schema').WorkflowRepository>>;
     remove(workflowId: number, repositoryId: number): Promise<boolean>;
-    setPrimary(
-      workflowId: number,
-      repositoryId: number
-    ): Promise<import('../db/schema').WorkflowRepository | undefined>;
   };
   worktree: {
     get(id: number): Promise<import('../db/schema').Worktree | undefined>;

@@ -14,7 +14,6 @@ export const workflowRepositories = sqliteTable(
     repositoryId: integer('repository_id')
       .notNull()
       .references(() => repositories.id, { onDelete: 'cascade' }),
-    setPrimaryAt: text('set_primary_at'), // null = secondary, datetime = primary repository
     workflowId: integer('workflow_id')
       .notNull()
       .references(() => workflows.id, { onDelete: 'cascade' }),

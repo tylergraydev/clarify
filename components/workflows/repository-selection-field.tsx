@@ -12,7 +12,6 @@ import type { Repository } from '@/types/electron';
 import { Checkbox, checkboxVariants } from '@/components/ui/checkbox';
 import { descriptionVariants, errorVariants, labelVariants } from '@/components/ui/form/field-wrapper';
 import { TanStackFieldRoot } from '@/components/ui/form/tanstack-field-root';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 
 export const repositorySelectionVariants = cva('flex flex-col gap-2', {
@@ -79,11 +78,6 @@ export const RepositorySelectionField = ({
     return (value as Array<number> | undefined) ?? [];
   });
 
-  const primaryId = useStore(form.store, (state) => {
-    const value = state.values['primaryRepositoryId'];
-    return (value as string | undefined) ?? '';
-  });
-
   // Get field errors
   const repositoryIdsErrors = useStore(form.store, (state) => {
     const meta = state.fieldMeta['repositoryIds'];
@@ -101,34 +95,12 @@ export const RepositorySelectionField = ({
 
   const handleRepositoryToggle = (repositoryId: number, isChecked: boolean) => {
     if (isChecked) {
-      // Add to selection
       const newIds = [...selectedIds, repositoryId];
       form.setFieldValue('repositoryIds', newIds);
-
-      // If this is the first selection, make it primary
-      if (selectedIds.length === 0) {
-        form.setFieldValue('primaryRepositoryId', String(repositoryId));
-      }
     } else {
-      // Remove from selection
       const newIds = selectedIds.filter((id) => id !== repositoryId);
       form.setFieldValue('repositoryIds', newIds);
-
-      // If removed repository was primary, clear or reassign
-      if (primaryId === String(repositoryId)) {
-        if (newIds.length > 0) {
-          // Set first remaining as primary
-          form.setFieldValue('primaryRepositoryId', String(newIds[0]));
-        } else {
-          // Clear primary
-          form.setFieldValue('primaryRepositoryId', '');
-        }
-      }
     }
-  };
-
-  const handlePrimaryChange = (value: string) => {
-    form.setFieldValue('primaryRepositoryId', value);
   };
 
   const hasRepositories = repositories.length > 0;
@@ -161,69 +133,41 @@ export const RepositorySelectionField = ({
           className={repositorySelectionVariants({ size })}
           role={'group'}
         >
-          <RadioGroup
-            disabled={isDisabled}
-            onValueChange={handlePrimaryChange}
-            orientation={'vertical'}
-            value={primaryId}
-          >
-            {repositories.map((repository) => {
-              const isSelected = selectedIds.includes(repository.id);
-              const isOptionDisabled = isDisabled;
+          {repositories.map((repository) => {
+            const isSelected = selectedIds.includes(repository.id);
+            const isOptionDisabled = isDisabled;
 
-              return (
-                <div
-                  className={cn(repositoryItemVariants({ isSelected, size }), !isOptionDisabled && 'cursor-pointer')}
-                  key={repository.id}
-                  onClick={() => {
-                    if (!isOptionDisabled) {
-                      handleRepositoryToggle(repository.id, !isSelected);
-                    }
-                  }}
-                >
-                  {/* Selection Checkbox */}
-                  <div className={'flex items-center gap-3'}>
-                    <Checkbox
-                      aria-label={`Select ${repository.name}`}
-                      checked={isSelected}
-                      disabled={isOptionDisabled}
-                      onCheckedChange={(isChecked) => handleRepositoryToggle(repository.id, isChecked)}
-                      onClick={(e) => e.stopPropagation()}
-                      size={size}
-                    />
-                    <div className={'flex min-w-0 flex-1 flex-col gap-0.5'}>
-                      <span className={cn('font-medium text-foreground', isOptionDisabled && 'opacity-50')}>
-                        {repository.name}
-                      </span>
-                      <span className={cn('truncate text-xs text-muted-foreground', isOptionDisabled && 'opacity-50')}>
-                        {repository.path}
-                      </span>
-                    </div>
+            return (
+              <div
+                className={cn(repositoryItemVariants({ isSelected, size }), !isOptionDisabled && 'cursor-pointer')}
+                key={repository.id}
+                onClick={() => {
+                  if (!isOptionDisabled) {
+                    handleRepositoryToggle(repository.id, !isSelected);
+                  }
+                }}
+              >
+                <div className={'flex items-center gap-3'}>
+                  <Checkbox
+                    aria-label={`Select ${repository.name}`}
+                    checked={isSelected}
+                    disabled={isOptionDisabled}
+                    onCheckedChange={(isChecked) => handleRepositoryToggle(repository.id, isChecked)}
+                    onClick={(e) => e.stopPropagation()}
+                    size={size}
+                  />
+                  <div className={'flex min-w-0 flex-1 flex-col gap-0.5'}>
+                    <span className={cn('font-medium text-foreground', isOptionDisabled && 'opacity-50')}>
+                      {repository.name}
+                    </span>
+                    <span className={cn('truncate text-xs text-muted-foreground', isOptionDisabled && 'opacity-50')}>
+                      {repository.path}
+                    </span>
                   </div>
-
-                  {/* Primary Selection Radio - Only show when selected */}
-                  {isSelected && (
-                    <div className={'ml-auto flex items-center gap-2'} onClick={(e) => e.stopPropagation()}>
-                      <RadioGroupItem
-                        aria-label={`Make ${repository.name} primary`}
-                        disabled={isOptionDisabled}
-                        size={size}
-                        value={String(repository.id)}
-                      />
-                      <span
-                        className={cn(
-                          'text-xs text-muted-foreground',
-                          primaryId === String(repository.id) && 'font-medium text-accent'
-                        )}
-                      >
-                        {primaryId === String(repository.id) ? 'Primary' : 'Make Primary'}
-                      </span>
-                    </div>
-                  )}
                 </div>
-              );
-            })}
-          </RadioGroup>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className={'rounded-md border border-dashed border-border p-4 text-center text-sm text-muted-foreground'}>

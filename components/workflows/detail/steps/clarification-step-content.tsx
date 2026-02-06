@@ -332,10 +332,9 @@ export const ClarificationStepContent = ({ workflowId }: ClarificationStepConten
   const repositoryPath = useMemo(() => {
     if (!repositories || repositories.length === 0) return '';
 
-    // Prefer the workflow's primary repository, then any workflow repo, then project default
+    // Prefer the first workflow repository, then the project's default repository
     if (workflowRepos && workflowRepos.length > 0) {
-      const primaryWorkflowRepo = workflowRepos.find((wr) => wr.setPrimaryAt !== null);
-      const workflowRepo = primaryWorkflowRepo ?? workflowRepos[0];
+      const workflowRepo = workflowRepos[0];
       if (workflowRepo) {
         const matchedRepo = repositories.find((r) => r.id === workflowRepo.repositoryId);
         if (matchedRepo) return matchedRepo.path;

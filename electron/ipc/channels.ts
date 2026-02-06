@@ -198,7 +198,6 @@ export const IpcChannels = {
     addMultiple: 'workflowRepository:addMultiple',
     list: 'workflowRepository:list',
     remove: 'workflowRepository:remove',
-    setPrimary: 'workflowRepository:setPrimary',
   },
   worktree: {
     get: 'worktree:get',

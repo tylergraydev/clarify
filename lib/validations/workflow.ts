@@ -12,11 +12,6 @@ export const createWorkflowSchema = z
     featureName: z.string().min(1, 'Feature name is required').max(255, 'Feature name is too long'),
     featureRequest: z.string().min(1, 'Feature request is required').max(10000, 'Feature request is too long'),
     pauseBehavior: z.enum(pauseBehaviors).default('auto_pause'),
-    primaryRepositoryId: z
-      .string()
-      .optional()
-      .transform((val) => (val ? Number(val) : null))
-      .refine((val) => val === null || (!isNaN(val) && val > 0), 'Invalid primary repository selection'),
     projectId: z
       .string()
       .min(1, 'Project is required')

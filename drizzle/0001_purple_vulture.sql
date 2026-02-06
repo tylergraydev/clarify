@@ -1,0 +1,1 @@
+ALTER TABLE `workflow_repositories` DROP COLUMN `set_primary_at`;

@@ -653,15 +653,10 @@ export interface ElectronAPI {
     update(id: number, data: UpdateWorkflowInput): Promise<Workflow>;
   };
   workflowRepository: {
-    add(workflowId: number, repositoryId: number, isPrimary?: boolean): Promise<WorkflowRepository>;
-    addMultiple(
-      workflowId: number,
-      repositoryIds: Array<number>,
-      primaryRepositoryId?: number
-    ): Promise<Array<WorkflowRepository>>;
+    add(workflowId: number, repositoryId: number): Promise<WorkflowRepository>;
+    addMultiple(workflowId: number, repositoryIds: Array<number>): Promise<Array<WorkflowRepository>>;
     list(workflowId: number): Promise<Array<WorkflowRepository>>;
     remove(workflowId: number, repositoryId: number): Promise<boolean>;
-    setPrimary(workflowId: number, repositoryId: number): Promise<undefined | WorkflowRepository>;
   };
   worktree: {
     get(id: number): Promise<undefined | Worktree>;
@@ -1636,15 +1631,13 @@ const electronAPI: ElectronAPI = {
     update: (id, data) => ipcRenderer.invoke(IpcChannels.workflow.update, id, data),
   },
   workflowRepository: {
-    add: (workflowId, repositoryId, isPrimary) =>
-      ipcRenderer.invoke(IpcChannels.workflowRepository.add, workflowId, repositoryId, isPrimary),
-    addMultiple: (workflowId, repositoryIds, primaryRepositoryId) =>
-      ipcRenderer.invoke(IpcChannels.workflowRepository.addMultiple, workflowId, repositoryIds, primaryRepositoryId),
+    add: (workflowId, repositoryId) =>
+      ipcRenderer.invoke(IpcChannels.workflowRepository.add, workflowId, repositoryId),
+    addMultiple: (workflowId, repositoryIds) =>
+      ipcRenderer.invoke(IpcChannels.workflowRepository.addMultiple, workflowId, repositoryIds),
     list: (workflowId) => ipcRenderer.invoke(IpcChannels.workflowRepository.list, workflowId),
     remove: (workflowId, repositoryId) =>
       ipcRenderer.invoke(IpcChannels.workflowRepository.remove, workflowId, repositoryId),
-    setPrimary: (workflowId, repositoryId) =>
-      ipcRenderer.invoke(IpcChannels.workflowRepository.setPrimary, workflowId, repositoryId),
   },
   worktree: {
     get: (id) => ipcRenderer.invoke(IpcChannels.worktree.get, id),

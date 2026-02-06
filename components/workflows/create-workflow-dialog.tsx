@@ -99,7 +99,6 @@ export const CreateWorkflowDialog = ({
     featureName: '',
     featureRequest: '',
     pauseBehavior: 'auto_pause',
-    primaryRepositoryId: '',
     projectId: String(projectId),
     repositoryIds: [],
     skipClarification: false,
@@ -125,9 +124,7 @@ export const CreateWorkflowDialog = ({
         // Step 2: Associate repositories with the workflow
         if (value.repositoryIds.length > 0) {
           const repositoryIds = value.repositoryIds.map(Number);
-          const primaryRepositoryId = value.primaryRepositoryId ? Number(value.primaryRepositoryId) : undefined;
-
-          await workflowRepositories.addMultiple(workflow.id, repositoryIds, primaryRepositoryId);
+          await workflowRepositories.addMultiple(workflow.id, repositoryIds);
         }
 
         // Step 3: Increment template usage if a template was used
@@ -277,7 +274,7 @@ export const CreateWorkflowDialog = ({
 
                 {/* Repository Selection Field */}
                 <RepositorySelectionField
-                  description={'Select one or more repositories and choose a primary'}
+                  description={'Select one or more repositories for this workflow'}
                   form={form}
                   isRequired
                   label={'Repositories'}

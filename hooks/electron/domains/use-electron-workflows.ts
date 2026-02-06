@@ -103,9 +103,9 @@ export function useElectronWorkflows() {
 
   const workflowRepositories = useMemo(
     () => ({
-      addMultiple: async (workflowId: number, repositoryIds: Array<number>, primaryRepositoryId?: number) => {
+      addMultiple: async (workflowId: number, repositoryIds: Array<number>) => {
         const electronApi = throwIfNoApi(api, 'workflowRepository.addMultiple');
-        return electronApi.workflowRepository.addMultiple(workflowId, repositoryIds, primaryRepositoryId);
+        return electronApi.workflowRepository.addMultiple(workflowId, repositoryIds);
       },
       list: async (workflowId: number) => {
         const electronApi = throwIfNoApi(api, 'workflowRepository.list');
