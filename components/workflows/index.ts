@@ -1,5 +1,7 @@
 // Dialog components
 export { CreateWorkflowDialog } from './create-workflow-dialog';
+// Detail components
+export * from './detail';
 export { EditWorkflowDialog } from './edit-workflow-dialog';
 // Table components
 export {

@@ -44,3 +44,15 @@ export const DEFAULT_ACTIVE_WORKFLOWS_TYPE_FILTER = 'all' as const;
 // Shell layout defaults
 export const DEFAULT_SHELL_SIDEBAR_COLLAPSED = false;
 export const DEFAULT_SHELL_NAV_ITEMS_EXPANDED: Array<string> = [];
+
+// Workflow detail storage keys
+export const WORKFLOW_DETAIL_STREAMING_PANEL_HEIGHT_STORAGE_KEY = 'app:workflow-detail-streaming-panel-height';
+export const WORKFLOW_DETAIL_STREAMING_PANEL_COLLAPSED_STORAGE_KEY = 'app:workflow-detail-streaming-panel-collapsed';
+export const WORKFLOW_DETAIL_ACTIVE_STREAMING_TAB_STORAGE_KEY = 'app:workflow-detail-active-streaming-tab';
+export const WORKFLOW_DETAIL_EXPANDED_STEPS_STORAGE_KEY = 'app:workflow-detail-expanded-steps';
+
+// Workflow detail defaults
+export const DEFAULT_WORKFLOW_DETAIL_STREAMING_PANEL_HEIGHT = 250;
+export const DEFAULT_WORKFLOW_DETAIL_STREAMING_PANEL_COLLAPSED = false;
+export const DEFAULT_WORKFLOW_DETAIL_ACTIVE_STREAMING_TAB = 'clarification' as const;
+export const DEFAULT_WORKFLOW_DETAIL_EXPANDED_STEPS: Array<string> = [];

@@ -29,6 +29,11 @@
   --workflow-panel-max-width: 800px;
   --workflow-header-height: 64px;
 
+  /* Workflow streaming panel dimensions */
+  --workflow-streaming-panel-min-height: 120px;
+  --workflow-streaming-panel-max-height: 500px;
+  --workflow-drag-handle-height: 8px;
+
   /* Responsive gap values */
   --gap-xs: 8px;
   --gap-sm: 12px;
@@ -104,6 +109,10 @@
     /* Workflow adjustments */
     --workflow-panel-min-width: 100%;
     --workflow-header-height: 56px;
+
+    /* Workflow streaming panel adjustments */
+    --workflow-streaming-panel-min-height: 80px;
+    --workflow-streaming-panel-max-height: 300px;
 
     /* Table adjustments for mobile - use compact by default */
     --table-cell-padding-x-compact: 8px;
