@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "base-ui": {
-      "type": "http",
-      "url": "https://base-ui-mcp.polv.workers.dev/mcp"
-    },
     "neon": {
       "type": "http",
       "url": "https://mcp.neon.tech/mcp"
