@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { projectKeys } from '@/lib/queries/projects';
 import { repositoryKeys } from '@/lib/queries/repositories';
+import { workflowKeys } from '@/lib/queries/workflows';
 
 import { useElectronDb } from '../use-electron';
 
@@ -89,9 +90,46 @@ export function useDeleteRepository() {
   });
 }
 
+/**
+ * Delete a repository and cancel all non-terminal workflows for its project.
+ * Use this instead of useDeleteRepository when the project has active workflows.
+ */
+export function useDeleteRepositoryWithCleanup() {
+  const queryClient = useQueryClient();
+  const { repositories } = useElectronDb();
+
+  return useMutation({
+    mutationFn: (repositoryId: number) => repositories.deleteWithCleanup(repositoryId),
+    onSuccess: () => {
+      // Invalidate all repository queries
+      void queryClient.invalidateQueries({ queryKey: repositoryKeys._def });
+      // Invalidate project queries (project may need to update)
+      void queryClient.invalidateQueries({ queryKey: projectKeys._def });
+      // Invalidate workflow queries since workflows were cancelled
+      void queryClient.invalidateQueries({ queryKey: workflowKeys._def });
+    },
+  });
+}
+
 // ============================================================================
 // Mutation Hooks
 // ============================================================================
+
+/**
+ * Fetch pre-delete info for a repository.
+ * Returns affected non-terminal workflows that will be cancelled on deletion.
+ * Only enabled when a valid repositoryId is provided and the query is explicitly enabled.
+ */
+export function usePreDeleteInfo(repositoryId: number, options?: { enabled?: boolean }) {
+  const { isElectron, repositories } = useElectronDb();
+  const enabled = options?.enabled ?? false;
+
+  return useQuery({
+    ...repositoryKeys.preDeleteInfo(repositoryId),
+    enabled: isElectron && repositoryId > 0 && enabled,
+    queryFn: () => repositories.preDeleteInfo(repositoryId),
+  });
+}
 
 /**
  * Fetch all repositories

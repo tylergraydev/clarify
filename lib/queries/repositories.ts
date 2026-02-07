@@ -5,4 +5,5 @@ export const repositoryKeys = createQueryKeys('repositories', {
   default: (projectId: number) => [projectId],
   detail: (id: number) => [id],
   list: (filters?: { projectId?: number }) => [{ filters }],
+  preDeleteInfo: (repositoryId: number) => [repositoryId],
 });

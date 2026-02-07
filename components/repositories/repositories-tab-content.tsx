@@ -16,7 +16,8 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
   useClearDefaultRepository,
-  useDeleteRepository,
+  useDeleteRepositoryWithCleanup,
+  usePreDeleteInfo,
   useRepositoriesByProject,
   useSetDefaultRepository,
 } from '@/hooks/queries/use-repositories';
@@ -40,9 +41,17 @@ export const RepositoriesTabContent = ({ className, projectId, ref, ...props }: 
   // Data fetching
   const { data: repositories, error, isLoading } = useRepositoriesByProject(projectId);
 
+  // Fetch pre-delete info when the delete dialog is open for a selected repository
+  const {
+    data: preDeleteInfo,
+    isLoading: isLoadingPreDeleteInfo,
+  } = usePreDeleteInfo(selectedRepository?.id ?? 0, {
+    enabled: deleteDialogOpen && selectedRepository !== null,
+  });
+
   // Mutations
   const clearDefaultRepositoryMutation = useClearDefaultRepository();
-  const deleteRepositoryMutation = useDeleteRepository();
+  const deleteRepositoryMutation = useDeleteRepositoryWithCleanup();
   const setDefaultRepositoryMutation = useSetDefaultRepository();
 
   // Handlers
@@ -189,9 +198,11 @@ export const RepositoriesTabContent = ({ className, projectId, ref, ...props }: 
         {selectedRepository && (
           <ConfirmDeleteRepositoryDialog
             isLoading={deleteRepositoryMutation.isPending}
+            isLoadingInfo={isLoadingPreDeleteInfo}
             isOpen={deleteDialogOpen}
             onConfirm={handleDeleteConfirm}
             onOpenChange={setDeleteDialogOpen}
+            preDeleteInfo={preDeleteInfo}
             repositoryName={selectedRepository.name}
           />
         )}

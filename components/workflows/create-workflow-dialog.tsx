@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 
 import { useStore } from '@tanstack/react-form';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import type { CreateWorkflowFormValues } from '@/lib/validations/workflow';
 
@@ -174,6 +174,25 @@ export const CreateWorkflowDialog = ({
   const selectedTemplateId = useStore(form.store, (state) => state.values.templateId);
   const selectedType = useStore(form.store, (state) => state.values.type);
   const selectedSkipClarification = useStore(form.store, (state) => state.values.skipClarification);
+
+  // Compute IDs of repositories marked as default for this project
+  const defaultRepositoryIds = useMemo(
+    () => repositories.filter((r) => r.setAsDefaultAt !== null).map((r) => r.id),
+    [repositories]
+  );
+
+  // Pre-select default repositories when dialog opens
+  useEffect(() => {
+    if (!isOpen || defaultRepositoryIds.length === 0) return;
+    // Skip if initialValues provided repositoryIds (e.g. copy workflow)
+    if (initialValues?.repositoryIds?.length) return;
+
+    const currentIds = form.getFieldValue('repositoryIds') as Array<number>;
+    // Only auto-fill if user hasn't manually changed the selection
+    if (currentIds.length === 0) {
+      form.setFieldValue('repositoryIds', defaultRepositoryIds);
+    }
+  }, [isOpen, defaultRepositoryIds, form, initialValues]);
 
   // Template auto-populate effect
   useEffect(() => {

@@ -331,21 +331,15 @@ export const ClarificationStepContent = ({ workflowId }: ClarificationStepConten
   const { data: repositories } = useRepositoriesByProject(workflow?.projectId ?? 0);
 
   const repositoryPath = useMemo(() => {
-    if (!repositories || repositories.length === 0) return '';
+    if (!workflowRepos || workflowRepos.length === 0 || !repositories || repositories.length === 0) return '';
 
-    // Prefer the first workflow repository, then the project's default repository
-    if (workflowRepos && workflowRepos.length > 0) {
-      const workflowRepo = workflowRepos[0];
-      if (workflowRepo) {
-        const matchedRepo = repositories.find((r) => r.id === workflowRepo.repositoryId);
-        if (matchedRepo) return matchedRepo.path;
-      }
+    const workflowRepo = workflowRepos[0];
+    if (workflowRepo) {
+      const matchedRepo = repositories.find((r) => r.id === workflowRepo.repositoryId);
+      if (matchedRepo) return matchedRepo.path;
     }
 
-    // Fall back to the project's default repository
-    const defaultRepo = repositories.find((r) => r.setAsDefaultAt !== null);
-    const selected = defaultRepo ?? repositories[0];
-    return selected ? selected.path : '';
+    return '';
   }, [repositories, workflowRepos]);
 
   // Mutations

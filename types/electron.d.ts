@@ -489,10 +489,15 @@ export interface ElectronAPI {
     clearDefault(id: number): Promise<import('../db/schema').Repository | undefined>;
     create(data: import('../db/schema').NewRepository): Promise<import('../db/schema').Repository>;
     delete(id: number): Promise<boolean>;
+    deleteWithCleanup(repositoryId: number): Promise<{ cancelledCount: number; deleted: boolean }>;
     findByPath(path: string): Promise<import('../db/schema').Repository | undefined>;
     findByProject(projectId: number): Promise<Array<import('../db/schema').Repository>>;
     get(id: number): Promise<import('../db/schema').Repository | undefined>;
     list(): Promise<Array<import('../db/schema').Repository>>;
+    preDeleteInfo(repositoryId: number): Promise<{
+      totalCount: number;
+      workflows: Array<{ featureName: string; id: number; status: string }>;
+    }>;
     setDefault(id: number): Promise<import('../db/schema').Repository | undefined>;
     update(
       id: number,

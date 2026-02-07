@@ -73,6 +73,10 @@ export function useElectronProjects() {
         const electronApi = throwIfNoApi(api, 'repository.delete');
         return electronApi.repository.delete(id);
       },
+      deleteWithCleanup: async (repositoryId: number) => {
+        const electronApi = throwIfNoApi(api, 'repository.deleteWithCleanup');
+        return electronApi.repository.deleteWithCleanup(repositoryId);
+      },
       findByPath: async (path: string) => {
         if (!api) return undefined;
         return api.repository.findByPath(path);
@@ -88,6 +92,10 @@ export function useElectronProjects() {
       list: async () => {
         if (!api) return [];
         return api.repository.list();
+      },
+      preDeleteInfo: async (repositoryId: number) => {
+        if (!api) return { totalCount: 0, workflows: [] };
+        return api.repository.preDeleteInfo(repositoryId);
       },
       setDefault: async (id: number) => {
         const electronApi = throwIfNoApi(api, 'repository.setDefault');

@@ -8,6 +8,7 @@ import { workflowRepositories } from '../schema';
 export interface WorkflowRepositoriesRepository {
   addMultipleToWorkflow(workflowId: number, repositoryIds: Array<number>): Array<WorkflowRepository>;
   addToWorkflow(workflowId: number, repositoryId: number): WorkflowRepository;
+  findByRepositoryId(repositoryId: number): Array<WorkflowRepository>;
   findByWorkflowId(workflowId: number): Array<WorkflowRepository>;
   removeFromWorkflow(workflowId: number, repositoryId: number): boolean;
 }
@@ -37,6 +38,14 @@ export function createWorkflowRepositoriesRepository(db: DrizzleDatabase): Workf
       };
 
       return db.insert(workflowRepositories).values(data).returning().get();
+    },
+
+    findByRepositoryId(repositoryId: number): Array<WorkflowRepository> {
+      return db
+        .select()
+        .from(workflowRepositories)
+        .where(eq(workflowRepositories.repositoryId, repositoryId))
+        .all();
     },
 
     findByWorkflowId(workflowId: number): Array<WorkflowRepository> {

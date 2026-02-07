@@ -598,10 +598,15 @@ export interface ElectronAPI {
     clearDefault(id: number): Promise<Repository | undefined>;
     create(data: NewRepository): Promise<Repository>;
     delete(id: number): Promise<boolean>;
+    deleteWithCleanup(repositoryId: number): Promise<{ cancelledCount: number; deleted: boolean }>;
     findByPath(path: string): Promise<Repository | undefined>;
     findByProject(projectId: number): Promise<Array<Repository>>;
     get(id: number): Promise<Repository | undefined>;
     list(): Promise<Array<Repository>>;
+    preDeleteInfo(repositoryId: number): Promise<{
+      totalCount: number;
+      workflows: Array<{ featureName: string; id: number; status: string }>;
+    }>;
     setDefault(id: number): Promise<Repository | undefined>;
     update(id: number, data: Partial<NewRepository>): Promise<Repository | undefined>;
   };
@@ -1582,10 +1587,14 @@ const electronAPI: ElectronAPI = {
     clearDefault: (id) => ipcRenderer.invoke(IpcChannels.repository.clearDefault, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.repository.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.repository.delete, id),
+    deleteWithCleanup: (repositoryId) =>
+      ipcRenderer.invoke(IpcChannels.repository.deleteWithCleanup, repositoryId),
     findByPath: (path) => ipcRenderer.invoke(IpcChannels.repository.findByPath, path),
     findByProject: (projectId) => ipcRenderer.invoke(IpcChannels.repository.findByProject, projectId),
     get: (id) => ipcRenderer.invoke(IpcChannels.repository.get, id),
     list: () => ipcRenderer.invoke(IpcChannels.repository.list),
+    preDeleteInfo: (repositoryId) =>
+      ipcRenderer.invoke(IpcChannels.repository.preDeleteInfo, repositoryId),
     setDefault: (id) => ipcRenderer.invoke(IpcChannels.repository.setDefault, id),
     update: (id, data) => ipcRenderer.invoke(IpcChannels.repository.update, id, data),
   },

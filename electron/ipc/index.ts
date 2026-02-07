@@ -108,13 +108,18 @@ export function registerAllHandlers(
   // Note: Created before projects because registerProjectHandlers needs both
   const repositoriesRepository = createRepositoriesRepository(db);
 
+  // Workflows and workflow-repositories - created early because registerRepositoryHandlers
+  // needs both for delete-with-cleanup (cancel linked workflows before deleting repo)
+  const workflowsRepository = createWorkflowsRepository(db);
+  const workflowRepositoriesRepository = createWorkflowRepositoriesRepository(db);
+
   // Projects - top-level organizational entity
   // Needs repositoriesRepository for addRepo functionality
   const projectsRepository = createProjectsRepository(db);
   registerProjectHandlers(projectsRepository, repositoriesRepository);
 
-  // Register repository handlers
-  registerRepositoryHandlers(repositoriesRepository);
+  // Register repository handlers (needs workflow repos for delete-with-cleanup)
+  registerRepositoryHandlers(repositoriesRepository, workflowsRepository, workflowRepositoriesRepository);
 
   // ============================================
   // Database handlers - Agent system
@@ -166,8 +171,8 @@ export function registerAllHandlers(
 
   // Workflow steps - individual steps within workflows
   // Note: Created before workflows because registerWorkflowHandlers needs steps repository
+  // Note: workflowsRepository is created earlier (before repository handlers) for delete-with-cleanup
   const workflowStepsRepository = createWorkflowStepsRepository(db);
-  const workflowsRepository = createWorkflowsRepository(db);
   registerStepHandlers(workflowStepsRepository, workflowsRepository);
 
   // Clarification handlers - need steps repository to look up agentId from step
@@ -183,7 +188,7 @@ export function registerAllHandlers(
   registerWorkflowHandlers(workflowsRepository, workflowStepsRepository, settingsRepository, agentsRepository);
 
   // Workflow repositories - repository associations for workflows
-  const workflowRepositoriesRepository = createWorkflowRepositoriesRepository(db);
+  // Note: workflowRepositoriesRepository is created earlier (before repository handlers) for delete-with-cleanup
   registerWorkflowRepositoriesHandlers(workflowRepositoriesRepository);
 
   // ============================================

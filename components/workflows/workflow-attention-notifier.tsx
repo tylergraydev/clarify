@@ -44,6 +44,38 @@ export const WorkflowAttentionNotifier = () => {
   /** Set of dedupe keys to prevent duplicate toasts for the same event */
   const notifiedRef = useRef<Set<string>>(new Set());
 
+  /**
+   * Show a toast notification for a workflow that needs attention.
+   */
+  function showAttentionToast(workflow: Workflow, reason: 'awaiting_input' | 'paused') {
+    const workflowPath = $path({
+      route: '/workflows/[id]',
+      routeParams: { id: workflow.id },
+    });
+
+    if (reason === 'awaiting_input') {
+      toast.warning({
+        actionProps: {
+          children: 'Go to Workflow',
+          onClick: () => router.push(workflowPath),
+        },
+        description: `"${workflow.featureName}" needs your input to continue.`,
+        timeout: 0,
+        title: 'Awaiting Your Input',
+      });
+    } else {
+      toast.info({
+        actionProps: {
+          children: 'Go to Workflow',
+          onClick: () => router.push(workflowPath),
+        },
+        description: `"${workflow.featureName}" paused after completing a step.`,
+        timeout: 0,
+        title: 'Workflow Paused',
+      });
+    }
+  }
+
   useEffect(() => {
     if (!activeWorkflows) return;
 
@@ -103,38 +135,6 @@ export const WorkflowAttentionNotifier = () => {
       }
     }
   }, [activeWorkflows]); // eslint-disable-line react-hooks/exhaustive-deps -- toast and router are stable refs
-
-  /**
-   * Show a toast notification for a workflow that needs attention.
-   */
-  function showAttentionToast(workflow: Workflow, reason: 'awaiting_input' | 'paused') {
-    const workflowPath = $path({
-      route: '/workflows/[id]',
-      routeParams: { id: workflow.id },
-    });
-
-    if (reason === 'awaiting_input') {
-      toast.warning({
-        actionProps: {
-          children: 'Go to Workflow',
-          onClick: () => router.push(workflowPath),
-        },
-        description: `"${workflow.featureName}" needs your input to continue.`,
-        timeout: 0,
-        title: 'Awaiting Your Input',
-      });
-    } else {
-      toast.info({
-        actionProps: {
-          children: 'Go to Workflow',
-          onClick: () => router.push(workflowPath),
-        },
-        description: `"${workflow.featureName}" paused after completing a step.`,
-        timeout: 0,
-        title: 'Workflow Paused',
-      });
-    }
-  }
 
   // This component renders nothing — it only produces side effects (toasts)
   return null;
