@@ -1,3 +1,7 @@
 {
-  "setup-worktree": ["pnpm install", "pnpm run electron:compile"]
+  "setup-worktree": [
+    "pnpm install",
+     "cp $ROOT_WORKTREE_PATH/clarify-dev.db clarify-dev.db",
+     "pnpm run electron:compile"
+  ]
 }

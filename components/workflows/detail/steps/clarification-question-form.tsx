@@ -138,7 +138,11 @@ function transformToAnswers(
 
 const QuestionCard = ({ children, header, index, question }: QuestionCardProps) => {
   return (
-    <div className={'rounded-lg border border-border bg-card p-4'}>
+    <div
+      className={
+        'h-full rounded-lg border border-border bg-muted/40 p-4 shadow-sm transition-colors hover:border-primary/40'
+      }
+    >
       {/* Question Header */}
       <div className={'mb-3 flex flex-col gap-1'}>
         <span className={'text-sm font-medium text-muted-foreground'}>
@@ -407,7 +411,7 @@ export const ClarificationQuestionForm = ({ isSubmitting, onSubmit, questions }:
         void form.handleSubmit();
       }}
     >
-      <div className={'flex flex-col gap-4'}>
+      <div className={'grid gap-4 md:grid-cols-2'}>
         {/* Question Cards */}
         {questions.map((question, index) => (
           <Fragment key={index}>
@@ -473,7 +477,7 @@ export const ClarificationQuestionForm = ({ isSubmitting, onSubmit, questions }:
         ))}
 
         {/* Submit Button */}
-        <div className={'mt-2 flex justify-end'}>
+        <div className={'col-span-full mt-2 flex justify-end'}>
           <form.AppForm>
             <form.SubmitButton>{isSubmitting ? 'Submitting Answers...' : 'Submit Answers'}</form.SubmitButton>
           </form.AppForm>
