@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, Building2, Calendar, ChevronRight, FolderGit2, Workflow } from 'lucide-react';
+import { Building2, ChevronRight, FolderGit2, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { useRouteParams } from 'next-typesafe-url/app';
 import Link from 'next/link';
@@ -11,46 +11,16 @@ import type { Project } from '@/types/electron';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { ProjectDetailSkeleton, ProjectNotFound } from '@/components/projects';
+import { ProjectOverviewTab } from '@/components/projects/overview/project-overview-tab';
 import { RepositoriesTabContent } from '@/components/repositories/repositories-tab-content';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTrigger } from '@/components/ui/tabs';
 import { WorkflowsTabContent } from '@/components/workflows/workflows-tab-content';
 import { useProject } from '@/hooks/queries/use-projects';
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useWorkflowsByProject } from '@/hooks/queries/use-workflows';
-import { formatDate } from '@/lib/utils';
 
 import { type ProjectTabValue, projectTabValues, Route } from './route-type';
-
-type ProjectWithDates = Pick<Project, 'archivedAt' | 'createdAt' | 'updatedAt'>;
-
-/**
- * Formats project dates for display in the metadata card
- */
-const formatProjectDates = (
-  project: ProjectWithDates
-): {
-  formattedArchivedDate: null | string;
-  formattedCreatedDate: string;
-  formattedUpdatedDate: string;
-} => {
-  return {
-    formattedArchivedDate: project.archivedAt ? formatDate(project.archivedAt) : null,
-    formattedCreatedDate: formatDate(project.createdAt),
-    formattedUpdatedDate: formatDate(project.updatedAt),
-  };
-};
-
-/**
- * Generates repository count text for display
- */
-const getRepositoryCountText = (count: number): string => {
-  if (count === 0) {
-    return 'No repositories added yet.';
-  }
-  return count === 1 ? '1 repository configured' : `${count} repositories configured`;
-};
 
 /**
  * Project detail page with breadcrumb navigation and tabbed layout.
@@ -112,15 +82,6 @@ const ProjectDetailPage = () => {
 
   // Derived state
   const isArchived = project.archivedAt !== null;
-  const { formattedArchivedDate, formattedCreatedDate, formattedUpdatedDate } = formatProjectDates(project);
-
-  // Derived counts for overview cards
-  const repositoryCount = repositories?.length ?? 0;
-  const workflowCount = workflows?.length ?? 0;
-  const recentWorkflows = workflows?.slice(0, 3) ?? [];
-  const hasNoRepositories = repositoryCount === 0;
-  const hasNoWorkflows = workflowCount === 0;
-  const hasMoreWorkflows = workflowCount > 3;
 
   return (
     <QueryErrorBoundary>
@@ -179,86 +140,13 @@ const ProjectDetailPage = () => {
 
             {/* Overview Tab */}
             <TabsPanel value={'overview'}>
-              <div className={'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}>
-                {/* Project metadata card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className={'text-base'}>{'Project Details'}</CardTitle>
-                  </CardHeader>
-                  <CardContent className={'space-y-3'}>
-                    <div className={'flex items-center gap-2 text-sm'}>
-                      <Calendar aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-                      <span className={'text-muted-foreground'}>{'Created:'}</span>
-                      <span>{formattedCreatedDate}</span>
-                    </div>
-                    <div className={'flex items-center gap-2 text-sm'}>
-                      <Calendar aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-                      <span className={'text-muted-foreground'}>{'Updated:'}</span>
-                      <span>{formattedUpdatedDate}</span>
-                    </div>
-                    {formattedArchivedDate && (
-                      <div className={'flex items-center gap-2 text-sm'}>
-                        <Archive aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-                        <span className={'text-muted-foreground'}>{'Archived:'}</span>
-                        <span>{formattedArchivedDate}</span>
-                      </div>
-                    )}
-                    <div className={'flex items-center gap-2 text-sm'}>
-                      <span className={'text-muted-foreground'}>{'Status:'}</span>
-                      <Badge variant={isArchived ? 'stale' : 'completed'}>{isArchived ? 'Archived' : 'Active'}</Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Repositories summary card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className={'text-base'}>{'Repositories'}</CardTitle>
-                  </CardHeader>
-                  <CardContent className={'space-y-3'}>
-                    <div className={'flex items-center gap-2 text-sm'}>
-                      <FolderGit2 aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-                      <span className={'text-muted-foreground'}>{'Total:'}</span>
-                      <span className={'font-medium'}>{repositoryCount}</span>
-                    </div>
-                    <p className={'text-sm text-muted-foreground'}>
-                      {hasNoRepositories ? 'No repositories added yet.' : getRepositoryCountText(repositoryCount)}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Recent Workflows summary card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className={'text-base'}>{'Recent Workflows'}</CardTitle>
-                  </CardHeader>
-                  <CardContent className={'space-y-3'}>
-                    <div className={'flex items-center gap-2 text-sm'}>
-                      <Workflow aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-                      <span className={'text-muted-foreground'}>{'Total:'}</span>
-                      <span className={'font-medium'}>{workflowCount}</span>
-                    </div>
-                    {hasNoWorkflows ? (
-                      <p className={'text-sm text-muted-foreground'}>{'No workflows created yet.'}</p>
-                    ) : (
-                      <div className={'space-y-1'}>
-                        {recentWorkflows.map((workflow) => (
-                          <p
-                            className={'truncate text-sm text-muted-foreground'}
-                            key={workflow.id}
-                            title={workflow.featureName}
-                          >
-                            {workflow.featureName}
-                          </p>
-                        ))}
-                        {hasMoreWorkflows && (
-                          <p className={'text-sm text-muted-foreground'}>{`+${workflowCount - 3} more`}</p>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+              <ProjectOverviewTab
+                isArchived={isArchived}
+                onTabChange={(tab) => setActiveTab(tab as ProjectTabValue)}
+                project={project}
+                repositories={repositories ?? []}
+                workflows={workflows ?? []}
+              />
             </TabsPanel>
 
             {/* Repositories Tab */}
