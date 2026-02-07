@@ -76,6 +76,7 @@ Use targeted exploration to understand the current state relevant to the feature
    - Hook names, component names, service names
    - Data flow: where data originates, how it moves, where it's consumed
    - What's persisted vs ephemeral today
+5. **Post-exploration clarification**: If codebase exploration reveals new ambiguities — such as multiple valid integration points, existing patterns that could conflict with the feature, architectural decisions that weren't obvious from the raw idea, or discovered complexity that changes the scope — use `AskUserQuestion` again to resolve them with the user before proceeding. This is critical because many ambiguities only become visible after seeing the actual code.
 
 ### Phase 4: Synthesize Requirements
 
