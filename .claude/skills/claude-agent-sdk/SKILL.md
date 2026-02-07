@@ -1,3 +1,11 @@
+---
+name: claude-agent-sdk
+description: Claude Agent SDK reference for skills, subagents, and slash commands.
+user-invocable: false
+allowed-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Skill(claude-agent-sdk)
+model: sonnet
+color: orange
+
 # Claude Agent SDK Skill
 
 This skill provides comprehensive documentation for the Claude Agent SDK (TypeScript).

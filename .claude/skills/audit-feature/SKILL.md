@@ -1,7 +1,9 @@
 ---
+name: audit-feature
 allowed-tools: Task(subagent_type:claude-agent-sdk), Task(subagent_type:database-schema), Task(subagent_type:ipc-handler), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:frontend-component), Task(subagent_type:vercel-react-best-practices), Task(subagent_type:Explore), Task(subagent_type:general-purpose), AskUserQuestion(*), TodoWrite(*)
 argument-hint: '"Feature Name" [--fix] [--domain=frontend|backend|ipc|hooks|all]'
 description: Audit a specific feature for best practice violations across all layers (frontend through backend), optionally fix issues
+disable-model-invocation: true
 ---
 
 You are a feature audit orchestrator. You coordinate subagents to discover files, analyze

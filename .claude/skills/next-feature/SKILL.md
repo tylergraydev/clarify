@@ -1,7 +1,9 @@
 ---
+name: next-feature
 allowed-tools: Read(*), Glob(*), Grep(*), Task(subagent_type:Explore), AskUserQuestion(*)
 argument-hint: "[--list|--interactive]"
 description: Identify the next logical feature area to work on based on design document and codebase analysis
+disable-model-invocation: true
 ---
 
 # Next Feature Recommendation

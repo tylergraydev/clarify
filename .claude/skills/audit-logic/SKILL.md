@@ -1,7 +1,9 @@
 ---
+name: audit-logic
 allowed-tools: Task(subagent_type:database-schema), Task(subagent_type:ipc-handler), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-form), Task(subagent_type:frontend-component), Task(subagent_type:Explore), Task(subagent_type:general-purpose), AskUserQuestion(*), TodoWrite(*)
 argument-hint: '"Feature Name" [--fix] [--domain=data-flow|cache|validation|actions|all]'
 description: Audit a feature's business logic for correctness - data flow, cache invalidation, form completeness, and action behavior
+disable-model-invocation: true
 ---
 
 You are a business logic audit orchestrator. You coordinate specialist subagents to trace data flow,

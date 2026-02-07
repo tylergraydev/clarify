@@ -1,7 +1,9 @@
 ---
+name: distill-feature
 allowed-tools: Read(*), Glob(*), Grep(*), Task(subagent_type:Explore), AskUserQuestion
 argument-hint: "rambling feature idea or description"
 description: Distill a rambling feature idea into a precise prompt for /plan-feature
+disable-model-invocation: true
 ---
 
 # Distill Feature Request

@@ -1,7 +1,9 @@
 ---
+name: implement-plan
 allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:claude-agent-sdk), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Task(subagent_type:page-route), Task(subagent_type:zustand-store), Task(subagent_type:vercel-react-best-practices), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,pnpm:*,cd:*), TodoWrite(*), AskUserQuestion(*)
 argument-hint: "path/to/implementation-plan.md [--step-by-step|--dry-run|--resume-from=N|--worktree]"
 description: Execute implementation plan with structured tracking and validation using subagent architecture
+disable-model-invocation: true
 ---
 
 ## CRITICAL: You Are an Orchestrator, NOT an Implementer

@@ -1,7 +1,9 @@
 ---
+name: fix-file
 allowed-tools: Task(subagent_type:*), Task(subagent_type:claude-agent-sdk), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
 argument-hint: 'path/to/file.ts [--reference=path/to/reference.ts] [--dry-run]'
 description: Fix a file to follow project patterns using specialist agents with automatic review and iteration
+disable-model-invocation: true
 ---
 
 You are a file fix orchestrator for Clarify. You coordinate specialist agents to fix files to
