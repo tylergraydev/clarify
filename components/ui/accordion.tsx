@@ -24,6 +24,7 @@ export const accordionItemVariants = cva(`border-b border-border`, {
   },
   variants: {
     status: {
+      awaiting_input: 'border-l-2 border-l-amber-500',
       completed: 'border-l-2 border-l-green-500',
       default: '',
       paused: 'border-l-2 border-l-orange-500',

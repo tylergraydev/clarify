@@ -13,7 +13,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { useCancelWorkflow, usePauseWorkflow, useResumeWorkflow, useWorkflow } from '@/hooks/queries';
 import { useElectronDb } from '@/hooks/use-electron';
 import { stepKeys } from '@/lib/queries/steps';
-import { capitalizeFirstLetter, cn, getWorkflowStatusVariant } from '@/lib/utils';
+import { capitalizeFirstLetter, cn, getWorkflowStatusLabel, getWorkflowStatusVariant } from '@/lib/utils';
 
 import { ConfirmCancelWorkflowDialog } from './confirm-cancel-workflow-dialog';
 
@@ -51,6 +51,10 @@ export const WorkflowTopBar = ({ className, ref, workflowId, ...props }: Workflo
     if (!workflowSteps) return null;
 
     switch (status) {
+      case 'awaiting_input': {
+        const awaitingStep = workflowSteps.find((s) => s.status === 'awaiting_input');
+        return awaitingStep ? `${awaitingStep.title} \u2014 Awaiting Input` : null;
+      }
       case 'cancelled': {
         const lastNonPendingStep = [...workflowSteps]
           .reverse()
@@ -74,8 +78,8 @@ export const WorkflowTopBar = ({ className, ref, workflowId, ...props }: Workflo
   };
 
   const stepDisplayText = getStepDisplayText();
-  const showPauseBehavior = status === 'running' || status === 'paused';
-  const isActive = status === 'running' || status === 'paused';
+  const showPauseBehavior = status === 'running' || status === 'paused' || status === 'awaiting_input';
+  const isActive = status === 'running' || status === 'paused' || status === 'awaiting_input';
 
   const handlePauseClick = () => {
     pauseMutation.mutate(workflowId);
@@ -112,7 +116,7 @@ export const WorkflowTopBar = ({ className, ref, workflowId, ...props }: Workflo
           <div className={'flex items-center gap-3'}>
             <h1 className={'text-lg font-semibold text-foreground'}>{workflow.featureName}</h1>
             <Badge variant={getWorkflowStatusVariant(status)}>
-              {capitalizeFirstLetter(status)}
+              {getWorkflowStatusLabel(status)}
             </Badge>
             {stepDisplayText && (
               <span className={'text-sm text-muted-foreground'}>{stepDisplayText}</span>

@@ -21,7 +21,7 @@ import {
 import { useAgent } from '@/hooks/queries/use-agents';
 import { useProject } from '@/hooks/queries/use-projects';
 import { useWorktree } from '@/hooks/queries/use-worktrees';
-import { capitalizeFirstLetter, formatDateTime, formatDuration, getWorkflowStatusVariant } from '@/lib/utils';
+import { capitalizeFirstLetter, formatDateTime, formatDuration, getWorkflowStatusLabel, getWorkflowStatusVariant } from '@/lib/utils';
 
 interface ViewWorkflowDialogProps {
   /** Whether the dialog is open */
@@ -114,7 +114,7 @@ export const ViewWorkflowDialog = ({ isOpen, onOpenChange, workflow }: ViewWorkf
                 label={'Status'}
                 value={
                   <Badge size={'sm'} variant={getWorkflowStatusVariant(workflow.status)}>
-                    {capitalizeFirstLetter(workflow.status)}
+                    {getWorkflowStatusLabel(workflow.status)}
                   </Badge>
                 }
               />

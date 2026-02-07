@@ -126,7 +126,9 @@ export function registerClarificationHandlers(
           handleStreamMessage
         );
 
-        persistOutcomeToStep(workflowStepsRepository, stepId, outcome);
+        const workflow = workflowsRepository.findById(workflowId);
+        const pauseBehavior = ((workflow?.pauseBehavior ?? 'auto_pause') as 'auto_pause' | 'continuous');
+        persistOutcomeToStep(workflowStepsRepository, workflowsRepository, stepId, workflowId, pauseBehavior, outcome);
 
         return outcome;
       } catch (error) {
@@ -265,11 +267,37 @@ export function registerClarificationHandlers(
             : {};
 
           workflowStepsRepository.update(typedInput.stepId, {
+            completedAt: new Date().toISOString(),
             outputStructured: {
               ...existingOutput,
               answers: typedInput.answers,
             },
+            status: 'completed',
           });
+
+          // Transition workflow based on pause behavior
+          const workflow = workflowsRepository.findById(typedInput.workflowId);
+          if (workflow) {
+            type PauseBehavior = 'auto_pause' | 'continuous';
+            const pauseBehavior = (workflow.pauseBehavior ?? 'auto_pause') as PauseBehavior;
+
+            if (pauseBehavior === 'continuous') {
+              workflowsRepository.updateStatus(typedInput.workflowId, 'running');
+              // Start next pending step
+              const allSteps = workflowStepsRepository.findByWorkflowId(typedInput.workflowId);
+              const currentStep = allSteps.find((s) => s.id === typedInput.stepId);
+              if (currentStep) {
+                const nextStep = allSteps
+                  .filter((s) => s.status === 'pending' && s.stepNumber > currentStep.stepNumber)
+                  .sort((a, b) => a.stepNumber - b.stepNumber)[0];
+                if (nextStep) {
+                  workflowStepsRepository.start(nextStep.id);
+                }
+              }
+            } else {
+              workflowsRepository.updateStatus(typedInput.workflowId, 'paused');
+            }
+          }
         }
 
         return result;
@@ -348,11 +376,11 @@ export function registerClarificationHandlers(
           // Auto-advance to the next step based on workflow pause behavior
           if (skippedStep) {
             const workflow = workflowsRepository.findById(skippedStep.workflowId);
-            if (workflow && workflow.status === 'running') {
+            if (workflow && (workflow.status === 'running' || workflow.status === 'awaiting_input')) {
               type PauseBehavior = 'auto_pause' | 'continuous';
               const pauseBehavior = (workflow.pauseBehavior ?? 'auto_pause') as PauseBehavior;
               const allSteps = workflowStepsRepository.findByWorkflowId(skippedStep.workflowId);
-              const runningStatuses = ['running', 'paused', 'editing'];
+              const runningStatuses = ['running', 'paused', 'editing', 'awaiting_input'];
               const hasRunningStep = allSteps.some((s) => runningStatuses.includes(s.status));
 
               if (!hasRunningStep) {
@@ -361,7 +389,10 @@ export function registerClarificationHandlers(
                   .sort((a, b) => a.stepNumber - b.stepNumber)[0];
 
                 if (nextStep && pauseBehavior === 'continuous') {
+                  workflowsRepository.updateStatus(skippedStep.workflowId, 'running');
                   workflowStepsRepository.start(nextStep.id);
+                } else {
+                  workflowsRepository.updateStatus(skippedStep.workflowId, 'paused');
                 }
               }
             }
@@ -411,6 +442,15 @@ export function registerClarificationHandlers(
 
         if (step.workflowId !== workflowId) {
           throw new Error(`Step ${stepId} does not belong to workflow ${workflowId}`);
+        }
+
+        // Reset step and workflow status if awaiting_input
+        if (step.status === 'awaiting_input') {
+          workflowStepsRepository.update(stepId, { status: 'running' });
+        }
+        const currentWorkflow = workflowsRepository.findById(workflowId);
+        if (currentWorkflow && currentWorkflow.status === 'awaiting_input') {
+          workflowsRepository.updateStatus(workflowId, 'running');
         }
 
         // Use passed agentId if provided, otherwise look up from the workflow step
@@ -471,10 +511,12 @@ export function registerClarificationHandlers(
         );
 
         // Use merged persistence if keeping existing questions, otherwise normal persistence
+        const retryWorkflow = workflowsRepository.findById(workflowId);
+        const retryPauseBehavior = ((retryWorkflow?.pauseBehavior ?? 'auto_pause') as 'auto_pause' | 'continuous');
         if (typedInput.keepExistingQuestions && outcome.type === 'QUESTIONS_FOR_USER') {
-          persistOutcomeToStepMerged(workflowStepsRepository, stepId, outcome);
+          persistOutcomeToStepMerged(workflowStepsRepository, workflowsRepository, stepId, workflowId, retryPauseBehavior, outcome);
         } else {
-          persistOutcomeToStep(workflowStepsRepository, stepId, outcome);
+          persistOutcomeToStep(workflowStepsRepository, workflowsRepository, stepId, workflowId, retryPauseBehavior, outcome);
         }
 
         return outcome;
@@ -513,7 +555,10 @@ export function registerClarificationHandlers(
  */
 function persistOutcomeToStep(
   workflowStepsRepository: WorkflowStepsRepository,
+  workflowsRepository: WorkflowsRepository,
   stepId: number,
+  workflowId: number,
+  pauseBehavior: 'auto_pause' | 'continuous',
   outcome: ClarificationOutcomeWithPause
 ): void {
   switch (outcome.type) {
@@ -522,13 +567,13 @@ function persistOutcomeToStep(
       break;
     case 'QUESTIONS_FOR_USER':
       workflowStepsRepository.update(stepId, {
-        completedAt: new Date().toISOString(),
         outputStructured: {
           assessment: outcome.assessment,
           questions: outcome.questions,
         },
-        status: 'completed',
+        status: 'awaiting_input',
       });
+      workflowsRepository.updateStatus(workflowId, 'awaiting_input');
       break;
     case 'SKIP_CLARIFICATION':
       workflowStepsRepository.update(stepId, {
@@ -540,6 +585,9 @@ function persistOutcomeToStep(
         },
         status: 'completed',
       });
+      if (pauseBehavior === 'auto_pause') {
+        workflowsRepository.updateStatus(workflowId, 'paused');
+      }
       break;
     case 'TIMEOUT':
       workflowStepsRepository.fail(stepId, outcome.error ?? `Timed out after ${outcome.elapsedSeconds}s`);
@@ -562,12 +610,15 @@ function persistOutcomeToStep(
  */
 function persistOutcomeToStepMerged(
   workflowStepsRepository: WorkflowStepsRepository,
+  workflowsRepository: WorkflowsRepository,
   stepId: number,
+  workflowId: number,
+  pauseBehavior: 'auto_pause' | 'continuous',
   outcome: ClarificationOutcomeWithPause
 ): void {
   if (outcome.type !== 'QUESTIONS_FOR_USER') {
     // Non-question outcomes should never reach here, but handle gracefully
-    persistOutcomeToStep(workflowStepsRepository, stepId, outcome);
+    persistOutcomeToStep(workflowStepsRepository, workflowsRepository, stepId, workflowId, pauseBehavior, outcome);
     return;
   }
 
@@ -586,14 +637,14 @@ function persistOutcomeToStepMerged(
   const mergedQuestions = [...existingQuestions, ...outcome.questions];
 
   workflowStepsRepository.update(stepId, {
-    completedAt: new Date().toISOString(),
     outputStructured: {
       assessment: outcome.assessment,
       questions: mergedQuestions,
       // Deliberately omit `answers` to force `unanswered` UI phase
     },
-    status: 'completed',
+    status: 'awaiting_input',
   });
+  workflowsRepository.updateStatus(workflowId, 'awaiting_input');
 }
 
 /**

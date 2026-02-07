@@ -35,7 +35,7 @@ type WorkflowCardProps = ClassName<{
 
 type WorkflowStatus = Workflow['status'];
 
-const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'paused', 'running'];
+const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'paused', 'running', 'awaiting_input'];
 const PAUSABLE_STATUSES: Array<WorkflowStatus> = ['running'];
 const RESUMABLE_STATUSES: Array<WorkflowStatus> = ['paused'];
 
@@ -75,6 +75,8 @@ const calculateProgress = (currentStep: null | number | undefined, totalSteps: n
  */
 const getStatusVariant = (status: string): 'clarifying' | 'completed' | 'default' | 'failed' | 'planning' => {
   switch (status) {
+    case 'awaiting_input':
+      return 'clarifying';
     case 'cancelled':
     case 'failed':
       return 'failed';
@@ -111,6 +113,7 @@ const getProgressBarColor = (status: WorkflowStatus): string => {
  * Formats status for display
  */
 const formatStatus = (status: string): string => {
+  if (status === 'awaiting_input') return 'Awaiting Input';
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
@@ -353,7 +356,11 @@ const ActiveWorkflowsContent = () => {
 
   const activeWorkflows = useMemo(() => {
     return workflows.filter(
-      (workflow) => workflow.status === 'running' || workflow.status === 'paused' || workflow.status === 'editing'
+      (workflow) =>
+        workflow.status === 'running' ||
+        workflow.status === 'paused' ||
+        workflow.status === 'editing' ||
+        workflow.status === 'awaiting_input'
     );
   }, [workflows]);
 

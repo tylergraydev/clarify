@@ -34,7 +34,7 @@ import { cn, optionsToItems } from '@/lib/utils';
 // ============================================================================
 
 /** Available workflow status filter values for active workflows (running, paused, editing) */
-export type ActiveWorkflowStatusFilterValue = 'all' | 'editing' | 'paused' | 'running';
+export type ActiveWorkflowStatusFilterValue = 'all' | 'awaiting_input' | 'editing' | 'paused' | 'running';
 
 /** Project option for project filter select */
 export interface ProjectFilterOption {
@@ -50,6 +50,7 @@ export interface WorkflowStatusFilterOption {
 /** Available workflow status filter values */
 export type WorkflowStatusFilterValue =
   | 'all'
+  | 'awaiting_input'
   | 'cancelled'
   | 'completed'
   | 'created'
@@ -99,6 +100,7 @@ export const ACTIVE_STATUS_FILTER_OPTIONS = [
   { label: 'All statuses', value: 'all' },
   { label: 'Running', value: 'running' },
   { label: 'Paused', value: 'paused' },
+  { label: 'Awaiting Input', value: 'awaiting_input' },
   { label: 'Editing', value: 'editing' },
 ] as const;
 
@@ -107,6 +109,7 @@ const STATUS_FILTER_OPTIONS: Array<WorkflowStatusFilterOption> = [
   { label: 'Created', value: 'created' },
   { label: 'Running', value: 'running' },
   { label: 'Paused', value: 'paused' },
+  { label: 'Awaiting Input', value: 'awaiting_input' },
   { label: 'Editing', value: 'editing' },
   { label: 'Completed', value: 'completed' },
   { label: 'Failed', value: 'failed' },

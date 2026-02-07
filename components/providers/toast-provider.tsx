@@ -6,6 +6,7 @@ import { Fragment } from 'react';
 import type { ToastType } from '@/components/ui/toast';
 
 import {
+  ToastAction,
   ToastClose,
   ToastContent,
   ToastDescription,
@@ -60,6 +61,19 @@ const ToastList = () => {
               <div className={'flex min-w-0 flex-1 flex-col gap-0.5'}>
                 {toast.title && <ToastTitle>{toast.title}</ToastTitle>}
                 {toast.description && <ToastDescription>{toast.description}</ToastDescription>}
+                {toast.actionProps && (
+                  <ToastAction
+                    className={`
+                      mt-1.5 inline-flex self-start rounded-md px-2.5 py-1 text-xs font-medium
+                      text-accent underline-offset-2
+                      transition-colors
+                      hover:underline
+                      focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0
+                      focus-visible:outline-none
+                    `}
+                    {...toast.actionProps}
+                  />
+                )}
               </div>
             </ToastContent>
             <ToastClose />

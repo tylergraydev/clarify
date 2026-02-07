@@ -18,7 +18,7 @@ import {
   type DataTableRowStyleCallback,
   TableNameButton,
 } from '@/components/ui/table';
-import { capitalizeFirstLetter, formatDateTime, formatDuration, getWorkflowStatusVariant } from '@/lib/utils';
+import { capitalizeFirstLetter, formatDateTime, formatDuration, getWorkflowStatusLabel, getWorkflowStatusVariant } from '@/lib/utils';
 
 // ============================================================================
 // Types
@@ -186,7 +186,7 @@ export const WorkflowHistoryTable = ({
       columnHelper.accessor('status', {
         cell: ({ row }) => (
           <Badge size={'sm'} variant={getWorkflowStatusVariant(row.original.status)}>
-            {capitalizeFirstLetter(row.original.status)}
+            {getWorkflowStatusLabel(row.original.status)}
           </Badge>
         ),
         header: ({ column }) => <DataTableColumnHeader column={column} title={'Status'} />,

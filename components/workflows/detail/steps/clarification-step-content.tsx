@@ -66,6 +66,7 @@ function determineUiPhase(
   if (stepStatus === 'running') return 'running';
   if (stepStatus === 'failed') return 'error';
   if (stepStatus === 'skipped') return 'skipped';
+  if (stepStatus === 'awaiting_input') return 'unanswered';
 
   // Status is completed
   if (stepStatus === 'completed') {

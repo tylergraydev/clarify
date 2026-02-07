@@ -19,6 +19,7 @@ export {
   repositorySelectionVariants,
 } from './repository-selection-field';
 export { ViewWorkflowDialog } from './view-workflow-dialog';
+export { WorkflowAttentionNotifier } from './workflow-attention-notifier';
 // Layout components
 export { WorkflowHistoryTable } from './workflow-history-table';
 export { WorkflowTable } from './workflow-table';

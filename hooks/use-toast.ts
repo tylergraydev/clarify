@@ -1,5 +1,7 @@
 'use client';
 
+import type { ComponentPropsWithRef } from 'react';
+
 import { Toast } from '@base-ui/react/toast';
 
 import type { ToastType } from '@/components/ui/toast';
@@ -96,6 +98,7 @@ export const useToast = () => {
 };
 
 interface ToastOptions {
+  actionProps?: ComponentPropsWithRef<'button'>;
   description?: string;
   onClose?: () => void;
   onRemove?: () => void;

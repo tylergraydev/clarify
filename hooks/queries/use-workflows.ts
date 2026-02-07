@@ -13,7 +13,7 @@ import { useElectronDb } from '../use-electron';
 /**
  * Active workflow statuses for filtering
  */
-const ACTIVE_STATUSES = ['running', 'paused', 'editing'] as const;
+const ACTIVE_STATUSES = ['running', 'paused', 'editing', 'awaiting_input'] as const;
 const CREATED_STATUS = 'created' as const;
 
 /**

@@ -3,7 +3,7 @@
 import type { Row } from '@tanstack/react-table';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
-import { Eye, Pause, Pencil, Play, X } from 'lucide-react';
+import { Copy, Eye, Pause, Pencil, Play, X } from 'lucide-react';
 import { Fragment, memo, useCallback, useMemo } from 'react';
 
 import type { Workflow } from '@/types/electron';
@@ -18,7 +18,7 @@ import {
   type DataTableRowStyleCallback,
   TableNameButton,
 } from '@/components/ui/table';
-import { capitalizeFirstLetter, formatDate, getWorkflowStatusVariant } from '@/lib/utils';
+import { capitalizeFirstLetter, formatDate, getWorkflowStatusLabel, getWorkflowStatusVariant } from '@/lib/utils';
 
 // ============================================================================
 // Types
@@ -26,11 +26,13 @@ import { capitalizeFirstLetter, formatDate, getWorkflowStatusVariant } from '@/l
 
 type WorkflowStatus = Workflow['status'];
 
-interface WorkflowTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onPause'> {
+interface WorkflowTableProps extends Omit<ComponentPropsWithRef<'div'>, 'onCopy' | 'onPause'> {
   /** Set of workflow IDs currently being cancelled */
   cancellingIds?: Set<number>;
   /** Callback when the user clicks cancel on a workflow */
   onCancel?: (workflowId: number) => void;
+  /** Callback when the user clicks copy on a workflow */
+  onCopy?: (workflow: Workflow) => void;
   /** Callback when the user clicks edit on a workflow (only for 'created' status) */
   onEdit?: (workflow: Workflow) => void;
   /** Callback fired when global filter (search) changes */
@@ -78,6 +80,7 @@ interface ActionsCellProps {
   isPausing: boolean;
   isResuming: boolean;
   onCancel?: (workflowId: number) => void;
+  onCopy?: (workflow: Workflow) => void;
   onEdit?: (workflow: Workflow) => void;
   onPause?: (workflowId: number) => void;
   onResume?: (workflowId: number) => void;
@@ -94,6 +97,7 @@ const ActionsCell = memo(function ActionsCell({
   isPausing,
   isResuming,
   onCancel,
+  onCopy,
   onEdit,
   onPause,
   onResume,
@@ -119,6 +123,15 @@ const ActionsCell = memo(function ActionsCell({
     icon: <Eye aria-hidden={'true'} className={'size-4'} />,
     label: 'View',
     onAction: (r) => onViewInfo?.(r.original),
+    type: 'button',
+  });
+
+  // Copy action
+  actions.push({
+    disabled: isActionPending,
+    icon: <Copy aria-hidden={'true'} className={'size-4'} />,
+    label: 'Copy',
+    onAction: (r) => onCopy?.(r.original),
     type: 'button',
   });
 
@@ -193,6 +206,7 @@ export const WorkflowTable = ({
   cancellingIds = new Set(),
   className,
   onCancel,
+  onCopy,
   onEdit,
   onGlobalFilterChange,
   onPause,
@@ -234,6 +248,7 @@ export const WorkflowTable = ({
             isPausing={pausingIds.has(row.original.id)}
             isResuming={resumingIds.has(row.original.id)}
             onCancel={onCancel}
+            onCopy={onCopy}
             onEdit={onEdit}
             onPause={onPause}
             onResume={onResume}
@@ -291,7 +306,7 @@ export const WorkflowTable = ({
       columnHelper.accessor('status', {
         cell: ({ row }) => (
           <Badge size={'sm'} variant={getWorkflowStatusVariant(row.original.status)}>
-            {capitalizeFirstLetter(row.original.status)}
+            {getWorkflowStatusLabel(row.original.status)}
           </Badge>
         ),
         header: ({ column }) => <DataTableColumnHeader column={column} title={'Status'} />,
@@ -336,7 +351,7 @@ export const WorkflowTable = ({
         size: 110,
       }),
     ],
-    [cancellingIds, onCancel, onEdit, onPause, onResume, onViewDetails, onViewInfo, pausingIds, projectMap, resumingIds]
+    [cancellingIds, onCancel, onCopy, onEdit, onPause, onResume, onViewDetails, onViewInfo, pausingIds, projectMap, resumingIds]
   );
 
   return (

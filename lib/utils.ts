@@ -118,7 +118,23 @@ export function getBadgeVariantForType(type: string): 'default' | 'planning' | '
 /**
  * Maps workflow status to badge variant for consistent status styling across tables and widgets.
  */
+const WORKFLOW_STATUS_LABEL_MAP: Record<string, string> = {
+  awaiting_input: 'Awaiting Input',
+  cancelled: 'Cancelled',
+  completed: 'Completed',
+  created: 'Created',
+  editing: 'Editing',
+  failed: 'Failed',
+  paused: 'Paused',
+  running: 'Running',
+};
+
+export function getWorkflowStatusLabel(status: string): string {
+  return WORKFLOW_STATUS_LABEL_MAP[status] ?? capitalizeFirstLetter(status);
+}
+
 const WORKFLOW_STATUS_VARIANT_MAP: Record<string, WorkflowBadgeVariant> = {
+  awaiting_input: 'clarifying',
   cancelled: 'stale',
   completed: 'completed',
   created: 'default',

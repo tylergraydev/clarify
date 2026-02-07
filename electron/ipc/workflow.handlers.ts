@@ -160,7 +160,31 @@ export function registerWorkflowHandlers(
   // Resume a paused workflow (update status to running)
   ipcMain.handle(IpcChannels.workflow.resume, (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
     try {
-      return workflowsRepository.updateStatus(id, 'running');
+      const steps = workflowStepsRepository.findByWorkflowId(id);
+
+      // If any step is awaiting_input, workflow should reflect that
+      const awaitingStep = steps.find((s) => s.status === 'awaiting_input');
+      if (awaitingStep) {
+        return workflowsRepository.updateStatus(id, 'awaiting_input');
+      }
+
+      // Check if any step is actively running
+      const runningStatuses = ['running', 'paused', 'editing'];
+      const hasActiveStep = steps.some((s) => runningStatuses.includes(s.status));
+
+      const updatedWorkflow = workflowsRepository.updateStatus(id, 'running');
+
+      // If no active step, find and start the next pending step
+      if (!hasActiveStep && updatedWorkflow) {
+        const nextPending = steps
+          .filter((s) => s.status === 'pending')
+          .sort((a, b) => a.stepNumber - b.stepNumber)[0];
+        if (nextPending) {
+          workflowStepsRepository.start(nextPending.id);
+        }
+      }
+
+      return updatedWorkflow;
     } catch (error) {
       console.error('[IPC Error] workflow:resume:', error);
       throw error;

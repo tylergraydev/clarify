@@ -54,6 +54,18 @@ function computeClarificationSummary(status: string, outputStructured: null | Re
 
   if (status === 'skipped') return 'Skipped';
 
+  // For awaiting_input status, show question count
+  if (status === 'awaiting_input' && outputStructured) {
+    const parsed = clarificationStepOutputSchema.safeParse(outputStructured);
+    if (parsed.success) {
+      const questionCount = parsed.data.questions?.length ?? 0;
+      if (questionCount > 0) {
+        return `${questionCount} question${questionCount !== 1 ? 's' : ''} awaiting answers`;
+      }
+    }
+    return 'Awaiting answers';
+  }
+
   // For completed status, inspect the structured output
   if (status === 'completed' && outputStructured) {
     const parsed = clarificationStepOutputSchema.safeParse(outputStructured);
@@ -88,6 +100,11 @@ function getActiveStepId(clarificationStatus: string, skipClarification: boolean
     return 'refinement';
   }
 
+  // Keep clarification expanded if awaiting input
+  if (clarificationStatus === 'awaiting_input') {
+    return 'clarification';
+  }
+
   return 'clarification';
 }
 
@@ -96,6 +113,8 @@ function getActiveStepId(clarificationStatus: string, skipClarification: boolean
  */
 function mapStepStatusToAccordionStatus(status: string): AccordionItemStatus {
   switch (status) {
+    case 'awaiting_input':
+      return 'awaiting_input';
     case 'completed':
       return 'completed';
     case 'failed':
@@ -116,6 +135,8 @@ function mapStepStatusToAccordionStatus(status: string): AccordionItemStatus {
  */
 function mapStepStatusToBadgeLabel(status: string): string {
   switch (status) {
+    case 'awaiting_input':
+      return 'Awaiting Input';
     case 'completed':
       return 'Completed';
     case 'editing':
@@ -138,6 +159,8 @@ function mapStepStatusToBadgeLabel(status: string): string {
  */
 function mapStepStatusToBadgeVariant(status: string): BadgeVariant {
   switch (status) {
+    case 'awaiting_input':
+      return 'pending';
     case 'completed':
       return 'completed';
     case 'failed':

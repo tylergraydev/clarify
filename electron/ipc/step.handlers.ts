@@ -36,7 +36,7 @@ export function registerStepHandlers(
   workflowsRepository: WorkflowsRepository
 ): void {
   type PauseBehavior = 'auto_pause' | 'continuous';
-  const RUNNING_STATUSES = ['running', 'paused', 'editing'] as const;
+  const RUNNING_STATUSES = ['running', 'paused', 'editing', 'awaiting_input'] as const;
 
   const shouldAutoAdvance = (pauseBehavior: PauseBehavior): boolean => {
     return pauseBehavior === 'continuous';
@@ -67,6 +67,7 @@ export function registerStepHandlers(
     }
 
     if (!shouldAutoAdvance(pauseBehavior)) {
+      workflowsRepository.updateStatus(step.workflowId, 'paused');
       return;
     }
 
@@ -98,7 +99,14 @@ export function registerStepHandlers(
   // Start a step (transition to running)
   ipcMain.handle(IpcChannels.step.start, (_event: IpcMainInvokeEvent, id: number): undefined | WorkflowStep => {
     try {
-      return workflowStepsRepository.start(id);
+      const step = workflowStepsRepository.start(id);
+      if (step) {
+        const workflow = workflowsRepository.findById(step.workflowId);
+        if (workflow && (workflow.status === 'paused' || workflow.status === 'awaiting_input')) {
+          workflowsRepository.updateStatus(step.workflowId, 'running');
+        }
+      }
+      return step;
     } catch (error) {
       console.error('[IPC Error] step:start:', error);
       throw error;

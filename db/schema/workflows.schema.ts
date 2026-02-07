@@ -10,6 +10,7 @@ export const workflowStatuses = [
   'running',
   'paused',
   'editing',
+  'awaiting_input',
   'completed',
   'failed',
   'cancelled',

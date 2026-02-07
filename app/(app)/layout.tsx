@@ -2,6 +2,7 @@
 
 import { ShellLayoutProvider } from '@/components/providers/shell-layout-provider';
 import { AppHeader, AppSidebar, StatusBar } from '@/components/shell';
+import { WorkflowAttentionNotifier } from '@/components/workflows/workflow-attention-notifier';
 import { useActiveWorkflows } from '@/hooks/queries/use-workflows';
 import { useShellStore } from '@/lib/stores/shell-store';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <ShellLayoutProvider>
+      {/* Global workflow attention toasts (renders nothing, fires toasts on status transitions) */}
+      <WorkflowAttentionNotifier />
+
       <div className={'relative min-h-screen bg-background'}>
         {/* Header - fixed at top */}
         <AppHeader />

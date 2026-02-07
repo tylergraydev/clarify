@@ -4,7 +4,16 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { agents } from './agents.schema';
 import { workflows } from './workflows.schema';
 
-export const stepStatuses = ['pending', 'running', 'paused', 'editing', 'completed', 'failed', 'skipped'] as const;
+export const stepStatuses = [
+  'pending',
+  'running',
+  'paused',
+  'editing',
+  'awaiting_input',
+  'completed',
+  'failed',
+  'skipped',
+] as const;
 export const stepTypes = [
   'clarification',
   'refinement',

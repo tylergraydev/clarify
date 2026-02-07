@@ -40,12 +40,18 @@ interface CreateWorkflowDialogProps {
   disabled?: boolean;
   /** Message to display when the trigger is disabled */
   disabledMessage?: string;
+  /** Initial values to pre-fill the form (used for copy workflow) */
+  initialValues?: Partial<CreateWorkflowFormValues>;
+  /** Callback when open state changes (for controlled mode) */
+  onOpenChange?: (isOpen: boolean) => void;
   /** Callback when workflow is successfully created */
   onSuccess?: () => void;
+  /** Controlled open state (optional - if provided, dialog becomes controlled) */
+  open?: boolean;
   /** The project ID to create the workflow for */
   projectId: number;
-  /** The trigger element that opens the dialog */
-  trigger: ReactNode;
+  /** The trigger element that opens the dialog (optional when using controlled mode) */
+  trigger?: ReactNode;
 }
 
 const workflowTypeOptions = workflowTypes.map((type) => ({
@@ -61,12 +67,27 @@ const pauseBehaviorOptions = pauseBehaviors.map((behavior) => ({
 export const CreateWorkflowDialog = ({
   disabled = false,
   disabledMessage = 'Please add at least one repository to the project before creating a workflow',
+  initialValues,
+  onOpenChange,
   onSuccess,
+  open,
   projectId,
   trigger,
 }: CreateWorkflowDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isInternalOpen, setIsInternalOpen] = useState(false);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+
+  // Determine if dialog is controlled or uncontrolled
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : isInternalOpen;
+
+  const setIsOpen = (value: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(value);
+    } else {
+      setIsInternalOpen(value);
+    }
+  };
 
   const { workflowRepositories } = useElectronDb();
   const toast = useToast();
@@ -104,6 +125,7 @@ export const CreateWorkflowDialog = ({
     skipClarification: false,
     templateId: '',
     type: 'planning',
+    ...initialValues,
   };
 
   const form = useAppForm({
@@ -189,15 +211,15 @@ export const CreateWorkflowDialog = ({
   const isPlanning = selectedType === 'planning';
   const isShowClarificationAgent = !selectedSkipClarification && planningAgentOptions.length > 0;
 
-  // If disabled, show tooltip with disabled message
-  if (disabled) {
+  // If disabled and has a trigger, show tooltip with disabled message
+  if (disabled && trigger) {
     return <Tooltip content={disabledMessage}>{trigger}</Tooltip>;
   }
 
   return (
     <DialogRoot onOpenChange={handleOpenChangeInternal} open={isOpen}>
-      {/* Trigger */}
-      <DialogTrigger>{trigger}</DialogTrigger>
+      {/* Trigger (only rendered when provided) */}
+      {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
 
       {/* Portal */}
       <DialogPortal>

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 
 import type { Workflow } from '@/db/schema/workflows.schema';
+import type { CreateWorkflowFormValues } from '@/lib/validations/workflow';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -23,6 +24,8 @@ import {
 } from '@/components/workflows/workflow-table-toolbar';
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useCancelWorkflow, useWorkflowsByProject } from '@/hooks/queries/use-workflows';
+import { useElectronDb } from '@/hooks/use-electron';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface WorkflowsTabContentProps extends ComponentPropsWithRef<'div'> {
@@ -42,6 +45,8 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
   const { data: workflows, error, isLoading } = useWorkflowsByProject(projectId);
   const { data: repositories = [] } = useRepositoriesByProject(projectId);
   const cancelWorkflowMutation = useCancelWorkflow();
+  const { workflowRepositories } = useElectronDb();
+  const toast = useToast();
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<WorkflowStatusFilterValue>(DEFAULT_STATUS_FILTER);
@@ -51,6 +56,9 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
 
   // Edit workflow state
   const [editingWorkflow, setEditingWorkflow] = useState<null | Workflow>(null);
+
+  // Copy workflow state
+  const [copyInitialValues, setCopyInitialValues] = useState<null | Partial<CreateWorkflowFormValues>>(null);
 
   // View workflow info state
   const [viewingWorkflow, setViewingWorkflow] = useState<null | Workflow>(null);
@@ -110,6 +118,39 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
   const handleEditDialogOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
       setEditingWorkflow(null);
+    }
+  }, []);
+
+  const handleCopyWorkflow = useCallback(
+    async (workflow: Workflow) => {
+      try {
+        // Fetch repository IDs for the source workflow
+        const workflowRepos = await workflowRepositories.list(workflow.id);
+        const repositoryIds = workflowRepos.map((wr) => wr.repositoryId);
+
+        setCopyInitialValues({
+          clarificationAgentId: workflow.clarificationAgentId ? String(workflow.clarificationAgentId) : '',
+          featureName: `${workflow.featureName} (Copy)`,
+          featureRequest: workflow.featureRequest,
+          pauseBehavior: workflow.pauseBehavior as 'auto_pause' | 'continuous',
+          repositoryIds,
+          skipClarification: workflow.skipClarification,
+          type: workflow.type as 'implementation' | 'planning',
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to copy workflow.';
+        toast.error({
+          description: message,
+          title: 'Error',
+        });
+      }
+    },
+    [workflowRepositories, toast]
+  );
+
+  const handleCopyDialogOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      setCopyInitialValues(null);
     }
   }, []);
 
@@ -203,6 +244,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
         <WorkflowTable
           cancellingIds={cancellingIds}
           onCancel={handleCancelWorkflow}
+          onCopy={handleCopyWorkflow}
           onEdit={handleEditWorkflow}
           onGlobalFilterChange={setSearchFilter}
           onViewDetails={handleViewDetails}
@@ -226,6 +268,16 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
             onOpenChange={handleEditDialogOpenChange}
             open={!!editingWorkflow}
             workflow={editingWorkflow}
+          />
+        )}
+
+        {/* Copy Workflow Dialog */}
+        {copyInitialValues && (
+          <CreateWorkflowDialog
+            initialValues={copyInitialValues}
+            onOpenChange={handleCopyDialogOpenChange}
+            open={!!copyInitialValues}
+            projectId={projectId}
           />
         )}
 

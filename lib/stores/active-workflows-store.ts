@@ -68,7 +68,7 @@ export interface ActiveWorkflowsState {
 /**
  * Status filter options for active workflows.
  */
-export type ActiveWorkflowsStatusFilter = 'all' | 'paused' | 'running';
+export type ActiveWorkflowsStatusFilter = 'all' | 'awaiting_input' | 'paused' | 'running';
 
 /**
  * Combined active workflows store type for state and actions.
