@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 
-type ProjectRepositoriesCardProps = {
+interface ProjectRepositoriesCardProps {
   onManageClick: () => void;
   repositories: Array<{
     defaultBranch: string;
@@ -17,7 +17,7 @@ type ProjectRepositoriesCardProps = {
     remoteUrl: null | string;
     setAsDefaultAt: null | string;
   }>;
-};
+}
 
 /** Displays a "Repositories" card showing repository details with branch info and default status in the project overview. */
 export const ProjectRepositoriesCard = ({ onManageClick, repositories }: ProjectRepositoriesCardProps) => {

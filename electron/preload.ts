@@ -268,16 +268,7 @@ export interface AgentWithRelations extends Agent {
 /**
  * Agent configuration for clarification.
  */
-export interface ClarificationAgentConfig {
-  hooks: Array<{ body: string; eventType: string; matcher: null | string }>;
-  id: number;
-  model: null | string;
-  name: string;
-  permissionMode: null | string;
-  skills: Array<{ isRequired: boolean; skillName: string }>;
-  systemPrompt: string;
-  tools: Array<{ toolName: string; toolPattern: string }>;
-}
+export type ClarificationAgentConfig = import('../types/agent-config').AgentConfig;
 
 /**
  * Discriminated union for a single answer to a clarification question.
@@ -417,18 +408,7 @@ export interface ClarificationSubmitAnswersResult {
 /**
  * Usage statistics from SDK result.
  */
-export interface ClarificationUsageStats {
-  /** Total cost in USD */
-  costUsd: number;
-  /** Total duration in milliseconds */
-  durationMs: number;
-  /** Input tokens consumed */
-  inputTokens: number;
-  /** Number of conversation turns */
-  numTurns: number;
-  /** Output tokens generated */
-  outputTokens: number;
-}
+export type ClarificationUsageStats = import('../types/usage-stats').UsageStats;
 
 // =============================================================================
 // Refinement Types
@@ -678,18 +658,7 @@ export interface ElectronAPI {
 /**
  * Agent configuration for file discovery.
  */
-export interface FileDiscoveryAgentConfig {
-  extendedThinkingEnabled: boolean;
-  hooks: Array<{ body: string; eventType: string; matcher: null | string }>;
-  id: number;
-  maxThinkingTokens: null | number;
-  model: null | string;
-  name: string;
-  permissionMode: null | string;
-  skills: Array<{ isRequired: boolean; skillName: string }>;
-  systemPrompt: string;
-  tools: Array<{ toolName: string; toolPattern: string }>;
-}
+export type FileDiscoveryAgentConfig = import('../types/agent-config').AgentConfig;
 
 /**
  * Discriminated union of all possible file discovery outcomes.
@@ -789,29 +758,12 @@ export type FileDiscoveryStreamMessage =
 /**
  * Usage statistics for file discovery.
  */
-export interface FileDiscoveryUsageStats {
-  costUsd: number;
-  durationMs: number;
-  inputTokens: number;
-  numTurns: number;
-  outputTokens: number;
-}
+export type FileDiscoveryUsageStats = import('../types/usage-stats').UsageStats;
 
 /**
  * Agent configuration for refinement.
  */
-export interface RefinementAgentConfig {
-  extendedThinkingEnabled: boolean;
-  hooks: Array<{ body: string; eventType: string; matcher: null | string }>;
-  id: number;
-  maxThinkingTokens: null | number;
-  model: null | string;
-  name: string;
-  permissionMode: null | string;
-  skills: Array<{ isRequired: boolean; skillName: string }>;
-  systemPrompt: string;
-  tools: Array<{ toolName: string; toolPattern: string }>;
-}
+export type RefinementAgentConfig = import('../types/agent-config').AgentConfig;
 
 /**
  * Discriminated union of all possible refinement outcomes.
@@ -900,13 +852,7 @@ export type RefinementStreamMessage =
 /**
  * Usage statistics from SDK result.
  */
-export interface RefinementUsageStats {
-  costUsd: number;
-  durationMs: number;
-  inputTokens: number;
-  numTurns: number;
-  outputTokens: number;
-}
+export type RefinementUsageStats = import('../types/usage-stats').UsageStats;
 
 /**
  * Filters for querying templates
@@ -952,13 +898,15 @@ export interface WorkflowStatistics {
   successRate: number;
 }
 
-/**
- * Base interface for all clarification stream messages.
- */
+// =============================================================================
+// Clarification Stream Message Types
+// =============================================================================
+
 interface ClarificationStreamMessageBase {
   sessionId: string;
   timestamp: number;
   type:
+    | 'extended_thinking_heartbeat'
     | 'phase_change'
     | 'text_delta'
     | 'thinking_delta'
@@ -969,111 +917,29 @@ interface ClarificationStreamMessageBase {
   workflowId: number;
 }
 
-/**
- * Stream message for phase transitions.
- */
-interface ClarificationStreamPhaseChange extends ClarificationStreamMessageBase {
-  phase: ClarificationServicePhase;
-  type: 'phase_change';
-}
+type ClarificationStreamPhaseChange = ClarificationStreamMessageBase & { phase: ClarificationServicePhase; type: 'phase_change' };
+type ClarificationStreamTextDelta = ClarificationStreamMessageBase & { delta: string; type: 'text_delta' };
+type ClarificationStreamThinkingDelta = ClarificationStreamMessageBase & { blockIndex: number; delta: string; type: 'thinking_delta' };
+type ClarificationStreamThinkingStart = ClarificationStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
+type ClarificationStreamToolStart = ClarificationStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_start' };
+type ClarificationStreamToolStop = ClarificationStreamMessageBase & { toolUseId: string; type: 'tool_stop' };
+type ClarificationStreamToolUpdate = ClarificationStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_update' };
 
-/**
- * Stream message for text delta.
- */
-interface ClarificationStreamTextDelta extends ClarificationStreamMessageBase {
-  delta: string;
-  type: 'text_delta';
-}
+// =============================================================================
+// File Discovery Stream Message Types
+// =============================================================================
 
-/**
- * Stream message for thinking delta.
- */
-interface ClarificationStreamThinkingDelta extends ClarificationStreamMessageBase {
-  blockIndex: number;
-  delta: string;
-  type: 'thinking_delta';
-}
+/** Step-specific: discovery completed. */
+interface FileDiscoveryStreamComplete extends FileDiscoveryStreamMessageBase { outcome: FileDiscoveryOutcome; type: 'complete' }
 
-/**
- * Stream message for thinking block start.
- */
-interface ClarificationStreamThinkingStart extends ClarificationStreamMessageBase {
-  blockIndex: number;
-  type: 'thinking_start';
-}
-
-/**
- * Stream message for tool start.
- */
-interface ClarificationStreamToolStart extends ClarificationStreamMessageBase {
-  toolInput: Record<string, unknown>;
-  toolName: string;
-  toolUseId: string;
-  type: 'tool_start';
-}
-
-/**
- * Stream message for tool stop.
- */
-interface ClarificationStreamToolStop extends ClarificationStreamMessageBase {
-  toolUseId: string;
-  type: 'tool_stop';
-}
-
-/**
- * Stream message for tool input updates.
- */
-interface ClarificationStreamToolUpdate extends ClarificationStreamMessageBase {
-  toolInput: Record<string, unknown>;
-  toolName: string;
-  toolUseId: string;
-  type: 'tool_update';
-}
-
-/**
- * Stream message indicating discovery completed.
- */
-interface FileDiscoveryStreamComplete extends FileDiscoveryStreamMessageBase {
-  outcome: FileDiscoveryOutcome;
-  type: 'complete';
-}
-
-/**
- * Stream message indicating an error occurred.
- */
-interface FileDiscoveryStreamError extends FileDiscoveryStreamMessageBase {
-  error: string;
-  stack?: string;
-  type: 'error';
-}
-
-/**
- * Heartbeat message during extended thinking execution.
- */
-interface FileDiscoveryStreamExtendedThinkingHeartbeat extends FileDiscoveryStreamMessageBase {
-  elapsedMs: number;
-  estimatedProgress: null | number;
-  maxThinkingTokens: number;
-  type: 'extended_thinking_heartbeat';
-}
-
-/**
- * Stream message for a single file discovered during execution.
- */
+/** Step-specific: error occurred. */
+interface FileDiscoveryStreamError extends FileDiscoveryStreamMessageBase { error: string; stack?: string; type: 'error' }
+type FileDiscoveryStreamExtendedThinkingHeartbeat = FileDiscoveryStreamMessageBase & { elapsedMs: number; estimatedProgress: null | number; maxThinkingTokens: number; type: 'extended_thinking_heartbeat' };
+/** Step-specific: file discovered during execution. */
 interface FileDiscoveryStreamFileDiscovered extends FileDiscoveryStreamMessageBase {
-  file: {
-    action: 'create' | 'delete' | 'modify' | 'reference';
-    filePath: string;
-    priority: 'high' | 'low' | 'medium';
-    relevanceExplanation: string;
-    role: string;
-  };
+  file: { action: 'create' | 'delete' | 'modify' | 'reference'; filePath: string; priority: 'high' | 'low' | 'medium'; relevanceExplanation: string; role: string };
   type: 'file_discovered';
 }
-
-/**
- * Base interface for all file discovery stream messages.
- */
 interface FileDiscoveryStreamMessageBase {
   sessionId: string;
   timestamp: number;
@@ -1091,81 +957,21 @@ interface FileDiscoveryStreamMessageBase {
     | 'tool_update';
 }
 
-/**
- * Stream message for phase transitions.
- */
-interface FileDiscoveryStreamPhaseChange extends FileDiscoveryStreamMessageBase {
-  phase: FileDiscoveryServicePhase;
-  type: 'phase_change';
-}
+type FileDiscoveryStreamPhaseChange = FileDiscoveryStreamMessageBase & { phase: FileDiscoveryServicePhase; type: 'phase_change' };
+type FileDiscoveryStreamTextDelta = FileDiscoveryStreamMessageBase & { delta: string; type: 'text_delta' };
+type FileDiscoveryStreamThinkingDelta = FileDiscoveryStreamMessageBase & { blockIndex: number; delta: string; type: 'thinking_delta' };
+type FileDiscoveryStreamThinkingStart = FileDiscoveryStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
+/** Step-specific: tool finished executing. */
+interface FileDiscoveryStreamToolFinish extends FileDiscoveryStreamMessageBase { toolOutput?: unknown; toolUseId: string; type: 'tool_finish' }
+type FileDiscoveryStreamToolStart = FileDiscoveryStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_start' };
+type FileDiscoveryStreamToolUpdate = FileDiscoveryStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_update' };
 
-/**
- * Stream message for text delta.
- */
-interface FileDiscoveryStreamTextDelta extends FileDiscoveryStreamMessageBase {
-  delta: string;
-  type: 'text_delta';
-}
+// =============================================================================
+// Refinement Stream Message Types
+// =============================================================================
 
-/**
- * Stream message for thinking delta.
- */
-interface FileDiscoveryStreamThinkingDelta extends FileDiscoveryStreamMessageBase {
-  blockIndex: number;
-  delta: string;
-  type: 'thinking_delta';
-}
+type RefinementStreamExtendedThinkingHeartbeat = RefinementStreamMessageBase & { elapsedMs: number; estimatedProgress: null | number; maxThinkingTokens: number; type: 'extended_thinking_heartbeat' };
 
-/**
- * Stream message for thinking block start.
- */
-interface FileDiscoveryStreamThinkingStart extends FileDiscoveryStreamMessageBase {
-  blockIndex: number;
-  type: 'thinking_start';
-}
-
-/**
- * Stream message for tool finish.
- */
-interface FileDiscoveryStreamToolFinish extends FileDiscoveryStreamMessageBase {
-  toolOutput?: unknown;
-  toolUseId: string;
-  type: 'tool_finish';
-}
-
-/**
- * Stream message for tool start.
- */
-interface FileDiscoveryStreamToolStart extends FileDiscoveryStreamMessageBase {
-  toolInput: Record<string, unknown>;
-  toolName: string;
-  toolUseId: string;
-  type: 'tool_start';
-}
-
-/**
- * Stream message for tool input updates.
- */
-interface FileDiscoveryStreamToolUpdate extends FileDiscoveryStreamMessageBase {
-  toolInput: Record<string, unknown>;
-  toolName: string;
-  toolUseId: string;
-  type: 'tool_update';
-}
-
-/**
- * Heartbeat message during extended thinking execution.
- */
-interface RefinementStreamExtendedThinkingHeartbeat extends RefinementStreamMessageBase {
-  elapsedMs: number;
-  estimatedProgress: null | number;
-  maxThinkingTokens: number;
-  type: 'extended_thinking_heartbeat';
-}
-
-/**
- * Base interface for all refinement stream messages.
- */
 interface RefinementStreamMessageBase {
   sessionId: string;
   timestamp: number;
@@ -1179,67 +985,13 @@ interface RefinementStreamMessageBase {
     | 'tool_stop'
     | 'tool_update';
 }
-
-/**
- * Stream message for phase transitions.
- */
-interface RefinementStreamPhaseChange extends RefinementStreamMessageBase {
-  phase: RefinementServicePhase;
-  type: 'phase_change';
-}
-
-/**
- * Stream message for text delta.
- */
-interface RefinementStreamTextDelta extends RefinementStreamMessageBase {
-  delta: string;
-  type: 'text_delta';
-}
-
-/**
- * Stream message for thinking delta.
- */
-interface RefinementStreamThinkingDelta extends RefinementStreamMessageBase {
-  blockIndex: number;
-  delta: string;
-  type: 'thinking_delta';
-}
-
-/**
- * Stream message for thinking block start.
- */
-interface RefinementStreamThinkingStart extends RefinementStreamMessageBase {
-  blockIndex: number;
-  type: 'thinking_start';
-}
-
-/**
- * Stream message for tool start.
- */
-interface RefinementStreamToolStart extends RefinementStreamMessageBase {
-  toolInput: Record<string, unknown>;
-  toolName: string;
-  toolUseId: string;
-  type: 'tool_start';
-}
-
-/**
- * Stream message for tool stop.
- */
-interface RefinementStreamToolStop extends RefinementStreamMessageBase {
-  toolUseId: string;
-  type: 'tool_stop';
-}
-
-/**
- * Stream message for tool input updates.
- */
-interface RefinementStreamToolUpdate extends RefinementStreamMessageBase {
-  toolInput: Record<string, unknown>;
-  toolName: string;
-  toolUseId: string;
-  type: 'tool_update';
-}
+type RefinementStreamPhaseChange = RefinementStreamMessageBase & { phase: RefinementServicePhase; type: 'phase_change' };
+type RefinementStreamTextDelta = RefinementStreamMessageBase & { delta: string; type: 'text_delta' };
+type RefinementStreamThinkingDelta = RefinementStreamMessageBase & { blockIndex: number; delta: string; type: 'thinking_delta' };
+type RefinementStreamThinkingStart = RefinementStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
+type RefinementStreamToolStart = RefinementStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_start' };
+type RefinementStreamToolStop = RefinementStreamMessageBase & { toolUseId: string; type: 'tool_stop' };
+type RefinementStreamToolUpdate = RefinementStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_update' };
 
 /**
  * Terminal workflow statuses that indicate a workflow has finished execution

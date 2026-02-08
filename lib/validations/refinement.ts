@@ -41,42 +41,9 @@ export const refinementServiceOptionsSchema = z.object({
   workflowId: z.number().int().positive('Workflow ID must be a positive integer'),
 });
 
-/**
- * Configuration for a loaded refinement agent.
- * Captures the full agent configuration needed for execution.
- */
-export interface RefinementAgentConfig {
-  /** Whether extended thinking is enabled */
-  extendedThinkingEnabled: boolean;
-  /** Array of hooks for agent events */
-  hooks: Array<{
-    body: string;
-    eventType: string;
-    matcher: null | string;
-  }>;
-  /** The unique identifier of the agent */
-  id: number;
-  /** Maximum thinking tokens budget for extended thinking */
-  maxThinkingTokens: null | number;
-  /** The model to use (e.g., 'claude-sonnet-4-20250514') */
-  model: null | string;
-  /** The display name of the agent */
-  name: string;
-  /** The permission mode for the agent */
-  permissionMode: null | string;
-  /** Array of skills the agent can use */
-  skills: Array<{
-    isRequired: boolean;
-    skillName: string;
-  }>;
-  /** The system prompt that defines agent behavior */
-  systemPrompt: string;
-  /** Array of tools the agent can use */
-  tools: Array<{
-    toolName: string;
-    toolPattern: string;
-  }>;
-}
+import type { AgentConfig } from '../../types/agent-config';
+
+export type RefinementAgentConfig = AgentConfig;
 
 /**
  * Discriminated union of all possible refinement outcomes.
@@ -260,6 +227,19 @@ export const refinementServiceStateSchema = z.object({
 // Streaming Message Types
 // =============================================================================
 
+import type {
+  StepStreamExtendedThinkingHeartbeat,
+  StepStreamPhaseChange,
+  StepStreamTextDelta,
+  StepStreamThinkingDelta,
+  StepStreamThinkingStart,
+  StepStreamToolStart,
+  StepStreamToolStop,
+  StepStreamToolUpdate,
+} from '../../types/step-stream';
+
+// Re-export shared types with refinement-specific names for backward compatibility
+export type RefinementStreamExtendedThinkingHeartbeat = StepStreamExtendedThinkingHeartbeat;
 /**
  * Type discriminator for refinement stream messages.
  */
@@ -272,6 +252,14 @@ export type RefinementStreamMessageType =
   | 'tool_start'
   | 'tool_stop'
   | 'tool_update';
+export type RefinementStreamPhaseChange = StepStreamPhaseChange<RefinementServicePhase>;
+export type RefinementStreamTextDelta = StepStreamTextDelta;
+export type RefinementStreamThinkingDelta = StepStreamThinkingDelta;
+export type RefinementStreamThinkingStart = StepStreamThinkingStart;
+export type RefinementStreamToolStart = StepStreamToolStart;
+export type RefinementStreamToolStop = StepStreamToolStop;
+
+export type RefinementStreamToolUpdate = StepStreamToolUpdate;
 
 export const refinementStreamMessageTypeSchema = z.enum([
   'phase_change',
@@ -304,20 +292,6 @@ const refinementStreamMessageBaseSchema = z.object({
 });
 
 /**
- * Heartbeat message during extended thinking execution.
- * Sent periodically to indicate progress when streaming is disabled.
- */
-export interface RefinementStreamExtendedThinkingHeartbeat extends RefinementStreamMessageBase {
-  /** Elapsed time in milliseconds since execution started */
-  elapsedMs: number;
-  /** Estimated completion percentage (0-100, null if unknown) */
-  estimatedProgress: null | number;
-  /** Maximum thinking tokens budget */
-  maxThinkingTokens: number;
-  type: 'extended_thinking_heartbeat';
-}
-
-/**
  * Discriminated union of all refinement stream message types.
  * Used for type-safe handling of streaming events in the renderer.
  */
@@ -330,79 +304,6 @@ export type RefinementStreamMessage =
   | RefinementStreamToolStart
   | RefinementStreamToolStop
   | RefinementStreamToolUpdate;
-
-/**
- * Stream message for phase transitions during refinement.
- */
-export interface RefinementStreamPhaseChange extends RefinementStreamMessageBase {
-  /** The new phase the service has transitioned to */
-  phase: RefinementServicePhase;
-  type: 'phase_change';
-}
-
-/**
- * Stream message for text delta (incremental text output).
- */
-export interface RefinementStreamTextDelta extends RefinementStreamMessageBase {
-  /** The incremental text content */
-  delta: string;
-  type: 'text_delta';
-}
-
-/**
- * Stream message for thinking delta (incremental thinking output).
- */
-export interface RefinementStreamThinkingDelta extends RefinementStreamMessageBase {
-  /** Index of the thinking block being updated */
-  blockIndex: number;
-  /** The incremental thinking content */
-  delta: string;
-  type: 'thinking_delta';
-}
-
-/**
- * Stream message indicating a new thinking block has started.
- */
-export interface RefinementStreamThinkingStart extends RefinementStreamMessageBase {
-  /** Index of the thinking block being started */
-  blockIndex: number;
-  type: 'thinking_start';
-}
-
-/**
- * Stream message indicating a tool has started executing.
- */
-export interface RefinementStreamToolStart extends RefinementStreamMessageBase {
-  /** Input parameters passed to the tool */
-  toolInput: Record<string, unknown>;
-  /** Name of the tool being executed */
-  toolName: string;
-  /** Unique identifier for this tool invocation */
-  toolUseId: string;
-  type: 'tool_start';
-}
-
-/**
- * Stream message indicating a tool has finished executing.
- */
-export interface RefinementStreamToolStop extends RefinementStreamMessageBase {
-  /** Unique identifier of the tool invocation that completed */
-  toolUseId: string;
-  type: 'tool_stop';
-}
-
-/**
- * Stream message indicating a tool input payload has been updated.
- */
-export interface RefinementStreamToolUpdate extends RefinementStreamMessageBase {
-  /** Input parameters passed to the tool */
-  toolInput: Record<string, unknown>;
-  /** Name of the tool being executed */
-  toolName: string;
-  /** Unique identifier for this tool invocation */
-  toolUseId: string;
-  type: 'tool_update';
-}
 
 /**
  * Zod schema for refinement stream messages (discriminated union).
@@ -475,22 +376,7 @@ export const refinementRegenerateInputSchema = z.object({
 // Usage Tracking Types
 // =============================================================================
 
-/**
- * Usage statistics from SDK result.
- * Tracks token usage, cost, and execution metrics.
- */
-export interface RefinementUsageStats {
-  /** Total cost in USD */
-  costUsd: number;
-  /** Total duration in milliseconds */
-  durationMs: number;
-  /** Input tokens consumed */
-  inputTokens: number;
-  /** Number of conversation turns */
-  numTurns: number;
-  /** Output tokens generated */
-  outputTokens: number;
-}
+export type { UsageStats as RefinementUsageStats } from '../../types/usage-stats';
 
 export const refinementUsageStatsSchema = z.object({
   costUsd: z.number().nonnegative(),

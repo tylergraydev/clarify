@@ -1,7 +1,5 @@
 import { create } from 'zustand';
 
-import type { ClarificationAnswer } from '../validations/clarification';
-
 import {
   DEFAULT_WORKFLOW_DETAIL_ACTIVE_STREAMING_TAB,
   DEFAULT_WORKFLOW_DETAIL_EXPANDED_STEPS,
@@ -12,29 +10,21 @@ import {
   WORKFLOW_DETAIL_STREAMING_PANEL_COLLAPSED_STORAGE_KEY,
   WORKFLOW_DETAIL_STREAMING_PANEL_HEIGHT_STORAGE_KEY,
 } from '../layout/constants';
+import {
+  type ClarificationSlice,
+  clarificationSliceInitialState,
+  type ClarificationSliceState,
+  createClarificationSlice,
+} from './clarification-slice';
 
 /**
  * Workflow detail actions interface for modifying store state.
  */
 export interface WorkflowDetailActions {
-  /** Clear all clarification draft answers */
-  clearClarificationDraftAnswers: () => void;
-  /** Remove a single clarification draft answer by question index */
-  removeClarificationDraftAnswer: (questionIndex: string) => void;
   /** Reset store to initial state */
   reset: () => void;
   /** Set the active streaming tab */
   setActiveStreamingTab: (tab: WorkflowDetailStepTab) => void;
-  /** Set the active clarification version index */
-  setClarificationActiveVersion: (version: number) => void;
-  /** Set a single clarification draft answer by question index */
-  setClarificationDraftAnswer: (questionIndex: string, answer: ClarificationAnswer) => void;
-  /** Set whether to keep existing questions when re-running clarification */
-  setClarificationKeepExistingQuestions: (keep: boolean) => void;
-  /** Set the rerun guidance text for clarification */
-  setClarificationRerunGuidance: (guidance: string) => void;
-  /** Set the selected agent override for clarification */
-  setClarificationSelectedAgentId: (agentId: null | number) => void;
   /** Set the expanded steps */
   setExpandedSteps: (steps: Array<string>) => void;
   /** Set whether the streaming panel is collapsed */
@@ -53,16 +43,6 @@ export interface WorkflowDetailActions {
 export interface WorkflowDetailState {
   /** The currently active streaming tab */
   activeStreamingTab: WorkflowDetailStepTab;
-  /** The currently active clarification version index */
-  clarificationActiveVersion: number;
-  /** Draft answers for clarification questions, keyed by question index */
-  clarificationDraftAnswers: Record<string, ClarificationAnswer>;
-  /** Whether to keep existing questions when re-running clarification */
-  clarificationKeepExistingQuestions: boolean;
-  /** Rerun guidance text for the clarification step */
-  clarificationRerunGuidance: string;
-  /** The selected agent override ID for clarification (null uses default) */
-  clarificationSelectedAgentId: null | number;
   /** Array of step identifiers that are currently expanded */
   expandedSteps: Array<string>;
   /** Whether the streaming panel is collapsed */
@@ -77,20 +57,16 @@ export interface WorkflowDetailState {
 export type WorkflowDetailStepTab = 'clarification' | 'discovery' | 'planning' | 'refinement';
 
 /**
- * Combined workflow detail store type for state and actions.
+ * Combined workflow detail store type for state, actions, and slices.
  */
-export type WorkflowDetailStore = WorkflowDetailActions & WorkflowDetailState;
+export type WorkflowDetailStore = ClarificationSlice & WorkflowDetailActions & WorkflowDetailState;
 
 /**
  * Initial state for reset functionality.
  */
-const initialState: WorkflowDetailState = {
+const initialState: ClarificationSliceState & WorkflowDetailState = {
+  ...clarificationSliceInitialState,
   activeStreamingTab: DEFAULT_WORKFLOW_DETAIL_ACTIVE_STREAMING_TAB,
-  clarificationActiveVersion: 0,
-  clarificationDraftAnswers: {},
-  clarificationKeepExistingQuestions: false,
-  clarificationRerunGuidance: '',
-  clarificationSelectedAgentId: null,
   expandedSteps: DEFAULT_WORKFLOW_DETAIL_EXPANDED_STEPS,
   isStreamingPanelCollapsed: DEFAULT_WORKFLOW_DETAIL_STREAMING_PANEL_COLLAPSED,
   streamingPanelHeight: DEFAULT_WORKFLOW_DETAIL_STREAMING_PANEL_HEIGHT,
@@ -133,17 +109,7 @@ function persistToElectronStore<T>(key: string, value: T): void {
  */
 export const useWorkflowDetailStore = create<WorkflowDetailStore>()((set) => ({
   ...initialState,
-
-  clearClarificationDraftAnswers: () => {
-    set({ clarificationDraftAnswers: {} });
-  },
-
-  removeClarificationDraftAnswer: (questionIndex: string) => {
-    set((state) => {
-      const { [questionIndex]: _, ...rest } = state.clarificationDraftAnswers;
-      return { clarificationDraftAnswers: rest };
-    });
-  },
+  ...createClarificationSlice(set as Parameters<typeof createClarificationSlice>[0]),
 
   reset: () => {
     set(initialState);
@@ -161,31 +127,6 @@ export const useWorkflowDetailStore = create<WorkflowDetailStore>()((set) => ({
   setActiveStreamingTab: (tab: WorkflowDetailStepTab) => {
     set({ activeStreamingTab: tab });
     persistToElectronStore(WORKFLOW_DETAIL_ACTIVE_STREAMING_TAB_STORAGE_KEY, tab);
-  },
-
-  setClarificationActiveVersion: (version: number) => {
-    set({ clarificationActiveVersion: version });
-  },
-
-  setClarificationDraftAnswer: (questionIndex: string, answer: ClarificationAnswer) => {
-    set((state) => ({
-      clarificationDraftAnswers: {
-        ...state.clarificationDraftAnswers,
-        [questionIndex]: answer,
-      },
-    }));
-  },
-
-  setClarificationKeepExistingQuestions: (keep: boolean) => {
-    set({ clarificationKeepExistingQuestions: keep });
-  },
-
-  setClarificationRerunGuidance: (guidance: string) => {
-    set({ clarificationRerunGuidance: guidance });
-  },
-
-  setClarificationSelectedAgentId: (agentId: null | number) => {
-    set({ clarificationSelectedAgentId: agentId });
   },
 
   setExpandedSteps: (steps: Array<string>) => {

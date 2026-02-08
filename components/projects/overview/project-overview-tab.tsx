@@ -9,7 +9,7 @@ import { ProjectRepositoriesCard } from '@/components/projects/overview/project-
 import { ProjectStatsRow } from '@/components/projects/overview/project-stats-row';
 import { useArchiveProject, useUnarchiveProject } from '@/hooks/queries/use-projects';
 
-type ProjectOverviewTabProps = {
+interface ProjectOverviewTabProps {
   isArchived: boolean;
   onTabChange: (tab: string) => void;
   project: {
@@ -40,7 +40,7 @@ type ProjectOverviewTabProps = {
     type: string;
     updatedAt: string;
   }>;
-};
+}
 
 /** Orchestrates the Overview tab layout for the project detail page, composing stats, activity, quick actions, and repositories. */
 export const ProjectOverviewTab = ({

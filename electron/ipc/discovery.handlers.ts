@@ -41,10 +41,11 @@ import type {
   FileDiscoveryOutcomeWithPause,
   FileDiscoveryServiceState,
   FileDiscoveryStreamMessage,
-} from '../services/file-discovery.service';
+} from '../../lib/validations/file-discovery';
 
 import { fileDiscoveryStepService } from '../services/file-discovery.service';
 import { IpcChannels } from './channels';
+import { createStreamForwarder, validateNumberId, validateString } from './ipc-utils';
 
 /**
  * Input for batch update operation
@@ -124,12 +125,10 @@ export function registerDiscoveryHandlers(
         });
 
         // Create stream message handler to forward events to renderer
-        const handleStreamMessage = (message: FileDiscoveryStreamMessage): void => {
-          const mainWindow = getMainWindow?.();
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send(IpcChannels.discovery.stream, message);
-          }
-        };
+        const handleStreamMessage = createStreamForwarder<FileDiscoveryStreamMessage>(
+          getMainWindow,
+          IpcChannels.discovery.stream,
+        );
 
         // Call the service with options and stream callback
         return await fileDiscoveryStepService.startDiscovery(
@@ -218,12 +217,10 @@ export function registerDiscoveryHandlers(
         });
 
         // Create stream message handler to forward events to renderer
-        const handleStreamMessage = (message: FileDiscoveryStreamMessage): void => {
-          const mainWindow = getMainWindow?.();
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send(IpcChannels.discovery.stream, message);
-          }
-        };
+        const handleStreamMessage = createStreamForwarder<FileDiscoveryStreamMessage>(
+          getMainWindow,
+          IpcChannels.discovery.stream,
+        );
 
         // Call the service with rediscovery mode
         return await fileDiscoveryStepService.startDiscovery(
@@ -358,36 +355,3 @@ export function registerDiscoveryHandlers(
   });
 }
 
-// =============================================================================
-// Validation Helpers
-// =============================================================================
-
-/**
- * Validates that a value is a valid number ID.
- *
- * @param value - The value to validate
- * @param name - The name of the parameter for error messages
- * @returns The validated number
- * @throws Error if the value is not a valid number
- */
-function validateNumberId(value: unknown, name: string): number {
-  if (typeof value !== 'number' || isNaN(value) || value <= 0) {
-    throw new Error(`Invalid ${name}: expected positive number, got ${String(value)}`);
-  }
-  return value;
-}
-
-/**
- * Validates that a value is a non-empty string.
- *
- * @param value - The value to validate
- * @param name - The name of the parameter for error messages
- * @returns The validated string
- * @throws Error if the value is not a non-empty string
- */
-function validateString(value: unknown, name: string): string {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new Error(`Invalid ${name}: expected non-empty string`);
-  }
-  return value;
-}

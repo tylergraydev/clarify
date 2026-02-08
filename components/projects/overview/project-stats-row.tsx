@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import { calculateAverageDuration, calculateCompletionRate, formatDuration } from '@/lib/workflow-stats';
 
-type ProjectStatsRowProps = {
+interface ProjectStatsRowProps {
   repositories: Array<unknown>;
   workflows: Array<{
     completedAt: null | string;
@@ -13,7 +13,7 @@ type ProjectStatsRowProps = {
     startedAt: null | string;
     status: string;
   }>;
-};
+}
 
 /** Displays a row of 4 statistic metric cards for a project overview. */
 export const ProjectStatsRow = ({ repositories, workflows }: ProjectStatsRowProps) => {

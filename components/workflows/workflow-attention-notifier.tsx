@@ -1,7 +1,7 @@
 'use client';
 
 import { $path } from 'next-typesafe-url';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
 import type { Workflow } from '@/types/electron';
@@ -33,10 +33,21 @@ interface WorkflowSnapshot {
  *
  * Must be rendered inside a ToastProvider and QueryProvider.
  */
+/**
+ * Extract the workflow ID from the pathname when on the workflow detail page.
+ * Returns `null` if the user is not viewing a specific workflow.
+ */
+function getViewedWorkflowId(pathname: string): null | number {
+  const match = /^\/workflows\/(\d+)$/.exec(pathname);
+  if (!match?.[1]) return null;
+  return Number(match[1]);
+}
+
 export const WorkflowAttentionNotifier = () => {
   const { data: activeWorkflows } = useActiveWorkflows();
   const toast = useToast();
   const router = useRouter();
+  const pathname = usePathname();
 
   /** Previous state snapshot per workflow ID */
   const prevSnapshotRef = useRef<Map<number, WorkflowSnapshot>>(new Map());
@@ -46,8 +57,12 @@ export const WorkflowAttentionNotifier = () => {
 
   /**
    * Show a toast notification for a workflow that needs attention.
+   * Suppressed when the user is already viewing this workflow's detail page.
    */
   function showAttentionToast(workflow: Workflow, reason: 'awaiting_input' | 'paused') {
+    const viewedWorkflowId = getViewedWorkflowId(pathname);
+    if (viewedWorkflowId === workflow.id) return;
+
     const workflowPath = $path({
       route: '/workflows/[id]',
       routeParams: { id: workflow.id },
@@ -134,7 +149,7 @@ export const WorkflowAttentionNotifier = () => {
         notified.delete(key);
       }
     }
-  }, [activeWorkflows]); // eslint-disable-line react-hooks/exhaustive-deps -- toast and router are stable refs
+  }, [activeWorkflows, pathname]); // eslint-disable-line react-hooks/exhaustive-deps -- toast and router are stable refs
 
   // This component renders nothing — it only produces side effects (toasts)
   return null;

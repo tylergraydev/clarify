@@ -140,7 +140,7 @@ const QuestionCard = ({ children, header, index, question }: QuestionCardProps) 
   return (
     <div
       className={
-        'h-full rounded-lg border border-border bg-muted/40 p-4 shadow-sm transition-colors hover:border-primary/40'
+        'h-full rounded-lg border border-border bg-muted/40 p-4 shadow-sm transition-colors hover:border-accent'
       }
     >
       {/* Question Header */}

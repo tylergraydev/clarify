@@ -55,7 +55,6 @@ import { buildOutcomeWithPauseInfo } from './agent-step/outcome-builder';
 import { StepAuditLogger } from './agent-step/step-audit-logger';
 import { buildErrorOutcomeFromResult, handleStepError } from './agent-step/step-error-handler';
 import { StructuredOutputValidator } from './agent-step/structured-output-validator';
-import { extractUsageStats } from './agent-step/usage-stats';
 import { debugLoggerService } from './debug-logger.service';
 
 /**
@@ -318,6 +317,34 @@ class RefinementStepService extends BaseAgentStepService<
   // ===========================================================================
 
   /**
+   * Apply outcome to refinement session state.
+   *
+   * Updates session phase and refinedText based on the outcome type.
+   *
+   * @param session - The active session
+   * @param outcome - The processed outcome
+   * @param _resultMessage - The SDK result message (unused)
+   * @param _agentConfig - The agent configuration (unused)
+   * @param onStreamMessage - Optional callback for phase change events
+   */
+  protected applyOutcomeToSession(
+    session: ActiveRefinementSession,
+    outcome: RefinementOutcome,
+    _resultMessage: SDKResultMessage,
+    _agentConfig: RefinementAgentConfig,
+    onStreamMessage?: (message: RefinementStreamMessage) => void
+  ): void {
+    if (outcome.type === 'SUCCESS') {
+      session.phase = 'complete';
+      session.refinedText = outcome.refinedText;
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
+    } else {
+      session.phase = outcome.type === 'ERROR' ? 'error' : 'complete';
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
+    }
+  }
+
+  /**
    * Build cancelled outcome specific to refinement step.
    *
    * @param _session - The active session (unused for refinement)
@@ -473,12 +500,119 @@ The refined text should be a prose narrative that reads as if the user had provi
   }
 
   /**
+   * Get the activity repository for SDK execution persistence.
+   */
+  protected getActivityRepository() {
+    return this.activityRepository;
+  }
+
+  // ===========================================================================
+  // Execute Agent Template Method Hooks
+  // ===========================================================================
+
+  /**
+   * Get the audit logger for refinement.
+   */
+  protected getAuditLogger() {
+    return this.auditLogger;
+  }
+
+  /**
+   * Get additional metadata for the exploring audit log.
+   */
+  protected getExploringAuditMetadata(session: ActiveRefinementSession): Record<string, unknown> {
+    return {
+      clarificationQuestionCount: session.options.clarificationContext.questions.length,
+    };
+  }
+
+  /**
+   * Get additional metadata for the outcome debug log.
+   */
+  protected getOutcomeLogMetadata(outcome: RefinementOutcome): Record<string, unknown> {
+    return {
+      refinedTextLength: outcome.type === 'SUCCESS' ? outcome.refinedText.length : 0,
+    };
+  }
+
+  /**
+   * Get the JSON schema for refinement structured output.
+   */
+  protected getOutputFormatSchema() {
+    return refinementAgentOutputJSONSchema;
+  }
+
+  /**
+   * Get the SDK executor for refinement.
+   */
+  protected getSdkExecutor() {
+    return this.sdkExecutor;
+  }
+
+  /**
+   * Get additional metadata for the "Starting agent" debug log.
+   */
+  protected getStartingAgentLogMetadata(
+    session: ActiveRefinementSession,
+    agentConfig: RefinementAgentConfig
+  ): Record<string, unknown> {
+    return {
+      allowedToolsCount: agentConfig.tools.length,
+      clarificationQuestionCount: session.options.clarificationContext.questions.length,
+      model: agentConfig.model,
+    };
+  }
+
+  /**
    * Return the step name for logging.
    *
    * @returns The step name 'refinement'
    */
   protected getStepName(): string {
     return 'refinement';
+  }
+
+  /**
+   * Log audit entries based on refinement outcome type.
+   *
+   * @param session - The active session
+   * @param outcome - The determined outcome
+   * @param agentConfig - The agent configuration
+   */
+  protected logOutcomeAudit(
+    session: ActiveRefinementSession,
+    outcome: RefinementOutcome,
+    agentConfig: RefinementAgentConfig
+  ): void {
+    if (outcome.type === 'SUCCESS') {
+      this.auditLogger.logStepCompleted(
+        session.options.workflowId,
+        session.options.stepId,
+        agentConfig.id,
+        agentConfig.name,
+        'Refinement completed successfully',
+        {
+          outcomeType: outcome.type,
+          refinedTextLength: outcome.refinedText.length,
+          refinedTextPreview: outcome.refinedText.slice(0, 200),
+          sessionId: session.sessionId,
+        },
+        { phase: 'complete', refinedTextLength: outcome.refinedText.length }
+      );
+    } else if (outcome.type === 'ERROR') {
+      this.auditLogger.logStepError(
+        session.options.workflowId,
+        session.options.stepId,
+        agentConfig.id,
+        agentConfig.name,
+        outcome.error ?? 'Unknown error',
+        {
+          error: outcome.error,
+          outcomeType: outcome.type,
+          sessionId: session.sessionId,
+        }
+      );
+    }
   }
 
   /**
@@ -517,165 +651,6 @@ The refined text should be a prose narrative that reads as if the user had provi
     return {
       refinedText: output.refinedText!,
       type: 'SUCCESS',
-    };
-  }
-
-  // ===========================================================================
-  // Private Helper Methods
-  // ===========================================================================
-
-  /**
-   * Execute the refinement agent and collect output.
-   *
-   * @param session - The active session
-   * @param agentConfig - The loaded agent configuration
-   * @param onStreamMessage - Optional callback for streaming events
-   * @returns The refinement outcome with usage metadata
-   */
-  private async executeAgent(
-    session: ActiveRefinementSession,
-    agentConfig: RefinementAgentConfig,
-    onStreamMessage?: (message: RefinementStreamMessage) => void
-  ): Promise<ExecuteAgentResult<RefinementOutcome, RefinementUsageStats>> {
-    // Build the prompt for refinement using template method
-    const prompt = this.buildPrompt(session.options);
-
-    debugLoggerService.logSdkEvent(session.sessionId, 'Starting refinement agent', {
-      allowedToolsCount: agentConfig.tools.length,
-      clarificationQuestionCount: session.options.clarificationContext.questions.length,
-      model: agentConfig.model,
-      promptLength: prompt.length,
-    });
-
-    // Audit log: refinement exploring
-    this.auditLogger.logStepExploring(
-      session.options.workflowId,
-      session.options.stepId,
-      agentConfig.id,
-      agentConfig.name,
-      {
-        clarificationQuestionCount: session.options.clarificationContext.questions.length,
-        model: agentConfig.model,
-        promptLength: prompt.length,
-        sessionId: session.sessionId,
-        toolsCount: agentConfig.tools.length,
-      }
-    );
-
-    // Execute the query using AgentSdkExecutor
-    const resultMessage = await this.sdkExecutor.executeQuery(
-      session,
-      {
-        abortController: session.abortController,
-        activityRepository: this.activityRepository ?? undefined,
-        agentConfig,
-        outputFormatSchema: refinementAgentOutputJSONSchema,
-        repositoryPath: session.options.repositoryPath,
-        stepId: session.options.stepId,
-      },
-      prompt,
-      {
-        onMessageEmit: onStreamMessage,
-        onPhaseChange: (phase) => {
-          session.phase = phase as RefinementServicePhase;
-          this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
-        },
-      }
-    );
-
-    // Phase: Processing response
-    session.phase = 'processing_response';
-    this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
-
-    // Handle missing result message (cancelled or null)
-    if (!resultMessage) {
-      return {
-        outcome: {
-          reason: 'Refinement was cancelled',
-          type: 'CANCELLED',
-        },
-      };
-    }
-
-    debugLoggerService.logSdkEvent(session.sessionId, 'Processing structured output', {
-      hasStructuredOutput: resultMessage.subtype === 'success' ? !!resultMessage.structured_output : false,
-      resultSubtype: resultMessage.subtype,
-    });
-
-    // Log raw agent text for debugging structured output issues
-    debugLoggerService.logSdkEvent(session.sessionId, 'Raw agent output for debugging', {
-      streamingTextLength: session.streamingText.length,
-      streamingTextPreview: session.streamingText.slice(0, 500),
-      thinkingBlockCount: session.thinkingBlocks.length,
-    });
-
-    // Extract and validate structured output using template method
-    const outcome = this.processStructuredOutput(resultMessage, session.sessionId);
-
-    // Update session state based on outcome
-    if (outcome.type === 'SUCCESS') {
-      session.phase = 'complete';
-      session.refinedText = outcome.refinedText;
-      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
-    } else {
-      session.phase = outcome.type === 'ERROR' ? 'error' : 'complete';
-      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
-    }
-
-    debugLoggerService.logSdkEvent(session.sessionId, 'Refinement outcome determined', {
-      outcomeType: outcome.type,
-      phase: session.phase,
-      refinedTextLength: outcome.type === 'SUCCESS' ? outcome.refinedText.length : 0,
-    });
-
-    // Audit log: refinement completed with specific outcome
-    if (outcome.type === 'SUCCESS') {
-      this.auditLogger.logStepCompleted(
-        session.options.workflowId,
-        session.options.stepId,
-        agentConfig.id,
-        agentConfig.name,
-        'Refinement completed successfully',
-        {
-          outcomeType: outcome.type,
-          refinedTextLength: outcome.refinedText.length,
-          refinedTextPreview: outcome.refinedText.slice(0, 200),
-          sessionId: session.sessionId,
-        },
-        { phase: 'complete', refinedTextLength: outcome.refinedText.length }
-      );
-    } else if (outcome.type === 'ERROR') {
-      this.auditLogger.logStepError(
-        session.options.workflowId,
-        session.options.stepId,
-        agentConfig.id,
-        agentConfig.name,
-        outcome.error ?? 'Unknown error',
-        {
-          error: outcome.error,
-          outcomeType: outcome.type,
-          sessionId: session.sessionId,
-        }
-      );
-    }
-
-    // Extract usage statistics from successful result
-    const usage = extractUsageStats(resultMessage);
-
-    if (usage) {
-      debugLoggerService.logSdkEvent(session.sessionId, 'Usage statistics extracted', {
-        costUsd: usage.costUsd,
-        durationMs: usage.durationMs,
-        inputTokens: usage.inputTokens,
-        numTurns: usage.numTurns,
-        outputTokens: usage.outputTokens,
-      });
-    }
-
-    return {
-      outcome,
-      sdkSessionId: resultMessage.session_id,
-      usage,
     };
   }
 }

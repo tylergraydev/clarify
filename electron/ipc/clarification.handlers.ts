@@ -26,6 +26,7 @@ import type {
 
 import { type ClarificationOutcomeWithPause, clarificationStepService } from '../services/clarification-step.service';
 import { IpcChannels } from './channels';
+import { advanceWorkflowAfterSkip, advanceWorkflowAfterStep, createStreamForwarder, parseOutputStructured, validateNumberId, validateString } from './ipc-utils';
 
 /**
  * Input for starting a clarification session.
@@ -106,12 +107,11 @@ export function registerClarificationHandlers(
         // Create stream message handler to forward events to renderer.
         // Injects workflowId into every message so the renderer can filter
         // by workflow and avoid cross-workflow stream contamination.
-        const handleStreamMessage = (message: ClarificationStreamMessage): void => {
-          const mainWindow = getMainWindow();
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send(IpcChannels.clarification.stream, { ...message, workflowId });
-          }
-        };
+        const handleStreamMessage = createStreamForwarder<ClarificationStreamMessage>(
+          getMainWindow,
+          IpcChannels.clarification.stream,
+          { workflowId },
+        );
 
         // Call the service with the complete options and stream callback
         const outcome = await clarificationStepService.startClarification(
@@ -260,11 +260,7 @@ export function registerClarificationHandlers(
         // can derive the "answered" phase from step data after a refetch.
         const step = workflowStepsRepository.findById(typedInput.stepId);
         if (step) {
-          const existingOutput = step.outputStructured
-            ? typeof step.outputStructured === 'string'
-              ? JSON.parse(step.outputStructured as string)
-              : step.outputStructured
-            : {};
+          const existingOutput = parseOutputStructured(step.outputStructured);
 
           workflowStepsRepository.update(typedInput.stepId, {
             completedAt: new Date().toISOString(),
@@ -275,29 +271,8 @@ export function registerClarificationHandlers(
             status: 'completed',
           });
 
-          // Transition workflow based on pause behavior
-          const workflow = workflowsRepository.findById(typedInput.workflowId);
-          if (workflow) {
-            type PauseBehavior = 'auto_pause' | 'continuous';
-            const pauseBehavior = (workflow.pauseBehavior ?? 'auto_pause') as PauseBehavior;
-
-            if (pauseBehavior === 'continuous') {
-              workflowsRepository.updateStatus(typedInput.workflowId, 'running');
-              // Start next pending step
-              const allSteps = workflowStepsRepository.findByWorkflowId(typedInput.workflowId);
-              const currentStep = allSteps.find((s) => s.id === typedInput.stepId);
-              if (currentStep) {
-                const nextStep = allSteps
-                  .filter((s) => s.status === 'pending' && s.stepNumber > currentStep.stepNumber)
-                  .sort((a, b) => a.stepNumber - b.stepNumber)[0];
-                if (nextStep) {
-                  workflowStepsRepository.start(nextStep.id);
-                }
-              }
-            } else {
-              workflowsRepository.updateStatus(typedInput.workflowId, 'paused');
-            }
-          }
+          // Advance workflow based on pause behavior
+          advanceWorkflowAfterStep(workflowsRepository, workflowStepsRepository, typedInput.workflowId, typedInput.stepId);
         }
 
         return result;
@@ -359,11 +334,7 @@ export function registerClarificationHandlers(
           const skippedStep = workflowStepsRepository.skip(clarificationStep.id);
 
           // Preserve existing output (e.g. questions from a completed run) and add skip info
-          const existingOutput = clarificationStep.outputStructured
-            ? typeof clarificationStep.outputStructured === 'string'
-              ? JSON.parse(clarificationStep.outputStructured as string)
-              : clarificationStep.outputStructured
-            : {};
+          const existingOutput = parseOutputStructured(clarificationStep.outputStructured);
 
           workflowStepsRepository.update(clarificationStep.id, {
             outputStructured: {
@@ -375,27 +346,7 @@ export function registerClarificationHandlers(
 
           // Auto-advance to the next step based on workflow pause behavior
           if (skippedStep) {
-            const workflow = workflowsRepository.findById(skippedStep.workflowId);
-            if (workflow && (workflow.status === 'running' || workflow.status === 'awaiting_input')) {
-              type PauseBehavior = 'auto_pause' | 'continuous';
-              const pauseBehavior = (workflow.pauseBehavior ?? 'auto_pause') as PauseBehavior;
-              const allSteps = workflowStepsRepository.findByWorkflowId(skippedStep.workflowId);
-              const runningStatuses = ['running', 'paused', 'editing', 'awaiting_input'];
-              const hasRunningStep = allSteps.some((s) => runningStatuses.includes(s.status));
-
-              if (!hasRunningStep) {
-                const nextStep = allSteps
-                  .filter((s) => s.status === 'pending' && s.stepNumber > skippedStep.stepNumber)
-                  .sort((a, b) => a.stepNumber - b.stepNumber)[0];
-
-                if (nextStep && pauseBehavior === 'continuous') {
-                  workflowsRepository.updateStatus(skippedStep.workflowId, 'running');
-                  workflowStepsRepository.start(nextStep.id);
-                } else {
-                  workflowsRepository.updateStatus(skippedStep.workflowId, 'paused');
-                }
-              }
-            }
+            advanceWorkflowAfterSkip(workflowsRepository, workflowStepsRepository, skippedStep.workflowId, skippedStep.stepNumber);
           }
 
           return {
@@ -474,22 +425,18 @@ export function registerClarificationHandlers(
         // Create stream message handler to forward events to renderer.
         // Injects workflowId into every message so the renderer can filter
         // by workflow and avoid cross-workflow stream contamination.
-        const handleStreamMessage = (message: ClarificationStreamMessage): void => {
-          const mainWindow = getMainWindow();
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send(IpcChannels.clarification.stream, { ...message, workflowId });
-          }
-        };
+        const handleStreamMessage = createStreamForwarder<ClarificationStreamMessage>(
+          getMainWindow,
+          IpcChannels.clarification.stream,
+          { workflowId },
+        );
 
         // If keepExistingQuestions, load existing questions from the step's outputStructured
         let existingQuestions: Array<ClarificationQuestion> | undefined;
         if (typedInput.keepExistingQuestions) {
           const existingStep = workflowStepsRepository.findById(stepId);
           if (existingStep?.outputStructured) {
-            const parsed =
-              typeof existingStep.outputStructured === 'string'
-                ? JSON.parse(existingStep.outputStructured as string)
-                : existingStep.outputStructured;
+            const parsed = parseOutputStructured(existingStep.outputStructured);
             existingQuestions = parsed?.questions as Array<ClarificationQuestion> | undefined;
           }
         }
@@ -626,10 +573,7 @@ function persistOutcomeToStepMerged(
   const existingStep = workflowStepsRepository.findById(stepId);
   let existingQuestions: Array<ClarificationQuestion> = [];
   if (existingStep?.outputStructured) {
-    const parsed =
-      typeof existingStep.outputStructured === 'string'
-        ? JSON.parse(existingStep.outputStructured as string)
-        : existingStep.outputStructured;
+    const parsed = parseOutputStructured(existingStep.outputStructured);
     existingQuestions = (parsed?.questions as Array<ClarificationQuestion>) ?? [];
   }
 
@@ -647,32 +591,3 @@ function persistOutcomeToStepMerged(
   workflowsRepository.updateStatus(workflowId, 'awaiting_input');
 }
 
-/**
- * Validates that a value is a valid number ID.
- *
- * @param value - The value to validate
- * @param name - The name of the parameter for error messages
- * @returns The validated number
- * @throws Error if the value is not a valid number
- */
-function validateNumberId(value: unknown, name: string): number {
-  if (typeof value !== 'number' || isNaN(value) || value <= 0) {
-    throw new Error(`Invalid ${name}: expected positive number, got ${String(value)}`);
-  }
-  return value;
-}
-
-/**
- * Validates that a value is a non-empty string.
- *
- * @param value - The value to validate
- * @param name - The name of the parameter for error messages
- * @returns The validated string
- * @throws Error if the value is not a non-empty string
- */
-function validateString(value: unknown, name: string): string {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new Error(`Invalid ${name}: expected non-empty string`);
-  }
-  return value;
-}

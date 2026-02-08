@@ -5,13 +5,13 @@ import { Archive, ArchiveRestore, FolderGit2, Pencil, Plus, Zap } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-type ProjectQuickActionsCardProps = {
+interface ProjectQuickActionsCardProps {
   isArchived: boolean;
   onAddRepository: () => void;
   onArchiveToggle: () => void;
   onCreateWorkflow: () => void;
   onEditProject: () => void;
-};
+}
 
 /**
  * Displays a "Quick Actions" card with buttons for common project operations

@@ -1,19 +1,6 @@
 import { differenceInMinutes, parseISO } from 'date-fns';
 
 /**
- * Calculates the completion rate as a percentage
- */
-export function calculateCompletionRate(workflows: Array<{ status: string }>): number {
-  if (workflows.length === 0) {
-    return 0;
-  }
-
-  const completedCount = workflows.filter((workflow) => workflow.status === 'completed').length;
-
-  return Math.round((completedCount / workflows.length) * 100);
-}
-
-/**
  * Calculates the average duration in minutes from completed workflows
  */
 export function calculateAverageDuration(
@@ -59,6 +46,19 @@ export function calculateAverageDuration(
   }
 
   return Math.round(totalMinutes / validCount);
+}
+
+/**
+ * Calculates the completion rate as a percentage
+ */
+export function calculateCompletionRate(workflows: Array<{ status: string }>): number {
+  if (workflows.length === 0) {
+    return 0;
+  }
+
+  const completedCount = workflows.filter((workflow) => workflow.status === 'completed').length;
+
+  return Math.round((completedCount / workflows.length) * 100);
 }
 
 /**

@@ -25,6 +25,7 @@ import type {
 
 import { type RefinementOutcomeWithPause, refinementStepService } from '../services/refinement-step.service';
 import { IpcChannels } from './channels';
+import { createStreamForwarder, validateNumberId, validateString } from './ipc-utils';
 
 /**
  * Input for starting a refinement session.
@@ -94,12 +95,10 @@ export function registerRefinementHandlers(getMainWindow: () => BrowserWindow | 
         });
 
         // Create stream message handler to forward events to renderer
-        const handleStreamMessage = (message: RefinementStreamMessage): void => {
-          const mainWindow = getMainWindow();
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send(IpcChannels.refinement.stream, message);
-          }
-        };
+        const handleStreamMessage = createStreamForwarder<RefinementStreamMessage>(
+          getMainWindow,
+          IpcChannels.refinement.stream,
+        );
 
         // Call the service with the complete options and stream callback
         const outcome = await refinementStepService.startRefinement(
@@ -245,12 +244,10 @@ export function registerRefinementHandlers(getMainWindow: () => BrowserWindow | 
         });
 
         // Create stream message handler
-        const handleStreamMessage = (message: RefinementStreamMessage): void => {
-          const mainWindow = getMainWindow();
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send(IpcChannels.refinement.stream, message);
-          }
-        };
+        const handleStreamMessage = createStreamForwarder<RefinementStreamMessage>(
+          getMainWindow,
+          IpcChannels.refinement.stream,
+        );
 
         // Augment the feature request with the regeneration guidance
         const augmentedFeatureRequest = `${featureRequest}
@@ -300,32 +297,3 @@ ${guidance}`;
   });
 }
 
-/**
- * Validates that a value is a valid number ID.
- *
- * @param value - The value to validate
- * @param name - The name of the parameter for error messages
- * @returns The validated number
- * @throws Error if the value is not a valid number
- */
-function validateNumberId(value: unknown, name: string): number {
-  if (typeof value !== 'number' || isNaN(value) || value <= 0) {
-    throw new Error(`Invalid ${name}: expected positive number, got ${String(value)}`);
-  }
-  return value;
-}
-
-/**
- * Validates that a value is a non-empty string.
- *
- * @param value - The value to validate
- * @param name - The name of the parameter for error messages
- * @returns The validated string
- * @throws Error if the value is not a non-empty string
- */
-function validateString(value: unknown, name: string): string {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new Error(`Invalid ${name}: expected non-empty string`);
-  }
-  return value;
-}

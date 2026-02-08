@@ -4,14 +4,19 @@ import { formatDistanceToNow, parseISO } from 'date-fns';
 import { CheckCircle, Clock, History, XCircle } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { useRouter } from 'next/navigation';
-import { type KeyboardEvent, Fragment, useCallback, useMemo } from 'react';
+import { Fragment, type KeyboardEvent, useCallback, useMemo } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatWorkflowDuration } from '@/lib/workflow-stats';
 
-type WorkflowData = {
+interface ProjectActivityCardProps {
+  onViewAllClick: () => void;
+  workflows: Array<WorkflowData>;
+}
+
+interface WorkflowData {
   completedAt: null | string;
   createdAt: string;
   durationMs: null | number;
@@ -21,12 +26,7 @@ type WorkflowData = {
   status: string;
   type: string;
   updatedAt: string;
-};
-
-type ProjectActivityCardProps = {
-  onViewAllClick: () => void;
-  workflows: WorkflowData[];
-};
+}
 
 /**
  * Formats a timestamp to relative time (e.g., "2 hours ago")

@@ -61,8 +61,11 @@
 
 import type { SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
 
-import type { BaseAgentConfig } from './agent-sdk-executor';
+import type { AgentActivityRepository } from '../../../db/repositories/agent-activity.repository';
+import type { UsageStats } from '../../../types/usage-stats';
+import type { AgentSdkExecutor, BaseAgentConfig, StreamEventHandlers } from './agent-sdk-executor';
 import type { StepAuditLogger } from './step-audit-logger';
+import type { ExecuteAgentResult } from './step-types';
 
 import { getDatabase } from '../../../db';
 import {
@@ -74,6 +77,7 @@ import {
 import { debugLoggerService } from '../debug-logger.service';
 import { MAX_RETRY_ATTEMPTS, STEP_TIMEOUTS, StepName } from './agent-step-constants';
 import { calculateBackoffDelay, RetryTracker } from './retry-backoff';
+import { extractUsageStats } from './usage-stats';
 
 // =============================================================================
 // Type Definitions
@@ -246,6 +250,33 @@ export abstract class BaseAgentStepService<
   // ===========================================================================
 
   /**
+   * Apply the outcome to the session state after processing structured output.
+   *
+   * Each step has different session state updates based on the outcome type:
+   * - Clarification: Updates questions/skipReason and phase
+   * - Refinement: Updates refinedText and phase
+   * - File Discovery: Saves files to DB, updates phase, may transform outcome
+   *
+   * If this method returns a result object, the returned outcome and usage will
+   * be used instead of the original. This allows steps like file discovery to
+   * replace the placeholder outcome with the actual saved files.
+   *
+   * @param session - The active session to update
+   * @param outcome - The outcome from processStructuredOutput
+   * @param resultMessage - The raw SDK result message (for re-validation if needed)
+   * @param agentConfig - The agent configuration
+   * @param onStreamMessage - Optional callback for phase change events
+   * @returns Optional result with transformed outcome and usage, or void
+   */
+  protected abstract applyOutcomeToSession(
+    session: TSession,
+    outcome: TOutcome,
+    resultMessage: SDKResultMessage,
+    agentConfig: TAgentConfig,
+    onStreamMessage?: (message: TStreamMessage) => void
+  ): Promise<void | { outcome?: TOutcome; usage?: UsageStats }> | void | { outcome?: TOutcome; usage?: UsageStats };
+
+  /**
    * Build the cancelled outcome specific to this step.
    *
    * Each step has a different cancelled outcome structure:
@@ -279,6 +310,10 @@ export abstract class BaseAgentStepService<
    */
   protected abstract buildNotFoundErrorOutcome(workflowId: number): TOutcome;
 
+  // ===========================================================================
+  // Abstract Template Methods (Implemented by Subclasses)
+  // ===========================================================================
+
   /**
    * Build the prompt for the agent based on service options.
    *
@@ -291,10 +326,6 @@ export abstract class BaseAgentStepService<
    * @returns The formatted prompt string
    */
   protected abstract buildPrompt(options: TOptions): string;
-
-  // ===========================================================================
-  // Abstract Template Methods (Implemented by Subclasses)
-  // ===========================================================================
 
   /**
    * Cancel an active session with standardized cleanup.
@@ -397,6 +428,10 @@ export abstract class BaseAgentStepService<
    */
   protected abstract createSession(workflowId: number, options: TOptions): TSession;
 
+  // ===========================================================================
+  // Cancel Template Method Abstract Methods
+  // ===========================================================================
+
   /**
    * Emit a phase change message to the stream callback.
    *
@@ -421,9 +456,175 @@ export abstract class BaseAgentStepService<
     }
   }
 
-  // ===========================================================================
-  // Cancel Template Method Abstract Methods
-  // ===========================================================================
+  /**
+   * Template method for executing an agent step.
+   *
+   * Provides the common flow shared by all agent step services:
+   * 1. Build prompt via `buildPrompt()`
+   * 2. Debug log agent start
+   * 3. Audit log exploring
+   * 4. Execute via `sdkExecutor.executeQuery()` with handlers
+   * 5. Set phase to `processing_response` and emit
+   * 6. Handle null result (cancelled) → return cancelled outcome
+   * 7. Debug log processing structured output
+   * 8. Debug log raw agent output
+   * 9. Call `processStructuredOutput()`
+   * 10. Call `applyOutcomeToSession()` — step-specific session updates (may transform outcome)
+   * 11. Debug log outcome determined
+   * 12. Call `logOutcomeAudit()` — step-specific audit logging
+   * 13. Extract usage statistics
+   * 14. Return result
+   *
+   * Subclasses customize behavior through abstract hooks:
+   * - `applyOutcomeToSession()` — update session state based on outcome, optionally transform outcome
+   * - `logOutcomeAudit()` — audit log based on outcome type
+   * - `getOutputFormatSchema()` — return JSON schema for structured output
+   * - `getCustomStreamEventHandler()` — optional custom stream event handler
+   *
+   * @param session - The active session
+   * @param agentConfig - The loaded agent configuration
+   * @param onStreamMessage - Optional callback for streaming events
+   * @returns The step outcome with usage metadata
+   */
+  protected async executeAgent(
+    session: TSession,
+    agentConfig: TAgentConfig,
+    onStreamMessage?: (message: TStreamMessage) => void
+  ): Promise<ExecuteAgentResult<TOutcome, UsageStats>> {
+    const stepName = this.getStepName();
+
+    // 1. Build prompt
+    // Cast is safe: concrete sessions always have the correct TOptions type
+    const prompt = this.buildPrompt(session.options as unknown as TOptions);
+
+    // 2. Debug log agent start
+    debugLoggerService.logSdkEvent(session.sessionId, `Starting ${stepName} agent`, {
+      promptLength: prompt.length,
+      ...this.getStartingAgentLogMetadata(session, agentConfig),
+    });
+
+    // 3. Audit log exploring
+    const auditLogger = this.getAuditLogger();
+    auditLogger.logStepExploring(
+      session.options.workflowId,
+      session.options.stepId,
+      agentConfig.id,
+      agentConfig.name,
+      {
+        model: agentConfig.model,
+        promptLength: prompt.length,
+        sessionId: session.sessionId,
+        toolsCount: agentConfig.tools.length,
+        ...this.getExploringAuditMetadata(session),
+      }
+    );
+
+    // Build stream event handlers
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handlers: StreamEventHandlers<TStreamMessage, any> = {
+      onMessageEmit: onStreamMessage,
+      onPhaseChange: (phase) => {
+        session.phase = phase as unknown as TSession['phase'];
+        this.emitPhaseChange(session.sessionId, session.phase as unknown as TPhase, onStreamMessage);
+      },
+    };
+
+    // Add custom stream event handler if step provides one
+    const customHandler = this.getCustomStreamEventHandler(onStreamMessage);
+    if (customHandler) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      handlers.onCustomStreamEvent = customHandler as StreamEventHandlers<TStreamMessage, any>['onCustomStreamEvent'];
+    }
+
+    // 4. Execute via SDK
+    const sdkExecutor = this.getSdkExecutor();
+    const activityRepository = this.getActivityRepository();
+    const resultMessage = await sdkExecutor.executeQuery(
+      session,
+      {
+        abortController: session.abortController,
+        activityRepository: activityRepository ?? undefined,
+        agentConfig,
+        outputFormatSchema: this.getOutputFormatSchema(),
+        repositoryPath: session.options.repositoryPath,
+        stepId: session.options.stepId,
+      },
+      prompt,
+      handlers
+    );
+
+    // 5. Phase: Processing response
+    const processingPhase = 'processing_response' as unknown as TPhase;
+    session.phase = processingPhase as unknown as TSession['phase'];
+    this.emitPhaseChange(session.sessionId, processingPhase, onStreamMessage);
+
+    // 6. Handle null result (cancelled)
+    if (!resultMessage) {
+      return {
+        outcome: this.buildCancelledOutcome(session),
+      };
+    }
+
+    // 7. Debug log processing structured output
+    debugLoggerService.logSdkEvent(session.sessionId, 'Processing structured output', {
+      hasStructuredOutput: resultMessage.subtype === 'success' ? !!resultMessage.structured_output : false,
+      resultSubtype: resultMessage.subtype,
+    });
+
+    // 8. Debug log raw agent output
+    debugLoggerService.logSdkEvent(session.sessionId, 'Raw agent output for debugging', {
+      streamingTextLength: (session as unknown as { streamingText: string }).streamingText.length,
+      streamingTextPreview: (session as unknown as { streamingText: string }).streamingText.slice(0, 500),
+      thinkingBlockCount: (session as unknown as { thinkingBlocks: Array<string> }).thinkingBlocks.length,
+    });
+
+    // 9. Process structured output
+    const outcome = this.processStructuredOutput(resultMessage, session.sessionId);
+
+    // 10. Apply outcome to session (step-specific)
+    // This may return a transformed outcome and handle step-specific side effects
+    const appliedResult = await this.applyOutcomeToSession(
+      session,
+      outcome,
+      resultMessage,
+      agentConfig,
+      onStreamMessage
+    );
+
+    // Use the potentially transformed outcome
+    const finalOutcome = appliedResult?.outcome ?? outcome;
+
+    // 11. Debug log outcome determined
+    debugLoggerService.logSdkEvent(session.sessionId, `${this.capitalizeStepName()} outcome determined`, {
+      outcomeType: finalOutcome.type,
+      phase: session.phase,
+      ...this.getOutcomeLogMetadata(finalOutcome),
+    });
+
+    // 12. Audit log based on outcome type (step-specific)
+    this.logOutcomeAudit(session, finalOutcome, agentConfig);
+
+    // 13. Extract usage statistics
+    // If applyOutcomeToSession already computed usage (e.g., file discovery SUCCESS), use that
+    const usage = appliedResult?.usage !== undefined ? appliedResult.usage : extractUsageStats(resultMessage);
+
+    if (usage) {
+      debugLoggerService.logSdkEvent(session.sessionId, 'Usage statistics extracted', {
+        costUsd: usage.costUsd,
+        durationMs: usage.durationMs,
+        inputTokens: usage.inputTokens,
+        numTurns: usage.numTurns,
+        outputTokens: usage.outputTokens,
+      });
+    }
+
+    // 14. Return result
+    return {
+      outcome: finalOutcome,
+      sdkSessionId: resultMessage.session_id,
+      usage,
+    };
+  }
 
   /**
    * Extract step-specific state from a session.
@@ -435,6 +636,105 @@ export abstract class BaseAgentStepService<
    * @returns The extracted state object
    */
   protected abstract extractState(session: TSession): unknown;
+
+  // ===========================================================================
+  // Cancel Template Method Optional Hooks
+  // ===========================================================================
+
+  /**
+   * Get the activity repository for SDK execution persistence.
+   *
+   * @returns The agent activity repository, or null if not configured
+   */
+  protected abstract getActivityRepository(): AgentActivityRepository | null;
+
+  // ===========================================================================
+  // Retry Template Method
+  // ===========================================================================
+
+  /**
+   * Get the audit logger for this step.
+   *
+   * @returns The step's audit logger instance
+   */
+  protected abstract getAuditLogger(): StepAuditLogger;
+
+  // ===========================================================================
+  // Execute Agent Template Method
+  // ===========================================================================
+
+  /**
+   * Get the custom stream event handler for SDK execution, if any.
+   *
+   * Override in subclasses that need custom stream event processing
+   * (e.g., file discovery for file_discovered events).
+   *
+   * @param _onStreamMessage - Optional callback for streaming events
+   * @returns The custom event handler function, or undefined
+   */
+  protected getCustomStreamEventHandler(
+    _onStreamMessage?: (message: TStreamMessage) => void
+  ): ((event: Record<string, unknown>, session: TSession) => void) | undefined {
+    return undefined;
+  }
+
+  // ===========================================================================
+  // Execute Agent Template Method - Abstract Hooks
+  // ===========================================================================
+
+  /**
+   * Get additional metadata to include in the exploring audit log entry.
+   *
+   * Override to add step-specific metadata (e.g., clarificationQuestionCount).
+   *
+   * @param _session - The active session
+   * @returns Additional metadata object, or empty object
+   */
+  protected getExploringAuditMetadata(_session: TSession): Record<string, unknown> {
+    return {};
+  }
+
+  /**
+   * Get additional metadata to include in the outcome debug log.
+   *
+   * Override to add step-specific outcome metadata (e.g., refinedTextLength).
+   *
+   * @param _outcome - The determined outcome
+   * @returns Additional metadata object, or empty object
+   */
+  protected getOutcomeLogMetadata(_outcome: TOutcome): Record<string, unknown> {
+    return {};
+  }
+
+  /**
+   * Get the JSON schema for the structured output format.
+   *
+   * Each step has a different schema for its agent output.
+   *
+   * @returns The JSON schema object for SDK outputFormat
+   */
+  protected abstract getOutputFormatSchema(): Record<string, unknown>;
+
+  /**
+   * Get the SDK executor instance for this step.
+   *
+   * @returns The step's AgentSdkExecutor instance
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected abstract getSdkExecutor(): AgentSdkExecutor<TAgentConfig, any, TStreamMessage>;
+
+  /**
+   * Get additional metadata to include in the "Starting agent" debug log.
+   *
+   * Override to add step-specific metadata (e.g., model, clarificationQuestionCount).
+   *
+   * @param _session - The active session
+   * @param _agentConfig - The loaded agent configuration
+   * @returns Additional metadata object, or empty object
+   */
+  protected getStartingAgentLogMetadata(_session: TSession, _agentConfig: TAgentConfig): Record<string, unknown> {
+    return {};
+  }
 
   /**
    * Return the step name for logging (e.g., 'clarification', 'refinement', 'discovery').
@@ -487,9 +787,19 @@ export abstract class BaseAgentStepService<
     };
   }
 
-  // ===========================================================================
-  // Cancel Template Method Optional Hooks
-  // ===========================================================================
+  /**
+   * Log audit entries based on the step outcome.
+   *
+   * Each step has different audit logging patterns based on outcome type:
+   * - Clarification: Logs questions count, skip reason, or error
+   * - Refinement: Logs success with refined text, or error
+   * - File Discovery: Handled in applyOutcomeToSession (SUCCESS path) or here (ERROR path)
+   *
+   * @param session - The active session
+   * @param outcome - The determined outcome
+   * @param agentConfig - The agent configuration
+   */
+  protected abstract logOutcomeAudit(session: TSession, outcome: TOutcome, agentConfig: TAgentConfig): void;
 
   /**
    * Optional hook for pre-cancel actions (e.g., save partial results).
@@ -498,10 +808,6 @@ export abstract class BaseAgentStepService<
    * @param _session - The active session being cancelled
    */
   protected onBeforeCancel?(_session: TSession): Promise<void> | void;
-
-  // ===========================================================================
-  // Retry Template Method
-  // ===========================================================================
 
   /**
    * Process structured output from the SDK result message.
@@ -634,5 +940,19 @@ export abstract class BaseAgentStepService<
         }
       }, timeoutSeconds * 1000);
     });
+  }
+
+  // ===========================================================================
+  // Private Utility Methods
+  // ===========================================================================
+
+  /**
+   * Get the capitalized step name for human-readable log messages.
+   *
+   * @returns Capitalized step name (e.g., 'Clarification', 'Refinement', 'File discovery')
+   */
+  private capitalizeStepName(): string {
+    const name = this.getStepName();
+    return name.charAt(0).toUpperCase() + name.slice(1);
   }
 }

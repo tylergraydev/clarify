@@ -42,6 +42,7 @@
 import type { Options, SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
 
 import type { AgentActivityRepository } from '../../../db/repositories/agent-activity.repository';
+import type { AgentConfig } from '../../../types/agent-config';
 import type { ActiveToolInfo } from './step-types';
 
 import { debugLoggerService } from '../debug-logger.service';
@@ -54,30 +55,7 @@ import { extractUsageStats } from './usage-stats';
 // Type Definitions
 // =============================================================================
 
-/**
- * Minimum required fields for any agent configuration.
- */
-export interface BaseAgentConfig {
-  /** Whether extended thinking is enabled */
-  extendedThinkingEnabled: boolean;
-  /** The unique identifier of the agent */
-  id: number;
-  /** Maximum thinking tokens budget */
-  maxThinkingTokens: null | number;
-  /** The model to use (optional) */
-  model: null | string;
-  /** The display name of the agent */
-  name: string;
-  /** Permission mode for tool execution (optional) */
-  permissionMode: null | string;
-  /** System prompt for the agent */
-  systemPrompt: string;
-  /** Array of allowed tools */
-  tools: Array<{
-    toolName: string;
-    toolPattern: string;
-  }>;
-}
+export type BaseAgentConfig = AgentConfig;
 
 /**
  * Minimum required fields for any active session.

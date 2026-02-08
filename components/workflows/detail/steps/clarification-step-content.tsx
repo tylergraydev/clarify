@@ -8,7 +8,6 @@ import type { ClarificationServicePhase } from '@/lib/validations/clarification'
 import type {
   ClarificationAnswer,
   ClarificationQuestion,
-  ClarificationStepOutput,
 } from '@/lib/validations/clarification';
 import type { ClarificationQuestion as ElectronClarificationQuestion } from '@/types/electron';
 
@@ -30,7 +29,7 @@ import { useWorkflow } from '@/hooks/queries/use-workflows';
 import { useElectronDb } from '@/hooks/use-electron';
 import { PHASE_LABELS } from '@/lib/constants/clarification';
 import { useWorkflowDetailStore } from '@/lib/stores/workflow-detail-store';
-import { clarificationStepOutputSchema } from '@/lib/validations/clarification';
+import { determineUiPhase, formatAnswerText, parseStepOutput } from '@/lib/utils/clarification-step-utils';
 
 import { useClarificationStreamContext } from '../clarification-stream-provider';
 import { ClarificationAgentSelector } from './clarification-agent-selector';
@@ -42,92 +41,6 @@ import { ClarificationQuestionForm } from './clarification-question-form';
 
 interface ClarificationStepContentProps {
   workflowId: number;
-}
-
-/**
- * UI phase derived from step status and outputStructured contents.
- */
-type UiPhase = 'answered' | 'error' | 'parse_error' | 'pending' | 'running' | 'skipped' | 'unanswered';
-
-// =============================================================================
-// Helpers
-// =============================================================================
-
-/**
- * Determine the UI phase from step status and parsed output.
- * When a step is completed but the output fails validation, returns 'parse_error'.
- */
-function determineUiPhase(
-  stepStatus: string,
-  parsedOutput: ClarificationStepOutput | null,
-  isParseError: boolean
-): UiPhase {
-  if (stepStatus === 'pending') return 'pending';
-  if (stepStatus === 'running') return 'running';
-  if (stepStatus === 'failed') return 'error';
-  if (stepStatus === 'skipped') return 'skipped';
-  if (stepStatus === 'awaiting_input') return 'unanswered';
-
-  // Status is completed
-  if (stepStatus === 'completed') {
-    // Output exists but failed schema validation
-    if (isParseError) return 'parse_error';
-
-    // Skipped via agent assessment or manual skip
-    if (parsedOutput?.skipped) return 'skipped';
-
-    // Has questions
-    if (parsedOutput?.questions && parsedOutput.questions.length > 0) {
-      // Check if answers are present
-      if (parsedOutput.answers && Object.keys(parsedOutput.answers).length > 0) {
-        return 'answered';
-      }
-      return 'unanswered';
-    }
-
-    // Completed with no questions (agent determined feature is clear)
-    return 'skipped';
-  }
-
-  return 'pending';
-}
-
-/**
- * Format a ClarificationAnswer for display in the answered summary.
- */
-function formatAnswerText(answer: ClarificationAnswer): string {
-  switch (answer.type) {
-    case 'checkbox': {
-      const parts = [...answer.selected];
-      if (answer.other) parts.push(`Other: ${answer.other}`);
-      return parts.join(', ');
-    }
-    case 'radio': {
-      if (answer.other) return `Other: ${answer.other}`;
-      return answer.selected;
-    }
-    case 'text': {
-      return answer.text;
-    }
-  }
-}
-
-/**
- * Parse the step's outputStructured JSON into a typed ClarificationStepOutput.
- * Returns an object with the parsed data and whether parsing failed.
- */
-function parseStepOutput(outputStructured: null | Record<string, unknown>): {
-  isParseError: boolean;
-  output: ClarificationStepOutput | null;
-} {
-  if (!outputStructured) return { isParseError: false, output: null };
-
-  const result = clarificationStepOutputSchema.safeParse(outputStructured);
-  if (result.success) {
-    return { isParseError: false, output: result.data };
-  }
-
-  return { isParseError: true, output: null };
 }
 
 // =============================================================================

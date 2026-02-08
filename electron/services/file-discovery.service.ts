@@ -33,15 +33,26 @@
 import type { SDKResultMessage } from '@anthropic-ai/claude-agent-sdk';
 
 import { randomUUID } from 'crypto';
-import { z } from 'zod';
 
 import type { AgentActivityRepository } from '../../db/repositories/agent-activity.repository';
 import type { NewDiscoveredFile } from '../../db/schema';
-import type { StepOutcomeWithPause } from './agent-step';
 import type { ActiveToolInfo, ExecuteAgentResult } from './agent-step/step-types';
 
 import { getDatabase } from '../../db';
 import { createDiscoveredFilesRepository } from '../../db/repositories';
+import {
+  type DiscoveredFileFromAgent,
+  type FileDiscoveryAgentConfig,
+  fileDiscoveryAgentOutputJSONSchema,
+  fileDiscoveryAgentOutputSchema,
+  type FileDiscoveryOutcome,
+  type FileDiscoveryOutcomeWithPause,
+  type FileDiscoveryServiceOptions,
+  type FileDiscoveryServicePhase,
+  type FileDiscoveryServiceState,
+  type FileDiscoveryStreamMessage,
+  type FileDiscoveryUsageStats,
+} from '../../lib/validations/file-discovery';
 import { AgentSdkExecutor } from './agent-step/agent-sdk-executor';
 import { MAX_RETRY_ATTEMPTS, STEP_TIMEOUTS } from './agent-step/agent-step-constants';
 import { createTimeoutPromise } from './agent-step/agent-timeout-manager';
@@ -53,6 +64,42 @@ import { StructuredOutputValidator } from './agent-step/structured-output-valida
 import { extractUsageStats } from './agent-step/usage-stats';
 import { debugLoggerService } from './debug-logger.service';
 
+// Re-export all types from the validation file for backward compatibility
+export type {
+  DiscoveredFileFromAgent,
+  FileDiscoveryAgentConfig,
+  FileDiscoveryAgentOutput,
+  FileDiscoveryOutcome,
+  FileDiscoveryOutcomeCancelled,
+  FileDiscoveryOutcomeError,
+  FileDiscoveryOutcomeSuccess,
+  FileDiscoveryOutcomeTimeout,
+  FileDiscoveryOutcomeWithPause,
+  FileDiscoveryServiceOptions,
+  FileDiscoveryServicePhase,
+  FileDiscoveryServiceState,
+  FileDiscoveryStreamComplete,
+  FileDiscoveryStreamError,
+  FileDiscoveryStreamExtendedThinkingHeartbeat,
+  FileDiscoveryStreamFileDiscovered,
+  FileDiscoveryStreamMessage,
+  FileDiscoveryStreamMessageBase,
+  FileDiscoveryStreamMessageType,
+  FileDiscoveryStreamPhaseChange,
+  FileDiscoveryStreamTextDelta,
+  FileDiscoveryStreamThinkingDelta,
+  FileDiscoveryStreamThinkingStart,
+  FileDiscoveryStreamToolFinish,
+  FileDiscoveryStreamToolStart,
+  FileDiscoveryStreamToolUpdate,
+  FileDiscoveryUsageStats,
+} from '../../lib/validations/file-discovery';
+export {
+  discoveredFileSchema,
+  fileDiscoveryAgentOutputJSONSchema,
+  fileDiscoveryAgentOutputSchema,
+} from '../../lib/validations/file-discovery';
+
 // =============================================================================
 // Constants
 // =============================================================================
@@ -61,399 +108,6 @@ import { debugLoggerService } from './debug-logger.service';
  * Default timeout for file discovery operations in seconds.
  */
 const DEFAULT_TIMEOUT_SECONDS = STEP_TIMEOUTS.fileDiscovery;
-
-// =============================================================================
-// Zod Schemas for Structured Output
-// =============================================================================
-
-/**
- * Schema for a single discovered file from the agent.
- */
-export const discoveredFileSchema = z.object({
-  action: z
-    .enum(['create', 'modify', 'delete', 'reference'])
-    .describe(
-      'What action is needed for this file: create (new file), modify (existing file changes), delete (remove file), reference (context only)'
-    ),
-  filePath: z.string().min(1).describe('Relative path from repository root (e.g., "components/ui/Button.tsx")'),
-  priority: z
-    .enum(['high', 'medium', 'low'])
-    .describe('Importance level: high (core to feature), medium (supporting), low (peripheral)'),
-  relevanceExplanation: z
-    .string()
-    .min(1)
-    .describe('Explanation of why this file is relevant to the feature implementation'),
-  role: z
-    .string()
-    .min(1)
-    .describe('The functional role of this file (e.g., "data model", "UI component", "utility", "configuration")'),
-});
-
-export type DiscoveredFileFromAgent = z.infer<typeof discoveredFileSchema>;
-
-/**
- * Schema for the complete agent output.
- * Uses a flat structure (no oneOf) to work around Claude's structured output limitations.
- */
-export const fileDiscoveryAgentOutputSchema = z.object({
-  discoveredFiles: z.array(discoveredFileSchema).describe('Array of discovered files with their metadata'),
-  summary: z.string().describe('Brief summary of the discovery analysis and findings'),
-});
-
-export type FileDiscoveryAgentOutput = z.infer<typeof fileDiscoveryAgentOutputSchema>;
-
-/**
- * JSON Schema for SDK structured outputs.
- * Generated from Zod schema for maintainability.
- */
-const generatedSchema = z.toJSONSchema(fileDiscoveryAgentOutputSchema) as Record<string, unknown>;
-// Remove $schema property - SDK may not support draft 2020-12 declarations
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { $schema, ...schemaWithoutDraft } = generatedSchema;
-export const fileDiscoveryAgentOutputJSONSchema: Record<string, unknown> = schemaWithoutDraft;
-
-// =============================================================================
-// Type Definitions
-// =============================================================================
-
-/**
- * Configuration for a loaded file discovery agent.
- */
-export interface FileDiscoveryAgentConfig {
-  /** Whether extended thinking is enabled */
-  extendedThinkingEnabled: boolean;
-  /** Array of hooks for agent events */
-  hooks: Array<{
-    body: string;
-    eventType: string;
-    matcher: null | string;
-  }>;
-  /** The unique identifier of the agent */
-  id: number;
-  /** Maximum thinking tokens budget for extended thinking */
-  maxThinkingTokens: null | number;
-  /** The model to use (e.g., 'claude-sonnet-4-20250514') */
-  model: null | string;
-  /** The display name of the agent */
-  name: string;
-  /** The permission mode for the agent */
-  permissionMode: null | string;
-  /** Array of skills the agent can use */
-  skills: Array<{
-    isRequired: boolean;
-    skillName: string;
-  }>;
-  /** The system prompt that defines agent behavior */
-  systemPrompt: string;
-  /** Array of tools the agent can use */
-  tools: Array<{
-    toolName: string;
-    toolPattern: string;
-  }>;
-}
-
-/**
- * Discriminated union of all possible file discovery outcomes.
- */
-export type FileDiscoveryOutcome =
-  | FileDiscoveryOutcomeCancelled
-  | FileDiscoveryOutcomeError
-  | FileDiscoveryOutcomeSuccess
-  | FileDiscoveryOutcomeTimeout;
-
-/**
- * Outcome when discovery is cancelled by the user.
- */
-export interface FileDiscoveryOutcomeCancelled {
-  /** Count of files discovered before cancellation */
-  partialCount: number;
-  /** Reason for cancellation */
-  reason?: string;
-  type: 'CANCELLED';
-}
-
-/**
- * Outcome when an error occurs during discovery.
- */
-export interface FileDiscoveryOutcomeError {
-  /** Error message describing what went wrong */
-  error: string;
-  /** Count of files discovered before error (if any) */
-  partialCount?: number;
-  /** Optional stack trace for debugging */
-  stack?: string;
-  type: 'ERROR';
-}
-
-// =============================================================================
-// Outcome Types (Discriminated Union)
-// =============================================================================
-
-/**
- * Outcome when discovery completes successfully.
- */
-export interface FileDiscoveryOutcomeSuccess {
-  /** Array of discovered file records saved to database */
-  discoveredFiles: Array<{ filePath: string; id: number; priority: string }>;
-  /** Summary of the discovery analysis */
-  summary: string;
-  /** Total count of files discovered */
-  totalCount: number;
-  type: 'SUCCESS';
-}
-
-/**
- * Outcome when the discovery process times out.
- */
-export interface FileDiscoveryOutcomeTimeout {
-  /** How long the process ran before timing out (in seconds) */
-  elapsedSeconds: number;
-  /** Error message describing the timeout */
-  error: string;
-  /** Count of files discovered before timeout (if any) */
-  partialCount?: number;
-  type: 'TIMEOUT';
-}
-
-/**
- * Extended outcome that includes pause information.
- * Uses generic StepOutcomeWithPause to combine file discovery outcome with pause/retry fields.
- */
-export type FileDiscoveryOutcomeWithPause = StepOutcomeWithPause<FileDiscoveryOutcome, FileDiscoveryUsageStats>;
-
-/**
- * Options for initializing the file discovery service.
- */
-export interface FileDiscoveryServiceOptions {
-  /** The selected agent to use for file discovery */
-  agentId: number;
-  /** Mode for re-discovery: 'replace' clears existing, 'additive' merges */
-  rediscoveryMode?: 'additive' | 'replace';
-  /** The refined feature request text to analyze */
-  refinedFeatureRequest: string;
-  /** The path to the repository being analyzed */
-  repositoryPath: string;
-  /** The ID of the current workflow step */
-  stepId: number;
-  /** Optional timeout in seconds for agent operations */
-  timeoutSeconds?: number;
-  /** The ID of the workflow this discovery belongs to */
-  workflowId: number;
-}
-
-// =============================================================================
-// Extended Outcome with Pause Info
-// =============================================================================
-
-/**
- * Phases of the file discovery service execution.
- */
-export type FileDiscoveryServicePhase =
-  | 'cancelled'
-  | 'complete'
-  | 'error'
-  | 'executing'
-  | 'executing_extended_thinking'
-  | 'idle'
-  | 'loading_agent'
-  | 'processing_response'
-  | 'saving_results'
-  | 'timeout';
-
-/**
- * State of the file discovery service during execution.
- */
-export interface FileDiscoveryServiceState {
-  /** Agent configuration after loading (null before loading) */
-  agentConfig: FileDiscoveryAgentConfig | null;
-  /** Count of discovered files so far */
-  discoveredCount: number;
-  /** Current execution phase */
-  phase: FileDiscoveryServicePhase;
-  /** Summary of discovery analysis (if complete) */
-  summary: null | string;
-}
-
-/**
- * Stream message indicating discovery completed.
- */
-export interface FileDiscoveryStreamComplete extends FileDiscoveryStreamMessageBase {
-  /** The discovery outcome */
-  outcome: FileDiscoveryOutcome;
-  type: 'complete';
-}
-
-// =============================================================================
-// Streaming Message Types
-// =============================================================================
-
-/**
- * Stream message indicating an error occurred.
- */
-export interface FileDiscoveryStreamError extends FileDiscoveryStreamMessageBase {
-  /** Error message */
-  error: string;
-  /** Optional stack trace */
-  stack?: string;
-  type: 'error';
-}
-
-/**
- * Heartbeat message during extended thinking execution.
- */
-export interface FileDiscoveryStreamExtendedThinkingHeartbeat extends FileDiscoveryStreamMessageBase {
-  /** Elapsed time in milliseconds since execution started */
-  elapsedMs: number;
-  /** Estimated completion percentage (0-100, null if unknown) */
-  estimatedProgress: null | number;
-  /** Maximum thinking tokens budget */
-  maxThinkingTokens: number;
-  type: 'extended_thinking_heartbeat';
-}
-
-/**
- * Stream message for a single file discovered during execution.
- */
-export interface FileDiscoveryStreamFileDiscovered extends FileDiscoveryStreamMessageBase {
-  /** The discovered file metadata */
-  file: DiscoveredFileFromAgent;
-  type: 'file_discovered';
-}
-
-/**
- * Discriminated union of all file discovery stream message types.
- */
-export type FileDiscoveryStreamMessage =
-  | FileDiscoveryStreamComplete
-  | FileDiscoveryStreamError
-  | FileDiscoveryStreamExtendedThinkingHeartbeat
-  | FileDiscoveryStreamFileDiscovered
-  | FileDiscoveryStreamPhaseChange
-  | FileDiscoveryStreamTextDelta
-  | FileDiscoveryStreamThinkingDelta
-  | FileDiscoveryStreamThinkingStart
-  | FileDiscoveryStreamToolFinish
-  | FileDiscoveryStreamToolStart
-  | FileDiscoveryStreamToolUpdate;
-
-/**
- * Base interface for all file discovery stream messages.
- */
-export interface FileDiscoveryStreamMessageBase {
-  /** The session ID this message belongs to */
-  sessionId: string;
-  /** Timestamp when the message was generated */
-  timestamp: number;
-  /** Message type discriminator */
-  type: FileDiscoveryStreamMessageType;
-}
-
-/**
- * Type discriminator for file discovery stream messages.
- */
-export type FileDiscoveryStreamMessageType =
-  | 'complete'
-  | 'error'
-  | 'extended_thinking_heartbeat'
-  | 'file_discovered'
-  | 'phase_change'
-  | 'text_delta'
-  | 'thinking_delta'
-  | 'thinking_start'
-  | 'tool_finish'
-  | 'tool_start'
-  | 'tool_update';
-
-/**
- * Stream message for phase transitions.
- */
-export interface FileDiscoveryStreamPhaseChange extends FileDiscoveryStreamMessageBase {
-  /** The new phase the service has transitioned to */
-  phase: FileDiscoveryServicePhase;
-  type: 'phase_change';
-}
-
-/**
- * Stream message for text delta (incremental text output).
- */
-export interface FileDiscoveryStreamTextDelta extends FileDiscoveryStreamMessageBase {
-  /** The incremental text content */
-  delta: string;
-  type: 'text_delta';
-}
-
-/**
- * Stream message for thinking delta (incremental thinking output).
- */
-export interface FileDiscoveryStreamThinkingDelta extends FileDiscoveryStreamMessageBase {
-  /** Index of the thinking block being updated */
-  blockIndex: number;
-  /** The incremental thinking content */
-  delta: string;
-  type: 'thinking_delta';
-}
-
-/**
- * Stream message indicating a new thinking block has started.
- */
-export interface FileDiscoveryStreamThinkingStart extends FileDiscoveryStreamMessageBase {
-  /** Index of the thinking block being started */
-  blockIndex: number;
-  type: 'thinking_start';
-}
-
-/**
- * Stream message indicating a tool has finished executing.
- */
-export interface FileDiscoveryStreamToolFinish extends FileDiscoveryStreamMessageBase {
-  /** Output from the tool execution */
-  toolOutput?: unknown;
-  /** Unique identifier of the tool invocation that completed */
-  toolUseId: string;
-  type: 'tool_finish';
-}
-
-/**
- * Stream message indicating a tool has started executing.
- */
-export interface FileDiscoveryStreamToolStart extends FileDiscoveryStreamMessageBase {
-  /** Input parameters passed to the tool */
-  toolInput: Record<string, unknown>;
-  /** Name of the tool being executed */
-  toolName: string;
-  /** Unique identifier for this tool invocation */
-  toolUseId: string;
-  type: 'tool_start';
-}
-
-/**
- * Stream message indicating a tool input payload has been updated.
- */
-export interface FileDiscoveryStreamToolUpdate extends FileDiscoveryStreamMessageBase {
-  /** Input parameters passed to the tool */
-  toolInput: Record<string, unknown>;
-  /** Name of the tool being executed */
-  toolName: string;
-  /** Unique identifier for this tool invocation */
-  toolUseId: string;
-  type: 'tool_update';
-}
-
-/**
- * Usage statistics from SDK result.
- */
-export interface FileDiscoveryUsageStats {
-  /** Total cost in USD */
-  costUsd: number;
-  /** Total duration in milliseconds */
-  durationMs: number;
-  /** Input tokens consumed */
-  inputTokens: number;
-  /** Number of conversation turns */
-  numTurns: number;
-  /** Output tokens generated */
-  outputTokens: number;
-}
 
 // =============================================================================
 // Internal Types
@@ -744,6 +398,75 @@ class FileDiscoveryStepService extends BaseAgentStepService<
   // ===========================================================================
 
   /**
+   * Apply outcome to file discovery session state.
+   *
+   * For SUCCESS outcomes, this method:
+   * 1. Re-validates the SDK result to extract raw discovered files
+   * 2. Saves files to the database (with saving_results phase)
+   * 3. Returns a transformed outcome with actual saved files and usage stats
+   *
+   * For non-SUCCESS outcomes, updates session phase and adds partialCount.
+   *
+   * @param session - The active session
+   * @param outcome - The processed outcome from processStructuredOutput
+   * @param resultMessage - The SDK result message for re-validation
+   * @param agentConfig - The agent configuration
+   * @param onStreamMessage - Optional callback for phase change events
+   * @returns Transformed result for SUCCESS, or partial count additions for errors
+   */
+  protected async applyOutcomeToSession(
+    session: ActiveFileDiscoverySession,
+    outcome: FileDiscoveryOutcome,
+    resultMessage: SDKResultMessage,
+    _agentConfig: FileDiscoveryAgentConfig,
+    onStreamMessage?: (message: FileDiscoveryStreamMessage) => void
+  ): Promise<void | { outcome?: FileDiscoveryOutcome; usage?: import('../../types/usage-stats').UsageStats }> {
+    if (outcome.type === 'SUCCESS') {
+      // Extract files from structured output for saving
+      const validationResult = this.structuredValidator.validate(resultMessage, session.sessionId);
+      if (validationResult.success && validationResult.data.discoveredFiles) {
+        session.discoveredFiles = validationResult.data.discoveredFiles;
+        session.summary = validationResult.data.summary;
+      }
+
+      // Phase: Saving results
+      session.phase = 'saving_results';
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
+
+      // Save discovered files to database
+      const savedFiles = await this.saveDiscoveredFiles(session);
+
+      session.phase = 'complete';
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
+
+      // Extract usage statistics from result message
+      const usage = extractUsageStats(resultMessage);
+
+      // Return transformed outcome with actual saved files
+      return {
+        outcome: {
+          discoveredFiles: savedFiles,
+          summary: session.summary ?? 'Discovery completed',
+          totalCount: savedFiles.length,
+          type: 'SUCCESS',
+        },
+        usage,
+      };
+    } else {
+      session.phase = outcome.type === 'ERROR' ? 'error' : 'complete';
+      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
+
+      // Add partialCount to non-SUCCESS outcomes
+      return {
+        outcome: {
+          ...outcome,
+          partialCount: session.discoveredFiles.length,
+        },
+      };
+    }
+  }
+
+  /**
    * Build cancelled outcome specific to file discovery step.
    *
    * File discovery includes partial count in the cancelled outcome.
@@ -884,12 +607,122 @@ Focus on actionable discovery that will help create a comprehensive implementati
   }
 
   /**
+   * Get the activity repository for SDK execution persistence.
+   */
+  protected getActivityRepository() {
+    return this.activityRepository;
+  }
+
+  /**
+   * Get the audit logger for file discovery.
+   */
+  protected getAuditLogger() {
+    return this.auditLogger;
+  }
+
+  // ===========================================================================
+  // Execute Agent Template Method Hooks
+  // ===========================================================================
+
+  /**
+   * Get the custom stream event handler for file discovery.
+   *
+   * Provides a handler for processing tool_result events that may
+   * contain file_discovered events in the future.
+   *
+   * @param onStreamMessage - Optional callback for streaming events
+   * @returns The custom event handler function
+   */
+  protected getCustomStreamEventHandler(
+    onStreamMessage?: (message: FileDiscoveryStreamMessage) => void
+  ): (event: Record<string, unknown>, session: ActiveFileDiscoverySession) => void {
+    return (event, sess) => {
+      this.handleCustomStreamEvent(event, sess, onStreamMessage);
+    };
+  }
+
+  /**
+   * Get additional metadata for the outcome debug log.
+   *
+   * File discovery SUCCESS path is handled in applyOutcomeToSession,
+   * but we still provide fileCount for non-SUCCESS outcomes.
+   */
+  protected getOutcomeLogMetadata(outcome: FileDiscoveryOutcome): Record<string, unknown> {
+    if (outcome.type === 'SUCCESS') {
+      return { fileCount: outcome.totalCount };
+    }
+    return {};
+  }
+
+  /**
+   * Get the JSON schema for file discovery structured output.
+   */
+  protected getOutputFormatSchema() {
+    return fileDiscoveryAgentOutputJSONSchema;
+  }
+
+  /**
+   * Get the SDK executor for file discovery.
+   */
+  protected getSdkExecutor() {
+    return this.sdkExecutor;
+  }
+
+  /**
    * Return the step name for logging.
    *
    * @returns The step name 'discovery'
    */
   protected getStepName(): string {
     return 'discovery';
+  }
+
+  /**
+   * Log audit entries based on file discovery outcome type.
+   *
+   * Note: SUCCESS audit logging is handled in applyOutcomeToSession
+   * because it needs the savedFiles data.
+   *
+   * @param session - The active session
+   * @param outcome - The determined outcome
+   * @param agentConfig - The agent configuration
+   */
+  protected logOutcomeAudit(
+    session: ActiveFileDiscoverySession,
+    outcome: FileDiscoveryOutcome,
+    agentConfig: FileDiscoveryAgentConfig
+  ): void {
+    // SUCCESS audit logging is handled in applyOutcomeToSession
+    // because it needs the savedFiles count
+    if (outcome.type === 'SUCCESS') {
+      // Already logged in applyOutcomeToSession
+      this.auditLogger.logStepCompleted(
+        session.options.workflowId,
+        session.options.stepId,
+        agentConfig.id,
+        agentConfig.name,
+        `File discovery completed: discovered ${outcome.totalCount} files`,
+        {
+          fileCount: outcome.totalCount,
+          sessionId: session.sessionId,
+          summary: session.summary,
+        },
+        { discoveredCount: outcome.totalCount, phase: 'complete' }
+      );
+    } else if (outcome.type === 'ERROR') {
+      this.auditLogger.logStepError(
+        session.options.workflowId,
+        session.options.stepId,
+        agentConfig.id,
+        agentConfig.name,
+        outcome.error ?? 'Unknown error',
+        {
+          error: outcome.error,
+          outcomeType: outcome.type,
+          sessionId: session.sessionId,
+        }
+      );
+    }
   }
 
   /**
@@ -980,186 +813,6 @@ Focus on actionable discovery that will help create a comprehensive implementati
         error: error instanceof Error ? error.message : 'Unknown error',
         stepId,
       });
-    }
-  }
-
-  /**
-   * Execute the file discovery agent and collect output.
-   *
-   * Uses AgentSdkExecutor for stream processing and SDK options building.
-   * The custom stream event handler hook is available for future file_discovered
-   * events if needed.
-   *
-   * @param session - The active session
-   * @param agentConfig - The loaded agent configuration
-   * @param onStreamMessage - Optional callback for streaming events
-   * @returns The discovery outcome with usage metadata
-   */
-  private async executeAgent(
-    session: ActiveFileDiscoverySession,
-    agentConfig: FileDiscoveryAgentConfig,
-    onStreamMessage?: (message: FileDiscoveryStreamMessage) => void
-  ): Promise<ExecuteAgentResult<FileDiscoveryOutcome, FileDiscoveryUsageStats>> {
-    // Build the prompt using template method
-    const prompt = this.buildPrompt(session.options);
-
-    debugLoggerService.logSdkEvent(session.sessionId, 'Starting file discovery agent', {
-      promptLength: prompt.length,
-    });
-
-    // Audit log: file discovery exploring
-    this.auditLogger.logStepExploring(
-      session.options.workflowId,
-      session.options.stepId,
-      agentConfig.id,
-      agentConfig.name,
-      {
-        model: agentConfig.model,
-        promptLength: prompt.length,
-        sessionId: session.sessionId,
-        toolsCount: agentConfig.tools.length,
-      }
-    );
-
-    // Execute the query using AgentSdkExecutor
-    const resultMessage = await this.sdkExecutor.executeQuery(
-      session,
-      {
-        abortController: session.abortController,
-        activityRepository: this.activityRepository ?? undefined,
-        agentConfig,
-        outputFormatSchema: fileDiscoveryAgentOutputJSONSchema,
-        repositoryPath: session.options.repositoryPath,
-        stepId: session.options.stepId,
-      },
-      prompt,
-      {
-        // Custom stream event handler for file_discovered events (if implemented in future)
-        onCustomStreamEvent: (event, sess) => {
-          this.handleCustomStreamEvent(event, sess, onStreamMessage);
-        },
-        onMessageEmit: onStreamMessage,
-        onPhaseChange: (phase) => {
-          session.phase = phase as FileDiscoveryServicePhase;
-          this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
-        },
-      }
-    );
-
-    // Phase: Processing response
-    session.phase = 'processing_response';
-    this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
-
-    // Handle missing result message (cancelled or null)
-    if (!resultMessage) {
-      return {
-        outcome: {
-          partialCount: session.discoveredFiles.length,
-          reason: 'File discovery was cancelled',
-          type: 'CANCELLED',
-        },
-      };
-    }
-
-    debugLoggerService.logSdkEvent(session.sessionId, 'Processing structured output', {
-      hasStructuredOutput: resultMessage.subtype === 'success' ? !!resultMessage.structured_output : false,
-      resultSubtype: resultMessage.subtype,
-    });
-
-    // Log raw agent text for debugging structured output issues
-    debugLoggerService.logSdkEvent(session.sessionId, 'Raw agent output for debugging', {
-      streamingTextLength: session.streamingText.length,
-      streamingTextPreview: session.streamingText.slice(0, 500),
-      thinkingBlockCount: session.thinkingBlocks.length,
-    });
-
-    // Extract and validate structured output using template method
-    const outcome = this.processStructuredOutput(resultMessage, session.sessionId);
-
-    // Update session state based on outcome and save files
-    if (outcome.type === 'SUCCESS') {
-      // Extract files from structured output for saving
-      const validationResult = this.structuredValidator.validate(resultMessage, session.sessionId);
-      if (validationResult.success && validationResult.data.discoveredFiles) {
-        session.discoveredFiles = validationResult.data.discoveredFiles;
-        session.summary = validationResult.data.summary;
-      }
-
-      // Phase: Saving results
-      session.phase = 'saving_results';
-      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
-
-      // Save discovered files to database
-      const savedFiles = await this.saveDiscoveredFiles(session);
-
-      session.phase = 'complete';
-      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
-
-      debugLoggerService.logSdkEvent(session.sessionId, 'File discovery outcome determined', {
-        fileCount: savedFiles.length,
-        outcomeType: 'SUCCESS',
-        phase: session.phase,
-      });
-
-      // Audit log: file discovery completed
-      this.auditLogger.logStepCompleted(
-        session.options.workflowId,
-        session.options.stepId,
-        agentConfig.id,
-        agentConfig.name,
-        `File discovery completed: discovered ${savedFiles.length} files`,
-        {
-          fileCount: savedFiles.length,
-          sessionId: session.sessionId,
-          summary: session.summary,
-        },
-        { discoveredCount: savedFiles.length, phase: 'complete' }
-      );
-
-      // Extract usage statistics
-      const usage = extractUsageStats(resultMessage);
-
-      return {
-        outcome: {
-          discoveredFiles: savedFiles,
-          summary: session.summary ?? 'Discovery completed',
-          totalCount: savedFiles.length,
-          type: 'SUCCESS',
-        },
-        sdkSessionId: resultMessage.session_id,
-        usage,
-      };
-    } else {
-      session.phase = outcome.type === 'ERROR' ? 'error' : 'complete';
-      this.emitPhaseChange(session.sessionId, session.phase, onStreamMessage);
-
-      // Audit log: file discovery error
-      if (outcome.type === 'ERROR') {
-        this.auditLogger.logStepError(
-          session.options.workflowId,
-          session.options.stepId,
-          agentConfig.id,
-          agentConfig.name,
-          outcome.error ?? 'Unknown error',
-          {
-            error: outcome.error,
-            outcomeType: outcome.type,
-            sessionId: session.sessionId,
-          }
-        );
-      }
-
-      // Extract usage statistics
-      const usage = extractUsageStats(resultMessage);
-
-      return {
-        outcome: {
-          ...outcome,
-          partialCount: session.discoveredFiles.length,
-        },
-        sdkSessionId: resultMessage.session_id,
-        usage,
-      };
     }
   }
 

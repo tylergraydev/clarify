@@ -106,42 +106,9 @@ export const clarificationStepOutputSchema = z.object({
   skipReason: z.string().optional(),
 });
 
-/**
- * Configuration for a loaded clarification agent.
- * Captures the full agent configuration needed for execution.
- */
-export interface ClarificationAgentConfig {
-  /** Whether extended thinking is enabled */
-  extendedThinkingEnabled: boolean;
-  /** Array of hooks for agent events */
-  hooks: Array<{
-    body: string;
-    eventType: string;
-    matcher: null | string;
-  }>;
-  /** The unique identifier of the agent */
-  id: number;
-  /** Maximum thinking tokens budget for extended thinking */
-  maxThinkingTokens: null | number;
-  /** The model to use (e.g., 'claude-sonnet-4-20250514') */
-  model: null | string;
-  /** The display name of the agent */
-  name: string;
-  /** The permission mode for the agent */
-  permissionMode: null | string;
-  /** Array of skills the agent can use */
-  skills: Array<{
-    isRequired: boolean;
-    skillName: string;
-  }>;
-  /** The system prompt that defines agent behavior */
-  systemPrompt: string;
-  /** Array of tools the agent can use */
-  tools: Array<{
-    toolName: string;
-    toolPattern: string;
-  }>;
-}
+import type { AgentConfig } from '../../types/agent-config';
+
+export type ClarificationAgentConfig = AgentConfig;
 
 // =============================================================================
 // Service-Level Types for Clarification Orchestration
@@ -375,27 +342,22 @@ const { $schema, ...schemaWithoutDraft } = generatedSchema;
 export const clarificationAgentOutputJSONSchema: Record<string, unknown> = schemaWithoutDraft;
 
 // =============================================================================
-// Usage Tracking Types
-// =============================================================================
-
-/**
- * Heartbeat message during extended thinking execution.
- * Sent periodically to indicate progress when streaming is disabled.
- */
-export interface ClarificationStreamExtendedThinkingHeartbeat extends ClarificationStreamMessageBase {
-  /** Elapsed time in milliseconds since execution started */
-  elapsedMs: number;
-  /** Estimated completion percentage (0-100, null if unknown) */
-  estimatedProgress: null | number;
-  /** Maximum thinking tokens budget */
-  maxThinkingTokens: number;
-  type: 'extended_thinking_heartbeat';
-}
-
-// =============================================================================
 // Streaming Message Types
 // =============================================================================
 
+import type {
+  StepStreamExtendedThinkingHeartbeat,
+  StepStreamPhaseChange,
+  StepStreamTextDelta,
+  StepStreamThinkingDelta,
+  StepStreamThinkingStart,
+  StepStreamToolStart,
+  StepStreamToolStop,
+  StepStreamToolUpdate,
+} from '../../types/step-stream';
+
+// Re-export shared types with clarification-specific names for backward compatibility
+export type ClarificationStreamExtendedThinkingHeartbeat = StepStreamExtendedThinkingHeartbeat;
 /**
  * Discriminated union of all clarification stream message types.
  * Used for type-safe handling of streaming events in the renderer.
@@ -409,10 +371,10 @@ export type ClarificationStreamMessage =
   | ClarificationStreamToolStart
   | ClarificationStreamToolStop
   | ClarificationStreamToolUpdate;
-
 /**
  * Base interface for all clarification stream messages.
  * All messages include session identification and timing.
+ * Note: workflowId is required (not optional) for clarification messages.
  */
 export interface ClarificationStreamMessageBase {
   /** The session ID this message belongs to */
@@ -424,7 +386,6 @@ export interface ClarificationStreamMessageBase {
   /** The workflow ID this message belongs to */
   workflowId: number;
 }
-
 /**
  * Type discriminator for clarification stream messages.
  */
@@ -437,93 +398,19 @@ export type ClarificationStreamMessageType =
   | 'tool_start'
   | 'tool_stop'
   | 'tool_update';
+export type ClarificationStreamPhaseChange = StepStreamPhaseChange<ClarificationServicePhase>;
+export type ClarificationStreamTextDelta = StepStreamTextDelta;
+export type ClarificationStreamThinkingDelta = StepStreamThinkingDelta;
+export type ClarificationStreamThinkingStart = StepStreamThinkingStart;
 
-/**
- * Stream message for phase transitions during clarification.
- */
-export interface ClarificationStreamPhaseChange extends ClarificationStreamMessageBase {
-  /** The new phase the service has transitioned to */
-  phase: ClarificationServicePhase;
-  type: 'phase_change';
-}
+export type ClarificationStreamToolStart = StepStreamToolStart;
 
-/**
- * Stream message for text delta (incremental text output).
- */
-export interface ClarificationStreamTextDelta extends ClarificationStreamMessageBase {
-  /** The incremental text content */
-  delta: string;
-  type: 'text_delta';
-}
+export type ClarificationStreamToolStop = StepStreamToolStop;
 
-/**
- * Stream message for thinking delta (incremental thinking output).
- */
-export interface ClarificationStreamThinkingDelta extends ClarificationStreamMessageBase {
-  /** Index of the thinking block being updated */
-  blockIndex: number;
-  /** The incremental thinking content */
-  delta: string;
-  type: 'thinking_delta';
-}
+export type ClarificationStreamToolUpdate = StepStreamToolUpdate;
 
-/**
- * Stream message indicating a new thinking block has started.
- */
-export interface ClarificationStreamThinkingStart extends ClarificationStreamMessageBase {
-  /** Index of the thinking block being started */
-  blockIndex: number;
-  type: 'thinking_start';
-}
+// =============================================================================
+// Usage Tracking Types
+// =============================================================================
 
-/**
- * Stream message indicating a tool has started executing.
- */
-export interface ClarificationStreamToolStart extends ClarificationStreamMessageBase {
-  /** Input parameters passed to the tool */
-  toolInput: Record<string, unknown>;
-  /** Name of the tool being executed */
-  toolName: string;
-  /** Unique identifier for this tool invocation */
-  toolUseId: string;
-  type: 'tool_start';
-}
-
-/**
- * Stream message indicating a tool has finished executing.
- */
-export interface ClarificationStreamToolStop extends ClarificationStreamMessageBase {
-  /** Unique identifier of the tool invocation that completed */
-  toolUseId: string;
-  type: 'tool_stop';
-}
-
-/**
- * Stream message indicating a tool input payload has been updated.
- */
-export interface ClarificationStreamToolUpdate extends ClarificationStreamMessageBase {
-  /** Input parameters passed to the tool */
-  toolInput: Record<string, unknown>;
-  /** Name of the tool being executed */
-  toolName: string;
-  /** Unique identifier for this tool invocation */
-  toolUseId: string;
-  type: 'tool_update';
-}
-
-/**
- * Usage statistics from SDK result.
- * Tracks token usage, cost, and execution metrics.
- */
-export interface ClarificationUsageStats {
-  /** Total cost in USD */
-  costUsd: number;
-  /** Total duration in milliseconds */
-  durationMs: number;
-  /** Input tokens consumed */
-  inputTokens: number;
-  /** Number of conversation turns */
-  numTurns: number;
-  /** Output tokens generated */
-  outputTokens: number;
-}
+export type { UsageStats as ClarificationUsageStats } from '../../types/usage-stats';

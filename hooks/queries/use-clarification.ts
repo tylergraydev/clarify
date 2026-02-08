@@ -6,9 +6,9 @@ import type { ClarificationRefinementInput, ClarificationStartInput, WorkflowSte
 
 import { clarificationKeys } from '@/lib/queries/clarification';
 import { stepKeys } from '@/lib/queries/steps';
-import { workflowKeys } from '@/lib/queries/workflows';
 
 import { useElectronDb } from '../use-electron';
+import { invalidateStepQueries } from './invalidation-utils';
 
 // ============================================================================
 // Constants
@@ -76,18 +76,7 @@ export function useRetryClarification() {
   return useMutation({
     mutationFn: (input: ClarificationStartInput) => clarification.retry(input),
     onSuccess: (_result, input) => {
-      void queryClient.invalidateQueries({
-        queryKey: stepKeys.byWorkflow(input.workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: stepKeys.listByWorkflow(input.workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: clarificationKeys.state(input.workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: workflowKeys.detail(input.workflowId).queryKey,
-      });
+      invalidateStepQueries(queryClient, input.workflowId, clarificationKeys.state(input.workflowId));
     },
   });
 }
@@ -104,18 +93,7 @@ export function useSkipClarification() {
     mutationFn: ({ reason, workflowId }: { reason?: string; workflowId: number }) =>
       clarification.skip(workflowId, reason),
     onSuccess: (_result, { workflowId }) => {
-      void queryClient.invalidateQueries({
-        queryKey: stepKeys.byWorkflow(workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: stepKeys.listByWorkflow(workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: clarificationKeys.state(workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: workflowKeys.detail(workflowId).queryKey,
-      });
+      invalidateStepQueries(queryClient, workflowId, clarificationKeys.state(workflowId));
     },
   });
 }
@@ -131,18 +109,7 @@ export function useStartClarification() {
   return useMutation({
     mutationFn: (input: ClarificationStartInput) => clarification.start(input),
     onSuccess: (_result, input) => {
-      void queryClient.invalidateQueries({
-        queryKey: stepKeys.byWorkflow(input.workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: stepKeys.listByWorkflow(input.workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: clarificationKeys.state(input.workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: workflowKeys.detail(input.workflowId).queryKey,
-      });
+      invalidateStepQueries(queryClient, input.workflowId, clarificationKeys.state(input.workflowId));
     },
   });
 }
@@ -158,18 +125,7 @@ export function useSubmitClarificationAnswers() {
   return useMutation({
     mutationFn: (input: ClarificationRefinementInput) => clarification.submitAnswers(input),
     onSuccess: (_result, input) => {
-      void queryClient.invalidateQueries({
-        queryKey: stepKeys.byWorkflow(input.workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: stepKeys.listByWorkflow(input.workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: clarificationKeys.state(input.workflowId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: workflowKeys.detail(input.workflowId).queryKey,
-      });
+      invalidateStepQueries(queryClient, input.workflowId, clarificationKeys.state(input.workflowId));
     },
   });
 }

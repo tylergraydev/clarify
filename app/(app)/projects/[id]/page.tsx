@@ -7,8 +7,6 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
-import type { Project } from '@/types/electron';
-
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { ProjectDetailSkeleton, ProjectNotFound } from '@/components/projects';
 import { ProjectOverviewTab } from '@/components/projects/overview/project-overview-tab';
