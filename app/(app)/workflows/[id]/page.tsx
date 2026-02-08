@@ -6,43 +6,28 @@ import { useRouteParams } from 'next-typesafe-url/app';
 import { withParamValidation } from 'next-typesafe-url/app/hoc';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
-import {
-  ClarificationStreamProvider,
-  WorkflowDetailSkeleton,
-  WorkflowPreStartSummary,
-  WorkflowStepAccordion,
-  WorkflowStreamingPanel,
-  WorkflowTopBar,
-} from '@/components/workflows/detail';
+import { ClarificationStreamProvider, WorkflowDetailSkeleton } from '@/components/workflows/detail';
 import { useProject, useWorkflow } from '@/hooks/queries';
 
-import { Route, workflowStepValues } from './route-type';
+import { Route } from './route-type';
 
 // ============================================================================
 // Page Content
 // ============================================================================
 
 /**
- * Workflow detail page with three-zone layout for active workflows.
+ * Workflow detail page - blank-slate placeholder.
  *
  * Features:
  * - Fetches real workflow data by ID using useWorkflow hook
- * - Pre-start form when workflow status is 'created'
- * - Sticky top bar with workflow name, status, and action buttons
- * - Scrollable step accordion for workflow pipeline phases
- * - Resizable streaming panel for real-time agent logs
- * - Type-safe step query param via nuqs
- * - ClarificationStreamProvider wraps the active layout to deduplicate
- *   stream subscriptions between the step content and streaming panel
+ * - Breadcrumb navigation chain (Home > Project > Workflows > Feature Name)
+ * - ClarificationStreamProvider wrapper for stream deduplication
+ * - Placeholder content for upcoming workflow detail UI
  */
 const WorkflowDetailContent = () => {
   const routeParams = useRouteParams(Route.routeParams);
-
-  // URL state management for active pipeline step
-  const [_step, _setStep] = useQueryState('step', parseAsStringLiteral(workflowStepValues));
 
   const workflowId = routeParams.data?.id ?? 0;
 
@@ -77,80 +62,46 @@ const WorkflowDetailContent = () => {
     redirect($path({ route: '/workflows/history' }));
   }
 
-  const workflowStatus = workflow.status;
-  const isPreStart = workflowStatus === 'created';
-  const isClarificationEnabled = workflowStatus === 'running' && !workflow.skipClarification;
+  const isClarificationEnabled = workflow.status === 'running' && !workflow.skipClarification;
 
-  const breadcrumb = (
-    <div className={'px-6 pt-4'}>
-      <nav aria-label={'Breadcrumb'} className={'flex items-center gap-2'}>
-        <Link
-          className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
-          href={$path({ route: '/dashboard' })}
-        >
-          Home
-        </Link>
-        <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-        <Link
-          className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
-          href={$path({ route: '/projects/[id]', routeParams: { id: workflow.projectId } })}
-        >
-          {project?.name ?? 'Project'}
-        </Link>
-        <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-        <Link
-          className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
-          href={$path({
-            route: '/projects/[id]',
-            routeParams: { id: workflow.projectId },
-            searchParams: { tab: 'workflows' },
-          })}
-        >
-          Workflows
-        </Link>
-        <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-        <span className={'text-sm text-foreground'}>{workflow.featureName}</span>
-      </nav>
-    </div>
-  );
-
-  // Pre-start: show the workflow settings form centered on page
-  if (isPreStart) {
-    return (
-      <QueryErrorBoundary>
-        {breadcrumb}
-        <main
-          aria-label={'Workflow setup'}
-          className={'relative isolate flex h-full flex-col items-center overflow-hidden px-6 py-10'}
-        >
-          <div
-            aria-hidden={'true'}
-            className={`
-              pointer-events-none absolute inset-x-0 top-0 -z-10 h-56
-            `}
-          />
-          <WorkflowPreStartSummary workflowId={workflowId} />
-        </main>
-      </QueryErrorBoundary>
-    );
-  }
-
-  // Active workflow: three-zone layout wrapped with stream provider
   return (
     <QueryErrorBoundary>
-      {breadcrumb}
+      {/* Breadcrumb Navigation */}
+      <div className={'px-6 pt-4'}>
+        <nav aria-label={'Breadcrumb'} className={'flex items-center gap-2'}>
+          <Link
+            className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
+            href={$path({ route: '/dashboard' })}
+          >
+            Home
+          </Link>
+          <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+          <Link
+            className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
+            href={$path({ route: '/projects/[id]', routeParams: { id: workflow.projectId } })}
+          >
+            {project?.name ?? 'Project'}
+          </Link>
+          <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+          <Link
+            className={'text-sm text-muted-foreground transition-colors hover:text-foreground'}
+            href={$path({
+              route: '/projects/[id]',
+              routeParams: { id: workflow.projectId },
+              searchParams: { tab: 'workflows' },
+            })}
+          >
+            Workflows
+          </Link>
+          <ChevronRight aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
+          <span className={'text-sm text-foreground'}>{workflow.featureName}</span>
+        </nav>
+      </div>
+
+      {/* Workflow Content */}
       <ClarificationStreamProvider isEnabled={isClarificationEnabled} workflowId={workflowId}>
-        <main aria-label={'Workflow detail'} className={'flex h-(--workflow-content-height) flex-col'}>
-          {/* Top Bar */}
-          <WorkflowTopBar workflowId={workflowId} />
-
-          {/* Step Accordion */}
-          <div className={'flex-1 overflow-auto'}>
-            <WorkflowStepAccordion workflowId={workflowId} />
-          </div>
-
-          {/* Streaming Panel */}
-          <WorkflowStreamingPanel workflowId={workflowId} />
+        <main aria-label={'Workflow detail'} className={'flex flex-1 items-center justify-center'}>
+          <p className={'text-muted-foreground'}>Workflow detail view coming soon</p>
         </main>
       </ClarificationStreamProvider>
     </QueryErrorBoundary>

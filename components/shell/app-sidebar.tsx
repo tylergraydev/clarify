@@ -3,6 +3,7 @@
 import type { ComponentPropsWithRef } from 'react';
 
 import {
+  ArchiveRestore,
   Bot,
   Clock,
   FileText,
@@ -201,6 +202,12 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
                   isActive: pathname === $path({ route: '/workflows/history', searchParams: {} }),
                   label: 'History',
                 },
+                {
+                  href: '/workflows/old',
+                  icon: ArchiveRestore,
+                  isActive: pathname.startsWith('/workflows/old'),
+                  label: 'Legacy View',
+                },
               ]}
               label={'Workflows'}
             />
@@ -246,6 +253,14 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
                   isCollapsed={false}
                   isNested={true}
                   label={'History'}
+                />
+                <NavItem
+                  href={'/workflows/old'}
+                  icon={ArchiveRestore}
+                  isActive={pathname.startsWith('/workflows/old')}
+                  isCollapsed={false}
+                  isNested={true}
+                  label={'Legacy View'}
                 />
               </CollapsibleContent>
             </Collapsible>

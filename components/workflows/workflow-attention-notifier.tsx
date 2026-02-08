@@ -38,7 +38,7 @@ interface WorkflowSnapshot {
  * Returns `null` if the user is not viewing a specific workflow.
  */
 function getViewedWorkflowId(pathname: string): null | number {
-  const match = /^\/workflows\/(\d+)$/.exec(pathname);
+  const match = /^\/workflows\/(?:old\/)?(\d+)$/.exec(pathname);
   if (!match?.[1]) return null;
   return Number(match[1]);
 }

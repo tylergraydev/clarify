@@ -12,6 +12,7 @@ declare module "@@@next-typesafe-url" {
     "/projects": InferRoute<import("./app/(app)/projects/route-type").RouteType>;
     "/projects/[id]": InferRoute<import("./app/(app)/projects/[id]/route-type").RouteType>;
     "/workflows/history": InferRoute<import("./app/(app)/workflows/history/route-type").RouteType>;
+    "/workflows/old/[id]": InferRoute<import("./app/(app)/workflows/old/[id]/route-type").RouteType>;
     "/workflows/[id]": InferRoute<import("./app/(app)/workflows/[id]/route-type").RouteType>;
   }
 
@@ -22,6 +23,7 @@ declare module "@@@next-typesafe-url" {
     "/templates": StaticRoute;
     "/workflows/active": StaticRoute;
     "/workflows/created": StaticRoute;
+    "/workflows/old": StaticRoute;
     "/debug": StaticRoute;
     "/": StaticRoute;
   }
