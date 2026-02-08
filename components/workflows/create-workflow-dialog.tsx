@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { useStore } from '@tanstack/react-form';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 
+import type { Workflow } from '@/db/schema/workflows.schema';
 import type { CreateWorkflowFormValues } from '@/lib/validations/workflow';
 
 import { ConfirmDiscardDialog } from '@/components/agents/confirm-discard-dialog';
@@ -45,7 +46,7 @@ interface CreateWorkflowDialogProps {
   /** Callback when open state changes (for controlled mode) */
   onOpenChange?: (isOpen: boolean) => void;
   /** Callback when workflow is successfully created */
-  onSuccess?: () => void;
+  onSuccess?: (workflow: Workflow) => void;
   /** Controlled open state (optional - if provided, dialog becomes controlled) */
   open?: boolean;
   /** The project ID to create the workflow for */
@@ -97,10 +98,7 @@ export const CreateWorkflowDialog = ({
   const { data: planningAgents = [] } = useAgentsByType('planning');
   const { agentId: defaultClarificationAgentId } = useDefaultClarificationAgent();
 
-  const createWorkflowMutation = useCreateWorkflow();
   const incrementTemplateUsageMutation = useIncrementTemplateUsage();
-
-  const isSubmitting = createWorkflowMutation.isPending;
 
   const templateOptions = [
     { label: 'None', value: '' },
@@ -116,6 +114,7 @@ export const CreateWorkflowDialog = ({
   }));
 
   const defaultValues: CreateWorkflowFormValues = {
+    autoStart: false,
     clarificationAgentId: defaultClarificationAgentId ? String(defaultClarificationAgentId) : '',
     featureName: '',
     featureRequest: '',
@@ -156,7 +155,7 @@ export const CreateWorkflowDialog = ({
 
         // Step 4: Close dialog and invoke success callback
         handleClose();
-        onSuccess?.();
+        onSuccess?.(workflow);
       } catch (error) {
         // Display error toast
         const message = error instanceof Error ? error.message : 'Failed to create workflow. Please try again.';
@@ -174,6 +173,10 @@ export const CreateWorkflowDialog = ({
   const selectedTemplateId = useStore(form.store, (state) => state.values.templateId);
   const selectedType = useStore(form.store, (state) => state.values.type);
   const selectedSkipClarification = useStore(form.store, (state) => state.values.skipClarification);
+  const selectedAutoStart = useStore(form.store, (state) => state.values.autoStart);
+
+  const createWorkflowMutation = useCreateWorkflow({ autoStart: selectedAutoStart });
+  const isSubmitting = createWorkflowMutation.isPending;
 
   // Compute IDs of repositories marked as default for this project
   const defaultRepositoryIds = useMemo(
@@ -347,6 +350,16 @@ export const CreateWorkflowDialog = ({
                       )}
                     </form.AppField>
 
+                    {/* Auto-Start Field */}
+                    <form.AppField name={'autoStart'}>
+                      {(field) => (
+                        <field.SwitchField
+                          description={'Automatically start the workflow immediately after creation.'}
+                          label={'Auto-start'}
+                        />
+                      )}
+                    </form.AppField>
+
                     {/* Clarification Agent Field - Hidden when skipClarification is true */}
                     {isShowClarificationAgent && (
                       <form.AppField name={'clarificationAgentId'}>
@@ -373,7 +386,9 @@ export const CreateWorkflowDialog = ({
                 </Button>
               </DialogClose>
               <form.AppForm>
-                <form.SubmitButton>{isSubmitting ? 'Creating...' : 'Create Workflow'}</form.SubmitButton>
+                <form.SubmitButton>
+                  {isSubmitting ? 'Creating...' : selectedAutoStart ? 'Create & Start Workflow' : 'Create Workflow'}
+                </form.SubmitButton>
               </form.AppForm>
             </DialogFooter>
           </form>

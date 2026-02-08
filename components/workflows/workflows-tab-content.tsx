@@ -154,6 +154,20 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
     }
   }, []);
 
+  const handleCreateWorkflowSuccess = useCallback(
+    (workflow: Workflow) => {
+      if (workflow.status === 'running') {
+        router.push(
+          $path({
+            route: '/workflows/[id]',
+            routeParams: { id: workflow.id },
+          })
+        );
+      }
+    },
+    [router]
+  );
+
   const handleViewInfo = useCallback((workflow: Workflow) => {
     setViewingWorkflow(workflow);
   }, []);
@@ -230,6 +244,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
         <div className={'flex items-center justify-end'}>
           <CreateWorkflowDialog
             disabled={hasNoRepositories}
+            onSuccess={handleCreateWorkflowSuccess}
             projectId={projectId}
             trigger={
               <Button disabled={hasNoRepositories}>
@@ -276,6 +291,7 @@ export const WorkflowsTabContent = ({ className, projectId, projectName, ref, ..
           <CreateWorkflowDialog
             initialValues={copyInitialValues}
             onOpenChange={handleCopyDialogOpenChange}
+            onSuccess={handleCreateWorkflowSuccess}
             open={!!copyInitialValues}
             projectId={projectId}
           />

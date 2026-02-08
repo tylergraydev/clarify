@@ -4,6 +4,7 @@ import { pauseBehaviors, workflowTypes } from '../../db/schema/workflows.schema'
 
 export const createWorkflowSchema = z
   .object({
+    autoStart: z.boolean().default(false),
     clarificationAgentId: z
       .string()
       .optional()

@@ -1,0 +1,20 @@
+# Step 1: Feature Request Refinement
+
+**Status**: Completed
+**Timestamp**: 2026-02-07
+**Duration**: ~16s
+
+## Original Request
+
+Move the existing workflow detail page at app/(app)/workflows/[id]/page.tsx to a new legacy route at app/(app)/workflows/old/[id]/page.tsx, preserving all its current functionality. Replace the current page with a new blank-slate page retaining only breadcrumbs and the clarification-stream-provider wrapper. Add a "Legacy View" navigation item to the sidebar.
+
+## Refined Feature Request
+
+Move the existing workflow detail page located at `app/(app)/workflows/[id]/page.tsx` to a new legacy route at `app/(app)/workflows/old/[id]/page.tsx`, preserving all its current functionality including the four-step accordion component (`workflow-step-accordion.tsx`), the streaming panel component (`workflow-streaming-panel.tsx`), the top bar component (`workflow-top-bar.tsx`), breadcrumb navigation, and the `clarification-stream-provider.tsx` wrapper that manages streaming state context. The existing page content should be copied to the legacy route unchanged, including all imports, the `withParamValidation` HOC usage that validates the numeric `id` parameter and optional `step` enum parameter, and the page component structure that combines these elements into the current four-step accordion interface for viewing AI workflow orchestration steps (clarification, refinement, file discovery, and implementation planning). After creating the new `app/(app)/workflows/old/[id]/` directory structure, generate a new `route-type.ts` file by running `pnpm next-typesafe-url` to ensure type-safe routing for the legacy route with the same parameter schema (id as number, step as optional enum matching the workflow step types). Replace the current `workflows/[id]/page.tsx` with a new blank-slate page that retains only the full breadcrumb navigation chain (Home > Project Name > Workflows > Feature Name, where Project Name and Feature Name are dynamically populated from real workflow data fetched via the `useWorkflow` React Query hook) and the `clarification-stream-provider.tsx` wrapper to maintain streaming context consistency, but remove the accordion, streaming panel, and top bar components entirely from this new page. The new page body should contain a minimal placeholder element (such as a centered container with text) indicating that the new workflow detail UI is under construction and will be implemented in a future iteration. In the application sidebar component located at `components/shell/app-sidebar.tsx`, add a fourth navigation sub-item under the existing Workflows collapsible section (positioned after the Active, Created, and History items) labeled "Legacy View" that links to either `/workflows/old` as a base path or constructs a link to the most recently viewed legacy workflow detail page using the appropriate route-type helper. All existing workflow detail components located in `components/workflows/detail/` directory remain completely untouched and unchanged, as they will only be referenced and imported by the legacy route page going forward. The Zustand store `workflow-detail-store.ts` that manages workflow detail UI state, all TanStack React Query hooks for workflow data fetching (such as `useWorkflow`, `useWorkflowSteps`), and all individual step components continue functioning exactly as-is on the legacy route without any modifications to their implementation. No workflow-related components, custom hooks, Electron services in `electron/services/`, IPC handlers in `electron/ipc/`, database repositories in `db/repositories/`, or Drizzle ORM schema definitions in `db/schema/` should be modified during this work, as this is purely a route reorganization that moves the existing complete workflow detail page to a legacy location while introducing a new minimal placeholder page at the original route path.
+
+## Validation
+
+- **Word Count**: ~430 words (original ~280 words, 1.5x expansion)
+- **Format**: Single paragraph
+- **Intent Preserved**: Yes - core intent of route reorganization maintained
+- **Scope**: No feature creep detected
