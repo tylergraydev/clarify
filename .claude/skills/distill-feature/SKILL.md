@@ -78,9 +78,27 @@ Use targeted exploration to understand the current state relevant to the feature
    - Hook names, component names, service names
    - Data flow: where data originates, how it moves, where it's consumed
    - What's persisted vs ephemeral today
-5. **Post-exploration clarification**: If codebase exploration reveals new ambiguities — such as multiple valid integration points, existing patterns that could conflict with the feature, architectural decisions that weren't obvious from the raw idea, or discovered complexity that changes the scope — use `AskUserQuestion` again to resolve them with the user before proceeding. This is critical because many ambiguities only become visible after seeing the actual code.
+### Phase 4: Post-Discovery Clarification
 
-### Phase 4: Synthesize Requirements
+**This phase is mandatory.** After codebase exploration, you now have concrete technical context that the user lacked when describing their feature. Use this knowledge to ask a focused round of clarifying questions before synthesizing requirements.
+
+1. **Review what you discovered** — compare what the user described with what actually exists in the codebase
+2. **Identify new ambiguities** that only became visible after seeing the actual code:
+   - **Integration points**: Multiple valid places to hook in the feature — ask which the user prefers
+   - **Existing patterns**: Discovered conventions or patterns that could shape the implementation — confirm the user wants to follow them or diverge
+   - **Scope implications**: The codebase reveals the feature is larger or smaller than the user likely imagined — confirm adjusted scope
+   - **Conflicting approaches**: Existing code suggests one approach but the user's description implies another — resolve the conflict
+   - **Missing pieces**: Infrastructure the feature needs that doesn't exist yet (e.g., no IPC channel for a domain, no schema table) — confirm the user wants these created
+   - **Side effects**: Changes that would ripple into other features or break existing behavior — confirm the user is aware and accepts them
+3. **Ask the user** using `AskUserQuestion`:
+   - Batch related questions (up to 4 per call)
+   - Reference specific files, types, and patterns you discovered so the user understands the technical context behind each question
+   - Provide concrete options grounded in what you found in the codebase rather than abstract choices
+   - Frame questions around decisions that would meaningfully change the implementation plan
+4. **Do NOT skip this phase** even if you think everything is clear — the goal is to surface assumptions you're making based on the codebase that the user may not agree with
+5. **Incorporate answers** into your mental model before proceeding to synthesis
+
+### Phase 5: Synthesize Requirements
 
 Organize everything discovered into clear categories:
 
@@ -90,7 +108,7 @@ Organize everything discovered into clear categories:
 4. **Constraints**: What should NOT change? What must be preserved?
 5. **Scope Boundaries**: What is explicitly in scope vs out of scope based on the user's description?
 
-### Phase 5: Craft the Prompt
+### Phase 6: Craft the Prompt
 
 Generate a single, dense paragraph (200-500 words) that:
 
@@ -103,7 +121,7 @@ Generate a single, dense paragraph (200-500 words) that:
 7. **Avoids fluff** — no motivational language, no "it would be nice if", no hedging
 8. **Uses precise technical language** matching the project's conventions
 
-### Phase 6: Output
+### Phase 7: Output
 
 Present the distilled prompt to the user in a clear format:
 
