@@ -15,7 +15,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useProjects } from '@/hooks/queries/use-projects';
-import { useCancelWorkflow, usePauseWorkflow, useResumeWorkflow, useWorkflows } from '@/hooks/queries/use-workflows';
+import {
+  useCancelWorkflow,
+  useConcurrencyStats,
+  usePauseWorkflow,
+  useResumeWorkflow,
+  useWorkflows,
+} from '@/hooks/queries/use-workflows';
 import { useWorktreeByWorkflowId } from '@/hooks/queries/use-worktrees';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +41,7 @@ type WorkflowCardProps = ClassName<{
 
 type WorkflowStatus = Workflow['status'];
 
-const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'paused', 'running', 'awaiting_input'];
+const CANCELLABLE_STATUSES: Array<WorkflowStatus> = ['created', 'queued', 'paused', 'running', 'awaiting_input'];
 const PAUSABLE_STATUSES: Array<WorkflowStatus> = ['running'];
 const RESUMABLE_STATUSES: Array<WorkflowStatus> = ['paused'];
 
@@ -57,6 +63,24 @@ const formatElapsedTime = (startedAt: null | string): string => {
   }
 
   return `${minutes}m`;
+};
+
+/**
+ * Maps step number to human-readable step name
+ */
+const getStepName = (stepNumber: null | number | undefined): null | string => {
+  switch (stepNumber) {
+    case 1:
+      return 'Clarification';
+    case 2:
+      return 'Refinement';
+    case 3:
+      return 'File Discovery';
+    case 4:
+      return 'Planning';
+    default:
+      return null;
+  }
 };
 
 /**
@@ -84,6 +108,7 @@ const getStatusVariant = (status: string): 'clarifying' | 'completed' | 'default
       return 'completed';
     case 'editing':
     case 'paused':
+    case 'queued':
       return 'clarifying';
     case 'running':
       return 'planning';
@@ -114,6 +139,7 @@ const getProgressBarColor = (status: WorkflowStatus): string => {
  */
 const formatStatus = (status: string): string => {
   if (status === 'awaiting_input') return 'Awaiting Input';
+  if (status === 'queued') return 'Queued';
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
@@ -208,6 +234,7 @@ const WorkflowCard = ({
   const elapsedTime = formatElapsedTime(workflow.startedAt);
   const statusVariant = getStatusVariant(workflow.status);
   const formattedStatus = formatStatus(workflow.status);
+  const _isRunningWithStepName = workflow.status === 'running' && getStepName(workflow.currentStepNumber) !== null;
 
   const isPausable = PAUSABLE_STATUSES.includes(workflow.status);
   const isResumable = RESUMABLE_STATUSES.includes(workflow.status);
@@ -262,8 +289,8 @@ const WorkflowCard = ({
         <div className={'min-w-0 flex-1'}>
           <h4 className={'truncate font-medium'}>{workflow.featureName}</h4>
           <p className={'text-sm text-muted-foreground'}>{projectName}</p>
-          {/* Branch name for implementation workflows */}
-          {workflow.worktreeId && <WorkflowBranchName workflowId={workflow.id} />}
+          {/* Branch name for workflows with worktrees */}
+          <WorkflowBranchName workflowId={workflow.id} />
         </div>
         <Badge size={'sm'} variant={statusVariant}>
           {formattedStatus}
@@ -279,8 +306,14 @@ const WorkflowCard = ({
           />
         </div>
         <div className={'mt-1 flex items-center justify-between text-xs text-muted-foreground'}>
-          <span>
+          <span className={'flex items-center gap-1.5'}>
             Step {workflow.currentStepNumber ?? 0} of {workflow.totalSteps ?? 0}
+            {_isRunningWithStepName && (
+              <Fragment>
+                <span className={'text-muted-foreground/50'}>|</span>
+                <span className={'text-accent'}>{getStepName(workflow.currentStepNumber)}</span>
+              </Fragment>
+            )}
           </span>
           <span>{progress}%</span>
         </div>
@@ -358,11 +391,16 @@ const ActiveWorkflowsContent = () => {
     return workflows.filter(
       (workflow) =>
         workflow.status === 'running' ||
+        workflow.status === 'queued' ||
         workflow.status === 'paused' ||
         workflow.status === 'editing' ||
         workflow.status === 'awaiting_input'
     );
   }, [workflows]);
+
+  const { data: concurrencyStats } = useConcurrencyStats({
+    enabled: activeWorkflows.length > 0,
+  });
 
   const projectMap = useMemo(() => {
     return projects.reduce<Record<number, Project>>((acc, project) => {
@@ -418,9 +456,26 @@ const ActiveWorkflowsContent = () => {
     );
   }
 
+  const _showConcurrencyStats =
+    concurrencyStats !== undefined && (concurrencyStats.running > 0 || concurrencyStats.queued > 0);
+
   // Workflows List
   return (
     <Fragment>
+      {/* Concurrency stats indicator */}
+      {_showConcurrencyStats && (
+        <div className={'mb-3 flex items-center gap-2'}>
+          <Badge size={'sm'} variant={'planning'}>
+            {concurrencyStats.running}/{concurrencyStats.maxConcurrent} running
+          </Badge>
+          {concurrencyStats.queued > 0 && (
+            <Badge size={'sm'} variant={'draft'}>
+              {concurrencyStats.queued} queued
+            </Badge>
+          )}
+        </div>
+      )}
+
       {/* Active Workflow Cards */}
       <div aria-live={'polite'} className={'space-y-3'}>
         {activeWorkflows.map((workflow) => (

@@ -2,7 +2,7 @@
 name: frontend-component
 description: Creates and modifies React components using Base UI primitives and CVA patterns. This agent is the sole authority for component creation work (UI primitives and feature components) and enforces all project conventions automatically.
 color: cyan
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Skill(component-conventions), Skill(react-coding-conventions), mcp__base-ui__base_ui_list_docs, mcp__base-ui__base_ui_get_doc
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(bun lint), Bash(bun typecheck), Skill(component-conventions), Skill(react-coding-conventions), mcp__base-ui__base_ui_list_docs, mcp__base-ui__base_ui_get_doc
 ---
 
 You are a specialized frontend component agent responsible for creating and modifying React components in this project.
@@ -203,8 +203,8 @@ export const DialogPopup = ({ className, ref, size, ...props }: DialogPopupProps
 Run validation commands:
 
 ```bash
-pnpm lint
-pnpm typecheck
+bun lint
+bun typecheck
 ```
 
 Fix any errors before completing.

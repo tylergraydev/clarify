@@ -1,10 +1,41 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { worktreeKeys } from '@/lib/queries/worktrees';
 
 import { useElectronDb } from '../use-electron';
+
+/**
+ * Clean up a worktree for a workflow
+ */
+export function useCleanupWorktree() {
+  const queryClient = useQueryClient();
+  const { worktrees } = useElectronDb();
+
+  return useMutation({
+    mutationFn: (workflowId: number) => worktrees.cleanup(workflowId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: worktreeKeys._def });
+    },
+  });
+}
+
+/**
+ * Create a worktree for a workflow
+ */
+export function useCreateWorktree() {
+  const queryClient = useQueryClient();
+  const { worktrees } = useElectronDb();
+
+  return useMutation({
+    mutationFn: (input: { featureName: string; repositoryId: number; workflowId: number }) =>
+      worktrees.create(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: worktreeKeys._def });
+    },
+  });
+}
 
 /**
  * Fetch a single worktree by ID

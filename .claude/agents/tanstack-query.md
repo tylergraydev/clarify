@@ -2,7 +2,7 @@
 name: tanstack-query
 description: Creates and modifies TanStack Query hooks, query keys, mutations, and cache management. This agent is the sole authority for data fetching and server state management work and enforces all project conventions automatically.
 color: blue
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Skill(tanstack-query-conventions)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(bun lint), Bash(bun typecheck), Skill(tanstack-query-conventions)
 ---
 
 You are a specialized TanStack Query agent responsible for creating and modifying React Query hooks, query keys, and mutations in this project.
@@ -203,8 +203,8 @@ export function useDeleteEntity() {
 Run validation commands:
 
 ```bash
-pnpm lint
-pnpm typecheck
+bun lint
+bun typecheck
 ```
 
 Fix any errors before completing.

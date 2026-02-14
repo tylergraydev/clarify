@@ -1,4 +1,31 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(for f in .claude/agents/claude-agent-sdk.md .claude/agents/database-schema.md .claude/agents/frontend-component.md .claude/agents/ipc-handler.md .claude/agents/page-route.md .claude/agents/tanstack-form-base-components.md .claude/agents/tanstack-form.md .claude/agents/tanstack-query.md .claude/agents/tanstack-table.md .claude/agents/vercel-react-best-practices.md .claude/agents/zustand-store.md)",
+      "Bash(do sed -i 's/pnpm/bun/g' \"$f\")",
+      "Bash(done)",
+      "Bash(for f in .claude/skills/audit-feature/SKILL.md .claude/skills/audit-logic/SKILL.md .claude/skills/audit-route/SKILL.md .claude/skills/claude-agent-sdk/SKILL.md .claude/skills/database-schema-conventions/references/Database-Schema-Conventions.md .claude/skills/fix-file/SKILL.md .claude/skills/fix-files/fix-files.md .claude/skills/implement-plan/SKILL.md .claude/skills/plan-feature/SKILL.md)",
+      "Bash(for f in docs/2026_02_07/implementation/auto-start-workflow-toggle/03-quality-gates.md docs/2026_02_07/implementation/legacy-workflow-route/03-implementation-summary.md docs/2026_02_07/orchestration/auto-start-workflow-toggle/03-implementation-planning.md docs/2026_02_07/orchestration/legacy-workflow-route/01-feature-refinement.md docs/2026_02_07/orchestration/legacy-workflow-route/02-file-discovery.md docs/2026_02_07/plans/auto-start-workflow-toggle-implementation-plan.md docs/2026_02_07/plans/legacy-workflow-route-implementation-plan.md)",
+      "Bash(bun typecheck:*)",
+      "Bash(bun lint:*)",
+      "Bash(bun electron:compile:*)",
+      "Bash(bun db:generate:*)",
+      "WebFetch(domain:www.conductor.build)",
+      "WebFetch(domain:conductor.build)",
+      "WebSearch",
+      "WebFetch(domain:docs.conductor.build)",
+      "Bash(bun:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "WebFetch(domain:orm.drizzle.team)",
+      "Bash(grep:*)",
+      "Bash(git --no-pager log:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)"
+    ]
+  },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "base-ui",

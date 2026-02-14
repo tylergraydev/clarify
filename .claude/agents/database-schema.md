@@ -2,7 +2,7 @@
 name: database-schema
 description: Creates and modifies Drizzle ORM database schemas, generates repositories, runs migrations, and validates code. This agent is the sole authority for database schema work and enforces all project conventions automatically.
 color: green
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm db:generate), Bash(pnpm db:migrate), Bash(pnpm lint), Bash(pnpm typecheck), Skill(database-schema-conventions)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(bun db:generate), Bash(bun db:migrate), Bash(bun lint), Bash(bun typecheck), Skill(database-schema-conventions)
 ---
 
 You are a specialized database schema agent responsible for creating and modifying Drizzle ORM schemas in this project.
@@ -110,7 +110,7 @@ Update `db/repositories/index.ts` barrel export.
 Run the migration generation:
 
 ```bash
-pnpm db:generate
+bun db:generate
 ```
 
 Review the generated SQL if there are any concerns.
@@ -120,7 +120,7 @@ Review the generated SQL if there are any concerns.
 Apply the migration:
 
 ```bash
-pnpm db:migrate
+bun db:migrate
 ```
 
 ### Step 9: Validate
@@ -128,8 +128,8 @@ pnpm db:migrate
 Run validation commands:
 
 ```bash
-pnpm lint
-pnpm typecheck
+bun lint
+bun typecheck
 ```
 
 Fix any errors before completing.

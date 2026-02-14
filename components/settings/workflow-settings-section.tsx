@@ -57,6 +57,19 @@ export const WorkflowSettingsSection = ({ form }: WorkflowSettingsSectionProps):
         {(field) => <field.RadioField label={'Default Pause Behavior'} options={pauseBehaviorOptions} />}
       </form.AppField>
 
+      {/* Max Concurrent Workflows */}
+      <form.AppField name={'workflow.maxConcurrentWorkflows'}>
+        {(field) => (
+          <field.NumberField
+            description={'Maximum number of workflows that can run simultaneously (1-10)'}
+            label={'Max Concurrent Workflows'}
+            max={10}
+            min={1}
+            step={1}
+          />
+        )}
+      </form.AppField>
+
       {/* Clarification Timeout */}
       <form.AppField name={'workflow.clarificationTimeoutSeconds'}>
         {(field) => (

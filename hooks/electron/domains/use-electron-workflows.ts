@@ -27,6 +27,14 @@ export function useElectronWorkflows() {
         if (!api) return undefined;
         return api.workflow.get(id);
       },
+      getConcurrencyStats: async () => {
+        const electronApi = throwIfNoApi(api, 'workflow.getConcurrencyStats');
+        return electronApi.workflow.getConcurrencyStats();
+      },
+      getQueuePosition: async (id: number) => {
+        const electronApi = throwIfNoApi(api, 'workflow.getQueuePosition');
+        return electronApi.workflow.getQueuePosition(id);
+      },
       getStatistics: async (filters?: Parameters<NonNullable<ElectronAPI>['workflow']['getStatistics']>[0]) => {
         const electronApi = throwIfNoApi(api, 'workflow.getStatistics');
         return electronApi.workflow.getStatistics(filters);

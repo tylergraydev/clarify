@@ -41,6 +41,7 @@ import { MessageChannelMain, type MessagePortMain } from 'electron';
 
 import type {
   AgentStreamClientMessage,
+  AgentStreamHookMatcher,
   AgentStreamHooks,
   AgentStreamMessage,
   AgentStreamOptions,
@@ -481,8 +482,8 @@ class AgentStreamService {
   private mapHooksToSDKFormat(hooks: AgentStreamHooks): Partial<Record<HookEvent, Array<HookCallbackMatcher>>> {
     const sdkHooks: Partial<Record<HookEvent, Array<HookCallbackMatcher>>> = {};
 
-    // Map each hook event type - using all HookEvent values from the SDK
-    const hookEvents: Array<HookEvent> = [
+    // Map each hook event type - using keys from AgentStreamHooks to ensure type-safe indexing
+    const hookEvents: Array<keyof AgentStreamHooks> = [
       'PreToolUse',
       'PostToolUse',
       'PostToolUseFailure',
@@ -501,7 +502,7 @@ class AgentStreamService {
     for (const event of hookEvents) {
       const matchers = hooks[event];
       if (matchers && matchers.length > 0) {
-        sdkHooks[event] = matchers.map((m) => {
+        sdkHooks[event] = matchers.map((m: AgentStreamHookMatcher) => {
           // Create a hook callback that continues execution - the matcher provides filtering.
           // TypeScript allows callback implementations to omit unused trailing parameters,
           // so we use a parameterless function rather than underscore-prefixed unused params.

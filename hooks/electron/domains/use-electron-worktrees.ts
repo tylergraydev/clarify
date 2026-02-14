@@ -9,6 +9,14 @@ export function useElectronWorktrees() {
 
   const worktrees = useMemo(
     () => ({
+      cleanup: async (workflowId: number) => {
+        if (!api) return false;
+        return api.worktree.cleanup(workflowId);
+      },
+      create: async (input: { featureName: string; repositoryId: number; workflowId: number }) => {
+        if (!api) return undefined;
+        return api.worktree.create(input);
+      },
       get: async (id: number) => {
         if (!api) return undefined;
         return api.worktree.get(id);

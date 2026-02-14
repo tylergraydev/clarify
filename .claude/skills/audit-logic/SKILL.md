@@ -927,8 +927,8 @@ Run validation checks on the codebase after business logic fixes were applied.
 
 ## Task
 
-1. Run ESLint: `pnpm lint`
-2. Run TypeScript: `pnpm typecheck`
+1. Run ESLint: `bun lint`
+2. Run TypeScript: `bun typecheck`
 
 ## Report Format
 

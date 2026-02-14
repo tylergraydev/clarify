@@ -6,14 +6,22 @@ export type {
   AgentSkill,
   AgentTool,
   AuditLog,
+  Conversation,
+  ConversationMessage,
+  DiffCommentRow,
   DiscoveredFile,
+  FileViewStateRow,
   NewAgent,
   NewAgentActivity,
   NewAgentHook,
   NewAgentSkill,
   NewAgentTool,
   NewAuditLog,
+  NewConversation,
+  NewConversationMessage,
+  NewDiffCommentRow,
   NewDiscoveredFile,
+  NewFileViewStateRow,
   NewProject,
   NewRepository,
   NewSetting,
@@ -37,6 +45,8 @@ export type {
  * The canonical definition is in types/agent-stream.d.ts.
  */
 export type { AgentStreamAPI } from './agent-stream';
+// Re-export debug log types for renderer use
+export type { DebugLogAPI, DebugLogEntry, DebugLogFilters } from './debug-log';
 
 /**
  * Agent activity API interface for fetching persisted activity records.
@@ -164,8 +174,7 @@ export interface AgentOperationResult {
   success: boolean;
 }
 
-// Re-export debug log types for renderer use
-export type { DebugLogAPI, DebugLogEntry, DebugLogFilters } from './debug-log';
+export type { TerminalAPI } from './terminal';
 
 /**
  * Extended Agent type that includes optional tools, skills, and hooks arrays
@@ -180,6 +189,30 @@ export type AgentWithRelations = import('../db/schema').Agent & {
 // =============================================================================
 // Clarification Types
 // =============================================================================
+
+export interface ChatAPI {
+  compactConversation(request: { conversationId: number; upToMessageId?: number }): Promise<{ compactedCount: number; summaryMessageId: number }>;
+  copyMessages(fromConversationId: number, toConversationId: number, upToMessageId?: number): Promise<Array<import('../db/schema').ConversationMessage>>;
+  createConversation(data: import('../db/schema').NewConversation): Promise<import('../db/schema').Conversation>;
+  createMessage(data: import('../db/schema').NewConversationMessage): Promise<import('../db/schema').ConversationMessage>;
+  deleteConversation(id: number): Promise<boolean>;
+  exportToNewChat(request: { messageIds: Array<number>; projectId: number; sourceConversationId: number }): Promise<import('../db/schema').Conversation>;
+  forkConversation(request: { forkPointMessageId: number; generateSummary?: boolean; sourceConversationId: number }): Promise<import('../db/schema').Conversation>;
+  generateTitle(conversationId: number): Promise<import('../db/schema').Conversation | undefined>;
+  getConversation(id: number): Promise<import('../db/schema').Conversation | undefined>;
+  getTokenEstimate(conversationId: number): Promise<number>;
+  listActiveMessages(conversationId: number): Promise<Array<import('../db/schema').ConversationMessage>>;
+  listConversations(projectId: number): Promise<Array<import('../db/schema').Conversation>>;
+  listMessages(conversationId: number): Promise<Array<import('../db/schema').ConversationMessage>>;
+  restoreMessage(id: number): Promise<import('../db/schema').ConversationMessage | undefined>;
+  revertToMessage(conversationId: number, messageId: number): Promise<{ affectedCount: number }>;
+  searchMessages(conversationId: number, query: string): Promise<Array<import('../db/schema').ConversationMessage>>;
+  softDeleteMessage(id: number): Promise<import('../db/schema').ConversationMessage | undefined>;
+  updateConversation(
+    id: number,
+    data: Partial<import('../db/schema').NewConversation>
+  ): Promise<import('../db/schema').Conversation | undefined>;
+}
 
 /**
  * Agent configuration for clarification.
@@ -332,14 +365,42 @@ export interface ClarificationSubmitAnswersResult {
   selectedOptions: Record<string, string>;
 }
 
+/**
+ * Usage statistics from SDK result.
+ */
+export type ClarificationUsageStats = import('./usage-stats').UsageStats;
+
+/**
+ * Diff API interface for git diff operations.
+ */
+export interface DiffAPI {
+  getBranches(repoPath: string): Promise<Array<import('./diff').GitBranch>>;
+  getDiff(repoPath: string, options?: import('./diff').DiffOptions): Promise<import('./diff').GitDiffResult>;
+  getFileContent(repoPath: string, filePath: string, ref?: string): Promise<string>;
+  getFileDiff(repoPath: string, options: import('./diff').FileDiffOptions): Promise<import('./diff').GitDiffResult>;
+  getLog(repoPath: string, options?: import('./diff').GitLogOptions): Promise<Array<import('./diff').GitLogEntry>>;
+  getStatus(repoPath: string): Promise<import('./diff').GitStatusResult>;
+  getWorktreeDiff(
+    worktreePath: string,
+    baseBranch?: string
+  ): Promise<{ committed: import('./diff').GitDiffResult; uncommitted: import('./diff').GitDiffResult }>;
+}
+
 // =============================================================================
 // Clarification Streaming Types
 // =============================================================================
 
 /**
- * Usage statistics from SDK result.
+ * Diff Comment API interface for inline comment CRUD.
  */
-export type ClarificationUsageStats = import('./usage-stats').UsageStats;
+export interface DiffCommentAPI {
+  create(data: import('../db/schema').NewDiffCommentRow): Promise<import('../db/schema').DiffCommentRow>;
+  delete(id: number): Promise<boolean>;
+  list(workflowId: number): Promise<Array<import('../db/schema').DiffCommentRow>>;
+  listByFile(workflowId: number, filePath: string): Promise<Array<import('../db/schema').DiffCommentRow>>;
+  toggleResolved(id: number): Promise<import('../db/schema').DiffCommentRow | undefined>;
+  update(id: number, data: { content: string }): Promise<import('../db/schema').DiffCommentRow | undefined>;
+}
 
 // =============================================================================
 // Refinement Types
@@ -406,6 +467,7 @@ export interface ElectronAPI {
     findByWorkflow(workflowId: number): Promise<Array<import('../db/schema').AuditLog>>;
     list(): Promise<Array<import('../db/schema').AuditLog>>;
   };
+  chat: ChatAPI;
   clarification: ClarificationAPI;
   debugLog: {
     clearLogs(): Promise<{ error?: string; success: boolean }>;
@@ -423,7 +485,10 @@ export interface ElectronAPI {
       filters?: Array<{ extensions: Array<string>; name: string }>
     ): Promise<null | string>;
   };
+  diff: DiffAPI;
+  diffComment: DiffCommentAPI;
   discovery: FileDiscoveryAPI;
+  fileViewState: FileViewStateAPI;
   fs: {
     exists(path: string): Promise<boolean>;
     readDirectory(path: string): Promise<{
@@ -445,6 +510,7 @@ export interface ElectronAPI {
     }>;
     writeFile(path: string, content: string): Promise<{ error?: string; success: boolean }>;
   };
+  github: import('../electron/preload').GitHubAPI;
   project: {
     addRepo(
       projectId: number,
@@ -470,6 +536,12 @@ export interface ElectronAPI {
     create(data: import('../db/schema').NewRepository): Promise<import('../db/schema').Repository>;
     delete(id: number): Promise<boolean>;
     deleteWithCleanup(repositoryId: number): Promise<{ cancelledCount: number; deleted: boolean }>;
+    detectGitInfo(path: string): Promise<{
+      defaultBranch?: string;
+      isGitRepo: boolean;
+      name?: string;
+      remoteUrl?: string;
+    }>;
     findByPath(path: string): Promise<import('../db/schema').Repository | undefined>;
     findByProject(projectId: number): Promise<Array<import('../db/schema').Repository>>;
     get(id: number): Promise<import('../db/schema').Repository | undefined>;
@@ -533,11 +605,14 @@ export interface ElectronAPI {
       placeholders: Array<Omit<import('../db/schema').NewTemplatePlaceholder, 'templateId'>>
     ): Promise<Array<import('../db/schema').TemplatePlaceholder>>;
   };
+  terminal: import('./terminal').TerminalAPI;
   workflow: {
     cancel(id: number): Promise<import('../db/schema').Workflow | undefined>;
     create(data: import('../db/schema').NewWorkflow): Promise<import('../db/schema').Workflow>;
     delete(id: number): Promise<boolean>;
     get(id: number): Promise<import('../db/schema').Workflow | undefined>;
+    getConcurrencyStats(): Promise<{ maxConcurrent: number; queued: number; running: number }>;
+    getQueuePosition(id: number): Promise<number>;
     getStatistics(filters?: { dateFrom?: string; dateTo?: string; projectId?: number }): Promise<WorkflowStatistics>;
     list(): Promise<Array<import('../db/schema').Workflow>>;
     listHistory(filters?: WorkflowHistoryFilters): Promise<WorkflowHistoryResult>;
@@ -559,6 +634,12 @@ export interface ElectronAPI {
     remove(workflowId: number, repositoryId: number): Promise<boolean>;
   };
   worktree: {
+    cleanup(workflowId: number): Promise<boolean>;
+    create(input: {
+      featureName: string;
+      repositoryId: number;
+      workflowId: number;
+    }): Promise<import('../db/schema').Worktree>;
     get(id: number): Promise<import('../db/schema').Worktree | undefined>;
     getByWorkflowId(workflowId: number): Promise<import('../db/schema').Worktree | undefined>;
     list(options?: { repositoryId?: number; status?: string }): Promise<Array<import('../db/schema').Worktree>>;
@@ -672,10 +753,6 @@ export interface FileDiscoveryStartInput {
   workflowId: number;
 }
 
-// =============================================================================
-// File Discovery Types
-// =============================================================================
-
 /**
  * Discriminated union of all file discovery stream message types.
  */
@@ -692,10 +769,24 @@ export type FileDiscoveryStreamMessage =
   | FileDiscoveryStreamToolStart
   | FileDiscoveryStreamToolUpdate;
 
+// =============================================================================
+// File Discovery Types
+// =============================================================================
+
 /**
  * Usage statistics for file discovery.
  */
 export type FileDiscoveryUsageStats = import('./usage-stats').UsageStats;
+
+/**
+ * File View State API interface for mark-as-viewed tracking.
+ */
+export interface FileViewStateAPI {
+  getStats(workflowId: number, totalFiles: number): Promise<{ totalFiles: number; viewedFiles: number }>;
+  list(workflowId: number): Promise<Array<import('../db/schema').FileViewStateRow>>;
+  markUnviewed(workflowId: number, filePath: string): Promise<boolean>;
+  markViewed(workflowId: number, filePath: string): Promise<import('../db/schema').FileViewStateRow>;
+}
 
 /**
  * Agent configuration for refinement.

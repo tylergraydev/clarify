@@ -46,8 +46,8 @@ Add an "Auto-start" toggle to the create workflow dialog that allows users to au
 
 ### Prerequisites
 
-- [ ] Verify pnpm is installed and project dependencies are up to date
-- [ ] Ensure development environment is configured with `pnpm dev` running
+- [ ] Verify bun is installed and project dependencies are up to date
+- [ ] Ensure development environment is configured with `bun dev` running
 - [ ] Confirm understanding of TanStack Form field patterns and Zod validation
 
 ### Step 1: Add autoStart Field to Validation Schema
@@ -65,7 +65,7 @@ Add an "Auto-start" toggle to the create workflow dialog that allows users to au
 
 **Validation Commands:**
 ```bash
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -92,7 +92,7 @@ pnpm lint && pnpm typecheck
 
 **Validation Commands:**
 ```bash
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -118,7 +118,7 @@ pnpm lint && pnpm typecheck
 
 **Validation Commands:**
 ```bash
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -144,7 +144,7 @@ pnpm lint && pnpm typecheck
 
 **Validation Commands:**
 ```bash
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -179,7 +179,7 @@ pnpm lint && pnpm typecheck
 
 **Validation Commands:**
 ```bash
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -205,7 +205,7 @@ pnpm lint && pnpm typecheck
 
 **Validation Commands:**
 ```bash
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -217,8 +217,8 @@ pnpm lint && pnpm typecheck
 
 ### Quality Gates
 
-- [ ] All TypeScript files pass `pnpm typecheck`
-- [ ] All files pass `pnpm lint`
+- [ ] All TypeScript files pass `bun typecheck`
+- [ ] All files pass `bun lint`
 - [ ] Auto-start toggle appears only for planning workflows
 - [ ] Submit button text changes dynamically based on autoStart state
 - [ ] Workflow auto-starts and navigates to detail page when toggle enabled

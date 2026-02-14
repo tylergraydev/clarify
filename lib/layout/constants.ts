@@ -45,6 +45,14 @@ export const DEFAULT_ACTIVE_WORKFLOWS_TYPE_FILTER = 'all' as const;
 export const DEFAULT_SHELL_SIDEBAR_COLLAPSED = false;
 export const DEFAULT_SHELL_NAV_ITEMS_EXPANDED: Array<string> = [];
 
+// Terminal panel storage keys
+export const TERMINAL_PANEL_HEIGHT_STORAGE_KEY = 'app:terminal-panel-height';
+export const TERMINAL_PANEL_OPEN_STORAGE_KEY = 'app:terminal-panel-open';
+
+// Terminal panel defaults
+export const DEFAULT_TERMINAL_PANEL_HEIGHT = 300;
+export const DEFAULT_TERMINAL_PANEL_OPEN = false;
+
 // Workflow detail storage keys
 export const WORKFLOW_DETAIL_STREAMING_PANEL_HEIGHT_STORAGE_KEY = 'app:workflow-detail-streaming-panel-height';
 export const WORKFLOW_DETAIL_STREAMING_PANEL_COLLAPSED_STORAGE_KEY = 'app:workflow-detail-streaming-panel-collapsed';

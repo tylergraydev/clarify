@@ -1,6 +1,6 @@
 ---
 name: implement-plan
-allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:claude-agent-sdk), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Task(subagent_type:page-route), Task(subagent_type:zustand-store), Task(subagent_type:vercel-react-best-practices), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,pnpm:*,cd:*), TodoWrite(*), AskUserQuestion(*)
+allowed-tools: Task(subagent_type:general-purpose), Task(subagent_type:claude-agent-sdk), Task(subagent_type:database-schema), Task(subagent_type:tanstack-query), Task(subagent_type:tanstack-table), Task(subagent_type:tanstack-form), Task(subagent_type:tanstack-form-base-components), Task(subagent_type:ipc-handler), Task(subagent_type:frontend-component), Task(subagent_type:page-route), Task(subagent_type:zustand-store), Task(subagent_type:vercel-react-best-practices), Read(*), Write(*), Bash(git:*,mkdir:*,npm:*,bun:*,cd:*), TodoWrite(*), AskUserQuestion(*)
 argument-hint: "path/to/implementation-plan.md [--step-by-step|--dry-run|--resume-from=N|--worktree]"
 description: Execute implementation plan with structured tracking and validation using subagent architecture
 disable-model-invocation: true
@@ -108,7 +108,7 @@ See the "Step-Type Detection Rules" section in @.claude/available-agents.md for 
 3. **Worktree Setup** (if `--worktree` flag):
    - Create worktree at `.worktrees/{feature-slug}/`
    - Create branch `feat/{feature-slug}`
-   - Run `pnpm install`
+   - Run `bun install`
 4. **Git Safety Checks**:
    - Block if on `main` (unless worktree created)
    - Check for uncommitted changes
@@ -158,7 +158,7 @@ Task(
     **What to do**: {description from plan}
     **Why**: {rationale from plan}
     **Files**: {file list from plan}
-    **Validation**: Run pnpm lint && pnpm typecheck
+    **Validation**: Run bun lint && bun typecheck
     **Success criteria**: {criteria from plan}
 
     Return structured results with:
@@ -178,7 +178,7 @@ Task(
 
 ### Phase 4: Quality Gates (Orchestrator)
 
-1. Run `pnpm lint && pnpm typecheck` via Bash
+1. Run `bun lint && bun typecheck` via Bash
 2. Save `XX-quality-gates.md`
 3. Mark quality gates todo as completed/failed
 
@@ -213,7 +213,7 @@ You are implementing Step {N}/{Total} of an implementation plan.
 {List of file paths}
 
 **Validation commands**:
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 
 **Success criteria**:
 {List from plan}
@@ -238,8 +238,8 @@ Provide results in this format:
 - path/to/new-file.ts - Purpose
 
 **Validation Results**:
-- pnpm lint: PASS/FAIL
-- pnpm typecheck: PASS/FAIL
+- bun lint: PASS/FAIL
+- bun typecheck: PASS/FAIL
 
 **Success Criteria**:
 - [✓] Criterion 1
@@ -298,7 +298,7 @@ Your tools for implementation are:
 - ✅ `Read` - Only for plan file and your log files
 - ✅ `Write` - Only for log files in docs/
 - ✅ `TodoWrite` - Track progress
-- ✅ `Bash` - Git commands, mkdir, pnpm commands
+- ✅ `Bash` - Git commands, mkdir, bun commands
 - ✅ `AskUserQuestion` - User decisions
 
 Your tools are NOT for:

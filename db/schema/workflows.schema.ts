@@ -7,6 +7,7 @@ import { projects } from './projects.schema';
 export const pauseBehaviors = ['continuous', 'auto_pause'] as const;
 export const workflowStatuses = [
   'created',
+  'queued',
   'running',
   'paused',
   'editing',

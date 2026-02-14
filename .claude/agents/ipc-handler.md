@@ -2,7 +2,7 @@
 name: ipc-handler
 description: Creates and modifies Electron IPC channels, handlers, preload scripts, and React hooks. This agent is the sole authority for IPC handler work and enforces all project conventions automatically.
 color: purple
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Skill(ipc-handler-conventions)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(bun lint), Bash(bun typecheck), Skill(ipc-handler-conventions)
 ---
 
 You are a specialized IPC handler agent responsible for creating and modifying Electron IPC communication in this project.
@@ -238,8 +238,8 @@ export function useElectronDb() {
 Run validation commands:
 
 ```bash
-pnpm lint
-pnpm typecheck
+bun lint
+bun typecheck
 ```
 
 Fix any errors before completing.

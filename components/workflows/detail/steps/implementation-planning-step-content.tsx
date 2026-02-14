@@ -28,7 +28,7 @@ const MOCK_IMPLEMENTATION_STEPS: Array<ImplementationStep> = [
       'Index exists on email column',
     ],
     title: 'Create user schema',
-    validationCommands: ['pnpm db:generate', 'pnpm db:migrate', 'pnpm typecheck'],
+    validationCommands: ['bun db:generate', 'bun db:migrate', 'bun typecheck'],
   },
   {
     description:
@@ -40,7 +40,7 @@ const MOCK_IMPLEMENTATION_STEPS: Array<ImplementationStep> = [
       'All methods use proper Drizzle query patterns',
     ],
     title: 'Add user repository',
-    validationCommands: ['pnpm typecheck', 'pnpm lint'],
+    validationCommands: ['bun typecheck', 'bun lint'],
   },
   {
     description:
@@ -53,7 +53,7 @@ const MOCK_IMPLEMENTATION_STEPS: Array<ImplementationStep> = [
       'Pagination displays correct page counts',
     ],
     title: 'Build user list page',
-    validationCommands: ['pnpm typecheck', 'pnpm lint', 'pnpm build'],
+    validationCommands: ['bun typecheck', 'bun lint', 'bun build'],
   },
   {
     description:
@@ -70,7 +70,7 @@ const MOCK_IMPLEMENTATION_STEPS: Array<ImplementationStep> = [
       'Form submission calls the correct handler',
     ],
     title: 'Create user form',
-    validationCommands: ['pnpm typecheck', 'pnpm lint'],
+    validationCommands: ['bun typecheck', 'bun lint'],
   },
   {
     description:
@@ -84,7 +84,7 @@ const MOCK_IMPLEMENTATION_STEPS: Array<ImplementationStep> = [
       'IPC handlers registered for all user operations',
     ],
     title: 'Add query hooks',
-    validationCommands: ['pnpm typecheck', 'pnpm lint'],
+    validationCommands: ['bun typecheck', 'bun lint'],
   },
 ];
 

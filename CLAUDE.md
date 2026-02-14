@@ -171,15 +171,15 @@ Clarify is a cross-platform Electron desktop application that transforms informa
 
 | Command | Description |
 |---|---|
-| `pnpm dev` | Start the Next.js development server on port 3000 |
-| `pnpm build` | Build the Next.js application for production |
-| `pnpm electron:dev` | Start Next.js dev server and Electron concurrently (waits for port 3000) |
-| `pnpm electron:compile` | Compile Electron TypeScript and bundle preload scripts with esbuild |
-| `pnpm electron:build` | Full Electron production build (Next.js static export + Electron compile) |
-| `pnpm electron:dist` | Build and package for distribution via electron-builder (NSIS/DMG/AppImage) |
-| `pnpm lint` | Run ESLint with auto-fix and caching |
-| `pnpm format` | Format all files with Prettier |
-| `pnpm typecheck` | Run TypeScript type checking without emitting |
-| `pnpm db:generate` | Generate Drizzle ORM migration files from schema changes |
-| `pnpm next-typesafe-url` | Generate type-safe route parameter definitions |
-| `pnpm start` | Start the Next.js production server (web mode only) |
+| `bun dev` | Start the Next.js development server on port 3000 |
+| `bun build` | Build the Next.js application for production |
+| `bun electron:dev` | Start Next.js dev server and Electron concurrently (waits for port 3000) |
+| `bun electron:compile` | Compile Electron TypeScript and bundle preload scripts with esbuild |
+| `bun electron:build` | Full Electron production build (Next.js static export + Electron compile) |
+| `bun electron:dist` | Build and package for distribution via electron-builder (NSIS/DMG/AppImage) |
+| `bun lint` | Run ESLint with auto-fix and caching |
+| `bun format` | Format all files with Prettier |
+| `bun typecheck` | Run TypeScript type checking without emitting |
+| `bun db:generate` | Generate Drizzle ORM migration files from schema changes |
+| `bun next-typesafe-url` | Generate type-safe route parameter definitions |
+| `bun start` | Start the Next.js production server (web mode only) |

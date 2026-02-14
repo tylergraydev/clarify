@@ -3,8 +3,13 @@
 import { useElectronAgentActivity } from './electron/domains/use-electron-agent-activity';
 import { useElectronAgents } from './electron/domains/use-electron-agents';
 import { useElectronAudit } from './electron/domains/use-electron-audit';
+import { useElectronChat } from './electron/domains/use-electron-chat';
 import { useElectronClarification } from './electron/domains/use-electron-clarification';
+import { useElectronDiff } from './electron/domains/use-electron-diff';
+import { useElectronDiffComments } from './electron/domains/use-electron-diff-comments';
 import { useElectronDiscovery } from './electron/domains/use-electron-discovery';
+import { useElectronFileViewState } from './electron/domains/use-electron-file-view-state';
+import { useElectronGitHub } from './electron/domains/use-electron-github';
 import { useElectronProjects } from './electron/domains/use-electron-projects';
 import { useElectronSettings } from './electron/domains/use-electron-settings';
 import { useElectronTemplates } from './electron/domains/use-electron-templates';
@@ -28,8 +33,13 @@ export function useElectronDb() {
   const { agentActivity } = useElectronAgentActivity();
   const { agentHooks, agents, agentSkills, agentTools } = useElectronAgents();
   const { audit } = useElectronAudit();
+  const { chat } = useElectronChat();
   const { clarification } = useElectronClarification();
+  const { diff } = useElectronDiff();
+  const { diffComments } = useElectronDiffComments();
+  const { github } = useElectronGitHub();
   const { discovery } = useElectronDiscovery();
+  const { fileViewState } = useElectronFileViewState();
   const { projects, repositories } = useElectronProjects();
   const { settings } = useElectronSettings();
   const { templates } = useElectronTemplates();
@@ -43,8 +53,13 @@ export function useElectronDb() {
     agentSkills,
     agentTools,
     audit,
+    chat,
     clarification,
+    diff,
+    diffComments,
     discovery,
+    fileViewState,
+    github,
     isElectron,
     projects,
     repositories,

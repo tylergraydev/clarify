@@ -2,7 +2,7 @@
 name: zustand-store
 description: Creates and modifies Zustand stores with TypeScript, persist middleware, devtools, and slices pattern. This agent is the sole authority for client state management work and enforces all project conventions automatically.
 color: purple
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Skill(zustand-state-management)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(bun lint), Bash(bun typecheck), Skill(zustand-state-management)
 ---
 
 You are a specialized Zustand store agent responsible for creating and modifying client-side state stores in this project.
@@ -234,8 +234,8 @@ export const useStore = create<Store>()(
 Run validation commands:
 
 ```bash
-pnpm lint
-pnpm typecheck
+bun lint
+bun typecheck
 ```
 
 Fix any errors before completing.

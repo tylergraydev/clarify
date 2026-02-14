@@ -200,7 +200,7 @@ relevant to implementing the feature by analyzing the refined request and codeba
    - **TIMEOUT**: Set 60-second timeout for plan generation
    - **RETRY STRATEGY**: If format validation fails, retry with explicit format constraints (maximum 2 attempts)
    - **FALLBACK**: If all retries fail, flag for manual review and continue with available output
-   - Prompt must include: "Generate an implementation plan in MARKDOWN format (NOT XML) following your defined template with these sections: ## Overview (with Estimated Duration, Complexity, Risk Level), ## Quick Summary, ## Prerequisites, ## Implementation Steps (each step with What/Why/Confidence/Files/Changes/Validation Commands/Success Criteria), ## Quality Gates, ## Notes. IMPORTANT: Include 'pnpm run lint:fix && pnpm run typecheck' validation for every step touching JS/JSX/TS/TSX files. Do NOT include code examples.
+   - Prompt must include: "Generate an implementation plan in MARKDOWN format (NOT XML) following your defined template with these sections: ## Overview (with Estimated Duration, Complexity, Risk Level), ## Quick Summary, ## Prerequisites, ## Implementation Steps (each step with What/Why/Confidence/Files/Changes/Validation Commands/Success Criteria), ## Quality Gates, ## Notes. IMPORTANT: Include 'bun run lint:fix && bun run typecheck' validation for every step touching JS/JSX/TS/TSX files. Do NOT include code examples.
    - Pass refined feature request, discovered files analysis, and project context
    - **LOG REQUIREMENT**: Capture complete agent prompt and full response
    - **VALIDATION COMMANDS**: Ensure all steps include appropriate validation commands
@@ -210,7 +210,7 @@ relevant to implementing the feature by analyzing the refined request and codeba
    - **Auto-Conversion**: If XML format detected, attempt automatic conversion to markdown
    - **Template Compliance**: Check for Overview, Prerequisites, Implementation Steps, Quality Gates
    - **Section Validation**: Verify each required section contains appropriate content
-   - **Command Validation**: Ensure steps include `pnpm run lint:fix && pnpm run typecheck`
+   - **Command Validation**: Ensure steps include `bun run lint:fix && bun run typecheck`
    - **Content Quality**: Verify no code examples or implementations included
    - **Completeness Check**: Confirm plan addresses all aspects of the refined request
    - **Error Recovery**: If validation fails, retry with explicit format constraints

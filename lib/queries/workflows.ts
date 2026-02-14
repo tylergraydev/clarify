@@ -6,10 +6,12 @@ export const workflowKeys = createQueryKeys('workflows', {
   byProject: (projectId: number) => [projectId],
   byStatus: (status: string) => [status],
   byType: (type: string) => [type],
+  concurrencyStats: null,
   created: null,
   detail: (id: number) => [id],
   history: (filters?: WorkflowHistoryFilters) => [{ filters }],
   historyStatistics: (filters?: { dateFrom?: string; dateTo?: string; projectId?: number }) => [{ filters }],
   list: (filters?: { projectId?: number; status?: string; type?: string }) => [{ filters }],
+  queuePosition: (id: number) => [id],
   running: null,
 });

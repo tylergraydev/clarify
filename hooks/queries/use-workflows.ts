@@ -11,9 +11,9 @@ import { workflowKeys } from '@/lib/queries/workflows';
 import { useElectronDb } from '../use-electron';
 
 /**
- * Active workflow statuses for filtering
+ * Active workflow statuses for filtering (includes queued)
  */
-const ACTIVE_STATUSES = ['running', 'paused', 'editing', 'awaiting_input'] as const;
+const ACTIVE_STATUSES = ['running', 'paused', 'editing', 'awaiting_input', 'queued'] as const;
 const CREATED_STATUS = 'created' as const;
 
 /**
@@ -77,6 +77,9 @@ export function useCancelWorkflow() {
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.created.queryKey,
         });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.concurrencyStats.queryKey,
+        });
         if (workflow.projectId) {
           void queryClient.invalidateQueries({
             queryKey: workflowKeys.byProject(workflow.projectId).queryKey,
@@ -84,6 +87,21 @@ export function useCancelWorkflow() {
         }
       }
     },
+  });
+}
+
+/**
+ * Fetch concurrency statistics (running, queued, maxConcurrent) with automatic polling.
+ */
+export function useConcurrencyStats(options?: { enabled?: boolean }) {
+  const { isElectron, workflows } = useElectronDb();
+  const enabledOption = options?.enabled ?? true;
+
+  return useQuery({
+    ...workflowKeys.concurrencyStats,
+    enabled: isElectron && enabledOption,
+    queryFn: () => workflows.getConcurrencyStats(),
+    refetchInterval: 3000,
   });
 }
 
@@ -191,6 +209,21 @@ export function usePauseWorkflow() {
 }
 
 /**
+ * Fetch queue position for a specific workflow.
+ * Only enabled when the workflow status is 'queued'.
+ */
+export function useQueuePosition(workflowId: number, status?: string) {
+  const { isElectron, workflows } = useElectronDb();
+
+  return useQuery({
+    ...workflowKeys.queuePosition(workflowId),
+    enabled: isElectron && status === 'queued',
+    queryFn: () => workflows.getQueuePosition(workflowId),
+    refetchInterval: 5000,
+  });
+}
+
+/**
  * Resume a paused workflow
  */
 export function useResumeWorkflow() {
@@ -238,6 +271,9 @@ export function useStartWorkflow() {
         });
         void queryClient.invalidateQueries({
           queryKey: workflowKeys.created.queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: workflowKeys.concurrencyStats.queryKey,
         });
         // Invalidate step queries to fetch newly created planning steps
         void queryClient.invalidateQueries({

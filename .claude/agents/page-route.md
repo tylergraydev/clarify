@@ -2,7 +2,7 @@
 name: page-route
 description: Creates and modifies Next.js App Router pages, layouts, loading states, and error boundaries. This agent is the sole authority for page-level work and enforces all project conventions automatically.
 color: orange
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Bash(pnpm next-typesafe-url), Skill(nextjs-routing-conventions), Skill(react-coding-conventions)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(bun lint), Bash(bun typecheck), Bash(bun next-typesafe-url), Skill(nextjs-routing-conventions), Skill(react-coding-conventions)
 ---
 
 You are a specialized page/route agent responsible for creating and modifying Next.js App Router pages in this project.
@@ -196,7 +196,7 @@ export { OtherComponent } from './other-component';
 Run the type generation command:
 
 ```bash
-pnpm next-typesafe-url
+bun next-typesafe-url
 ```
 
 ### Step 9: Validate
@@ -204,8 +204,8 @@ pnpm next-typesafe-url
 Run validation commands:
 
 ```bash
-pnpm lint
-pnpm typecheck
+bun lint
+bun typecheck
 ```
 
 Fix any errors before completing.
@@ -293,4 +293,4 @@ After completing work, provide a summary:
 - **Follow conventions strictly** - the skills' conventions are non-negotiable
 - **Keep it simple** - only add what is explicitly requested, no over-engineering
 - **Document changes** - provide clear summaries of what was created/modified
-- **Regenerate route types** - always run `pnpm next-typesafe-url` after route changes
+- **Regenerate route types** - always run `bun next-typesafe-url` after route changes

@@ -10,13 +10,17 @@ import { useToast } from '@/hooks/use-toast';
 import { useAppForm } from '@/lib/forms';
 import { settingsFormSchema, type SettingsFormValues } from '@/lib/validations/settings';
 
+import type { SettingsFormApi as ChatFormApi } from './chat-settings-section';
 import type { SettingsFormApi as LoggingFormApi } from './logging-settings-section';
+import type { SettingsFormApi as TerminalFormApi } from './terminal-settings-section';
 import type { SettingsFormApi as WorkflowFormApi } from './workflow-settings-section';
 import type { SettingsFormApi as WorktreeFormApi } from './worktree-settings-section';
 
 import { type AutoSaveState, AutoSaveStatus } from './auto-save-status';
+import { ChatSettingsSection } from './chat-settings-section';
 import { DebugSettingsSection } from './debug-settings-section';
 import { LoggingSettingsSection } from './logging-settings-section';
+import { TerminalSettingsSection } from './terminal-settings-section';
 import { UISettingsSection } from './ui-settings-section';
 import { WorkflowSettingsSection } from './workflow-settings-section';
 import { WorktreeSettingsSection } from './worktree-settings-section';
@@ -93,6 +97,46 @@ function flattenSettingsValues(values: SettingsFormValues): Array<{ key: string;
   updates.push({
     key: 'logging.logRetentionDays',
     value: String(values.logging.logRetentionDays),
+  });
+
+  // Chat settings
+  updates.push({
+    key: 'chat.autoGenerateTitle',
+    value: String(values.chat.autoGenerateTitle),
+  });
+  updates.push({
+    key: 'chat.autoPromptCompaction',
+    value: String(values.chat.autoPromptCompaction),
+  });
+  updates.push({
+    key: 'chat.compactionTokenThreshold',
+    value: String(values.chat.compactionTokenThreshold),
+  });
+  updates.push({
+    key: 'chat.titleRegenerateInterval',
+    value: String(values.chat.titleRegenerateInterval),
+  });
+
+  // Terminal settings
+  updates.push({
+    key: 'terminal.shellPath',
+    value: values.terminal.shellPath,
+  });
+  updates.push({
+    key: 'terminal.fontSize',
+    value: String(values.terminal.fontSize),
+  });
+  updates.push({
+    key: 'terminal.fontFamily',
+    value: values.terminal.fontFamily,
+  });
+  updates.push({
+    key: 'terminal.cursorBlink',
+    value: String(values.terminal.cursorBlink),
+  });
+  updates.push({
+    key: 'terminal.scrollback',
+    value: String(values.terminal.scrollback),
   });
 
   return updates;
@@ -193,6 +237,12 @@ export const SettingsForm = ({ initialValues, onSuccess }: SettingsFormProps): R
 
         {/* Worktree Settings Section */}
         <WorktreeSettingsSection form={form as unknown as WorktreeFormApi} />
+
+        {/* Terminal Settings Section */}
+        <TerminalSettingsSection form={form as unknown as TerminalFormApi} />
+
+        {/* Chat Settings Section */}
+        <ChatSettingsSection form={form as unknown as ChatFormApi} />
 
         {/* Logging Settings Section */}
         <LoggingSettingsSection form={form as unknown as LoggingFormApi} />

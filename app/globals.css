@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import '@xterm/xterm/css/xterm.css';
 @source "../node_modules/streamdown/dist/*.js";
 
 :root {
@@ -28,6 +29,11 @@
   --workflow-panel-min-width: 300px;
   --workflow-panel-max-width: 800px;
   --workflow-header-height: 64px;
+
+  /* Terminal panel dimensions */
+  --terminal-panel-min-height: 120px;
+  --terminal-panel-max-height: 600px;
+  --terminal-panel-collapsed-height: 36px;
 
   /* Workflow streaming panel dimensions */
   --workflow-streaming-panel-min-height: 120px;

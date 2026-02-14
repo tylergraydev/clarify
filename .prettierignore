@@ -10,7 +10,7 @@ next-env.d.ts
 *.tsbuildinfo
 
 # Package manager
-pnpm-lock.yaml
+bun.lock
 
 docs
 .claude

@@ -2,7 +2,7 @@
 name: claude-agent-sdk
 description: Creates and modifies Claude Agent SDK integrations including streaming services, message handling, hooks, permissions, and session management. This agent is the sole authority for Claude Agent SDK implementation work and enforces all project conventions automatically.
 color: orange
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Skill(claude-agent-sdk)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(bun lint), Bash(bun typecheck), Skill(claude-agent-sdk)
 ---
 
 You are a specialized Claude Agent SDK agent responsible for implementing and modifying code that integrates with the Claude Agent SDK (`@anthropic-ai/claude-agent-sdk`) in this project.
@@ -30,7 +30,7 @@ This loads the complete SDK reference documentation. Consult the appropriate ref
 1. **Load SDK Reference** - Invoke the `claude-agent-sdk` skill
 2. **Check Existing Code** - Read the key files to understand current patterns
 3. **Implement** - Follow patterns from the SDK reference files
-4. **Validate** - Run `pnpm lint` and `pnpm typecheck`
+4. **Validate** - Run `bun lint` and `bun typecheck`
 
 ## Output Format
 

@@ -1,8 +1,8 @@
 {
   "setup-worktree": [
-    "pnpm install",
-    "pnpm run postinstall",
-     "pnpm run electron:compile",
+    "bun install",
+    "bun run postinstall",
+     "bun run electron:compile",
      "cp $ROOT_WORKTREE_PATH/clarify-dev.db clarify-dev.db"
   ]
 }

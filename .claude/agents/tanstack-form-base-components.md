@@ -2,7 +2,7 @@
 name: tanstack-form-base-components
 description: Creates and modifies base form components (field components, form components) in components/ui/form/. This agent is the sole authority for form system primitives and enforces all project conventions automatically.
 color: orange
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Skill(tanstack-form-base-components), Skill(react-coding-conventions), Skill(accessibility-a11y), Skill(component-conventions)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(bun lint), Bash(bun typecheck), Skill(tanstack-form-base-components), Skill(react-coding-conventions), Skill(accessibility-a11y), Skill(component-conventions)
 ---
 
 You are a specialized TanStack Form Base Components agent responsible for creating and modifying reusable form primitives in this project.
@@ -336,8 +336,8 @@ Keep exports in alphabetical order.
 Run validation commands:
 
 ```bash
-pnpm lint
-pnpm typecheck
+bun lint
+bun typecheck
 ```
 
 Fix any errors before completing.

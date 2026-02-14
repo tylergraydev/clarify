@@ -20,7 +20,11 @@ import {
   createAgentsRepository,
   createAgentToolsRepository,
   createAuditLogsRepository,
+  createConversationMessagesRepository,
+  createConversationsRepository,
+  createDiffCommentsRepository,
   createDiscoveredFilesRepository,
+  createFileViewStateRepository,
   createProjectsRepository,
   createRepositoriesRepository,
   createSettingsRepository,
@@ -34,6 +38,7 @@ import {
 import { clarificationStepService } from '../services/clarification-step.service';
 import { fileDiscoveryStepService } from '../services/file-discovery.service';
 import { refinementStepService } from '../services/refinement-step.service';
+import { createWorkflowPoolManager } from '../services/workflow-pool-manager.service';
 import { registerAgentActivityHandlers } from './agent-activity.handlers';
 import { registerAgentHookHandlers } from './agent-hook.handlers';
 import { registerAgentSkillHandlers } from './agent-skill.handlers';
@@ -43,11 +48,16 @@ import { registerAgentToolHandlers } from './agent-tool.handlers';
 import { registerAgentHandlers } from './agent.handlers';
 import { registerAppHandlers } from './app.handlers';
 import { registerAuditHandlers } from './audit.handlers';
+import { registerChatHandlers } from './chat.handlers';
 import { registerClarificationHandlers } from './clarification.handlers';
 import { registerDebugLogHandlers } from './debug-log.handlers';
 import { registerDialogHandlers } from './dialog.handlers';
+import { registerDiffCommentHandlers } from './diff-comment.handlers';
+import { registerDiffHandlers } from './diff.handlers';
 import { registerDiscoveryHandlers } from './discovery.handlers';
+import { registerFileViewStateHandlers } from './file-view-state.handlers';
 import { registerFsHandlers } from './fs.handlers';
+import { registerGitHubHandlers } from './github.handlers';
 import { registerProjectHandlers } from './project.handlers';
 import { registerRefinementHandlers } from './refinement.handlers';
 import { registerRepositoryHandlers } from './repository.handlers';
@@ -55,9 +65,10 @@ import { registerSettingsHandlers } from './settings.handlers';
 import { registerStepHandlers } from './step.handlers';
 import { registerStoreHandlers } from './store.handlers';
 import { registerTemplateHandlers } from './template.handlers';
+import { registerTerminalHandlers } from './terminal.handlers';
 import { registerWorkflowRepositoriesHandlers } from './workflow-repositories.handlers';
 import { registerWorkflowHandlers } from './workflow.handlers';
-import { registerWorktreeHandlers } from './worktree.handlers';
+import { maybeCleanupWorktree, registerWorktreeHandlers } from './worktree.handlers';
 
 // Re-export channels for external use
 export { IpcChannels } from './channels';
@@ -99,6 +110,9 @@ export function registerAllHandlers(
 
   // Agent stream handlers (need window reference for MessagePort transfer)
   registerAgentStreamHandlers(getMainWindow);
+
+  // Terminal handlers (need window reference for PTY data/exit events)
+  registerTerminalHandlers(getMainWindow);
 
   // ============================================
   // Database handlers - Core entities
@@ -169,11 +183,34 @@ export function registerAllHandlers(
   // Database handlers - Workflow system
   // ============================================
 
+  // Worktrees - git worktree management for parallel workflows
+  // Note: Created before workflows because registerWorkflowHandlers needs worktrees repository
+  const worktreesRepository = createWorktreesRepository(db);
+
   // Workflow steps - individual steps within workflows
   // Note: Created before workflows because registerWorkflowHandlers needs steps repository
   // Note: workflowsRepository is created earlier (before repository handlers) for delete-with-cleanup
   const workflowStepsRepository = createWorkflowStepsRepository(db);
-  registerStepHandlers(workflowStepsRepository, workflowsRepository);
+
+  // Create workflow pool manager for concurrency control
+  const workflowPoolManager = createWorkflowPoolManager({
+    agentsRepository,
+    repositoriesRepository,
+    settingsRepository,
+    workflowRepositoriesRepository,
+    workflowsRepository,
+    workflowStepsRepository,
+    worktreesRepository,
+  });
+
+  registerStepHandlers(
+    workflowStepsRepository,
+    workflowsRepository,
+    worktreesRepository,
+    repositoriesRepository,
+    settingsRepository,
+    workflowPoolManager
+  );
 
   // Clarification handlers - need steps repository to look up agentId from step
   // Also needs getMainWindow for streaming events to renderer
@@ -185,7 +222,16 @@ export function registerAllHandlers(
   // Workflows - orchestration runs
   // Needs workflowStepsRepository for creating planning steps on start
   // Also needs settingsRepository and agentsRepository for clarification agent fallback logic
-  registerWorkflowHandlers(workflowsRepository, workflowStepsRepository, settingsRepository, agentsRepository);
+  registerWorkflowHandlers(
+    workflowsRepository,
+    workflowStepsRepository,
+    settingsRepository,
+    agentsRepository,
+    workflowRepositoriesRepository,
+    repositoriesRepository,
+    worktreesRepository,
+    workflowPoolManager
+  );
 
   // Workflow repositories - repository associations for workflows
   // Note: workflowRepositoriesRepository is created earlier (before repository handlers) for delete-with-cleanup
@@ -217,7 +263,58 @@ export function registerAllHandlers(
   // Database handlers - Git worktrees
   // ============================================
 
-  // Worktrees - git worktree management for parallel workflows
-  const worktreesRepository = createWorktreesRepository(db);
-  registerWorktreeHandlers(worktreesRepository);
+  // Worktrees handlers (worktreesRepository created earlier, before workflow handlers)
+  registerWorktreeHandlers(worktreesRepository, repositoriesRepository, settingsRepository);
+
+  // ============================================
+  // Database handlers - Chat
+  // ============================================
+
+  // Conversations and messages for project chat
+  const conversationsRepository = createConversationsRepository(db);
+  const conversationMessagesRepository = createConversationMessagesRepository(db);
+  registerChatHandlers(conversationsRepository, conversationMessagesRepository);
+
+  // ============================================
+  // Database handlers - Diff & Code Review
+  // ============================================
+
+  // Git diff operations (stateless - no DB dependency)
+  registerDiffHandlers();
+
+  // Diff comments - inline comments on diff lines
+  const diffCommentsRepository = createDiffCommentsRepository(db);
+  registerDiffCommentHandlers(diffCommentsRepository);
+
+  // GitHub operations (uses gh CLI, needs diffCommentsRepository for comment sync)
+  registerGitHubHandlers(diffCommentsRepository);
+
+  // File view state - mark-as-viewed tracking
+  const fileViewStateRepository = createFileViewStateRepository(db);
+  registerFileViewStateHandlers(fileViewStateRepository);
+
+  // ============================================
+  // Stale worktree cleanup on startup
+  // ============================================
+
+  // Clean up worktrees from crashed sessions after a short delay
+  setTimeout(async () => {
+    try {
+      const staleWorktrees = worktreesRepository.findAll({ status: 'active' });
+      for (const wt of staleWorktrees) {
+        if (!wt.workflowId) continue;
+        const workflow = workflowsRepository.findById(wt.workflowId);
+        if (workflow && ['cancelled', 'completed', 'failed'].includes(workflow.status)) {
+          await maybeCleanupWorktree(
+            wt.workflowId,
+            worktreesRepository,
+            repositoriesRepository,
+            settingsRepository
+          );
+        }
+      }
+    } catch (error) {
+      console.error('[Worktree] Stale cleanup failed:', error);
+    }
+  }, 5000);
 }

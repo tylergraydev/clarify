@@ -1,6 +1,6 @@
 ---
 name: fix-file
-allowed-tools: Task(subagent_type:*), Task(subagent_type:claude-agent-sdk), Bash(timeout 120 pnpm typecheck), Bash(timeout 120 pnpm lint), Bash(timeout 60 pnpm format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
+allowed-tools: Task(subagent_type:*), Task(subagent_type:claude-agent-sdk), Bash(timeout 120 bun typecheck), Bash(timeout 120 bun lint), Bash(timeout 60 bun format), Write(*), Read(*), Edit(*), Glob(*), Grep(*), TodoWrite(*)
 argument-hint: 'path/to/file.ts [--reference=path/to/reference.ts] [--dry-run]'
 description: Fix a file to follow project patterns using specialist agents with automatic review and iteration
 disable-model-invocation: true
@@ -372,9 +372,9 @@ Mark "Validate changes (lint, typecheck)" as in_progress.
 **Run validation**:
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm format
+bun lint
+bun typecheck
+bun format
 ```
 
 **Track Validation Results**:
@@ -558,8 +558,8 @@ Report the changes made for each issue.
 **Run Validation Again**:
 
 ```bash
-pnpm lint
-pnpm typecheck
+bun lint
+bun typecheck
 ```
 
 **Maximum Iterations**: 2 fix-review cycles. If issues persist after 2 iterations, report them as needing manual attention.

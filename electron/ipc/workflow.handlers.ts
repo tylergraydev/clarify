@@ -10,17 +10,23 @@ import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 
 import type {
   AgentsRepository,
+  RepositoriesRepository,
   SettingsRepository,
   WorkflowHistoryFilters,
   WorkflowHistoryResult,
+  WorkflowRepositoriesRepository,
   WorkflowsRepository,
   WorkflowStatistics,
   WorkflowStepsRepository,
+  WorktreesRepository,
 } from '../../db/repositories';
 import type { NewWorkflow, Workflow } from '../../db/schema';
 import type { UpdateWorkflowInput } from '../../lib/validations/workflow';
+import type { WorkflowPoolManager } from '../services/workflow-pool-manager.service';
 
+import { worktreeService } from '../services/worktree.service';
 import { IpcChannels } from './channels';
+import { maybeCleanupWorktree } from './worktree.handlers';
 
 /**
  * Filter options for listing workflows
@@ -43,7 +49,11 @@ export function registerWorkflowHandlers(
   workflowsRepository: WorkflowsRepository,
   workflowStepsRepository: WorkflowStepsRepository,
   settingsRepository: SettingsRepository,
-  agentsRepository: AgentsRepository
+  agentsRepository: AgentsRepository,
+  workflowRepositoriesRepository: WorkflowRepositoriesRepository,
+  repositoriesRepository: RepositoriesRepository,
+  worktreesRepository: WorktreesRepository,
+  workflowPoolManager: WorkflowPoolManager
 ): void {
   // Create a new workflow
   ipcMain.handle(IpcChannels.workflow.create, (_event: IpcMainInvokeEvent, data: NewWorkflow): Workflow => {
@@ -70,6 +80,12 @@ export function registerWorkflowHandlers(
         if (workflow.status !== 'created') {
           console.warn(`[IPC] workflow:start - workflow ${id} already has status '${workflow.status}'`);
           return workflow; // Return current state without modification
+        }
+
+        // Concurrency check: queue if at capacity
+        if (!workflowPoolManager.canStartWorkflow()) {
+          workflowPoolManager.enqueueWorkflow(id);
+          return workflowsRepository.findById(id);
         }
 
         // Resolve clarification agent ID with fallback logic
@@ -100,6 +116,40 @@ export function registerWorkflowHandlers(
             console.log(`[IPC] workflow:start - using first available planning agent: ${clarificationAgentId}`);
           } else {
             console.warn('[IPC] workflow:start - no planning agents available for clarification step');
+          }
+        }
+
+        // Create worktree if enabled
+        const createFeatureBranch = settingsRepository.getValue('worktreeCreateFeatureBranch');
+        if (createFeatureBranch !== 'false') {
+          try {
+            const workflowRepos = workflowRepositoriesRepository.findByWorkflowId(id);
+            const primaryWorkflowRepo = workflowRepos[0];
+            if (primaryWorkflowRepo) {
+              const repo = repositoriesRepository.findById(primaryWorkflowRepo.repositoryId);
+              if (repo) {
+                const branchName = worktreeService.generateBranchName(id, workflow.featureName);
+                const targetDir = worktreeService.resolveWorktreeDir(repo.path, branchName);
+                const worktreePath = await worktreeService.createWorktree(repo.path, branchName, targetDir);
+
+                // Run setup commands (errors logged, don't fail workflow)
+                await worktreeService.runSetupCommands(worktreePath, repo.path);
+
+                // Create DB record
+                worktreesRepository.create({
+                  branchName,
+                  path: worktreePath,
+                  repositoryId: repo.id,
+                  status: 'active',
+                  workflowId: id,
+                });
+
+                console.log(`[IPC] workflow:start - created worktree: ${branchName}`);
+              }
+            }
+          } catch (worktreeError) {
+            console.error('[IPC] workflow:start - worktree creation failed, continuing without worktree:', worktreeError);
+            // Don't fail the workflow start - continue without worktree
           }
         }
 
@@ -157,7 +207,7 @@ export function registerWorkflowHandlers(
     }
   });
 
-  // Resume a paused workflow (update status to running)
+  // Resume a paused workflow (update status to running, or queue if at capacity)
   ipcMain.handle(IpcChannels.workflow.resume, (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
     try {
       const steps = workflowStepsRepository.findByWorkflowId(id);
@@ -166,6 +216,12 @@ export function registerWorkflowHandlers(
       const awaitingStep = steps.find((s) => s.status === 'awaiting_input');
       if (awaitingStep) {
         return workflowsRepository.updateStatus(id, 'awaiting_input');
+      }
+
+      // Concurrency check: queue if at capacity
+      if (!workflowPoolManager.canStartWorkflow()) {
+        workflowPoolManager.enqueueWorkflow(id);
+        return workflowsRepository.findById(id);
       }
 
       // Check if any step is actively running
@@ -191,15 +247,30 @@ export function registerWorkflowHandlers(
     }
   });
 
-  // Cancel a workflow (update status to cancelled)
-  ipcMain.handle(IpcChannels.workflow.cancel, (_event: IpcMainInvokeEvent, id: number): undefined | Workflow => {
-    try {
-      return workflowsRepository.updateStatus(id, 'cancelled');
-    } catch (error) {
-      console.error('[IPC Error] workflow:cancel:', error);
-      throw error;
+  // Cancel a workflow (update status to cancelled, cleanup worktree)
+  ipcMain.handle(
+    IpcChannels.workflow.cancel,
+    async (_event: IpcMainInvokeEvent, id: number): Promise<undefined | Workflow> => {
+      try {
+        const result = workflowsRepository.updateStatus(id, 'cancelled');
+
+        // Fire-and-forget worktree cleanup
+        maybeCleanupWorktree(id, worktreesRepository, repositoriesRepository, settingsRepository).catch((error) => {
+          console.error('[Worktree] cleanup on cancel failed:', error);
+        });
+
+        // Try to start next queued workflow
+        workflowPoolManager.tryDequeueNext().catch((error) => {
+          console.error('[WorkflowPool] dequeue on cancel failed:', error);
+        });
+
+        return result;
+      } catch (error) {
+        console.error('[IPC Error] workflow:cancel:', error);
+        throw error;
+      }
     }
-  });
+  );
 
   // Delete a workflow permanently
   ipcMain.handle(IpcChannels.workflow.delete, (_event: IpcMainInvokeEvent, id: number): boolean => {
@@ -275,4 +346,27 @@ export function registerWorkflowHandlers(
       }
     }
   );
+
+  // Get concurrency statistics (running, queued, max)
+  ipcMain.handle(
+    IpcChannels.workflow.getConcurrencyStats,
+    (): { maxConcurrent: number; queued: number; running: number } => {
+      try {
+        return workflowPoolManager.getConcurrencyStats();
+      } catch (error) {
+        console.error('[IPC Error] workflow:getConcurrencyStats:', error);
+        throw error;
+      }
+    }
+  );
+
+  // Get queue position for a specific workflow
+  ipcMain.handle(IpcChannels.workflow.getQueuePosition, (_event: IpcMainInvokeEvent, id: number): number => {
+    try {
+      return workflowPoolManager.getQueuePosition(id);
+    } catch (error) {
+      console.error('[IPC Error] workflow:getQueuePosition:', error);
+      throw error;
+    }
+  });
 }

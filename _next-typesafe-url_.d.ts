@@ -18,6 +18,7 @@ declare module "@@@next-typesafe-url" {
 
   interface StaticRouter {
     "/agents": StaticRoute;
+    "/chat": StaticRoute;
     "/dashboard": StaticRoute;
     "/settings": StaticRoute;
     "/templates": StaticRoute;

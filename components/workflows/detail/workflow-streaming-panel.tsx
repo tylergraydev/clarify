@@ -23,6 +23,7 @@ import { useWorkflowDetailStore } from '@/lib/stores/workflow-detail-store';
 import { cn, formatElapsed } from '@/lib/utils';
 import { type ActivityUsageSummary, transformActivityToStreamState } from '@/lib/utils/agent-activity-transform';
 
+import { WorkflowChangesTab } from './changes/workflow-changes-tab';
 import { useClarificationStreamContext } from './clarification-stream-provider';
 
 // =============================================================================
@@ -45,12 +46,13 @@ const TAB_ORDER: Array<{ label: string; value: WorkflowDetailStepTab }> = [
   { label: 'Refinement', value: 'refinement' },
   { label: 'File Discovery', value: 'discovery' },
   { label: 'Planning', value: 'planning' },
+  { label: 'Changes', value: 'changes' },
 ];
 
 /**
  * Maps a tab value to the corresponding workflow step type.
  */
-const TAB_TO_STEP_TYPE: Record<WorkflowDetailStepTab, string> = {
+const TAB_TO_STEP_TYPE: Partial<Record<WorkflowDetailStepTab, string>> = {
   clarification: 'clarification',
   discovery: 'discovery',
   planning: 'planning',
@@ -243,7 +245,7 @@ export const WorkflowStreamingPanel = ({ className, ref, workflowId, ...props }:
             </TabsPanel>
 
             {/* Historical Tab Panels */}
-            {TAB_ORDER.filter((tab) => tab.value !== 'clarification').map((tab) => (
+            {TAB_ORDER.filter((tab) => tab.value !== 'clarification' && tab.value !== 'changes').map((tab) => (
               <TabsPanel className={'min-h-0 flex-1 overflow-hidden'} key={tab.value} value={tab.value}>
                 <HistoricalStepContent
                   isStreaming={false}
@@ -251,6 +253,11 @@ export const WorkflowStreamingPanel = ({ className, ref, workflowId, ...props }:
                 />
               </TabsPanel>
             ))}
+
+            {/* Changes Tab Panel */}
+            <TabsPanel className={'min-h-0 flex-1 overflow-hidden'} value={'changes'}>
+              <WorkflowChangesTab workflowId={workflowId} />
+            </TabsPanel>
           </TabsRoot>
         </Fragment>
       )}

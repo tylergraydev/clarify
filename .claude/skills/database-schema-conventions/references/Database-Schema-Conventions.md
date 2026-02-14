@@ -423,13 +423,13 @@ SQLite stores timestamps as TEXT in ISO 8601 format (e.g., `2024-01-15T10:30:00.
 ### Generate Migrations
 
 ```bash
-pnpm db:generate
+bun db:generate
 ```
 
 ### Run Migrations
 
 ```bash
-pnpm db:migrate
+bun db:migrate
 ```
 
 ### Migration Best Practices

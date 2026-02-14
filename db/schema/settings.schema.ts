@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-export const settingCategories = ['workflow', 'worktree', 'logging', 'ui'] as const;
+export const settingCategories = ['workflow', 'worktree', 'logging', 'ui', 'chat'] as const;
 export const settingValueTypes = ['string', 'number', 'boolean', 'json'] as const;
 
 export const settings = sqliteTable(

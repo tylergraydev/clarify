@@ -21,7 +21,7 @@
 |------|--------|--------|
 | `app/(app)/workflows/old/[id]/page.tsx` | Create | Copy of current workflow detail page with all functionality |
 | `app/(app)/workflows/old/[id]/route-type.ts` | Create | Route type definition for legacy route (same params schema) |
-| `_next-typesafe-url_.d.ts` | Regenerate | Auto-generated after `pnpm next-typesafe-url` |
+| `_next-typesafe-url_.d.ts` | Regenerate | Auto-generated after `bun next-typesafe-url` |
 
 ### Medium Priority (May Need Modification)
 
@@ -52,7 +52,7 @@
 
 ## Architecture Insights
 
-- **Type-Safe Routing**: `next-typesafe-url` generates `route-type.ts` files for each dynamic route. After adding `old/[id]/`, `pnpm next-typesafe-url` regenerates the type declarations.
+- **Type-Safe Routing**: `next-typesafe-url` generates `route-type.ts` files for each dynamic route. After adding `old/[id]/`, `bun next-typesafe-url` regenerates the type declarations.
 - **Sidebar Pattern**: Both expanded (`NavItem` in `CollapsibleContent`) and collapsed (`CollapsedNavMenu` items array) must be updated.
 - **Attention Notifier**: The regex at line 41 of `workflow-attention-notifier.tsx` should be updated to match both `/workflows/{id}` and `/workflows/old/{id}`.
 - **Eight files** reference `/workflows/[id]` via `$path()` - none need changes since they should link to the new blank-slate page.

@@ -30,6 +30,6 @@
 - `_next-typesafe-url_.d.ts`
 
 ## Quality Gates
-- pnpm next-typesafe-url: PASS
-- pnpm lint: PASS
-- pnpm typecheck: PASS
+- bun next-typesafe-url: PASS
+- bun lint: PASS
+- bun typecheck: PASS

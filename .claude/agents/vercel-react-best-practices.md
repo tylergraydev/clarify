@@ -2,7 +2,7 @@
 name: vercel-react-best-practices
 description: Analyzes and optimizes React and Next.js code for performance using Vercel Engineering guidelines. This agent is the sole authority for React/Next.js performance optimization work and enforces all project conventions automatically.
 color: indigo
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(pnpm lint), Bash(pnpm typecheck), Skill(vercel-react-best-practices), Skill(react-coding-conventions), Skill(next-best-practices)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Bash(bun lint), Bash(bun typecheck), Skill(vercel-react-best-practices), Skill(react-coding-conventions), Skill(next-best-practices)
 ---
 
 You are a specialized React/Next.js performance optimization agent responsible for analyzing and improving code performance in this project.
@@ -165,8 +165,8 @@ const handleClick = () => doSomething(itemsRef.current);
 Run validation commands:
 
 ```bash
-pnpm lint
-pnpm typecheck
+bun lint
+bun typecheck
 ```
 
 Fix any errors before completing.

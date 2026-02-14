@@ -49,7 +49,7 @@ Move the current workflow detail page (`workflows/[id]/page.tsx`) to a new legac
 ## Prerequisites
 
 - [ ] Confirm the current `workflows/[id]/page.tsx` builds and runs correctly before beginning changes
-- [ ] Ensure `pnpm next-typesafe-url` command is functional and generates `_next-typesafe-url_.d.ts`
+- [ ] Ensure `bun next-typesafe-url` command is functional and generates `_next-typesafe-url_.d.ts`
 
 ## Implementation Steps
 
@@ -70,7 +70,7 @@ Move the current workflow detail page (`workflows/[id]/page.tsx`) to a new legac
 
 **Validation Commands:**
 ```bash
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -82,7 +82,7 @@ pnpm lint && pnpm typecheck
 
 ### Step 2: Regenerate Type-Safe Route Definitions
 
-**What**: Run `pnpm next-typesafe-url` to regenerate the `_next-typesafe-url_.d.ts` file so it discovers the new `workflows/old/[id]` route.
+**What**: Run `bun next-typesafe-url` to regenerate the `_next-typesafe-url_.d.ts` file so it discovers the new `workflows/old/[id]` route.
 **Why**: Without regeneration, the new route would not appear in the type system and `$path()` calls for the legacy route would fail type checking.
 **Confidence**: High
 
@@ -90,12 +90,12 @@ pnpm lint && pnpm typecheck
 - `_next-typesafe-url_.d.ts` - Regenerated automatically; should include new `"/workflows/old/[id]"` in `DynamicRouter`
 
 **Changes:**
-- Run `pnpm next-typesafe-url` to regenerate the declaration file
+- Run `bun next-typesafe-url` to regenerate the declaration file
 - Verify the output includes `"/workflows/old/[id]"` in the `DynamicRouter` interface
 
 **Validation Commands:**
 ```bash
-pnpm next-typesafe-url && pnpm lint && pnpm typecheck
+bun next-typesafe-url && bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -128,7 +128,7 @@ pnpm next-typesafe-url && pnpm lint && pnpm typecheck
 
 **Validation Commands:**
 ```bash
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -156,7 +156,7 @@ pnpm lint && pnpm typecheck
 
 **Validation Commands:**
 ```bash
-pnpm next-typesafe-url && pnpm lint && pnpm typecheck
+bun next-typesafe-url && bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -182,7 +182,7 @@ pnpm next-typesafe-url && pnpm lint && pnpm typecheck
 
 **Validation Commands:**
 ```bash
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -206,7 +206,7 @@ pnpm lint && pnpm typecheck
 
 **Validation Commands:**
 ```bash
-pnpm next-typesafe-url && pnpm lint && pnpm typecheck
+bun next-typesafe-url && bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -228,7 +228,7 @@ pnpm next-typesafe-url && pnpm lint && pnpm typecheck
 
 **Validation Commands:**
 ```bash
-pnpm lint && pnpm typecheck
+bun lint && bun typecheck
 ```
 
 **Success Criteria:**
@@ -239,9 +239,9 @@ pnpm lint && pnpm typecheck
 
 ## Quality Gates
 
-- [ ] All TypeScript files pass `pnpm typecheck`
-- [ ] All files pass `pnpm lint`
-- [ ] `pnpm next-typesafe-url` generates valid route declarations including both `/workflows/[id]` and `/workflows/old/[id]`
+- [ ] All TypeScript files pass `bun typecheck`
+- [ ] All files pass `bun lint`
+- [ ] `bun next-typesafe-url` generates valid route declarations including both `/workflows/[id]` and `/workflows/old/[id]`
 - [ ] Legacy page at `/workflows/old/[id]` renders identical UI to the original page
 - [ ] New blank-slate page at `/workflows/[id]` renders only breadcrumbs, ClarificationStreamProvider, and placeholder
 - [ ] Sidebar "Legacy View" item appears in both expanded and collapsed states

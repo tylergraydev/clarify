@@ -77,6 +77,10 @@ export function useElectronProjects() {
         const electronApi = throwIfNoApi(api, 'repository.deleteWithCleanup');
         return electronApi.repository.deleteWithCleanup(repositoryId);
       },
+      detectGitInfo: async (path: string) => {
+        if (!api) return { isGitRepo: false };
+        return api.repository.detectGitInfo(path);
+      },
       findByPath: async (path: string) => {
         if (!api) return undefined;
         return api.repository.findByPath(path);

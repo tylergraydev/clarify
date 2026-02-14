@@ -63,11 +63,52 @@ export const loggingSettingsSchema = z.object({
 export type LoggingSettingsFormValues = z.infer<typeof loggingSettingsSchema>;
 
 /**
+ * Chat settings schema
+ * Controls conversation title generation and compaction behavior
+ */
+export const chatSettingsSchema = z.object({
+  autoGenerateTitle: z.boolean(),
+  autoPromptCompaction: z.boolean(),
+  compactionTokenThreshold: z
+    .number()
+    .min(20000, 'Minimum threshold is 20,000 tokens')
+    .max(200000, 'Maximum threshold is 200,000 tokens'),
+  titleRegenerateInterval: z
+    .number()
+    .min(5, 'Minimum interval is 5 messages')
+    .max(50, 'Maximum interval is 50 messages'),
+});
+
+export type ChatSettingsFormValues = z.infer<typeof chatSettingsSchema>;
+
+/**
+ * Terminal settings schema
+ * Controls terminal appearance and behavior
+ */
+export const terminalSettingsSchema = z.object({
+  cursorBlink: z.boolean(),
+  fontFamily: z.string(),
+  fontSize: z
+    .number()
+    .min(8, 'Minimum font size is 8')
+    .max(32, 'Maximum font size is 32'),
+  scrollback: z
+    .number()
+    .min(100, 'Minimum scrollback is 100 lines')
+    .max(10000, 'Maximum scrollback is 10,000 lines'),
+  shellPath: z.string(),
+});
+
+export type TerminalSettingsFormValues = z.infer<typeof terminalSettingsSchema>;
+
+/**
  * Combined settings form schema
  * Encompasses all settings categories for full form validation
  */
 export const settingsFormSchema = z.object({
+  chat: chatSettingsSchema,
   logging: loggingSettingsSchema,
+  terminal: terminalSettingsSchema,
   workflow: workflowSettingsSchema,
   worktree: worktreeSettingsSchema,
 });

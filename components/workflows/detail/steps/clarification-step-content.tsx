@@ -26,6 +26,7 @@ import {
 import { useDefaultClarificationAgent } from '@/hooks/queries/use-default-clarification-agent';
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useWorkflow } from '@/hooks/queries/use-workflows';
+import { useWorktreeByWorkflowId } from '@/hooks/queries/use-worktrees';
 import { useElectronDb } from '@/hooks/use-electron';
 import { PHASE_LABELS } from '@/lib/constants/clarification';
 import { useWorkflowDetailStore } from '@/lib/stores/workflow-detail-store';
@@ -242,8 +243,13 @@ export const ClarificationStepContent = ({ workflowId }: ClarificationStepConten
     queryKey: ['workflowRepositories', workflowId],
   });
   const { data: repositories } = useRepositoriesByProject(workflow?.projectId ?? 0);
+  const { data: worktree } = useWorktreeByWorkflowId(workflowId);
 
   const repositoryPath = useMemo(() => {
+    // If workflow has an active worktree, use its path
+    if (worktree?.path && worktree.status === 'active') return worktree.path;
+
+    // Fallback to repository path
     if (!workflowRepos || workflowRepos.length === 0 || !repositories || repositories.length === 0) return '';
 
     const workflowRepo = workflowRepos[0];
@@ -253,7 +259,7 @@ export const ClarificationStepContent = ({ workflowId }: ClarificationStepConten
     }
 
     return '';
-  }, [repositories, workflowRepos]);
+  }, [worktree, repositories, workflowRepos]);
 
   // Mutations
   const startMutation = useStartClarification();

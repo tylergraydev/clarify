@@ -6,9 +6,12 @@ import { agentSkillKeys } from './agent-skills';
 import { agentToolKeys } from './agent-tools';
 import { agentKeys } from './agents';
 import { auditLogKeys } from './audit-logs';
+import { chatKeys } from './chat';
 import { clarificationKeys } from './clarification';
 import { debugLogKeys } from './debug-logs';
+import { diffCommentKeys, diffKeys, fileViewStateKeys } from './diff';
 import { discoveredFileKeys } from './discovered-files';
+import { githubKeys } from './github';
 import { projectKeys } from './projects';
 import { refinementKeys } from './refinement';
 import { repositoryKeys } from './repositories';
@@ -24,9 +27,14 @@ export const queries = mergeQueryKeys(
   agentSkillKeys,
   agentToolKeys,
   auditLogKeys,
+  chatKeys,
   clarificationKeys,
   debugLogKeys,
+  diffCommentKeys,
+  diffKeys,
+  githubKeys,
   discoveredFileKeys,
+  fileViewStateKeys,
   projectKeys,
   refinementKeys,
   repositoryKeys,
@@ -45,9 +53,12 @@ export { agentToolKeys } from './agent-tools';
 // Re-export individual keys for direct access
 export { agentKeys } from './agents';
 export { auditLogKeys } from './audit-logs';
+export { chatKeys } from './chat';
 export { clarificationKeys } from './clarification';
 export { debugLogKeys } from './debug-logs';
+export { diffCommentKeys, diffKeys, fileViewStateKeys } from './diff';
 export { discoveredFileKeys } from './discovered-files';
+export { githubKeys } from './github';
 export { projectKeys } from './projects';
 export { refinementKeys } from './refinement';
 export { repositoryKeys } from './repositories';

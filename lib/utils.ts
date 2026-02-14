@@ -126,6 +126,7 @@ const WORKFLOW_STATUS_LABEL_MAP: Record<string, string> = {
   editing: 'Editing',
   failed: 'Failed',
   paused: 'Paused',
+  queued: 'Queued',
   running: 'Running',
 };
 
@@ -141,6 +142,7 @@ const WORKFLOW_STATUS_VARIANT_MAP: Record<string, WorkflowBadgeVariant> = {
   editing: 'clarifying',
   failed: 'failed',
   paused: 'draft',
+  queued: 'draft',
   running: 'planning',
 };
 

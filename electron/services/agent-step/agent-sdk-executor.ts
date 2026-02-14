@@ -133,12 +133,6 @@ export class AgentSdkExecutor<
   TStreamMessage extends { sessionId: string; timestamp: number; type: string },
 > {
   /**
-   * Map of toolUseId to the database row ID for tool_start activity records.
-   * Used to update tool_start records with stoppedAt and durationMs on content_block_stop.
-   */
-  private toolStartActivityIds = new Map<string, { id: number; startedAt: number }>();
-
-  /**
    * Build SDK Options from agent configuration.
    *
    * Constructs the Options object for Claude Agent SDK query execution,
@@ -267,8 +261,8 @@ export class AgentSdkExecutor<
     const query = await getQueryFunction();
     const sdkOptions = this.buildSdkOptions(config);
 
-    // Clear tool start tracking for this execution
-    this.toolStartActivityIds.clear();
+    // Create execution-scoped map for tool start tracking (avoids cross-workflow contamination)
+    const toolStartActivityIds = new Map<string, { id: number; startedAt: number }>();
 
     // Start heartbeat for extended thinking mode
     let heartbeatInterval: NodeJS.Timeout | null = null;
@@ -307,7 +301,7 @@ export class AgentSdkExecutor<
 
         // Process streaming events for real-time UI updates
         if (message.type === 'stream_event') {
-          this.processStreamEvent(session, message, handlers, config);
+          this.processStreamEvent(session, message, handlers, config, toolStartActivityIds);
         }
 
         // Capture the result message for structured output extraction
@@ -350,7 +344,8 @@ export class AgentSdkExecutor<
     session: TSession,
     message: { event: Record<string, unknown>; type: 'stream_event' },
     handlers: StreamEventHandlers<TStreamMessage, TSession>,
-    config?: SdkExecutorConfig<TAgentConfig>
+    config?: SdkExecutorConfig<TAgentConfig>,
+    toolStartActivityIds?: Map<string, { id: number; startedAt: number }>
   ): void {
     const event = message.event;
 
@@ -501,7 +496,7 @@ export class AgentSdkExecutor<
         }
 
         // Persist tool_start activity and track the record ID for later update
-        this.persistToolStartActivity(config, toolName, toolUseId);
+        this.persistToolStartActivity(config, toolName, toolUseId, toolStartActivityIds);
       }
     } else if (eventType === 'content_block_stop') {
       // Clear the most recent tool from active list when done
@@ -524,7 +519,7 @@ export class AgentSdkExecutor<
           }
 
           // Update the tool_start record with stoppedAt and durationMs
-          this.persistToolStopActivity(config, completedTool.toolUseId);
+          this.persistToolStopActivity(config, completedTool.toolUseId, toolStartActivityIds);
         }
       }
     }
@@ -587,7 +582,8 @@ export class AgentSdkExecutor<
   private persistToolStartActivity(
     config: SdkExecutorConfig<TAgentConfig> | undefined,
     toolName: string,
-    toolUseId: string
+    toolUseId: string,
+    toolStartActivityIds?: Map<string, { id: number; startedAt: number }>
   ): void {
     if (!config?.activityRepository || config.stepId === undefined) return;
 
@@ -603,7 +599,7 @@ export class AgentSdkExecutor<
         workflowStepId: config.stepId,
       });
 
-      this.toolStartActivityIds.set(toolUseId, { id: record.id, startedAt });
+      toolStartActivityIds?.set(toolUseId, { id: record.id, startedAt });
     } catch (error) {
       debugLoggerService.logSdkEvent('activity-persistence', 'Failed to persist tool_start activity', {
         error: error instanceof Error ? error.message : String(error),
@@ -624,11 +620,12 @@ export class AgentSdkExecutor<
    */
   private persistToolStopActivity(
     config: SdkExecutorConfig<TAgentConfig> | undefined,
-    toolUseId: string
+    toolUseId: string,
+    toolStartActivityIds?: Map<string, { id: number; startedAt: number }>
   ): void {
     if (!config?.activityRepository || config.stepId === undefined) return;
 
-    const tracked = this.toolStartActivityIds.get(toolUseId);
+    const tracked = toolStartActivityIds?.get(toolUseId);
     if (!tracked) return;
 
     const stoppedAt = Date.now();
@@ -640,7 +637,7 @@ export class AgentSdkExecutor<
         stoppedAt,
       });
 
-      this.toolStartActivityIds.delete(toolUseId);
+      toolStartActivityIds?.delete(toolUseId);
     } catch (error) {
       debugLoggerService.logSdkEvent('activity-persistence', 'Failed to persist tool_stop activity update', {
         error: error instanceof Error ? error.message : String(error),

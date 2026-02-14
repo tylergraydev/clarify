@@ -62,6 +62,14 @@ const eslintConfig = defineConfig([
       'react-snob/require-derived-conditional-prefix': 'off',
     },
   },
+  // Test file overrides - relaxed rules for test assertions and fixtures.
+  {
+    files: ['**/__tests__/**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      'perfectionist/sort-objects': 'off',
+    },
+  },
   // Prettier config must be the last to override conflicting rules.
   eslintConfigPrettier,
 ]);

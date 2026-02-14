@@ -1,3 +1,4 @@
+import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 /**
  * Repository IPC Handlers
  *
@@ -9,7 +10,8 @@
  * - Pre-delete info for workflow impact assessment
  * - Atomic delete with workflow cleanup
  */
-import { ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
 
 import type {
   RepositoriesRepository,
@@ -19,6 +21,16 @@ import type {
 import type { NewRepository, Repository } from '../../db/schema';
 
 import { IpcChannels } from './channels';
+
+/**
+ * Result from detecting Git repository information at a given path
+ */
+export interface DetectGitInfoResult {
+  defaultBranch?: string;
+  isGitRepo: boolean;
+  name?: string;
+  remoteUrl?: string;
+}
 
 /**
  * Non-terminal workflow statuses that indicate a workflow is still active
@@ -230,6 +242,42 @@ export function registerRepositoryHandlers(
       } catch (error) {
         console.error('[IPC Error] repository:deleteWithCleanup:', error);
         throw error;
+      }
+    }
+  );
+
+  // Detect Git repository information from a filesystem path
+  ipcMain.handle(
+    IpcChannels.repository.detectGitInfo,
+    (_event: IpcMainInvokeEvent, dirPath: string): DetectGitInfoResult => {
+      const execOpts = { cwd: dirPath, encoding: 'utf-8' as const, shell: true, stdio: 'pipe' as const };
+
+      try {
+        // Verify it's a Git repository
+        execFileSync('git', ['rev-parse', '--git-dir'], execOpts);
+
+        // Get current branch name
+        let defaultBranch: string | undefined;
+        try {
+          defaultBranch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], execOpts).trim();
+        } catch {
+          // Branch detection can fail in empty repos
+        }
+
+        // Get remote URL (may not exist)
+        let remoteUrl: string | undefined;
+        try {
+          remoteUrl = execFileSync('git', ['remote', 'get-url', 'origin'], execOpts).trim();
+        } catch {
+          // No remote configured — that's fine
+        }
+
+        // Derive name from folder basename
+        const name = path.basename(dirPath);
+
+        return { defaultBranch, isGitRepo: true, name, remoteUrl };
+      } catch {
+        return { isGitRepo: false };
       }
     }
   );

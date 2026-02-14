@@ -3,17 +3,21 @@
 import type { ComponentPropsWithRef } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
-import { Ban, Pause, Play } from 'lucide-react';
+import { Ban, GitPullRequest, Pause, Play, TerminalSquare } from 'lucide-react';
 import { Fragment, useState } from 'react';
 
+import { CreatePrDialog } from '@/components/pulls/create-pr-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip } from '@/components/ui/tooltip';
-import { useCancelWorkflow, usePauseWorkflow, useResumeWorkflow, useWorkflow } from '@/hooks/queries';
+import { useCancelWorkflow, usePauseWorkflow, useQueuePosition, useResumeWorkflow, useWorkflow } from '@/hooks/queries';
+import { useGitHubAuth } from '@/hooks/queries/use-github';
 import { useElectronDb } from '@/hooks/use-electron';
+import { useTerminal } from '@/hooks/use-terminal';
 import { stepKeys } from '@/lib/queries/steps';
 import { capitalizeFirstLetter, cn, getWorkflowStatusLabel, getWorkflowStatusVariant } from '@/lib/utils';
+import { isGitHubRepo } from '@/lib/utils/github';
 
 import { ConfirmCancelWorkflowDialog } from './confirm-cancel-workflow-dialog';
 
@@ -28,15 +32,49 @@ interface WorkflowTopBarProps extends ComponentPropsWithRef<'div'> {
 
 export const WorkflowTopBar = ({ className, ref, workflowId, ...props }: WorkflowTopBarProps) => {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [isCreatePrOpen, setIsCreatePrOpen] = useState(false);
 
   const { data: workflow } = useWorkflow(workflowId);
-  const { isElectron, steps } = useElectronDb();
+  const { diff, isElectron, repositories, steps, workflowRepositories } = useElectronDb();
 
   const { data: workflowSteps } = useQuery({
     ...stepKeys.listByWorkflow(workflowId),
     enabled: isElectron && workflowId > 0,
     queryFn: () => steps.list(workflowId),
   });
+
+  const { data: queuePosition } = useQueuePosition(workflowId, workflow?.status);
+  const { data: ghAuth } = useGitHubAuth();
+
+  // Fetch workflow repositories for "Create PR" button
+  const { data: workflowRepos } = useQuery({
+    enabled: isElectron && workflow?.status === 'completed',
+    queryFn: async () => {
+      const repoAssociations = await workflowRepositories.list(workflowId);
+      const repos = await Promise.all(
+        repoAssociations.map((wr) => repositories.get(wr.repositoryId))
+      );
+      return repos.filter(Boolean);
+    },
+    queryKey: ['workflowRepos', workflowId],
+  });
+
+  // Fetch branches for the first GitHub repo
+  const firstGitHubRepo = workflowRepos?.find((r) => isGitHubRepo(r?.remoteUrl));
+  const { data: branches = [] } = useQuery({
+    enabled: isElectron && !!firstGitHubRepo?.path,
+    queryFn: () => diff.getBranches(firstGitHubRepo!.path),
+    queryKey: ['branches', firstGitHubRepo?.path],
+  });
+
+  // Fetch worktree for "Open Terminal" button
+  const { data: worktree } = useQuery({
+    enabled: isElectron && workflowId > 0,
+    queryFn: () => window.electronAPI!.worktree.getByWorkflowId(workflowId),
+    queryKey: ['worktree', 'byWorkflow', workflowId],
+  });
+
+  const { createTerminal } = useTerminal();
 
   const pauseMutation = usePauseWorkflow();
   const resumeMutation = useResumeWorkflow();
@@ -45,6 +83,7 @@ export const WorkflowTopBar = ({ className, ref, workflowId, ...props }: Workflo
   if (!workflow) return null;
 
   const status = workflow.status;
+  const isQueued = status === 'queued';
 
   // Derive current step display text
   const getStepDisplayText = (): null | string => {
@@ -77,9 +116,12 @@ export const WorkflowTopBar = ({ className, ref, workflowId, ...props }: Workflo
     }
   };
 
-  const stepDisplayText = getStepDisplayText();
+  const stepDisplayText = isQueued
+    ? `Waiting in queue${queuePosition ? ` (position ${queuePosition})` : ''}`
+    : getStepDisplayText();
   const showPauseBehavior = status === 'running' || status === 'paused' || status === 'awaiting_input';
-  const isActive = status === 'running' || status === 'paused' || status === 'awaiting_input';
+  const isActive = status === 'running' || status === 'paused' || status === 'awaiting_input' || isQueued;
+  const _isCreatePrVisible = status === 'completed' && firstGitHubRepo && ghAuth?.isAuthenticated;
 
   const handlePauseClick = () => {
     pauseMutation.mutate(workflowId);
@@ -159,7 +201,7 @@ export const WorkflowTopBar = ({ className, ref, workflowId, ...props }: Workflo
                 </Tooltip>
               )}
 
-              <Tooltip content={'Cancel workflow'}>
+              <Tooltip content={isQueued ? 'Remove from queue' : 'Cancel workflow'}>
                 <Button
                   disabled={cancelMutation.isPending}
                   onClick={() => setIsCancelDialogOpen(true)}
@@ -167,9 +209,42 @@ export const WorkflowTopBar = ({ className, ref, workflowId, ...props }: Workflo
                   variant={'destructive'}
                 >
                   <Ban aria-hidden={'true'} className={'size-4'} />
-                  Cancel
+                  {isQueued ? 'Dequeue' : 'Cancel'}
                 </Button>
               </Tooltip>
+            </div>
+          )}
+
+          {/* Non-active action buttons */}
+          {!isActive && (
+            <div className={'flex items-center gap-2'}>
+              {/* Open Terminal - shown when workflow has a worktree */}
+              {worktree?.path && (
+                <Tooltip content={'Open terminal in worktree directory'}>
+                  <Button
+                    onClick={() => createTerminal({ cwd: worktree.path, workflowId })}
+                    size={'sm'}
+                    variant={'outline'}
+                  >
+                    <TerminalSquare aria-hidden={'true'} className={'size-4'} />
+                    {'Terminal'}
+                  </Button>
+                </Tooltip>
+              )}
+
+              {/* Create PR Button - shown when workflow is completed and has a GitHub repo */}
+              {_isCreatePrVisible && (
+                <Tooltip content={'Create pull request from workflow'}>
+                  <Button
+                    onClick={() => setIsCreatePrOpen(true)}
+                    size={'sm'}
+                    variant={'outline'}
+                  >
+                    <GitPullRequest aria-hidden={'true'} className={'size-4'} />
+                    {'Create PR'}
+                  </Button>
+                </Tooltip>
+              )}
             </div>
           )}
         </div>
@@ -185,6 +260,17 @@ export const WorkflowTopBar = ({ className, ref, workflowId, ...props }: Workflo
         onConfirm={handleCancelConfirm}
         onOpenChange={setIsCancelDialogOpen}
       />
+
+      {firstGitHubRepo && (
+        <CreatePrDialog
+          branches={branches}
+          defaultBody={workflow.featureRequest ?? ''}
+          defaultTitle={workflow.featureName}
+          isOpen={isCreatePrOpen}
+          onOpenChange={setIsCreatePrOpen}
+          repoPath={firstGitHubRepo.path}
+        />
+      )}
     </Fragment>
   );
 };

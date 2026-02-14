@@ -9,7 +9,7 @@ import { z } from 'zod';
 /**
  * Valid tab values for project detail page
  */
-export const projectTabValues = ['overview', 'repositories', 'workflows'] as const;
+export const projectTabValues = ['overview', 'repositories', 'workflows', 'chat'] as const;
 
 // ============================================================================
 // Route Type

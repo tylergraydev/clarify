@@ -91,11 +91,24 @@ function transformSettingsToFormValues(settings: Array<Setting>): SettingsFormVa
   };
 
   return {
+    chat: {
+      autoGenerateTitle: getBoolean('chat.autoGenerateTitle', true),
+      autoPromptCompaction: getBoolean('chat.autoPromptCompaction', true),
+      compactionTokenThreshold: getNumber('chat.compactionTokenThreshold', 80000),
+      titleRegenerateInterval: getNumber('chat.titleRegenerateInterval', 10),
+    },
     logging: {
       exportLogsWithDatabase: getBoolean('logging.exportLogsWithDatabase', true),
       includeCliOutput: getBoolean('logging.includeCliOutput', true),
       logExportLocation: getString('logging.logExportLocation', ''),
       logRetentionDays: getNumber('logging.logRetentionDays', 30),
+    },
+    terminal: {
+      cursorBlink: getBoolean('terminal.cursorBlink', true),
+      fontFamily: getString('terminal.fontFamily', ''),
+      fontSize: getNumber('terminal.fontSize', 13),
+      scrollback: getNumber('terminal.scrollback', 1000),
+      shellPath: getString('terminal.shellPath', ''),
     },
     workflow: {
       clarificationTimeoutSeconds: getNumber('workflow.clarificationTimeoutSeconds', 60),

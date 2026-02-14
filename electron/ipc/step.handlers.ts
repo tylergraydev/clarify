@@ -12,10 +12,18 @@
  */
 import { ipcMain, type IpcMainInvokeEvent } from 'electron';
 
-import type { WorkflowsRepository, WorkflowStepsRepository } from '../../db/repositories';
+import type {
+  RepositoriesRepository,
+  SettingsRepository,
+  WorkflowsRepository,
+  WorkflowStepsRepository,
+  WorktreesRepository,
+} from '../../db/repositories';
 import type { NewWorkflowStep, WorkflowStep } from '../../db/schema';
+import type { WorkflowPoolManager } from '../services/workflow-pool-manager.service';
 
 import { IpcChannels } from './channels';
+import { maybeCleanupWorktree } from './worktree.handlers';
 
 /**
  * Filter options for listing steps
@@ -33,7 +41,11 @@ interface StepListFilters {
  */
 export function registerStepHandlers(
   workflowStepsRepository: WorkflowStepsRepository,
-  workflowsRepository: WorkflowsRepository
+  workflowsRepository: WorkflowsRepository,
+  worktreesRepository?: WorktreesRepository,
+  repositoriesRepository?: RepositoriesRepository,
+  settingsRepository?: SettingsRepository,
+  workflowPoolManager?: WorkflowPoolManager
 ): void {
   type PauseBehavior = 'auto_pause' | 'continuous';
   const RUNNING_STATUSES = ['running', 'paused', 'editing', 'awaiting_input'] as const;
@@ -63,6 +75,24 @@ export function registerStepHandlers(
       .sort((a, b) => a.stepNumber - b.stepNumber)[0];
 
     if (!nextStep) {
+      // Workflow is complete - fire-and-forget worktree cleanup
+      if (worktreesRepository && repositoriesRepository && settingsRepository) {
+        maybeCleanupWorktree(
+          step.workflowId,
+          worktreesRepository,
+          repositoriesRepository,
+          settingsRepository
+        ).catch((error) => {
+          console.error('[Worktree] cleanup on completion failed:', error);
+        });
+      }
+
+      // Try to start next queued workflow now that a slot is free
+      if (workflowPoolManager) {
+        workflowPoolManager.tryDequeueNext().catch((error) => {
+          console.error('[WorkflowPool] dequeue on completion failed:', error);
+        });
+      }
       return;
     }
 
@@ -148,7 +178,19 @@ export function registerStepHandlers(
     IpcChannels.step.fail,
     (_event: IpcMainInvokeEvent, id: number, errorMessage: string): undefined | WorkflowStep => {
       try {
-        return workflowStepsRepository.fail(id, errorMessage);
+        const step = workflowStepsRepository.fail(id, errorMessage);
+
+        // If workflow transitions to failed, try to dequeue next queued workflow
+        if (step && workflowPoolManager) {
+          const workflow = workflowsRepository.findById(step.workflowId);
+          if (workflow && workflow.status === 'failed') {
+            workflowPoolManager.tryDequeueNext().catch((error) => {
+              console.error('[WorkflowPool] dequeue on failure failed:', error);
+            });
+          }
+        }
+
+        return step;
       } catch (error) {
         console.error('[IPC Error] step:fail:', error);
         throw error;

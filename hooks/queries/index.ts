@@ -108,6 +108,33 @@ export type { UseDebugLogsOptions } from './use-debug-logs';
 export { useDefaultClarificationAgent, useSetDefaultClarificationAgent } from './use-default-clarification-agent';
 
 // ============================================================================
+// GitHub / PR Hooks
+// ============================================================================
+export {
+  useClosePullRequest,
+  useConvertToReady,
+  useCreatePrComment,
+  useCreatePullRequest,
+  useGitHubAuth,
+  useGitHubConnectionStatus,
+  useGitHubRepoInfo,
+  useMergePullRequest,
+  usePrChecks,
+  usePrComments,
+  usePrDeployments,
+  usePrDiff,
+  usePrTemplate,
+  usePullRequest,
+  usePullRequests,
+  usePushCommentToGitHub,
+  useReplyToPrComment,
+  useRerunCheck,
+  useRerunFailedChecks,
+  useSyncCommentsFromGitHub,
+  useUpdatePullRequest,
+} from './use-github';
+
+// ============================================================================
 // Project Hooks
 // ============================================================================
 export {
@@ -168,8 +195,10 @@ export {
 // ============================================================================
 export {
   useCancelWorkflow,
+  useConcurrencyStats,
   useCreateWorkflow,
   usePauseWorkflow,
+  useQueuePosition,
   useResumeWorkflow,
   useStartWorkflow,
   useWorkflow,
@@ -191,6 +220,7 @@ export {
   clarificationKeys,
   debugLogKeys,
   discoveredFileKeys,
+  githubKeys,
   projectKeys,
   queries,
   repositoryKeys,

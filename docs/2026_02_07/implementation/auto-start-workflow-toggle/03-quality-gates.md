@@ -6,7 +6,7 @@
 
 | Gate | Result |
 |------|--------|
-| pnpm lint | PASS |
-| pnpm typecheck | PASS |
+| bun lint | PASS |
+| bun typecheck | PASS |
 
 All quality gates passed on first run.

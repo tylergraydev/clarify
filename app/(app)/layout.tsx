@@ -2,6 +2,7 @@
 
 import { ShellLayoutProvider } from '@/components/providers/shell-layout-provider';
 import { AppHeader, AppSidebar, StatusBar } from '@/components/shell';
+import { TerminalPanel } from '@/components/terminal';
 import { WorkflowAttentionNotifier } from '@/components/workflows/workflow-attention-notifier';
 import { useActiveWorkflows } from '@/hooks/queries/use-workflows';
 import { useShellStore } from '@/lib/stores/shell-store';
@@ -13,11 +14,12 @@ type AppLayoutProps = RequiredChildren;
  * App shell layout component that provides the four-region design:
  * - AppHeader at the top (fixed)
  * - AppSidebar on the left (fixed)
- * - Main content area in the center
+ * - Main content area in the center (flex-1)
+ * - TerminalPanel at the bottom of the content area (resizable)
  * - StatusBar at the bottom (fixed)
  *
- * The main content area adjusts its margins to account for the fixed
- * header, sidebar, and status bar positions.
+ * The main content and terminal panel live in a flex-col wrapper
+ * that fills the available space between header and status bar.
  */
 export default function AppLayout({ children }: AppLayoutProps) {
   const { isSidebarCollapsed } = useShellStore();
@@ -35,27 +37,34 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {/* Sidebar - fixed on left, hidden on mobile */}
         <AppSidebar />
 
-        {/* Main content area */}
-        <main
+        {/* Content wrapper: main + terminal panel */}
+        <div
           className={cn(
-            `
-              min-h-[calc(100vh-3rem-2rem)]
-              overflow-y-auto
-              transition-[margin-left] duration-200 ease-out
-            `,
-            // Margin top accounts for header height (48px = 3rem)
+            'flex flex-col transition-[margin-left] duration-200 ease-out',
+            // Top accounts for header height (48px = 3rem)
             'mt-12',
-            // Margin bottom accounts for status bar height (32px = 2rem)
+            // Bottom accounts for status bar height (32px = 2rem)
             'mb-8',
-            // Padding uses CSS variables for responsive values
-            'px-(--padding-content-x) py-(--padding-content-y)',
+            // Height fills between header and status bar
+            'h-[calc(100vh-3rem-2rem)]',
             // No left margin on mobile (sidebar hidden), responsive margin on tablet+
             'ml-0',
             isSidebarCollapsed ? 'md:ml-(--sidebar-width-collapsed)' : 'md:ml-(--sidebar-width-expanded)'
           )}
         >
-          {children}
-        </main>
+          {/* Main content area */}
+          <main
+            className={cn(
+              'flex-1 overflow-y-auto',
+              'px-(--padding-content-x) py-(--padding-content-y)'
+            )}
+          >
+            {children}
+          </main>
+
+          {/* Terminal panel - sits at bottom of content wrapper */}
+          <TerminalPanel />
+        </div>
 
         {/* Status bar - fixed at bottom */}
         <StatusBar activeWorkflowCount={activeWorkflows?.length ?? 0} />

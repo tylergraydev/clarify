@@ -6,6 +6,7 @@ import * as path from 'path';
 import { closeDatabase, type DrizzleDatabase, initializeDatabase } from '../db';
 import { seedDatabase } from '../db/seed';
 import { registerAllHandlers } from './ipc';
+import { killAllTerminals } from './services/terminal.service';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loadURL = isDev ? null : serve({ directory: 'out' });
@@ -76,6 +77,21 @@ function createApplicationMenu(): void {
             createDebugWindow();
           },
           label: 'Debug Log Viewer',
+        },
+        { type: 'separator' },
+        {
+          accelerator: 'Ctrl+`',
+          click: () => {
+            mainWindow?.webContents.send('terminal:toggle');
+          },
+          label: 'Toggle Terminal',
+        },
+        {
+          accelerator: 'Ctrl+Shift+`',
+          click: () => {
+            mainWindow?.webContents.send('terminal:new');
+          },
+          label: 'New Terminal',
         },
         { type: 'separator' },
         { role: 'reload' },
@@ -290,6 +306,9 @@ app.on('activate', () => {
 app.on('before-quit', () => {
   // Unregister all global shortcuts
   globalShortcut.unregisterAll();
+
+  // Kill all terminal PTY sessions
+  killAllTerminals();
 
   // Close debug window if open
   if (debugWindow && !debugWindow.isDestroyed()) {

@@ -7,12 +7,16 @@ import type {
   AgentSkill,
   AgentTool,
   AuditLog,
+  Conversation,
+  ConversationMessage,
   DiscoveredFile,
   NewAgent,
   NewAgentHook,
   NewAgentSkill,
   NewAgentTool,
   NewAuditLog,
+  NewConversation,
+  NewConversationMessage,
   NewDiscoveredFile,
   NewProject,
   NewRepository,
@@ -32,6 +36,7 @@ import type {
 } from '../db/schema';
 import type { UpdateWorkflowInput } from '../lib/validations/workflow';
 import type { DebugLogFilters } from '../types/debug-log';
+import type { TerminalCreateOptions, TerminalInfo } from '../types/terminal';
 
 import { IpcChannels } from './ipc/channels';
 
@@ -488,6 +493,26 @@ export interface ElectronAPI {
     findByWorkflow(workflowId: number): Promise<Array<AuditLog>>;
     list(): Promise<Array<AuditLog>>;
   };
+  chat: {
+    compactConversation(request: { conversationId: number; upToMessageId?: number }): Promise<{ compactedCount: number; summaryMessageId: number }>;
+    copyMessages(fromConversationId: number, toConversationId: number, upToMessageId?: number): Promise<Array<ConversationMessage>>;
+    createConversation(data: NewConversation): Promise<Conversation>;
+    createMessage(data: NewConversationMessage): Promise<ConversationMessage>;
+    deleteConversation(id: number): Promise<boolean>;
+    exportToNewChat(request: { messageIds: Array<number>; projectId: number; sourceConversationId: number }): Promise<Conversation>;
+    forkConversation(request: { forkPointMessageId: number; generateSummary?: boolean; sourceConversationId: number }): Promise<Conversation>;
+    generateTitle(conversationId: number): Promise<Conversation | undefined>;
+    getConversation(id: number): Promise<Conversation | undefined>;
+    getTokenEstimate(conversationId: number): Promise<number>;
+    listActiveMessages(conversationId: number): Promise<Array<ConversationMessage>>;
+    listConversations(projectId: number): Promise<Array<Conversation>>;
+    listMessages(conversationId: number): Promise<Array<ConversationMessage>>;
+    restoreMessage(id: number): Promise<ConversationMessage | undefined>;
+    revertToMessage(conversationId: number, messageId: number): Promise<{ affectedCount: number }>;
+    searchMessages(conversationId: number, query: string): Promise<Array<ConversationMessage>>;
+    softDeleteMessage(id: number): Promise<ConversationMessage | undefined>;
+    updateConversation(id: number, data: Partial<NewConversation>): Promise<Conversation | undefined>;
+  };
   clarification: {
     getState(workflowId: number): Promise<ClarificationServiceState | null>;
     /** Subscribe to streaming events during clarification. Returns unsubscribe function. */
@@ -514,6 +539,26 @@ export interface ElectronAPI {
       filters?: Array<{ extensions: Array<string>; name: string }>
     ): Promise<null | string>;
   };
+  diff: {
+    getBranches(repoPath: string): Promise<Array<import('../types/diff').GitBranch>>;
+    getDiff(repoPath: string, options?: import('../types/diff').DiffOptions): Promise<import('../types/diff').GitDiffResult>;
+    getFileContent(repoPath: string, filePath: string, ref?: string): Promise<string>;
+    getFileDiff(repoPath: string, options: import('../types/diff').FileDiffOptions): Promise<import('../types/diff').GitDiffResult>;
+    getLog(repoPath: string, options?: import('../types/diff').GitLogOptions): Promise<Array<import('../types/diff').GitLogEntry>>;
+    getStatus(repoPath: string): Promise<import('../types/diff').GitStatusResult>;
+    getWorktreeDiff(
+      worktreePath: string,
+      baseBranch?: string
+    ): Promise<{ committed: import('../types/diff').GitDiffResult; uncommitted: import('../types/diff').GitDiffResult }>;
+  };
+  diffComment: {
+    create(data: import('../db/schema').NewDiffCommentRow): Promise<import('../db/schema').DiffCommentRow>;
+    delete(id: number): Promise<boolean>;
+    list(workflowId: number): Promise<Array<import('../db/schema').DiffCommentRow>>;
+    listByFile(workflowId: number, filePath: string): Promise<Array<import('../db/schema').DiffCommentRow>>;
+    toggleResolved(id: number): Promise<import('../db/schema').DiffCommentRow | undefined>;
+    update(id: number, data: { content: string }): Promise<import('../db/schema').DiffCommentRow | undefined>;
+  };
   discovery: {
     add(stepId: number, data: NewDiscoveredFile): Promise<DiscoveredFile>;
     cancel(sessionId: string): Promise<FileDiscoveryOutcome>;
@@ -529,6 +574,12 @@ export interface ElectronAPI {
     toggle(id: number): Promise<DiscoveredFile | undefined>;
     update(id: number, data: Partial<NewDiscoveredFile>): Promise<DiscoveredFile | undefined>;
     updatePriority(id: number, priority: string): Promise<DiscoveredFile | undefined>;
+  };
+  fileViewState: {
+    getStats(workflowId: number, totalFiles: number): Promise<{ totalFiles: number; viewedFiles: number }>;
+    list(workflowId: number): Promise<Array<import('../db/schema').FileViewStateRow>>;
+    markUnviewed(workflowId: number, filePath: string): Promise<boolean>;
+    markViewed(workflowId: number, filePath: string): Promise<import('../db/schema').FileViewStateRow>;
   };
   fs: {
     exists(path: string): Promise<boolean>;
@@ -551,6 +602,7 @@ export interface ElectronAPI {
     }>;
     writeFile(path: string, content: string): Promise<{ error?: string; success: boolean }>;
   };
+  github: GitHubAPI;
   project: {
     addRepo(projectId: number, repoData: NewRepository): Promise<Repository>;
     archive(id: number): Promise<Project | undefined>;
@@ -579,6 +631,12 @@ export interface ElectronAPI {
     create(data: NewRepository): Promise<Repository>;
     delete(id: number): Promise<boolean>;
     deleteWithCleanup(repositoryId: number): Promise<{ cancelledCount: number; deleted: boolean }>;
+    detectGitInfo(path: string): Promise<{
+      defaultBranch?: string;
+      isGitRepo: boolean;
+      name?: string;
+      remoteUrl?: string;
+    }>;
     findByPath(path: string): Promise<Repository | undefined>;
     findByProject(projectId: number): Promise<Array<Repository>>;
     get(id: number): Promise<Repository | undefined>;
@@ -629,11 +687,23 @@ export interface ElectronAPI {
       placeholders: Array<Omit<NewTemplatePlaceholder, 'templateId'>>
     ): Promise<Array<TemplatePlaceholder>>;
   };
+  terminal: {
+    create(options?: TerminalCreateOptions): Promise<TerminalInfo>;
+    getInfo(terminalId: string): Promise<null | TerminalInfo>;
+    input(terminalId: string, data: string): void;
+    kill(terminalId: string): Promise<boolean>;
+    listActive(): Promise<Array<string>>;
+    onData(terminalId: string, callback: (data: string) => void): () => void;
+    onExit(terminalId: string, callback: (exitCode: number) => void): () => void;
+    resize(terminalId: string, cols: number, rows: number): void;
+  };
   workflow: {
     cancel(id: number): Promise<undefined | Workflow>;
     create(data: NewWorkflow): Promise<Workflow>;
     delete(id: number): Promise<boolean>;
     get(id: number): Promise<undefined | Workflow>;
+    getConcurrencyStats(): Promise<{ maxConcurrent: number; queued: number; running: number }>;
+    getQueuePosition(id: number): Promise<number>;
     getStatistics(filters?: { dateFrom?: string; dateTo?: string; projectId?: number }): Promise<WorkflowStatistics>;
     list(): Promise<Array<Workflow>>;
     listHistory(filters?: WorkflowHistoryFilters): Promise<WorkflowHistoryResult>;
@@ -649,6 +719,8 @@ export interface ElectronAPI {
     remove(workflowId: number, repositoryId: number): Promise<boolean>;
   };
   worktree: {
+    cleanup(workflowId: number): Promise<boolean>;
+    create(input: { featureName: string; repositoryId: number; workflowId: number }): Promise<Worktree>;
     get(id: number): Promise<undefined | Worktree>;
     getByWorkflowId(workflowId: number): Promise<undefined | Worktree>;
     list(options?: { repositoryId?: number; status?: string }): Promise<Array<Worktree>>;
@@ -759,6 +831,30 @@ export type FileDiscoveryStreamMessage =
  * Usage statistics for file discovery.
  */
 export type FileDiscoveryUsageStats = import('../types/usage-stats').UsageStats;
+
+export interface GitHubAPI {
+  checkAuth(): Promise<import('../types/github').GitHubAuthStatus>;
+  closePr(repoPath: string, prNumber: number): Promise<import('../types/github').GitHubPullRequest>;
+  convertToReady(repoPath: string, prNumber: number): Promise<import('../types/github').GitHubPullRequest>;
+  createPr(repoPath: string, input: import('../types/github').CreatePrInput): Promise<import('../types/github').GitHubPullRequest>;
+  createPrComment(repoPath: string, prNumber: number, input: import('../types/github').CreatePrCommentInput): Promise<import('../types/github').GitHubPrComment>;
+  detectPrTemplate(repoPath: string): Promise<null | string>;
+  getDeployments(repoPath: string, prNumber: number): Promise<Array<import('../types/github').GitHubDeployment>>;
+  getPr(repoPath: string, prNumber: number): Promise<import('../types/github').GitHubPullRequest>;
+  getPrDiff(repoPath: string, prNumber: number): Promise<string>;
+  getPrDiffParsed(repoPath: string, prNumber: number): Promise<import('../types/diff').GitDiffResult>;
+  getRepoInfo(repoPath: string): Promise<import('../types/github').GitHubRepoInfo>;
+  listChecks(repoPath: string, ref: string): Promise<Array<import('../types/github').GitHubCheckRun>>;
+  listPrComments(repoPath: string, prNumber: number): Promise<Array<import('../types/github').GitHubPrComment>>;
+  listPrs(repoPath: string, filters?: import('../types/github').PrListFilters): Promise<Array<import('../types/github').GitHubPullRequest>>;
+  mergePr(repoPath: string, prNumber: number, strategy: import('../types/github').MergeStrategy): Promise<import('../types/github').MergeResult>;
+  pushComment(repoPath: string, prNumber: number, localCommentId: number): Promise<import('../db/schema').DiffCommentRow>;
+  replyToPrComment(repoPath: string, prNumber: number, commentId: number, body: string): Promise<import('../types/github').GitHubPrComment>;
+  rerunCheck(repoPath: string, runId: number): Promise<void>;
+  rerunFailedChecks(repoPath: string, runId: number): Promise<void>;
+  syncComments(repoPath: string, prNumber: number, workflowId: number): Promise<import('../electron/services/github-comment-sync.service').CommentSyncResult>;
+  updatePr(repoPath: string, prNumber: number, input: import('../types/github').UpdatePrInput): Promise<import('../types/github').GitHubPullRequest>;
+}
 
 /**
  * Agent configuration for refinement.
@@ -1173,6 +1269,44 @@ const electronAPI: ElectronAPI = {
     findByWorkflow: (workflowId) => ipcRenderer.invoke(IpcChannels.audit.findByWorkflow, workflowId),
     list: () => ipcRenderer.invoke(IpcChannels.audit.list),
   },
+  chat: {
+    compactConversation: (request: { conversationId: number; upToMessageId?: number }) =>
+      ipcRenderer.invoke(IpcChannels.chat.compactConversation, request) as Promise<{ compactedCount: number; summaryMessageId: number }>,
+    copyMessages: (fromConversationId: number, toConversationId: number, upToMessageId?: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.copyMessages, fromConversationId, toConversationId, upToMessageId) as Promise<Array<ConversationMessage>>,
+    createConversation: (data: NewConversation) =>
+      ipcRenderer.invoke(IpcChannels.chat.createConversation, data) as Promise<Conversation>,
+    createMessage: (data: NewConversationMessage) =>
+      ipcRenderer.invoke(IpcChannels.chat.createMessage, data) as Promise<ConversationMessage>,
+    deleteConversation: (id: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.deleteConversation, id) as Promise<boolean>,
+    exportToNewChat: (request: { messageIds: Array<number>; projectId: number; sourceConversationId: number }) =>
+      ipcRenderer.invoke(IpcChannels.chat.exportToNewChat, request) as Promise<Conversation>,
+    forkConversation: (request: { forkPointMessageId: number; generateSummary?: boolean; sourceConversationId: number }) =>
+      ipcRenderer.invoke(IpcChannels.chat.forkConversation, request) as Promise<Conversation>,
+    generateTitle: (conversationId: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.generateTitle, conversationId) as Promise<Conversation | undefined>,
+    getConversation: (id: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.getConversation, id) as Promise<Conversation | undefined>,
+    getTokenEstimate: (conversationId: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.getTokenEstimate, conversationId) as Promise<number>,
+    listActiveMessages: (conversationId: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.listActiveMessages, conversationId) as Promise<Array<ConversationMessage>>,
+    listConversations: (projectId: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.listConversations, projectId) as Promise<Array<Conversation>>,
+    listMessages: (conversationId: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.listMessages, conversationId) as Promise<Array<ConversationMessage>>,
+    restoreMessage: (id: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.restoreMessage, id) as Promise<ConversationMessage | undefined>,
+    revertToMessage: (conversationId: number, messageId: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.revertToMessage, conversationId, messageId) as Promise<{ affectedCount: number }>,
+    searchMessages: (conversationId: number, query: string) =>
+      ipcRenderer.invoke(IpcChannels.chat.searchMessages, conversationId, query) as Promise<Array<ConversationMessage>>,
+    softDeleteMessage: (id: number) =>
+      ipcRenderer.invoke(IpcChannels.chat.softDeleteMessage, id) as Promise<ConversationMessage | undefined>,
+    updateConversation: (id: number, data: Partial<NewConversation>) =>
+      ipcRenderer.invoke(IpcChannels.chat.updateConversation, id, data) as Promise<Conversation | undefined>,
+  },
   clarification: (() => {
     // Private state - callbacks registered via onStreamMessage() to receive stream events
     const streamCallbacks = new Set<(message: ClarificationStreamMessage) => void>();
@@ -1228,6 +1362,31 @@ const electronAPI: ElectronAPI = {
     openFile: (filters) => ipcRenderer.invoke(IpcChannels.dialog.openFile, filters),
     saveFile: (defaultPath, filters) => ipcRenderer.invoke(IpcChannels.dialog.saveFile, defaultPath, filters),
   },
+  diff: {
+    getBranches: (repoPath: string) => ipcRenderer.invoke(IpcChannels.diff.getBranches, repoPath),
+    getDiff: (repoPath: string, options?: import('../types/diff').DiffOptions) =>
+      ipcRenderer.invoke(IpcChannels.diff.getDiff, repoPath, options),
+    getFileContent: (repoPath: string, filePath: string, ref?: string) =>
+      ipcRenderer.invoke(IpcChannels.diff.getFileContent, repoPath, filePath, ref),
+    getFileDiff: (repoPath: string, options: import('../types/diff').FileDiffOptions) =>
+      ipcRenderer.invoke(IpcChannels.diff.getFileDiff, repoPath, options),
+    getLog: (repoPath: string, options?: import('../types/diff').GitLogOptions) =>
+      ipcRenderer.invoke(IpcChannels.diff.getLog, repoPath, options),
+    getStatus: (repoPath: string) => ipcRenderer.invoke(IpcChannels.diff.getStatus, repoPath),
+    getWorktreeDiff: (worktreePath: string, baseBranch?: string) =>
+      ipcRenderer.invoke(IpcChannels.diff.getWorktreeDiff, worktreePath, baseBranch),
+  },
+  diffComment: {
+    create: (data: import('../db/schema').NewDiffCommentRow) =>
+      ipcRenderer.invoke(IpcChannels.diffComment.create, data),
+    delete: (id: number) => ipcRenderer.invoke(IpcChannels.diffComment.delete, id),
+    list: (workflowId: number) => ipcRenderer.invoke(IpcChannels.diffComment.list, workflowId),
+    listByFile: (workflowId: number, filePath: string) =>
+      ipcRenderer.invoke(IpcChannels.diffComment.listByFile, workflowId, filePath),
+    toggleResolved: (id: number) => ipcRenderer.invoke(IpcChannels.diffComment.toggleResolved, id),
+    update: (id: number, data: { content: string }) =>
+      ipcRenderer.invoke(IpcChannels.diffComment.update, id, data),
+  },
   discovery: (() => {
     // Private state - callbacks registered via onStreamMessage() to receive stream events
     const streamCallbacks = new Set<(message: FileDiscoveryStreamMessage) => void>();
@@ -1275,12 +1434,64 @@ const electronAPI: ElectronAPI = {
         ipcRenderer.invoke(IpcChannels.discovery.updatePriority, id, priority),
     };
   })(),
+  fileViewState: {
+    getStats: (workflowId: number, totalFiles: number) =>
+      ipcRenderer.invoke(IpcChannels.fileViewState.getStats, workflowId, totalFiles),
+    list: (workflowId: number) => ipcRenderer.invoke(IpcChannels.fileViewState.list, workflowId),
+    markUnviewed: (workflowId: number, filePath: string) =>
+      ipcRenderer.invoke(IpcChannels.fileViewState.markUnviewed, workflowId, filePath),
+    markViewed: (workflowId: number, filePath: string) =>
+      ipcRenderer.invoke(IpcChannels.fileViewState.markViewed, workflowId, filePath),
+  },
   fs: {
     exists: (path) => ipcRenderer.invoke(IpcChannels.fs.exists, path),
     readDirectory: (path) => ipcRenderer.invoke(IpcChannels.fs.readDirectory, path),
     readFile: (path) => ipcRenderer.invoke(IpcChannels.fs.readFile, path),
     stat: (path) => ipcRenderer.invoke(IpcChannels.fs.stat, path),
     writeFile: (path, content) => ipcRenderer.invoke(IpcChannels.fs.writeFile, path, content),
+  },
+  github: {
+    checkAuth: () => ipcRenderer.invoke(IpcChannels.github.checkAuth),
+    closePr: (repoPath: string, prNumber: number) =>
+      ipcRenderer.invoke(IpcChannels.github.closePr, repoPath, prNumber),
+    convertToReady: (repoPath: string, prNumber: number) =>
+      ipcRenderer.invoke(IpcChannels.github.convertToReady, repoPath, prNumber),
+    createPr: (repoPath: string, input: import('../types/github').CreatePrInput) =>
+      ipcRenderer.invoke(IpcChannels.github.createPr, repoPath, input),
+    createPrComment: (repoPath: string, prNumber: number, input: import('../types/github').CreatePrCommentInput) =>
+      ipcRenderer.invoke(IpcChannels.github.createPrComment, repoPath, prNumber, input),
+    detectPrTemplate: (repoPath: string) =>
+      ipcRenderer.invoke(IpcChannels.github.detectPrTemplate, repoPath),
+    getDeployments: (repoPath: string, prNumber: number) =>
+      ipcRenderer.invoke(IpcChannels.github.getDeployments, repoPath, prNumber),
+    getPr: (repoPath: string, prNumber: number) =>
+      ipcRenderer.invoke(IpcChannels.github.getPr, repoPath, prNumber),
+    getPrDiff: (repoPath: string, prNumber: number) =>
+      ipcRenderer.invoke(IpcChannels.github.getPrDiff, repoPath, prNumber),
+    getPrDiffParsed: (repoPath: string, prNumber: number) =>
+      ipcRenderer.invoke(IpcChannels.github.getPrDiffParsed, repoPath, prNumber),
+    getRepoInfo: (repoPath: string) =>
+      ipcRenderer.invoke(IpcChannels.github.getRepoInfo, repoPath),
+    listChecks: (repoPath: string, ref: string) =>
+      ipcRenderer.invoke(IpcChannels.github.listChecks, repoPath, ref),
+    listPrComments: (repoPath: string, prNumber: number) =>
+      ipcRenderer.invoke(IpcChannels.github.listPrComments, repoPath, prNumber),
+    listPrs: (repoPath: string, filters?: import('../types/github').PrListFilters) =>
+      ipcRenderer.invoke(IpcChannels.github.listPrs, repoPath, filters),
+    mergePr: (repoPath: string, prNumber: number, strategy: import('../types/github').MergeStrategy) =>
+      ipcRenderer.invoke(IpcChannels.github.mergePr, repoPath, prNumber, strategy),
+    pushComment: (repoPath: string, prNumber: number, localCommentId: number) =>
+      ipcRenderer.invoke(IpcChannels.github.pushComment, repoPath, prNumber, localCommentId),
+    replyToPrComment: (repoPath: string, prNumber: number, commentId: number, body: string) =>
+      ipcRenderer.invoke(IpcChannels.github.replyToPrComment, repoPath, prNumber, commentId, body),
+    rerunCheck: (repoPath: string, runId: number) =>
+      ipcRenderer.invoke(IpcChannels.github.rerunCheck, repoPath, runId),
+    rerunFailedChecks: (repoPath: string, runId: number) =>
+      ipcRenderer.invoke(IpcChannels.github.rerunFailedChecks, repoPath, runId),
+    syncComments: (repoPath: string, prNumber: number, workflowId: number) =>
+      ipcRenderer.invoke(IpcChannels.github.syncComments, repoPath, prNumber, workflowId),
+    updatePr: (repoPath: string, prNumber: number, input: import('../types/github').UpdatePrInput) =>
+      ipcRenderer.invoke(IpcChannels.github.updatePr, repoPath, prNumber, input),
   },
   project: {
     addRepo: (projectId, repoData) => ipcRenderer.invoke(IpcChannels.project.addRepo, projectId, repoData),
@@ -1341,6 +1552,7 @@ const electronAPI: ElectronAPI = {
     delete: (id) => ipcRenderer.invoke(IpcChannels.repository.delete, id),
     deleteWithCleanup: (repositoryId) =>
       ipcRenderer.invoke(IpcChannels.repository.deleteWithCleanup, repositoryId),
+    detectGitInfo: (path) => ipcRenderer.invoke(IpcChannels.repository.detectGitInfo, path),
     findByPath: (path) => ipcRenderer.invoke(IpcChannels.repository.findByPath, path),
     findByProject: (projectId) => ipcRenderer.invoke(IpcChannels.repository.findByProject, projectId),
     get: (id) => ipcRenderer.invoke(IpcChannels.repository.get, id),
@@ -1387,11 +1599,106 @@ const electronAPI: ElectronAPI = {
     updatePlaceholders: (templateId, placeholders) =>
       ipcRenderer.invoke(IpcChannels.template.updatePlaceholders, templateId, placeholders),
   },
+  terminal: (() => {
+    // Private state - data callbacks keyed by terminalId
+    const dataCallbacks = new Map<string, Set<(data: string) => void>>();
+    // Private state - exit callbacks keyed by terminalId
+    const exitCallbacks = new Map<string, Set<(exitCode: number) => void>>();
+
+    // Listen for PTY data from main process
+    ipcRenderer.on(IpcChannels.terminal.data, (_event, msg: { data: string; terminalId: string }) => {
+      const callbacks = dataCallbacks.get(msg.terminalId);
+      if (callbacks) {
+        for (const cb of callbacks) {
+          try {
+            cb(msg.data);
+          } catch (error) {
+            console.error('[Terminal] Error in data callback:', error);
+          }
+        }
+      }
+    });
+
+    // Listen for PTY exit from main process
+    ipcRenderer.on(IpcChannels.terminal.exit, (_event, msg: { exitCode: number; terminalId: string }) => {
+      const callbacks = exitCallbacks.get(msg.terminalId);
+      if (callbacks) {
+        for (const cb of callbacks) {
+          try {
+            cb(msg.exitCode);
+          } catch (error) {
+            console.error('[Terminal] Error in exit callback:', error);
+          }
+        }
+      }
+      // Cleanup callback maps on exit
+      dataCallbacks.delete(msg.terminalId);
+      exitCallbacks.delete(msg.terminalId);
+    });
+
+    // Listen for menu shortcuts and dispatch as CustomEvents
+    ipcRenderer.on(IpcChannels.terminal.toggle, () => {
+      window.dispatchEvent(new CustomEvent('terminal:toggle'));
+    });
+
+    ipcRenderer.on(IpcChannels.terminal.new, () => {
+      window.dispatchEvent(new CustomEvent('terminal:new'));
+    });
+
+    return {
+      create: (options?: TerminalCreateOptions) =>
+        ipcRenderer.invoke(IpcChannels.terminal.create, options) as Promise<TerminalInfo>,
+      getInfo: (terminalId: string) =>
+        ipcRenderer.invoke(IpcChannels.terminal.getInfo, terminalId) as Promise<null | TerminalInfo>,
+      input: (terminalId: string, data: string) => {
+        ipcRenderer.send(IpcChannels.terminal.input, terminalId, data);
+      },
+      kill: (terminalId: string) =>
+        ipcRenderer.invoke(IpcChannels.terminal.kill, terminalId) as Promise<boolean>,
+      listActive: () =>
+        ipcRenderer.invoke(IpcChannels.terminal.listActive) as Promise<Array<string>>,
+      onData: (terminalId: string, callback: (data: string) => void) => {
+        if (!dataCallbacks.has(terminalId)) {
+          dataCallbacks.set(terminalId, new Set());
+        }
+        dataCallbacks.get(terminalId)!.add(callback);
+        return () => {
+          const callbacks = dataCallbacks.get(terminalId);
+          if (callbacks) {
+            callbacks.delete(callback);
+            if (callbacks.size === 0) {
+              dataCallbacks.delete(terminalId);
+            }
+          }
+        };
+      },
+      onExit: (terminalId: string, callback: (exitCode: number) => void) => {
+        if (!exitCallbacks.has(terminalId)) {
+          exitCallbacks.set(terminalId, new Set());
+        }
+        exitCallbacks.get(terminalId)!.add(callback);
+        return () => {
+          const callbacks = exitCallbacks.get(terminalId);
+          if (callbacks) {
+            callbacks.delete(callback);
+            if (callbacks.size === 0) {
+              exitCallbacks.delete(terminalId);
+            }
+          }
+        };
+      },
+      resize: (terminalId: string, cols: number, rows: number) => {
+        ipcRenderer.send(IpcChannels.terminal.resize, terminalId, cols, rows);
+      },
+    };
+  })(),
   workflow: {
     cancel: (id) => ipcRenderer.invoke(IpcChannels.workflow.cancel, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.workflow.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.workflow.delete, id),
     get: (id) => ipcRenderer.invoke(IpcChannels.workflow.get, id),
+    getConcurrencyStats: () => ipcRenderer.invoke(IpcChannels.workflow.getConcurrencyStats),
+    getQueuePosition: (id) => ipcRenderer.invoke(IpcChannels.workflow.getQueuePosition, id),
     getStatistics: (filters) => ipcRenderer.invoke(IpcChannels.workflow.getStatistics, filters),
     list: () => ipcRenderer.invoke(IpcChannels.workflow.list),
     listHistory: (filters) => ipcRenderer.invoke(IpcChannels.workflow.listHistory, filters),
@@ -1410,6 +1717,8 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke(IpcChannels.workflowRepository.remove, workflowId, repositoryId),
   },
   worktree: {
+    cleanup: (workflowId) => ipcRenderer.invoke(IpcChannels.worktree.cleanup, workflowId),
+    create: (input) => ipcRenderer.invoke(IpcChannels.worktree.create, input),
     get: (id) => ipcRenderer.invoke(IpcChannels.worktree.get, id),
     getByWorkflowId: (workflowId) => ipcRenderer.invoke(IpcChannels.worktree.getByWorkflowId, workflowId),
     list: (options) => ipcRenderer.invoke(IpcChannels.worktree.list, options),

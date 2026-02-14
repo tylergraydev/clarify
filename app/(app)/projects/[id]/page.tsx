@@ -1,12 +1,13 @@
 'use client';
 
-import { Building2, ChevronRight, FolderGit2, Workflow } from 'lucide-react';
+import { Building2, ChevronRight, FolderGit2, MessageCircle, Workflow } from 'lucide-react';
 import { $path } from 'next-typesafe-url';
 import { useRouteParams } from 'next-typesafe-url/app';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
+import { ChatTabContent } from '@/components/chat/chat-tab-content';
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import { ProjectDetailSkeleton, ProjectNotFound } from '@/components/projects';
 import { ProjectOverviewTab } from '@/components/projects/overview/project-overview-tab';
@@ -133,6 +134,10 @@ const ProjectDetailPage = () => {
                 <Workflow aria-hidden={'true'} className={'mr-2 size-4'} />
                 {'Workflows'}
               </TabsTrigger>
+              <TabsTrigger value={'chat'}>
+                <MessageCircle aria-hidden={'true'} className={'mr-2 size-4'} />
+                {'Chat'}
+              </TabsTrigger>
               <TabsIndicator />
             </TabsList>
 
@@ -155,6 +160,11 @@ const ProjectDetailPage = () => {
             {/* Workflows Tab */}
             <TabsPanel value={'workflows'}>
               <WorkflowsTabContent projectId={projectId} projectName={project.name} />
+            </TabsPanel>
+
+            {/* Chat Tab */}
+            <TabsPanel value={'chat'}>
+              <ChatTabContent projectId={projectId} />
             </TabsPanel>
           </TabsRoot>
         </section>

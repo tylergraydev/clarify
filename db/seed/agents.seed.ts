@@ -320,7 +320,7 @@ Always use the project's established patterns for timestamps, soft deletes, and 
       { toolName: 'Edit', toolPattern: 'db/**' },
       { toolName: 'Glob', toolPattern: '*' },
       { toolName: 'Grep', toolPattern: '*' },
-      { toolName: 'Bash', toolPattern: 'pnpm db:*' },
+      { toolName: 'Bash', toolPattern: 'bun db:*' },
     ],
     type: 'specialist',
   },

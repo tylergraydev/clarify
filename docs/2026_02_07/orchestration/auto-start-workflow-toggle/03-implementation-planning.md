@@ -32,6 +32,6 @@ See full plan at: `docs/2026_02_07/plans/auto-start-workflow-toggle-implementati
 
 - **Format**: Markdown (correct)
 - **Required Sections**: All present (Overview, Quick Summary, Prerequisites, Steps, Quality Gates, Notes)
-- **Validation Commands**: All steps include `pnpm lint && pnpm typecheck`
+- **Validation Commands**: All steps include `bun lint && bun typecheck`
 - **No Code Examples**: Plan contains instructions only, no implementation code
 - **Completeness**: All aspects of refined request addressed

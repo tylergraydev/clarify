@@ -54,7 +54,7 @@ export interface WorkflowDetailState {
 /**
  * Step tab type for the workflow detail streaming panel.
  */
-export type WorkflowDetailStepTab = 'clarification' | 'discovery' | 'planning' | 'refinement';
+export type WorkflowDetailStepTab = 'changes' | 'clarification' | 'discovery' | 'planning' | 'refinement';
 
 /**
  * Combined workflow detail store type for state, actions, and slices.

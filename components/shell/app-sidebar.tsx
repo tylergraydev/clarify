@@ -8,8 +8,11 @@ import {
   Clock,
   FileText,
   FolderKanban,
+  GitCompare,
+  GitPullRequest,
   History,
   LayoutDashboard,
+  MessageCircle,
   Play,
   Settings,
   Star,
@@ -173,6 +176,33 @@ export const AppSidebar = ({ className, ref, ...props }: AppSidebarProps) => {
             isActive={isPathActive($path({ route: '/templates' }))}
             isCollapsed={isSidebarCollapsed}
             label={'Templates'}
+          />
+
+          {/* Chat */}
+          <NavItem
+            href={'/chat'}
+            icon={MessageCircle}
+            isActive={isPathActive('/chat')}
+            isCollapsed={isSidebarCollapsed}
+            label={'Chat'}
+          />
+
+          {/* Changes */}
+          <NavItem
+            href={'/changes'}
+            icon={GitCompare}
+            isActive={isPathActive('/changes')}
+            isCollapsed={isSidebarCollapsed}
+            label={'Changes'}
+          />
+
+          {/* Pull Requests */}
+          <NavItem
+            href={'/pulls'}
+            icon={GitPullRequest}
+            isActive={isPathActive('/pulls')}
+            isCollapsed={isSidebarCollapsed}
+            label={'Pull Requests'}
           />
 
           {/* Separator */}
