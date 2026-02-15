@@ -29,6 +29,8 @@ export interface AgentConfig {
   name: string;
   /** The permission mode for the agent */
   permissionMode: null | string;
+  /** The provider for this agent (e.g., 'claude', 'openai') */
+  provider: null | string;
   /** Array of skills the agent can use */
   skills: Array<{
     isRequired: boolean;

@@ -1,13 +1,15 @@
 'use client';
 
-import { CheckSquareIcon, ListIcon, SearchIcon } from 'lucide-react';
+import { CheckSquareIcon, FolderIcon, ListIcon, SearchIcon } from 'lucide-react';
 import { memo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface ChatPanelHeaderProps {
+  isFileExplorerOpen?: boolean;
   isSelectMode: boolean;
+  onFileExplorerToggle?: () => void;
   onSearchToggle: () => void;
   onSelectMode: () => void;
   onTocToggle: () => void;
@@ -16,7 +18,7 @@ interface ChatPanelHeaderProps {
 }
 
 export const ChatPanelHeader = memo(
-  ({ isSelectMode, onSearchToggle, onSelectMode, onTocToggle, title, tokenEstimate }: ChatPanelHeaderProps) => {
+  ({ isFileExplorerOpen, isSelectMode, onFileExplorerToggle, onSearchToggle, onSelectMode, onTocToggle, title, tokenEstimate }: ChatPanelHeaderProps) => {
     const formatTokens = (tokens: number): string => {
       if (tokens >= 1000) {
         return `~${(tokens / 1000).toFixed(0)}K tokens`;
@@ -40,6 +42,17 @@ export const ChatPanelHeader = memo(
           <Button onClick={onTocToggle} size={'icon-sm'} type={'button'} variant={'ghost'}>
             <ListIcon className={'size-4'} />
           </Button>
+          {onFileExplorerToggle && (
+            <Button
+              className={cn(isFileExplorerOpen && 'bg-muted')}
+              onClick={onFileExplorerToggle}
+              size={'icon-sm'}
+              type={'button'}
+              variant={'ghost'}
+            >
+              <FolderIcon className={'size-4'} />
+            </Button>
+          )}
           <Button
             className={cn(isSelectMode && 'bg-muted')}
             onClick={onSelectMode}

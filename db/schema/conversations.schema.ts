@@ -14,13 +14,14 @@ export const conversations = sqliteTable(
     forkSummary: text('fork_summary'),
     id: integer('id').primaryKey({ autoIncrement: true }),
     isCompacted: integer('is_compacted', { mode: 'boolean' }).default(false).notNull(),
-    parentConversationId: integer('parent_conversation_id').references(
-      (): AnySQLiteColumn => conversations.id,
-      { onDelete: 'set null' }
-    ),
+    model: text('model'),
+    parentConversationId: integer('parent_conversation_id').references((): AnySQLiteColumn => conversations.id, {
+      onDelete: 'set null',
+    }),
     projectId: integer('project_id')
       .notNull()
       .references(() => projects.id, { onDelete: 'cascade' }),
+    provider: text('provider').default('claude'),
     title: text('title').notNull().default('New Conversation'),
     titleGeneratedByAi: integer('title_generated_by_ai', { mode: 'boolean' }).default(false).notNull(),
     updatedAt: text('updated_at')

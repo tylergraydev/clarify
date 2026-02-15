@@ -1,7 +1,7 @@
 'use client';
 
-import { ArchiveIcon, BotIcon, UserIcon } from 'lucide-react';
-import { type ComponentPropsWithRef, memo, useCallback } from 'react';
+import { ArchiveIcon, BotIcon, FileIcon, UserIcon } from 'lucide-react';
+import { type ComponentPropsWithRef, memo, useCallback, useMemo } from 'react';
 import { Streamdown } from 'streamdown';
 
 import type { ChatMessageWithBlocks } from '@/types/chat';
@@ -68,6 +68,17 @@ export const ChatMessage = memo(
     const isUser = message.role === 'user';
     const hasBlocks = message.blocks.length > 0;
     const isCompactionSummary = 'isCompactionSummary' in message && message.isCompactionSummary;
+
+    // Parse mentioned files from metadata
+    const mentionedFilePaths = useMemo(() => {
+      if (!message.metadata) return [];
+      try {
+        const meta = JSON.parse(message.metadata) as { mentionedFiles?: Array<string> };
+        return meta.mentionedFiles ?? [];
+      } catch {
+        return [];
+      }
+    }, [message.metadata]);
 
     const handleCopy = useCallback(() => {
       onCopyMessage?.(message.content ?? '');
@@ -169,6 +180,16 @@ export const ChatMessage = memo(
           )}
         >
           {renderContent()}
+          {mentionedFilePaths.length > 0 && (
+            <div className={'mt-1.5 flex items-center gap-1 text-[11px] opacity-70'}>
+              <FileIcon className={'size-3'} />
+              <span>
+                {'Referenced '}
+                {mentionedFilePaths.length}
+                {mentionedFilePaths.length === 1 ? ' file' : ' files'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Action bar (hover-revealed) */}

@@ -20,6 +20,7 @@ interface DiffSectionsProps {
   collapsedFiles: Set<string>;
   committedFiles: Array<FileDiff>;
   onToggleFileCollapse: (path: string) => void;
+  repoPath?: string;
   uncommittedFiles: Array<FileDiff>;
   viewMode: DiffViewMode;
 }
@@ -38,6 +39,7 @@ export const DiffSections = ({
   collapsedFiles,
   committedFiles,
   onToggleFileCollapse,
+  repoPath,
   uncommittedFiles,
   viewMode,
 }: DiffSectionsProps) => {
@@ -59,9 +61,7 @@ export const DiffSections = ({
           <AccordionHeader>
             <AccordionTrigger>
               <GitCommitHorizontal aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-              <span className={'text-sm font-medium'}>
-                Committed Changes
-              </span>
+              <span className={'text-sm font-medium'}>Committed Changes</span>
               <span className={'text-xs text-muted-foreground'}>
                 ({committedFiles.length} file{committedFiles.length !== 1 ? 's' : ''})
               </span>
@@ -80,6 +80,7 @@ export const DiffSections = ({
                   isCollapsed={collapsedFiles.has(file.path)}
                   key={file.path}
                   onToggleCollapse={() => onToggleFileCollapse(file.path)}
+                  repoPath={repoPath}
                   viewMode={viewMode}
                 />
               ))}
@@ -93,9 +94,7 @@ export const DiffSections = ({
           <AccordionHeader>
             <AccordionTrigger>
               <PenLine aria-hidden={'true'} className={'size-4 text-muted-foreground'} />
-              <span className={'text-sm font-medium'}>
-                Uncommitted Changes
-              </span>
+              <span className={'text-sm font-medium'}>Uncommitted Changes</span>
               <span className={'text-xs text-muted-foreground'}>
                 ({uncommittedFiles.length} file{uncommittedFiles.length !== 1 ? 's' : ''})
               </span>
@@ -114,6 +113,7 @@ export const DiffSections = ({
                   isCollapsed={collapsedFiles.has(file.path)}
                   key={file.path}
                   onToggleCollapse={() => onToggleFileCollapse(file.path)}
+                  repoPath={repoPath}
                   viewMode={viewMode}
                 />
               ))}

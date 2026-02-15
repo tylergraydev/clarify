@@ -191,13 +191,30 @@ export type AgentWithRelations = import('../db/schema').Agent & {
 // =============================================================================
 
 export interface ChatAPI {
-  compactConversation(request: { conversationId: number; upToMessageId?: number }): Promise<{ compactedCount: number; summaryMessageId: number }>;
-  copyMessages(fromConversationId: number, toConversationId: number, upToMessageId?: number): Promise<Array<import('../db/schema').ConversationMessage>>;
+  compactConversation(request: {
+    conversationId: number;
+    upToMessageId?: number;
+  }): Promise<{ compactedCount: number; summaryMessageId: number }>;
+  copyMessages(
+    fromConversationId: number,
+    toConversationId: number,
+    upToMessageId?: number
+  ): Promise<Array<import('../db/schema').ConversationMessage>>;
   createConversation(data: import('../db/schema').NewConversation): Promise<import('../db/schema').Conversation>;
-  createMessage(data: import('../db/schema').NewConversationMessage): Promise<import('../db/schema').ConversationMessage>;
+  createMessage(
+    data: import('../db/schema').NewConversationMessage
+  ): Promise<import('../db/schema').ConversationMessage>;
   deleteConversation(id: number): Promise<boolean>;
-  exportToNewChat(request: { messageIds: Array<number>; projectId: number; sourceConversationId: number }): Promise<import('../db/schema').Conversation>;
-  forkConversation(request: { forkPointMessageId: number; generateSummary?: boolean; sourceConversationId: number }): Promise<import('../db/schema').Conversation>;
+  exportToNewChat(request: {
+    messageIds: Array<number>;
+    projectId: number;
+    sourceConversationId: number;
+  }): Promise<import('../db/schema').Conversation>;
+  forkConversation(request: {
+    forkPointMessageId: number;
+    generateSummary?: boolean;
+    sourceConversationId: number;
+  }): Promise<import('../db/schema').Conversation>;
   generateTitle(conversationId: number): Promise<import('../db/schema').Conversation | undefined>;
   getConversation(id: number): Promise<import('../db/schema').Conversation | undefined>;
   getTokenEstimate(conversationId: number): Promise<number>;
@@ -488,6 +505,32 @@ export interface ElectronAPI {
   diff: DiffAPI;
   diffComment: DiffCommentAPI;
   discovery: FileDiscoveryAPI;
+  editor: {
+    detect(): Promise<Array<import('./editor').DetectedEditor>>;
+    getPreferred(): Promise<import('./editor').EditorPreference | undefined>;
+    getRegistry(): Promise<Array<import('./editor').EditorDefinition>>;
+    open(input: import('./editor').OpenInEditorInput): Promise<import('./editor').OpenInEditorResult>;
+    setPreferred(pref: import('./editor').EditorPreference): Promise<void>;
+  };
+  fileExplorer: {
+    listDirectory(
+      repoPath: string,
+      dirPath?: string
+    ): Promise<{
+      entries: Array<{ name: string; relativePath: string; type: 'directory' | 'file' }>;
+      error?: string;
+      success: boolean;
+    }>;
+    searchFiles(
+      repoPath: string,
+      query: string,
+      limit?: number
+    ): Promise<{
+      error?: string;
+      results: Array<{ relativePath: string; score: number }>;
+      success: boolean;
+    }>;
+  };
   fileViewState: FileViewStateAPI;
   fs: {
     exists(path: string): Promise<boolean>;
@@ -511,6 +554,14 @@ export interface ElectronAPI {
     writeFile(path: string, content: string): Promise<{ error?: string; success: boolean }>;
   };
   github: import('../electron/preload').GitHubAPI;
+  mcpServer: {
+    delete(name: string): Promise<boolean>;
+    detectProjectServers(dirPath: string): Promise<Array<import('../types/mcp-server').McpServerConfig>>;
+    list(): Promise<Array<import('../types/mcp-server').McpServerConfig>>;
+    save(config: import('../types/mcp-server').McpServerConfig): Promise<void>;
+    toggle(name: string, enabled: boolean): Promise<void>;
+  };
+  planning: PlanningAPI;
   project: {
     addRepo(
       projectId: number,
@@ -529,6 +580,20 @@ export interface ElectronAPI {
       id: number,
       data: Partial<import('../db/schema').NewProject>
     ): Promise<import('../db/schema').Project | undefined>;
+  };
+  provider: {
+    deleteKey(provider: import('../lib/constants/providers').Provider): Promise<boolean>;
+    getKey(provider: import('../lib/constants/providers').Provider): Promise<string | undefined>;
+    list(): Promise<
+      Array<{
+        configured: boolean;
+        maskedKey?: string;
+        provider: import('../lib/constants/providers').Provider;
+      }>
+    >;
+    listConfigured(): Promise<Array<import('../lib/constants/providers').Provider>>;
+    setKey(provider: import('../lib/constants/providers').Provider, apiKey: string): Promise<boolean>;
+    validate(provider: import('../lib/constants/providers').Provider): Promise<{ error?: string; valid: boolean }>;
   };
   refinement: RefinementAPI;
   repository: {
@@ -788,6 +853,41 @@ export interface FileViewStateAPI {
   markViewed(workflowId: number, filePath: string): Promise<import('../db/schema').FileViewStateRow>;
 }
 
+// =============================================================================
+// Planning Types
+// =============================================================================
+
+/**
+ * Planning API interface.
+ */
+export interface PlanningAPI {
+  approvePlan(workflowId: number, stepId: number): Promise<{ success: boolean }>;
+  cancel(workflowId: number): Promise<import('../electron/preload').PlanningOutcome>;
+  editPlan(input: import('../electron/preload').PlanningEditInput): Promise<{ success: boolean }>;
+  getState(workflowId: number): Promise<import('../electron/preload').PlanningServiceState | null>;
+  onStreamMessage(callback: (message: import('../electron/preload').PlanningStreamMessage) => void): () => void;
+  retry(
+    input: import('../electron/preload').PlanningStartInput
+  ): Promise<import('../electron/preload').PlanningOutcomeWithPause>;
+  start(
+    input: import('../electron/preload').PlanningStartInput
+  ): Promise<import('../electron/preload').PlanningOutcomeWithPause>;
+  submitFeedback(
+    input: import('../electron/preload').PlanningFeedbackInput
+  ): Promise<import('../electron/preload').PlanningOutcomeWithPause>;
+}
+/**
+ * Planning input/output types re-exported from preload.
+ */
+export type PlanningEditInput = import('../electron/preload').PlanningEditInput;
+export type PlanningFeedbackInput = import('../electron/preload').PlanningFeedbackInput;
+export type PlanningOutcomeWithPause = import('../electron/preload').PlanningOutcomeWithPause;
+export type PlanningServicePhase = import('../electron/preload').PlanningServicePhase;
+export type PlanningServiceState = import('../electron/preload').PlanningServiceState;
+export type PlanningStartInput = import('../electron/preload').PlanningStartInput;
+
+export type PlanningStreamMessage = import('../electron/preload').PlanningStreamMessage;
+
 /**
  * Agent configuration for refinement.
  */
@@ -956,7 +1056,12 @@ export interface WorkflowStatistics {
 // Clarification Stream Message Types
 // =============================================================================
 
-type ClarificationStreamExtendedThinkingHeartbeat = ClarificationStreamMessageBase & { elapsedMs: number; estimatedProgress: null | number; maxThinkingTokens: number; type: 'extended_thinking_heartbeat' };
+type ClarificationStreamExtendedThinkingHeartbeat = ClarificationStreamMessageBase & {
+  elapsedMs: number;
+  estimatedProgress: null | number;
+  maxThinkingTokens: number;
+  type: 'extended_thinking_heartbeat';
+};
 
 interface ClarificationStreamMessageBase {
   sessionId: string;
@@ -972,27 +1077,62 @@ interface ClarificationStreamMessageBase {
     | 'tool_update';
   workflowId: number;
 }
-type ClarificationStreamPhaseChange = ClarificationStreamMessageBase & { phase: ClarificationServicePhase; type: 'phase_change' };
+type ClarificationStreamPhaseChange = ClarificationStreamMessageBase & {
+  phase: ClarificationServicePhase;
+  type: 'phase_change';
+};
 type ClarificationStreamTextDelta = ClarificationStreamMessageBase & { delta: string; type: 'text_delta' };
-type ClarificationStreamThinkingDelta = ClarificationStreamMessageBase & { blockIndex: number; delta: string; type: 'thinking_delta' };
+type ClarificationStreamThinkingDelta = ClarificationStreamMessageBase & {
+  blockIndex: number;
+  delta: string;
+  type: 'thinking_delta';
+};
 type ClarificationStreamThinkingStart = ClarificationStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
-type ClarificationStreamToolStart = ClarificationStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_start' };
+type ClarificationStreamToolStart = ClarificationStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_start';
+};
 type ClarificationStreamToolStop = ClarificationStreamMessageBase & { toolUseId: string; type: 'tool_stop' };
-type ClarificationStreamToolUpdate = ClarificationStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_update' };
+type ClarificationStreamToolUpdate = ClarificationStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
+};
 
 // =============================================================================
 // File Discovery Stream Message Types
 // =============================================================================
 
 /** Step-specific: discovery completed. */
-interface FileDiscoveryStreamComplete extends FileDiscoveryStreamMessageBase { outcome: FileDiscoveryOutcome; type: 'complete' }
+interface FileDiscoveryStreamComplete extends FileDiscoveryStreamMessageBase {
+  outcome: FileDiscoveryOutcome;
+  type: 'complete';
+}
 
 /** Step-specific: error occurred. */
-interface FileDiscoveryStreamError extends FileDiscoveryStreamMessageBase { error: string; stack?: string; type: 'error' }
-type FileDiscoveryStreamExtendedThinkingHeartbeat = FileDiscoveryStreamMessageBase & { elapsedMs: number; estimatedProgress: null | number; maxThinkingTokens: number; type: 'extended_thinking_heartbeat' };
+interface FileDiscoveryStreamError extends FileDiscoveryStreamMessageBase {
+  error: string;
+  stack?: string;
+  type: 'error';
+}
+type FileDiscoveryStreamExtendedThinkingHeartbeat = FileDiscoveryStreamMessageBase & {
+  elapsedMs: number;
+  estimatedProgress: null | number;
+  maxThinkingTokens: number;
+  type: 'extended_thinking_heartbeat';
+};
 /** Step-specific: file discovered during execution. */
 interface FileDiscoveryStreamFileDiscovered extends FileDiscoveryStreamMessageBase {
-  file: { action: 'create' | 'delete' | 'modify' | 'reference'; filePath: string; priority: 'high' | 'low' | 'medium'; relevanceExplanation: string; role: string };
+  file: {
+    action: 'create' | 'delete' | 'modify' | 'reference';
+    filePath: string;
+    priority: 'high' | 'low' | 'medium';
+    relevanceExplanation: string;
+    role: string;
+  };
   type: 'file_discovered';
 }
 interface FileDiscoveryStreamMessageBase {
@@ -1012,20 +1152,46 @@ interface FileDiscoveryStreamMessageBase {
     | 'tool_update';
 }
 
-type FileDiscoveryStreamPhaseChange = FileDiscoveryStreamMessageBase & { phase: FileDiscoveryServicePhase; type: 'phase_change' };
+type FileDiscoveryStreamPhaseChange = FileDiscoveryStreamMessageBase & {
+  phase: FileDiscoveryServicePhase;
+  type: 'phase_change';
+};
 type FileDiscoveryStreamTextDelta = FileDiscoveryStreamMessageBase & { delta: string; type: 'text_delta' };
-type FileDiscoveryStreamThinkingDelta = FileDiscoveryStreamMessageBase & { blockIndex: number; delta: string; type: 'thinking_delta' };
+type FileDiscoveryStreamThinkingDelta = FileDiscoveryStreamMessageBase & {
+  blockIndex: number;
+  delta: string;
+  type: 'thinking_delta';
+};
 type FileDiscoveryStreamThinkingStart = FileDiscoveryStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
 /** Step-specific: tool finished executing. */
-interface FileDiscoveryStreamToolFinish extends FileDiscoveryStreamMessageBase { toolOutput?: unknown; toolUseId: string; type: 'tool_finish' }
-type FileDiscoveryStreamToolStart = FileDiscoveryStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_start' };
-type FileDiscoveryStreamToolUpdate = FileDiscoveryStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_update' };
+interface FileDiscoveryStreamToolFinish extends FileDiscoveryStreamMessageBase {
+  toolOutput?: unknown;
+  toolUseId: string;
+  type: 'tool_finish';
+}
+type FileDiscoveryStreamToolStart = FileDiscoveryStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_start';
+};
+type FileDiscoveryStreamToolUpdate = FileDiscoveryStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
+};
 
 // =============================================================================
 // Refinement Streaming Types
 // =============================================================================
 
-type RefinementStreamExtendedThinkingHeartbeat = RefinementStreamMessageBase & { elapsedMs: number; estimatedProgress: null | number; maxThinkingTokens: number; type: 'extended_thinking_heartbeat' };
+type RefinementStreamExtendedThinkingHeartbeat = RefinementStreamMessageBase & {
+  elapsedMs: number;
+  estimatedProgress: null | number;
+  maxThinkingTokens: number;
+  type: 'extended_thinking_heartbeat';
+};
 
 interface RefinementStreamMessageBase {
   sessionId: string;
@@ -1040,13 +1206,30 @@ interface RefinementStreamMessageBase {
     | 'tool_stop'
     | 'tool_update';
 }
-type RefinementStreamPhaseChange = RefinementStreamMessageBase & { phase: RefinementServicePhase; type: 'phase_change' };
+type RefinementStreamPhaseChange = RefinementStreamMessageBase & {
+  phase: RefinementServicePhase;
+  type: 'phase_change';
+};
 type RefinementStreamTextDelta = RefinementStreamMessageBase & { delta: string; type: 'text_delta' };
-type RefinementStreamThinkingDelta = RefinementStreamMessageBase & { blockIndex: number; delta: string; type: 'thinking_delta' };
+type RefinementStreamThinkingDelta = RefinementStreamMessageBase & {
+  blockIndex: number;
+  delta: string;
+  type: 'thinking_delta';
+};
 type RefinementStreamThinkingStart = RefinementStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
-type RefinementStreamToolStart = RefinementStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_start' };
+type RefinementStreamToolStart = RefinementStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_start';
+};
 type RefinementStreamToolStop = RefinementStreamMessageBase & { toolUseId: string; type: 'tool_stop' };
-type RefinementStreamToolUpdate = RefinementStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_update' };
+type RefinementStreamToolUpdate = RefinementStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
+};
 
 declare global {
   interface Window {

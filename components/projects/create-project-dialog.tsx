@@ -25,14 +25,20 @@ import { useAppForm } from '@/lib/forms/form-hook';
 import { createProjectSchema } from '@/lib/validations/project';
 
 interface CreateProjectDialogProps {
+  /** Controlled open state (optional - if provided, component is controlled) */
+  isOpen?: boolean;
+  /** Callback when open state changes (optional - for controlled mode) */
+  onOpenChange?: (open: boolean) => void;
   /** Callback when project is successfully created */
   onSuccess?: () => void;
-  /** The trigger element that opens the dialog */
-  trigger: ReactNode;
+  /** The trigger element that opens the dialog (optional when using controlled mode) */
+  trigger?: ReactNode;
 }
 
-export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const CreateProjectDialog = ({ isOpen: controlledIsOpen, onOpenChange, onSuccess, trigger }: CreateProjectDialogProps) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = controlledIsOpen ?? internalIsOpen;
+  const setIsOpen = onOpenChange ?? setInternalIsOpen;
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
   const createProjectMutation = useCreateProject();
@@ -91,7 +97,7 @@ export const CreateProjectDialog = ({ onSuccess, trigger }: CreateProjectDialogP
   return (
     <DialogRoot onOpenChange={handleOpenChangeInternal} open={isOpen}>
       {/* Trigger */}
-      <DialogTrigger>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
 
       {/* Portal */}
       <DialogPortal>

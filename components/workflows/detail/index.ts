@@ -1,4 +1,5 @@
 export { ClarificationStreamProvider } from './clarification-stream-provider';
+export { PlanningStreamProvider } from './planning-stream-provider';
 export { ClarificationStepContent } from './steps/clarification-step-content';
 export { FileDiscoveryStepContent } from './steps/file-discovery-step-content';
 export { ImplementationPlanningStepContent } from './steps/implementation-planning-step-content';

@@ -18,6 +18,7 @@ interface DiffViewerProps {
   committedFiles?: Array<FileDiff>;
   files: Array<FileDiff>;
   isSectioned?: boolean;
+  repoPath?: string;
   uncommittedFiles?: Array<FileDiff>;
 }
 
@@ -26,6 +27,7 @@ export const DiffViewer = ({
   committedFiles = [],
   files,
   isSectioned = false,
+  repoPath,
   uncommittedFiles = [],
 }: DiffViewerProps) => {
   const viewMode = useDiffViewStore((s) => s.viewMode);
@@ -93,6 +95,7 @@ export const DiffViewer = ({
           onSelectFile={handleSelectFile}
           onSortChange={setSortMode}
           onStatusFilterChange={setStatusFilter}
+          repoPath={repoPath}
           searchQuery={searchQuery}
           selectedFilePath={selectedFilePath}
           sortMode={sortMode}
@@ -105,6 +108,7 @@ export const DiffViewer = ({
               collapsedFiles={collapsedFiles}
               committedFiles={committedFiles}
               onToggleFileCollapse={toggleFileCollapsed}
+              repoPath={repoPath}
               uncommittedFiles={uncommittedFiles}
               viewMode={viewMode}
             />
@@ -116,6 +120,7 @@ export const DiffViewer = ({
                     file={file}
                     isCollapsed={collapsedFiles.has(file.path)}
                     onToggleCollapse={() => toggleFileCollapsed(file.path)}
+                    repoPath={repoPath}
                     viewMode={viewMode}
                   />
                 </div>

@@ -7,8 +7,9 @@ import { projects } from './projects.schema';
 
 export const agentTypes = ['planning', 'specialist', 'review'] as const;
 export const agentColors = ['green', 'blue', 'yellow', 'cyan', 'red'] as const;
-export const agentModels = ['sonnet', 'opus', 'haiku', 'inherit'] as const;
+export const agentModels = ['sonnet', 'opus', 'haiku', 'inherit', 'gpt-4o', 'gpt-4o-mini', 'o3', 'o4-mini'] as const;
 export const agentPermissionModes = ['default', 'acceptEdits', 'dontAsk', 'bypassPermissions', 'plan'] as const;
+export const agentProviders = ['claude', 'openai', 'bedrock', 'vertex', 'custom'] as const;
 
 export const agents = sqliteTable(
   'agents',
@@ -33,6 +34,7 @@ export const agents = sqliteTable(
     projectId: integer('project_id').references(() => projects.id, {
       onDelete: 'cascade',
     }),
+    provider: text('provider').default('claude'),
     systemPrompt: text('system_prompt').notNull(),
     type: text('type').notNull(),
     updatedAt: text('updated_at')

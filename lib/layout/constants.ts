@@ -45,6 +45,14 @@ export const DEFAULT_ACTIVE_WORKFLOWS_TYPE_FILTER = 'all' as const;
 export const DEFAULT_SHELL_SIDEBAR_COLLAPSED = false;
 export const DEFAULT_SHELL_NAV_ITEMS_EXPANDED: Array<string> = [];
 
+// File explorer panel storage keys
+export const FILE_EXPLORER_PANEL_OPEN_STORAGE_KEY = 'app:file-explorer-panel-open';
+export const FILE_EXPLORER_PANEL_WIDTH_STORAGE_KEY = 'app:file-explorer-panel-width';
+
+// File explorer panel defaults
+export const DEFAULT_FILE_EXPLORER_PANEL_OPEN = false;
+export const DEFAULT_FILE_EXPLORER_PANEL_WIDTH = 288;
+
 // Terminal panel storage keys
 export const TERMINAL_PANEL_HEIGHT_STORAGE_KEY = 'app:terminal-panel-height';
 export const TERMINAL_PANEL_OPEN_STORAGE_KEY = 'app:terminal-panel-open';

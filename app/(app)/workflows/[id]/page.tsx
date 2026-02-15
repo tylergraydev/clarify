@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
-import { ClarificationStreamProvider, WorkflowDetailSkeleton } from '@/components/workflows/detail';
+import { ClarificationStreamProvider, PlanningStreamProvider, WorkflowDetailSkeleton } from '@/components/workflows/detail';
 import { useProject, useWorkflow } from '@/hooks/queries';
 
 import { Route } from './route-type';
@@ -63,6 +63,7 @@ const WorkflowDetailContent = () => {
   }
 
   const isClarificationEnabled = workflow.status === 'running' && !workflow.skipClarification;
+  const isPlanningEnabled = workflow.status === 'running';
 
   return (
     <QueryErrorBoundary>
@@ -100,9 +101,11 @@ const WorkflowDetailContent = () => {
 
       {/* Workflow Content */}
       <ClarificationStreamProvider isEnabled={isClarificationEnabled} workflowId={workflowId}>
-        <main aria-label={'Workflow detail'} className={'flex flex-1 items-center justify-center'}>
-          <p className={'text-muted-foreground'}>Workflow detail view coming soon</p>
-        </main>
+        <PlanningStreamProvider isEnabled={isPlanningEnabled} workflowId={workflowId}>
+          <main aria-label={'Workflow detail'} className={'flex flex-1 items-center justify-center'}>
+            <p className={'text-muted-foreground'}>Workflow detail view coming soon</p>
+          </main>
+        </PlanningStreamProvider>
       </ClarificationStreamProvider>
     </QueryErrorBoundary>
   );

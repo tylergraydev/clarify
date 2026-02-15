@@ -48,7 +48,10 @@ import type {
   AgentStreamSession,
 } from '../../types/agent-stream';
 
+import { getProviderIdForModel } from '../../lib/constants/providers';
 import { debugLoggerService } from './debug-logger.service';
+import { buildSdkMcpServers } from './mcp-server.service';
+import { providerRegistry } from './providers/provider-registry';
 
 /**
  * Delay in milliseconds before cleaning up a completed session.
@@ -221,8 +224,13 @@ class AgentStreamService {
     // Start the port
     port1.start();
 
-    // Start the real SDK stream
-    void this.startSDKStream(sessionId, options);
+    // Start the appropriate stream based on provider
+    const provider = options.provider ?? 'claude';
+    if (provider === 'claude') {
+      void this.startSDKStream(sessionId, options);
+    } else {
+      void this.startProviderStream(sessionId, options);
+    }
 
     // Return port2 to be transferred to renderer
     return { port: port2, sessionId };
@@ -765,6 +773,109 @@ class AgentStreamService {
   }
 
   /**
+   * Start a provider stream for non-Claude providers.
+   *
+   * Uses the provider abstraction layer to stream chat responses.
+   * Events from the provider's streamChat() generator are forwarded
+   * through the MessagePort to the renderer process.
+   *
+   * @param sessionId - The session ID for this stream
+   * @param options - Stream options including prompt, model, provider, etc.
+   */
+  private async startProviderStream(sessionId: string, options: AgentStreamOptions): Promise<void> {
+    const activeSession = this.activeSessions.get(sessionId);
+    if (!activeSession) return;
+
+    const { signal } = activeSession.abortController;
+
+    try {
+      // Resolve provider from model or explicit provider option
+      const providerId = getProviderIdForModel(options.model ?? '') ?? (options.provider as 'openai' | undefined);
+      if (!providerId) {
+        throw new Error(`Cannot determine provider for model: ${options.model}`);
+      }
+
+      const provider = providerRegistry.getOrThrow(providerId);
+
+      // Update session status
+      activeSession.session.status = 'running';
+      this.sendMessage(sessionId, {
+        id: randomUUID(),
+        sessionId,
+        status: 'connected',
+        subtype: 'init',
+        timestamp: Date.now(),
+        type: 'system',
+      } as AgentStreamMessage);
+
+      // Iterate the provider's stream generator
+      for await (const event of provider.streamChat({
+        abortController: activeSession.abortController,
+        cwd: options.cwd,
+        model: options.model ?? 'gpt-4o',
+        prompt: options.prompt,
+        reasoningLevel: options.reasoningLevel,
+        systemPrompt: options.systemPrompt,
+      })) {
+        if (signal.aborted) return;
+
+        // Forward events to renderer via MessagePort
+        this.sendMessage(sessionId, event);
+
+        // Track accumulated text
+        if (event.type === 'text_delta' && 'delta' in event) {
+          activeSession.session.text += (event as { delta: string }).delta;
+        }
+
+        // Handle result messages
+        if (event.type === 'result') {
+          const resultEvent = event as { result?: string; subtype: string };
+          if (resultEvent.subtype === 'success') {
+            activeSession.session.status = 'completed';
+            activeSession.session.result = resultEvent.result;
+          } else {
+            activeSession.session.status = 'error';
+            activeSession.session.error = (event as { error?: string }).error;
+          }
+        }
+      }
+
+      // Ensure session is marked complete if generator finishes without a result message
+      if (activeSession.session.status === 'running') {
+        activeSession.session.status = 'completed';
+        this.sendMessage(sessionId, {
+          id: randomUUID(),
+          result: activeSession.session.text,
+          sessionId,
+          subtype: 'success',
+          timestamp: Date.now(),
+          type: 'result',
+        } as AgentStreamMessage);
+      }
+    } catch (error) {
+      if (signal.aborted) return;
+
+      const errorMessage = error instanceof Error ? error.message : 'Provider stream failed';
+      activeSession.session.status = 'error';
+      activeSession.session.error = errorMessage;
+
+      this.sendMessage(sessionId, {
+        error: errorMessage,
+        id: randomUUID(),
+        sessionId,
+        subtype: 'error',
+        timestamp: Date.now(),
+        type: 'result',
+      } as AgentStreamMessage);
+    } finally {
+      // Schedule session cleanup
+      setTimeout(() => {
+        this.activeSessions.delete(sessionId);
+      }, CLEANUP_DELAY_MS);
+    }
+  }
+
+  /**
    * Start the real Claude Agent SDK stream.
    *
    * This method dynamically imports the SDK and initiates a streaming
@@ -855,6 +966,17 @@ class AgentStreamService {
       // Converts AgentStreamHooks to SDK format with proper HookCallbackMatcher structure
       if (options.hooks) {
         sdkOptions.hooks = this.mapHooksToSDKFormat(options.hooks);
+      }
+
+      // Map model selection (Claude SDK accepts shorthand names: 'sonnet', 'opus', 'haiku')
+      if (options.model) {
+        sdkOptions.model = options.model;
+      }
+
+      // Configure MCP servers (global + project .mcp.json)
+      const mcpServers = buildSdkMcpServers(options.cwd);
+      if (Object.keys(mcpServers).length > 0) {
+        sdkOptions.mcpServers = mcpServers;
       }
 
       // Set up canUseTool callback for permission handling

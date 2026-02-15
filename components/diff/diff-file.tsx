@@ -11,24 +11,15 @@ interface DiffFileProps {
   file: FileDiff;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  repoPath?: string;
   viewMode: DiffViewMode;
 }
 
-export const DiffFile = ({ file, isCollapsed, onToggleCollapse, viewMode }: DiffFileProps) => {
+export const DiffFile = ({ file, isCollapsed, onToggleCollapse, repoPath, viewMode }: DiffFileProps) => {
   return (
     <div className={'group rounded-md border border-border'}>
-      <FileHeaderBar
-        file={file}
-        isCollapsed={isCollapsed}
-        onToggleCollapse={onToggleCollapse}
-      />
-      {!isCollapsed && (
-        viewMode === 'split' ? (
-          <SplitDiffView file={file} />
-        ) : (
-          <UnifiedDiffView file={file} />
-        )
-      )}
+      <FileHeaderBar file={file} isCollapsed={isCollapsed} onToggleCollapse={onToggleCollapse} repoPath={repoPath} />
+      {!isCollapsed && (viewMode === 'split' ? <SplitDiffView file={file} /> : <UnifiedDiffView file={file} />)}
     </div>
   );
 };

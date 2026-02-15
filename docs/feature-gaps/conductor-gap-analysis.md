@@ -38,18 +38,18 @@
 
 ### 6. File Explorer & File Mentions
 **Conductor:** Workspace file tree explorer, Cmd+P file search with fuzzy matching, @-mention files in chat, drag-and-drop files/folders from Finder, file picker for attachments, image pasting, clickable file paths in agent responses.
-**Clarify:** Has file discovery (AI-powered) but no interactive file browser, no file mentions in chat, no file attachments.
-**Status:** Not started
+**Clarify:** Git-aware file explorer panel, Cmd+P file search with fuzzy matching, @-mention files in chat input, file chips for attached files, file contents prepended to agent prompts as context.
+**Status:** Complete
 
 ### 7. Plan Mode (Interactive Planning)
 **Conductor:** Interactive plan mode where Claude proposes a plan, asks questions, user approves/provides feedback before implementation begins. Hand off plans to other agents.
-**Clarify:** Has implementation planning as a workflow step, but it's a one-shot generation, not interactive with back-and-forth.
-**Status:** Not started
+**Clarify:** Interactive plan mode in the workflow pipeline. AI generates a structured implementation plan (summary, approach, complexity, risks, ordered steps with files/criteria/commands). User reviews the plan and can approve it, provide feedback to regenerate with context of all prior iterations, or re-run from scratch. Plan iterations are versioned and browsable. Feedback triggers regeneration with full conversation context.
+**Status:** Complete
 
 ### 8. Multi-Model Support
 **Conductor:** Claude (Opus, Sonnet, Haiku), GPT-5/Codex (with reasoning levels: low/medium/high/xhigh), model switching per chat, thinking level toggles (Cmd+Shift+.), Bedrock/Vertex/custom API providers.
-**Clarify:** Claude models only (Sonnet/Opus/Haiku). No OpenAI/Codex support, no custom providers.
-**Status:** Not started
+**Clarify:** Full multi-model support with provider abstraction layer. Per-chat model selector (Claude Sonnet/Opus/Haiku, OpenAI GPT-4o/GPT-4o Mini/o3/o4-mini), thinking level toggle (Cmd+Shift+. cycles off/low/medium/high), reasoning levels for OpenAI o3/o4 models, API key management in Settings with masked keys and connection testing, provider-aware workflow agent executor, and stub providers for AWS Bedrock, Google Vertex AI, and custom OpenAI-compatible endpoints.
+**Status:** Complete
 
 ---
 
@@ -57,18 +57,18 @@
 
 ### 9. Command Palette
 **Conductor:** Cmd+K command palette for quick actions - create workspace, search workspaces, open files, archive, switch repos, etc.
-**Clarify:** No command palette.
-**Status:** Not started
+**Clarify:** Cmd+K command palette with search/filter, keyboard navigation (arrow keys, Enter, Esc), grouped commands (Go to, Create, Toggle), navigation to all app pages, quick-create for projects/agents/templates, sidebar/terminal toggles, debug window launcher, and header trigger button with shortcut hint.
+**Status:** Complete
 
 ### 10. MCP (Model Context Protocol) Support
 **Conductor:** MCP server integration, .mcp.json recognition, MCP status display, MCP output handling.
-**Clarify:** No MCP support.
-**Status:** Not started
+**Clarify:** Full MCP server management in Settings with add/edit/delete/toggle for global servers (stdio, SSE, HTTP transports). Project-scoped `.mcp.json` auto-detection and merging. MCP servers automatically passed to Claude Agent SDK for both workflow execution and chat streaming. Configs stored via electron-store with full IPC layer and TanStack Query integration.
+**Status:** Complete
 
 ### 11. IDE / Editor Integration
 **Conductor:** "Open In" menu for Cursor, VS Code, Zed, IntelliJ, Sublime, XCode, Android Studio. Smooth file opening from diff viewer.
-**Clarify:** No IDE integration.
-**Status:** Not started
+**Clarify:** Full editor integration with auto-detection of 7 editors (VS Code, Cursor, Zed, IntelliJ, Sublime, Xcode, Android Studio) via CLI probing. Preferred editor selection in Settings with detection status badges, custom command support, and test button. "Open in Editor" buttons in diff file headers, file tree sidebar items, and chat file explorer nodes — all hover-revealed with single-click opening. Editor preferences stored via electron-store.
+**Status:** Complete
 
 ### 12. Keyboard Shortcut System
 **Conductor:** 50+ keyboard shortcuts, Cmd+/ cheatsheet, Zen mode (Ctrl+Z), shortcuts for every major action (review, fix errors, merge, create PR, etc.), custom send key config, Colemak/Dvorak support.
@@ -155,12 +155,12 @@
 | 3 | **P0** | ~~Integrated Diff Viewer & Code Review~~ | Complete |
 | 4 | **P1** | ~~GitHub/PR Integration~~ | Complete |
 | 5 | **P1** | ~~Embedded Terminal~~ | Complete |
-| 6 | **P1** | File Explorer & Mentions | Essential context sharing |
-| 7 | **P1** | Plan Mode (Interactive) | Quality of output |
-| 8 | **P1** | Multi-Model Support | Flexibility |
-| 9 | **P2** | Command Palette | UX polish |
-| 10 | **P2** | MCP Support | Extensibility |
-| 11 | **P2** | IDE Integration | Developer convenience |
+| 6 | **P1** | ~~File Explorer & Mentions~~ | Complete |
+| 7 | **P1** | ~~Plan Mode (Interactive)~~ | Complete |
+| 8 | **P1** | ~~Multi-Model Support~~ | Complete |
+| 9 | **P2** | ~~Command Palette~~ | Complete |
+| 10 | **P2** | ~~MCP Support~~ | Complete |
+| 11 | **P2** | ~~IDE Integration~~ | Complete |
 | 12 | **P2** | Keyboard Shortcuts | Power user productivity |
 | 13 | **P2** | Cost/Token Per-Message | Transparency |
 | 14 | **P2** | Slash Commands | Power user feature |

@@ -2,10 +2,11 @@
 
 import type { ComponentPropsWithRef, CSSProperties } from 'react';
 
-import { Menu } from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
 
 import { IconButton } from '@/components/ui/icon-button';
 import { useIsMobile } from '@/hooks/use-media-query';
+import { useCommandPaletteStore } from '@/lib/stores/command-palette-store';
 import { useShellStore } from '@/lib/stores/shell-store';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ type AppHeaderProps = ComponentPropsWithRef<'header'>;
 export const AppHeader = ({ className, ref, ...props }: AppHeaderProps) => {
   const isMobile = useIsMobile();
   const { isSidebarCollapsed, setMobileDrawerOpen, toggleSidebar } = useShellStore();
+  const { open: openCommandPalette } = useCommandPaletteStore();
 
   const handleToggleSidebar = () => {
     if (isMobile) {
@@ -59,6 +61,18 @@ export const AppHeader = ({ className, ref, ...props }: AppHeaderProps) => {
         <div className={'flex items-center gap-2'} style={noDragStyle}>
           <span className={'text-sm font-semibold text-foreground'}>{'Clarify Orchestrator'}</span>
         </div>
+
+        {/* Command Palette Trigger */}
+        <button
+          className={'flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
+          onClick={openCommandPalette}
+          style={noDragStyle}
+          type={'button'}
+        >
+          <Search className={'size-3'} />
+          <span>{'Search...'}</span>
+          <kbd className={'ml-2 rounded-sm border border-border px-1 py-0.5 text-[10px]'}>{'⌘K'}</kbd>
+        </button>
 
         {/* Spacer for centering */}
         <div className={'flex-1'} style={dragRegionStyle} />
