@@ -8,6 +8,7 @@ import type { ConversationMessage } from '@/types/electron';
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ui/ai/conversation';
 import { Button } from '@/components/ui/button';
 import { useChatKeyboardShortcuts } from '@/hooks/chat/use-chat-keyboard-shortcuts';
+import { useElectronFs } from '@/hooks/electron/use-electron-fs';
 import {
   useActiveMessages,
   useCompactConversation,
@@ -23,6 +24,7 @@ import {
 import { useRepositoriesByProject } from '@/hooks/queries/use-repositories';
 import { useAgentStream } from '@/hooks/use-agent-stream';
 import { useChatStore } from '@/lib/stores/chat-store';
+import { useFileExplorerStore } from '@/lib/stores/file-explorer-store';
 import { extractBlocksFromStream, parseMessageBlocks } from '@/lib/utils/chat';
 
 import { ChatCompactionBanner } from './chat-compaction-banner';
@@ -30,6 +32,7 @@ import { ChatCompactionDialog } from './chat-compaction-dialog';
 import { ChatConversationStarters } from './chat-conversation-starters';
 import { ChatErrorState } from './chat-error-state';
 import { ChatExportToolbar } from './chat-export-toolbar';
+import { ChatFileExplorer } from './chat-file-explorer';
 import { ChatInput } from './chat-input';
 import { ChatMessage } from './chat-message';
 import { ChatPanelHeader } from './chat-panel-header';
@@ -38,12 +41,14 @@ import { ChatSearchOverlay } from './chat-search-overlay';
 import { ChatSidebar } from './chat-sidebar';
 import { ChatStreamingMessage } from './chat-streaming-message';
 import { ChatTableOfContents } from './chat-table-of-contents';
+import { FileSearchDialog } from './file-search-dialog';
 
 interface ChatTabContentProps {
   projectId: number;
 }
 
 const COMPACTION_TOKEN_THRESHOLD = 80_000;
+const EMPTY_MESSAGES: Array<ConversationMessage> = [];
 
 /**
  * Format conversation history for inclusion in the agent prompt.
@@ -67,15 +72,20 @@ function generateTitle(message: string): string {
 export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
   const {
     activeConversationId,
+    clearMentionedFiles,
     clearSelectedMessages,
     compactionNotificationDismissed,
     currentSearchMatchIndex,
     isSearchOpen,
     isSelectMode,
     isTocOpen,
+    mentionedFiles,
     messageSearchQuery,
+    reasoningLevel,
     searchMatchCount,
     selectedMessageIds,
+    selectedModel,
+    selectedProvider,
     setActiveConversationId,
     setCompactionNotificationDismissed,
     setCurrentSearchMatchIndex,
@@ -86,6 +96,9 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
     setSearchMatchCount,
     toggleMessageSelection,
   } = useChatStore();
+
+  const { isOpen: isFileExplorerOpen, togglePanel: toggleFileExplorer } = useFileExplorerStore();
+  const { readFile } = useElectronFs();
 
   const isFirstMessage = useRef(false);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -101,8 +114,11 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
   // Compaction dialog state
   const [isCompactionDialogOpen, setIsCompactionDialogOpen] = useState(false);
 
+  // File search dialog state
+  const [isFileSearchOpen, setIsFileSearchOpen] = useState(false);
+
   // Data queries - use activeMessages (non-deleted) as primary source
-  const { data: messages = [] } = useActiveMessages(activeConversationId);
+  const { data: messages = EMPTY_MESSAGES } = useActiveMessages(activeConversationId);
   const { data: repositories = [] } = useRepositoriesByProject(projectId);
   const { data: tokenEstimate = 0 } = useTokenEstimate(activeConversationId);
 
@@ -125,17 +141,12 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
   const defaultCwd = repositories[0]?.path;
 
   // Parse messages into rich blocks
-  const parsedMessages = useMemo(
-    () => messages.map(parseMessageBlocks),
-    [messages]
-  );
+  const parsedMessages = useMemo(() => messages.map(parseMessageBlocks), [messages]);
 
   // Derived state
   const isEmptyConversation = messages.length === 0 && !isStreaming;
   const isShowCompactionBanner =
-    tokenEstimate > COMPACTION_TOKEN_THRESHOLD &&
-    !compactionNotificationDismissed &&
-    !isCompactionDialogOpen;
+    tokenEstimate > COMPACTION_TOKEN_THRESHOLD && !compactionNotificationDismissed && !isCompactionDialogOpen;
 
   // Find current conversation title
   const currentConversationTitle = useMemo(() => {
@@ -218,6 +229,7 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
     chatInputRef,
     enabled: activeConversationId !== null,
     onCancelStream: handleCancelStream,
+    onFileSearch: defaultCwd ? () => setIsFileSearchOpen(true) : undefined,
     onNewConversation: handleNewConversation,
   });
 
@@ -232,12 +244,58 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
         isFirstMessage.current = true;
       }
 
-      // Save user message to DB
+      // Collect attached files from @-mentions and file explorer selections
+      const explorerFiles = useFileExplorerStore.getState().selectedFiles;
+      const seen = new Set<string>();
+      const attachedFiles: Array<{ relativePath: string }> = [];
+      for (const f of mentionedFiles) {
+        if (!seen.has(f.relativePath)) {
+          seen.add(f.relativePath);
+          attachedFiles.push(f);
+        }
+      }
+      for (const f of explorerFiles) {
+        if (!seen.has(f.relativePath)) {
+          seen.add(f.relativePath);
+          attachedFiles.push(f);
+        }
+      }
+
+      // Read file contents and build context block
+      let fileContextBlock = '';
+      if (attachedFiles.length > 0 && defaultCwd) {
+        const fileContents = await Promise.all(
+          attachedFiles.map(async (f) => {
+            const fullPath = `${defaultCwd}/${f.relativePath}`;
+            const result = await readFile(fullPath);
+            return { content: result.content ?? '', path: f.relativePath };
+          })
+        );
+        const fileBlocks = fileContents
+          .filter((f) => f.content.length > 0)
+          .map((f) => `<file path="${f.path}">\n${f.content}\n</file>`)
+          .join('\n');
+        if (fileBlocks) {
+          fileContextBlock = `<attached_files>\n${fileBlocks}\n</attached_files>\n\n`;
+        }
+      }
+
+      // Save user message to DB with file metadata
+      const messageMetadata =
+        attachedFiles.length > 0 ? JSON.stringify({ mentionedFiles: attachedFiles.map((f) => f.relativePath) }) : null;
+
       await createMessage.mutateAsync({
         content: messageText,
         conversationId,
+        metadata: messageMetadata,
         role: 'user',
       });
+
+      // Clear mentions and selections after saving
+      if (attachedFiles.length > 0) {
+        clearMentionedFiles();
+        useFileExplorerStore.getState().clearFileSelections();
+      }
 
       // Two-stage title: immediate substring, then deferred AI generation
       if (isFirstMessage.current) {
@@ -247,16 +305,35 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
         });
       }
 
-      // Build prompt with conversation history
+      // Build prompt with file context + conversation history
       const history = formatConversationHistory(messages);
-      const prompt = `${history}${messageText}`;
+      const prompt = `${fileContextBlock}${history}${messageText}`;
 
       await stream.start({
         cwd: defaultCwd,
+        model: selectedModel,
         prompt,
+        provider: selectedProvider,
+        ...(reasoningLevel ? { reasoningLevel } : {}),
       });
     },
-    [activeConversationId, createConversation, createMessage, updateConversation, messages, stream, defaultCwd, projectId, setActiveConversationId]
+    [
+      activeConversationId,
+      createConversation,
+      createMessage,
+      updateConversation,
+      messages,
+      stream,
+      defaultCwd,
+      projectId,
+      setActiveConversationId,
+      mentionedFiles,
+      readFile,
+      clearMentionedFiles,
+      selectedModel,
+      selectedProvider,
+      reasoningLevel,
+    ]
   );
 
   // Message action handlers
@@ -314,7 +391,14 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
     });
     clearSelectedMessages();
     setActiveConversationId(result.id);
-  }, [activeConversationId, selectedMessageIds, exportToNewChat, projectId, clearSelectedMessages, setActiveConversationId]);
+  }, [
+    activeConversationId,
+    selectedMessageIds,
+    exportToNewChat,
+    projectId,
+    clearSelectedMessages,
+    setActiveConversationId,
+  ]);
 
   const handleRetry = useCallback(() => {
     // Retry the last user message
@@ -322,9 +406,15 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
     if (lastUserMsg?.content) {
       const history = formatConversationHistory(messages.slice(0, -1));
       const prompt = `${history}${lastUserMsg.content}`;
-      void stream.start({ cwd: defaultCwd, prompt });
+      void stream.start({
+        cwd: defaultCwd,
+        model: selectedModel,
+        prompt,
+        provider: selectedProvider,
+        ...(reasoningLevel ? { reasoningLevel } : {}),
+      });
     }
-  }, [messages, stream, defaultCwd]);
+  }, [messages, stream, defaultCwd, selectedModel, selectedProvider, reasoningLevel]);
 
   const handleSearchNext = useCallback(() => {
     if (searchMatchCount === 0) return;
@@ -366,7 +456,9 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
           <Fragment>
             {/* Panel header */}
             <ChatPanelHeader
+              isFileExplorerOpen={isFileExplorerOpen}
               isSelectMode={isSelectMode}
+              onFileExplorerToggle={defaultCwd ? toggleFileExplorer : undefined}
               onSearchToggle={() => setIsSearchOpen(!isSearchOpen)}
               onSelectMode={() => setIsSelectMode(!isSelectMode)}
               onTocToggle={() => setIsTocOpen(!isTocOpen)}
@@ -428,10 +520,7 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
 
                   {/* Stream error */}
                   {isStreamError && (
-                    <ChatErrorState
-                      error={stream.error ?? 'An unexpected error occurred'}
-                      onRetry={handleRetry}
-                    />
+                    <ChatErrorState error={stream.error ?? 'An unexpected error occurred'} onRetry={handleRetry} />
                   )}
 
                   {/* Empty state */}
@@ -460,6 +549,11 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
                   onClose={() => setIsTocOpen(false)}
                   onScrollToMessage={handleScrollToMessage}
                 />
+              )}
+
+              {/* File Explorer panel */}
+              {isFileExplorerOpen && defaultCwd && (
+                <ChatFileExplorer onClose={toggleFileExplorer} repoPath={defaultCwd} />
               )}
             </div>
 
@@ -522,6 +616,9 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
           tokenEstimate={tokenEstimate}
         />
       )}
+
+      {/* File search dialog (Cmd+P) */}
+      <FileSearchDialog onOpenChange={setIsFileSearchOpen} open={isFileSearchOpen} repoPath={defaultCwd} />
     </div>
   );
 };
