@@ -92,10 +92,18 @@ export function registerProviderHandlers(): void {
         }
 
         if (provider === 'openai') {
-          const response = await fetch('https://api.openai.com/v1/models', {
-            headers: { Authorization: `Bearer ${apiKey}` },
-            method: 'GET',
-          });
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10_000);
+          let response: Response;
+          try {
+            response = await fetch('https://api.openai.com/v1/models', {
+              headers: { Authorization: `Bearer ${apiKey}` },
+              method: 'GET',
+              signal: controller.signal,
+            });
+          } finally {
+            clearTimeout(timeoutId);
+          }
           if (response.ok) {
             return { valid: true };
           }

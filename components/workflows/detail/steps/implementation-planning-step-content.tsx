@@ -534,8 +534,13 @@ export const ImplementationPlanningStepContent = ({ workflowId }: Implementation
     setPlanningFeedbackText('');
   }, [setPlanningIsEditing, setPlanningFeedbackText]);
 
-  // Auto-start: bridge DB status → service execution
+  // Auto-start: bridge DB status → service execution.
+  // The ref is scoped to the current step — reset when the step ID changes
+  // so a new step can auto-trigger independently.
   const hasAutoTriggeredRef = useRef(false);
+  useEffect(() => {
+    hasAutoTriggeredRef.current = false;
+  }, [resolvedStepId]);
   useEffect(() => {
     if (
       !isStateLoading &&

@@ -189,9 +189,16 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
     }
   }, [currentSearchMatchIndex, messageSearchQuery, messages, searchMatchCount]);
 
-  // Save assistant response when stream completes
+  // Save assistant response when stream completes.
+  // Depends only on stream.status intentionally: other values (stream.text,
+  // activeConversationId, etc.) are read synchronously from the closure when
+  // status transitions to 'completed', avoiding re-fires on every streaming
+  // token. The ref guard prevents double-execution across React strict-mode
+  // or concurrent re-renders.
+  const completionHandledRef = useRef(false);
   useEffect(() => {
-    if (stream.status === 'completed' && stream.text && activeConversationId) {
+    if (stream.status === 'completed' && !completionHandledRef.current && stream.text && activeConversationId) {
+      completionHandledRef.current = true;
       const blocks = extractBlocksFromStream(stream.messages);
       createMessage.mutate({
         content: stream.text,
@@ -206,6 +213,9 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
         isFirstMessage.current = false;
         void generateTitleMutation.mutateAsync(activeConversationId);
       }
+    }
+    if (stream.status !== 'completed') {
+      completionHandledRef.current = false;
     }
   }, [stream.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -265,11 +275,13 @@ export const ChatTabContent = ({ projectId }: ChatTabContentProps) => {
       let fileContextBlock = '';
       if (attachedFiles.length > 0 && defaultCwd) {
         const fileContents = await Promise.all(
-          attachedFiles.map(async (f) => {
-            const fullPath = `${defaultCwd}/${f.relativePath}`;
-            const result = await readFile(fullPath);
-            return { content: result.content ?? '', path: f.relativePath };
-          })
+          attachedFiles
+            .filter((f) => !f.relativePath.includes('..'))
+            .map(async (f) => {
+              const fullPath = `${defaultCwd}/${f.relativePath}`;
+              const result = await readFile(fullPath);
+              return { content: result.content ?? '', path: f.relativePath };
+            })
         );
         const fileBlocks = fileContents
           .filter((f) => f.content.length > 0)
