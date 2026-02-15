@@ -37,6 +37,7 @@ import {
 } from '../../db/repositories';
 import { clarificationStepService } from '../services/clarification-step.service';
 import { fileDiscoveryStepService } from '../services/file-discovery.service';
+import { planningStepService } from '../services/planning-step.service';
 import { refinementStepService } from '../services/refinement-step.service';
 import { createWorkflowPoolManager } from '../services/workflow-pool-manager.service';
 import { registerAgentActivityHandlers } from './agent-activity.handlers';
@@ -55,10 +56,15 @@ import { registerDialogHandlers } from './dialog.handlers';
 import { registerDiffCommentHandlers } from './diff-comment.handlers';
 import { registerDiffHandlers } from './diff.handlers';
 import { registerDiscoveryHandlers } from './discovery.handlers';
+import { registerEditorHandlers } from './editor.handlers';
+import { registerFileExplorerHandlers } from './file-explorer.handlers';
 import { registerFileViewStateHandlers } from './file-view-state.handlers';
 import { registerFsHandlers } from './fs.handlers';
 import { registerGitHubHandlers } from './github.handlers';
+import { registerMcpServerHandlers } from './mcp-server.handlers';
+import { registerPlanningHandlers } from './planning.handlers';
 import { registerProjectHandlers } from './project.handlers';
+import { registerProviderHandlers } from './provider.handlers';
 import { registerRefinementHandlers } from './refinement.handlers';
 import { registerRepositoryHandlers } from './repository.handlers';
 import { registerSettingsHandlers } from './settings.handlers';
@@ -92,11 +98,23 @@ export function registerAllHandlers(
   // File system handlers
   registerFsHandlers();
 
+  // File explorer handlers (git-aware tree browsing and search)
+  registerFileExplorerHandlers();
+
   // Electron store handlers
   registerStoreHandlers();
 
   // App info handlers
   registerAppHandlers();
+
+  // Provider handlers (API key management, provider listing/validation)
+  registerProviderHandlers();
+
+  // MCP server handlers (MCP server CRUD, .mcp.json detection)
+  registerMcpServerHandlers();
+
+  // Editor handlers (editor detection, preferences, file opening)
+  registerEditorHandlers();
 
   // Debug log handlers (with debug window creation function)
   registerDebugLogHandlers(createDebugWindow);
@@ -216,6 +234,9 @@ export function registerAllHandlers(
   // Also needs getMainWindow for streaming events to renderer
   registerClarificationHandlers(workflowStepsRepository, workflowsRepository, getMainWindow);
 
+  // Planning handlers - interactive plan generation with feedback loop
+  registerPlanningHandlers(workflowStepsRepository, workflowsRepository, getMainWindow);
+
   // Refinement handlers - needs getMainWindow for streaming events to renderer
   registerRefinementHandlers(getMainWindow);
 
@@ -249,6 +270,7 @@ export function registerAllHandlers(
   clarificationStepService.setAgentActivityRepository(agentActivityRepository);
   refinementStepService.setAgentActivityRepository(agentActivityRepository);
   fileDiscoveryStepService.setAgentActivityRepository(agentActivityRepository);
+  planningStepService.setAgentActivityRepository(agentActivityRepository);
 
   // Discovered files - files found during analysis
   // Also needs workflowStepsRepository and getMainWindow for discovery streaming
@@ -305,12 +327,7 @@ export function registerAllHandlers(
         if (!wt.workflowId) continue;
         const workflow = workflowsRepository.findById(wt.workflowId);
         if (workflow && ['cancelled', 'completed', 'failed'].includes(workflow.status)) {
-          await maybeCleanupWorktree(
-            wt.workflowId,
-            worktreesRepository,
-            repositoriesRepository,
-            settingsRepository
-          );
+          await maybeCleanupWorktree(wt.workflowId, worktreesRepository, repositoriesRepository, settingsRepository);
         }
       }
     } catch (error) {

@@ -284,7 +284,7 @@ export const WorkflowStepAccordion = ({ className, ref, workflowId, ...props }: 
           </AccordionTrigger>
         </AccordionHeader>
         <AccordionPanel variant={'padded'}>
-          <ImplementationPlanningStepContent />
+          <ImplementationPlanningStepContent workflowId={workflowId} />
         </AccordionPanel>
       </AccordionItem>
     </AccordionRoot>

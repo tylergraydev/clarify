@@ -16,6 +16,12 @@ import {
   type ClarificationSliceState,
   createClarificationSlice,
 } from './clarification-slice';
+import {
+  createPlanningSlice,
+  type PlanningSlice,
+  planningSliceInitialState,
+  type PlanningSliceState,
+} from './planning-slice';
 
 /**
  * Workflow detail actions interface for modifying store state.
@@ -59,13 +65,14 @@ export type WorkflowDetailStepTab = 'changes' | 'clarification' | 'discovery' | 
 /**
  * Combined workflow detail store type for state, actions, and slices.
  */
-export type WorkflowDetailStore = ClarificationSlice & WorkflowDetailActions & WorkflowDetailState;
+export type WorkflowDetailStore = ClarificationSlice & PlanningSlice & WorkflowDetailActions & WorkflowDetailState;
 
 /**
  * Initial state for reset functionality.
  */
-const initialState: ClarificationSliceState & WorkflowDetailState = {
+const initialState: ClarificationSliceState & PlanningSliceState & WorkflowDetailState = {
   ...clarificationSliceInitialState,
+  ...planningSliceInitialState,
   activeStreamingTab: DEFAULT_WORKFLOW_DETAIL_ACTIVE_STREAMING_TAB,
   expandedSteps: DEFAULT_WORKFLOW_DETAIL_EXPANDED_STEPS,
   isStreamingPanelCollapsed: DEFAULT_WORKFLOW_DETAIL_STREAMING_PANEL_COLLAPSED,
@@ -110,6 +117,7 @@ function persistToElectronStore<T>(key: string, value: T): void {
 export const useWorkflowDetailStore = create<WorkflowDetailStore>()((set) => ({
   ...initialState,
   ...createClarificationSlice(set as Parameters<typeof createClarificationSlice>[0]),
+  ...createPlanningSlice(set as Parameters<typeof createPlanningSlice>[0]),
 
   reset: () => {
     set(initialState);

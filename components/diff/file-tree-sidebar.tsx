@@ -20,6 +20,7 @@ interface FileTreeSidebarProps {
   onSelectFile: (path: string) => void;
   onSortChange: (sort: DiffSortMode) => void;
   onStatusFilterChange: (filter: DiffStatusFilter) => void;
+  repoPath?: string;
   searchQuery: string;
   selectedFilePath: null | string;
   sortMode: DiffSortMode;
@@ -54,10 +55,7 @@ function sortFiles(files: Array<FileDiff>, sortMode: DiffSortMode): Array<FileDi
 
   switch (sortMode) {
     case 'changes': {
-      sorted.sort(
-        (a, b) =>
-          b.stats.additions + b.stats.deletions - (a.stats.additions + a.stats.deletions)
-      );
+      sorted.sort((a, b) => b.stats.additions + b.stats.deletions - (a.stats.additions + a.stats.deletions));
       break;
     }
     case 'name': {
@@ -82,6 +80,7 @@ export const FileTreeSidebar = ({
   onSelectFile,
   onSortChange,
   onStatusFilterChange,
+  repoPath,
   searchQuery,
   selectedFilePath,
   sortMode,
@@ -132,9 +131,7 @@ export const FileTreeSidebar = ({
       {/* File list */}
       <div className={'flex-1 overflow-y-auto p-1'}>
         {filteredFiles.length === 0 ? (
-          <div className={'px-2 py-4 text-center text-xs text-muted-foreground'}>
-            No matching files
-          </div>
+          <div className={'px-2 py-4 text-center text-xs text-muted-foreground'}>No matching files</div>
         ) : (
           <div className={'flex flex-col gap-0.5'}>
             {filteredFiles.map((file) => (
@@ -143,6 +140,7 @@ export const FileTreeSidebar = ({
                 isSelected={selectedFilePath === file.path}
                 key={file.path}
                 onSelect={onSelectFile}
+                repoPath={repoPath}
               />
             ))}
           </div>

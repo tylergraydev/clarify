@@ -6,6 +6,7 @@ import * as path from 'path';
 import { closeDatabase, type DrizzleDatabase, initializeDatabase } from '../db';
 import { seedDatabase } from '../db/seed';
 import { registerAllHandlers } from './ipc';
+import { initializeProviders } from './services/providers';
 import { killAllTerminals } from './services/terminal.service';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -277,6 +278,9 @@ async function toggleDebugWindow(): Promise<void> {
 app.whenReady().then(async () => {
   // Initialize database first
   initializeDb();
+
+  // Initialize AI provider registry (Claude, OpenAI, etc.)
+  initializeProviders();
 
   // Register all IPC handlers with database, window access, and debug window creation
   registerAllHandlers(db, getMainWindow, createDebugWindow);

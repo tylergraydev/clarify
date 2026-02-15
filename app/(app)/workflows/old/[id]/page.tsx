@@ -11,6 +11,7 @@ import { parseAsStringLiteral, useQueryState } from 'nuqs';
 import { QueryErrorBoundary } from '@/components/data/query-error-boundary';
 import {
   ClarificationStreamProvider,
+  PlanningStreamProvider,
   WorkflowDetailSkeleton,
   WorkflowPreStartSummary,
   WorkflowStepAccordion,
@@ -80,6 +81,7 @@ const WorkflowDetailContent = () => {
   const workflowStatus = workflow.status;
   const isPreStart = workflowStatus === 'created';
   const isClarificationEnabled = workflowStatus === 'running' && !workflow.skipClarification;
+  const isPlanningEnabled = workflowStatus === 'running';
 
   const breadcrumb = (
     <div className={'px-6 pt-4'}>
@@ -140,18 +142,20 @@ const WorkflowDetailContent = () => {
     <QueryErrorBoundary>
       {breadcrumb}
       <ClarificationStreamProvider isEnabled={isClarificationEnabled} workflowId={workflowId}>
-        <main aria-label={'Workflow detail'} className={'flex h-(--workflow-content-height) flex-col'}>
-          {/* Top Bar */}
-          <WorkflowTopBar workflowId={workflowId} />
+        <PlanningStreamProvider isEnabled={isPlanningEnabled} workflowId={workflowId}>
+          <main aria-label={'Workflow detail'} className={'flex h-(--workflow-content-height) flex-col'}>
+            {/* Top Bar */}
+            <WorkflowTopBar workflowId={workflowId} />
 
-          {/* Step Accordion */}
-          <div className={'flex-1 overflow-auto'}>
-            <WorkflowStepAccordion workflowId={workflowId} />
-          </div>
+            {/* Step Accordion */}
+            <div className={'flex-1 overflow-auto'}>
+              <WorkflowStepAccordion workflowId={workflowId} />
+            </div>
 
-          {/* Streaming Panel */}
-          <WorkflowStreamingPanel workflowId={workflowId} />
-        </main>
+            {/* Streaming Panel */}
+            <WorkflowStreamingPanel workflowId={workflowId} />
+          </main>
+        </PlanningStreamProvider>
       </ClarificationStreamProvider>
     </QueryErrorBoundary>
   );

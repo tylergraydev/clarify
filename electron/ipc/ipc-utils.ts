@@ -29,7 +29,7 @@ export function advanceWorkflowAfterSkip(
   workflowsRepo: WorkflowsRepository,
   workflowStepsRepo: WorkflowStepsRepository,
   workflowId: number,
-  skippedStepNumber: number,
+  skippedStepNumber: number
 ): void {
   const workflow = workflowsRepo.findById(workflowId);
   if (!workflow) return;
@@ -71,7 +71,7 @@ export function advanceWorkflowAfterStep(
   workflowsRepo: WorkflowsRepository,
   workflowStepsRepo: WorkflowStepsRepository,
   workflowId: number,
-  currentStepId: number,
+  currentStepId: number
 ): void {
   const workflow = workflowsRepo.findById(workflowId);
   if (!workflow) return;
@@ -112,7 +112,7 @@ export function advanceWorkflowAfterStep(
 export function createStreamForwarder<T>(
   getMainWindow: (() => BrowserWindow | null) | undefined,
   channel: string,
-  extraFields?: Record<string, unknown>,
+  extraFields?: Record<string, unknown>
 ): (message: T) => void {
   return (message: T) => {
     const mainWindow = getMainWindow?.();
@@ -140,9 +140,20 @@ export function parseOutputStructured(outputStructured: unknown): Record<string,
     return {};
   }
   if (typeof outputStructured === 'string') {
-    return JSON.parse(outputStructured) as Record<string, unknown>;
+    try {
+      const parsed: unknown = JSON.parse(outputStructured);
+      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+      return {};
+    } catch {
+      return {};
+    }
   }
-  return outputStructured as Record<string, unknown>;
+  if (typeof outputStructured === 'object' && !Array.isArray(outputStructured)) {
+    return outputStructured as Record<string, unknown>;
+  }
+  return {};
 }
 
 // =============================================================================

@@ -36,6 +36,7 @@ import type {
 } from '../db/schema';
 import type { UpdateWorkflowInput } from '../lib/validations/workflow';
 import type { DebugLogFilters } from '../types/debug-log';
+import type { McpServerConfig } from '../types/mcp-server';
 import type { TerminalCreateOptions, TerminalInfo } from '../types/terminal';
 
 import { IpcChannels } from './ipc/channels';
@@ -416,7 +417,7 @@ export interface ClarificationSubmitAnswersResult {
 export type ClarificationUsageStats = import('../types/usage-stats').UsageStats;
 
 // =============================================================================
-// Refinement Types
+// Planning Types
 // =============================================================================
 
 export interface ElectronAPI {
@@ -494,13 +495,28 @@ export interface ElectronAPI {
     list(): Promise<Array<AuditLog>>;
   };
   chat: {
-    compactConversation(request: { conversationId: number; upToMessageId?: number }): Promise<{ compactedCount: number; summaryMessageId: number }>;
-    copyMessages(fromConversationId: number, toConversationId: number, upToMessageId?: number): Promise<Array<ConversationMessage>>;
+    compactConversation(request: {
+      conversationId: number;
+      upToMessageId?: number;
+    }): Promise<{ compactedCount: number; summaryMessageId: number }>;
+    copyMessages(
+      fromConversationId: number,
+      toConversationId: number,
+      upToMessageId?: number
+    ): Promise<Array<ConversationMessage>>;
     createConversation(data: NewConversation): Promise<Conversation>;
     createMessage(data: NewConversationMessage): Promise<ConversationMessage>;
     deleteConversation(id: number): Promise<boolean>;
-    exportToNewChat(request: { messageIds: Array<number>; projectId: number; sourceConversationId: number }): Promise<Conversation>;
-    forkConversation(request: { forkPointMessageId: number; generateSummary?: boolean; sourceConversationId: number }): Promise<Conversation>;
+    exportToNewChat(request: {
+      messageIds: Array<number>;
+      projectId: number;
+      sourceConversationId: number;
+    }): Promise<Conversation>;
+    forkConversation(request: {
+      forkPointMessageId: number;
+      generateSummary?: boolean;
+      sourceConversationId: number;
+    }): Promise<Conversation>;
     generateTitle(conversationId: number): Promise<Conversation | undefined>;
     getConversation(id: number): Promise<Conversation | undefined>;
     getTokenEstimate(conversationId: number): Promise<number>;
@@ -541,15 +557,27 @@ export interface ElectronAPI {
   };
   diff: {
     getBranches(repoPath: string): Promise<Array<import('../types/diff').GitBranch>>;
-    getDiff(repoPath: string, options?: import('../types/diff').DiffOptions): Promise<import('../types/diff').GitDiffResult>;
+    getDiff(
+      repoPath: string,
+      options?: import('../types/diff').DiffOptions
+    ): Promise<import('../types/diff').GitDiffResult>;
     getFileContent(repoPath: string, filePath: string, ref?: string): Promise<string>;
-    getFileDiff(repoPath: string, options: import('../types/diff').FileDiffOptions): Promise<import('../types/diff').GitDiffResult>;
-    getLog(repoPath: string, options?: import('../types/diff').GitLogOptions): Promise<Array<import('../types/diff').GitLogEntry>>;
+    getFileDiff(
+      repoPath: string,
+      options: import('../types/diff').FileDiffOptions
+    ): Promise<import('../types/diff').GitDiffResult>;
+    getLog(
+      repoPath: string,
+      options?: import('../types/diff').GitLogOptions
+    ): Promise<Array<import('../types/diff').GitLogEntry>>;
     getStatus(repoPath: string): Promise<import('../types/diff').GitStatusResult>;
     getWorktreeDiff(
       worktreePath: string,
       baseBranch?: string
-    ): Promise<{ committed: import('../types/diff').GitDiffResult; uncommitted: import('../types/diff').GitDiffResult }>;
+    ): Promise<{
+      committed: import('../types/diff').GitDiffResult;
+      uncommitted: import('../types/diff').GitDiffResult;
+    }>;
   };
   diffComment: {
     create(data: import('../db/schema').NewDiffCommentRow): Promise<import('../db/schema').DiffCommentRow>;
@@ -574,6 +602,32 @@ export interface ElectronAPI {
     toggle(id: number): Promise<DiscoveredFile | undefined>;
     update(id: number, data: Partial<NewDiscoveredFile>): Promise<DiscoveredFile | undefined>;
     updatePriority(id: number, priority: string): Promise<DiscoveredFile | undefined>;
+  };
+  editor: {
+    detect(): Promise<Array<import('../types/editor').DetectedEditor>>;
+    getPreferred(): Promise<import('../types/editor').EditorPreference | undefined>;
+    getRegistry(): Promise<Array<import('../types/editor').EditorDefinition>>;
+    open(input: import('../types/editor').OpenInEditorInput): Promise<import('../types/editor').OpenInEditorResult>;
+    setPreferred(pref: import('../types/editor').EditorPreference): Promise<void>;
+  };
+  fileExplorer: {
+    listDirectory(
+      repoPath: string,
+      dirPath?: string
+    ): Promise<{
+      entries: Array<{ name: string; relativePath: string; type: 'directory' | 'file' }>;
+      error?: string;
+      success: boolean;
+    }>;
+    searchFiles(
+      repoPath: string,
+      query: string,
+      limit?: number
+    ): Promise<{
+      error?: string;
+      results: Array<{ relativePath: string; score: number }>;
+      success: boolean;
+    }>;
   };
   fileViewState: {
     getStats(workflowId: number, totalFiles: number): Promise<{ totalFiles: number; viewedFiles: number }>;
@@ -603,6 +657,23 @@ export interface ElectronAPI {
     writeFile(path: string, content: string): Promise<{ error?: string; success: boolean }>;
   };
   github: GitHubAPI;
+  mcpServer: {
+    delete(name: string): Promise<boolean>;
+    detectProjectServers(dirPath: string): Promise<Array<McpServerConfig>>;
+    list(): Promise<Array<McpServerConfig>>;
+    save(config: McpServerConfig): Promise<void>;
+    toggle(name: string, enabled: boolean): Promise<void>;
+  };
+  planning: {
+    approvePlan(workflowId: number, stepId: number): Promise<{ success: boolean }>;
+    cancel(workflowId: number): Promise<PlanningOutcome>;
+    editPlan(input: PlanningEditInput): Promise<{ success: boolean }>;
+    getState(workflowId: number): Promise<null | PlanningServiceState>;
+    onStreamMessage(callback: (message: PlanningStreamMessage) => void): () => void;
+    retry(input: PlanningStartInput): Promise<PlanningOutcomeWithPause>;
+    start(input: PlanningStartInput): Promise<PlanningOutcomeWithPause>;
+    submitFeedback(input: PlanningFeedbackInput): Promise<PlanningOutcomeWithPause>;
+  };
   project: {
     addRepo(projectId: number, repoData: NewRepository): Promise<Repository>;
     archive(id: number): Promise<Project | undefined>;
@@ -615,6 +686,14 @@ export interface ElectronAPI {
     toggleFavorite(id: number): Promise<Project | undefined>;
     unarchive(id: number): Promise<Project | undefined>;
     update(id: number, data: Partial<NewProject>): Promise<Project | undefined>;
+  };
+  provider: {
+    deleteKey(provider: string): Promise<boolean>;
+    getKey(provider: string): Promise<string | undefined>;
+    list(): Promise<Array<{ configured: boolean; maskedKey?: string; provider: string }>>;
+    listConfigured(): Promise<Array<string>>;
+    setKey(provider: string, apiKey: string): Promise<boolean>;
+    validate(provider: string): Promise<{ error?: string; valid: boolean }>;
   };
   refinement: {
     cancel(sessionId: string): Promise<RefinementOutcome>;
@@ -836,8 +915,15 @@ export interface GitHubAPI {
   checkAuth(): Promise<import('../types/github').GitHubAuthStatus>;
   closePr(repoPath: string, prNumber: number): Promise<import('../types/github').GitHubPullRequest>;
   convertToReady(repoPath: string, prNumber: number): Promise<import('../types/github').GitHubPullRequest>;
-  createPr(repoPath: string, input: import('../types/github').CreatePrInput): Promise<import('../types/github').GitHubPullRequest>;
-  createPrComment(repoPath: string, prNumber: number, input: import('../types/github').CreatePrCommentInput): Promise<import('../types/github').GitHubPrComment>;
+  createPr(
+    repoPath: string,
+    input: import('../types/github').CreatePrInput
+  ): Promise<import('../types/github').GitHubPullRequest>;
+  createPrComment(
+    repoPath: string,
+    prNumber: number,
+    input: import('../types/github').CreatePrCommentInput
+  ): Promise<import('../types/github').GitHubPrComment>;
   detectPrTemplate(repoPath: string): Promise<null | string>;
   getDeployments(repoPath: string, prNumber: number): Promise<Array<import('../types/github').GitHubDeployment>>;
   getPr(repoPath: string, prNumber: number): Promise<import('../types/github').GitHubPullRequest>;
@@ -846,15 +932,162 @@ export interface GitHubAPI {
   getRepoInfo(repoPath: string): Promise<import('../types/github').GitHubRepoInfo>;
   listChecks(repoPath: string, ref: string): Promise<Array<import('../types/github').GitHubCheckRun>>;
   listPrComments(repoPath: string, prNumber: number): Promise<Array<import('../types/github').GitHubPrComment>>;
-  listPrs(repoPath: string, filters?: import('../types/github').PrListFilters): Promise<Array<import('../types/github').GitHubPullRequest>>;
-  mergePr(repoPath: string, prNumber: number, strategy: import('../types/github').MergeStrategy): Promise<import('../types/github').MergeResult>;
-  pushComment(repoPath: string, prNumber: number, localCommentId: number): Promise<import('../db/schema').DiffCommentRow>;
-  replyToPrComment(repoPath: string, prNumber: number, commentId: number, body: string): Promise<import('../types/github').GitHubPrComment>;
+  listPrs(
+    repoPath: string,
+    filters?: import('../types/github').PrListFilters
+  ): Promise<Array<import('../types/github').GitHubPullRequest>>;
+  mergePr(
+    repoPath: string,
+    prNumber: number,
+    strategy: import('../types/github').MergeStrategy
+  ): Promise<import('../types/github').MergeResult>;
+  pushComment(
+    repoPath: string,
+    prNumber: number,
+    localCommentId: number
+  ): Promise<import('../db/schema').DiffCommentRow>;
+  replyToPrComment(
+    repoPath: string,
+    prNumber: number,
+    commentId: number,
+    body: string
+  ): Promise<import('../types/github').GitHubPrComment>;
   rerunCheck(repoPath: string, runId: number): Promise<void>;
   rerunFailedChecks(repoPath: string, runId: number): Promise<void>;
-  syncComments(repoPath: string, prNumber: number, workflowId: number): Promise<import('../electron/services/github-comment-sync.service').CommentSyncResult>;
-  updatePr(repoPath: string, prNumber: number, input: import('../types/github').UpdatePrInput): Promise<import('../types/github').GitHubPullRequest>;
+  syncComments(
+    repoPath: string,
+    prNumber: number,
+    workflowId: number
+  ): Promise<import('../electron/services/github-comment-sync.service').CommentSyncResult>;
+  updatePr(
+    repoPath: string,
+    prNumber: number,
+    input: import('../types/github').UpdatePrInput
+  ): Promise<import('../types/github').GitHubPullRequest>;
 }
+
+/**
+ * Input for editing a plan directly.
+ */
+export interface PlanningEditInput {
+  editedPlan: PlanningImplementationPlan;
+  stepId: number;
+  workflowId: number;
+}
+/**
+ * Input for submitting planning feedback.
+ */
+export interface PlanningFeedbackInput {
+  feedback: string;
+  stepId: number;
+  workflowId: number;
+}
+/**
+ * A complete implementation plan.
+ */
+export interface PlanningImplementationPlan {
+  approach: string;
+  estimatedComplexity: 'high' | 'low' | 'medium';
+  risks?: Array<string>;
+  steps: Array<PlanningImplementationStep>;
+  summary: string;
+}
+/**
+ * A single implementation step within a plan.
+ */
+export interface PlanningImplementationStep {
+  description: string;
+  files: Array<string>;
+  order: number;
+  successCriteria: Array<string>;
+  title: string;
+  validationCommands: Array<string>;
+}
+/**
+ * A single plan iteration (version).
+ */
+export interface PlanningIteration {
+  createdAt: string;
+  editedByUser: boolean;
+  feedback?: string;
+  plan: PlanningImplementationPlan;
+  version: number;
+}
+/**
+ * Discriminated union of all possible planning outcomes.
+ */
+export type PlanningOutcome =
+  | { elapsedSeconds: number; error: string; type: 'TIMEOUT' }
+  | { error: string; stack?: string; type: 'ERROR' }
+  | { plan: PlanningImplementationPlan; type: 'PLAN_GENERATED' }
+  | { reason: string; type: 'CANNOT_PLAN' }
+  | { reason?: string; type: 'CANCELLED' };
+/**
+ * Extended outcome fields for pause and retry information.
+ */
+export interface PlanningOutcomePauseInfo {
+  pauseRequested?: boolean;
+  retryCount?: number;
+  sdkSessionId?: string;
+  skipFallbackAvailable?: boolean;
+  usage?: PlanningUsageStats;
+}
+/**
+ * Extended planning outcome with pause and retry information.
+ */
+export type PlanningOutcomeWithPause = PlanningOutcome & PlanningOutcomePauseInfo;
+
+/**
+ * Phase type for planning service.
+ */
+export type PlanningServicePhase =
+  | 'awaiting_review'
+  | 'cancelled'
+  | 'complete'
+  | 'error'
+  | 'executing'
+  | 'executing_extended_thinking'
+  | 'idle'
+  | 'loading_agent'
+  | 'processing_response'
+  | 'regenerating'
+  | 'timeout';
+
+/**
+ * State of the planning service during execution.
+ */
+export interface PlanningServiceState {
+  agentConfig: null | { id: number; model: string; name: string };
+  currentPlan: null | PlanningImplementationPlan;
+  phase: PlanningServicePhase;
+}
+
+// =============================================================================
+// Refinement Types
+// =============================================================================
+
+/**
+ * Input for starting a planning session.
+ */
+export interface PlanningStartInput {
+  agentId?: number;
+  repositoryPath: string;
+  stepId: number;
+  timeoutSeconds?: number;
+  workflowId: number;
+}
+
+export type PlanningStreamMessage =
+  | PlanningStreamExtendedThinkingHeartbeat
+  | PlanningStreamPhaseChange
+  | PlanningStreamTextDelta
+  | PlanningStreamThinkingDelta
+  | PlanningStreamThinkingStart
+  | PlanningStreamToolStart
+  | PlanningStreamToolStop
+  | PlanningStreamToolUpdate;
+
+export type PlanningUsageStats = import('../types/usage-stats').UsageStats;
 
 /**
  * Agent configuration for refinement.
@@ -928,10 +1161,6 @@ export interface RefinementStartInput {
   workflowId: number;
 }
 
-// =============================================================================
-// File Discovery Types
-// =============================================================================
-
 /**
  * Discriminated union of all refinement stream message types.
  */
@@ -994,10 +1223,6 @@ export interface WorkflowStatistics {
   successRate: number;
 }
 
-// =============================================================================
-// Clarification Stream Message Types
-// =============================================================================
-
 interface ClarificationStreamMessageBase {
   sessionId: string;
   timestamp: number;
@@ -1013,27 +1238,73 @@ interface ClarificationStreamMessageBase {
   workflowId: number;
 }
 
-type ClarificationStreamPhaseChange = ClarificationStreamMessageBase & { phase: ClarificationServicePhase; type: 'phase_change' };
+type ClarificationStreamPhaseChange = ClarificationStreamMessageBase & {
+  phase: ClarificationServicePhase;
+  type: 'phase_change';
+};
+
 type ClarificationStreamTextDelta = ClarificationStreamMessageBase & { delta: string; type: 'text_delta' };
-type ClarificationStreamThinkingDelta = ClarificationStreamMessageBase & { blockIndex: number; delta: string; type: 'thinking_delta' };
-type ClarificationStreamThinkingStart = ClarificationStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
-type ClarificationStreamToolStart = ClarificationStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_start' };
-type ClarificationStreamToolStop = ClarificationStreamMessageBase & { toolUseId: string; type: 'tool_stop' };
-type ClarificationStreamToolUpdate = ClarificationStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_update' };
 
 // =============================================================================
-// File Discovery Stream Message Types
+// File Discovery Types
 // =============================================================================
+
+type ClarificationStreamThinkingDelta = ClarificationStreamMessageBase & {
+  blockIndex: number;
+  delta: string;
+  type: 'thinking_delta';
+};
+
+type ClarificationStreamThinkingStart = ClarificationStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
+
+type ClarificationStreamToolStart = ClarificationStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_start';
+};
+
+type ClarificationStreamToolStop = ClarificationStreamMessageBase & { toolUseId: string; type: 'tool_stop' };
+
+type ClarificationStreamToolUpdate = ClarificationStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
+};
 
 /** Step-specific: discovery completed. */
-interface FileDiscoveryStreamComplete extends FileDiscoveryStreamMessageBase { outcome: FileDiscoveryOutcome; type: 'complete' }
+interface FileDiscoveryStreamComplete extends FileDiscoveryStreamMessageBase {
+  outcome: FileDiscoveryOutcome;
+  type: 'complete';
+}
+
+// =============================================================================
+// Clarification Stream Message Types
+// =============================================================================
 
 /** Step-specific: error occurred. */
-interface FileDiscoveryStreamError extends FileDiscoveryStreamMessageBase { error: string; stack?: string; type: 'error' }
-type FileDiscoveryStreamExtendedThinkingHeartbeat = FileDiscoveryStreamMessageBase & { elapsedMs: number; estimatedProgress: null | number; maxThinkingTokens: number; type: 'extended_thinking_heartbeat' };
+interface FileDiscoveryStreamError extends FileDiscoveryStreamMessageBase {
+  error: string;
+  stack?: string;
+  type: 'error';
+}
+
+type FileDiscoveryStreamExtendedThinkingHeartbeat = FileDiscoveryStreamMessageBase & {
+  elapsedMs: number;
+  estimatedProgress: null | number;
+  maxThinkingTokens: number;
+  type: 'extended_thinking_heartbeat';
+};
 /** Step-specific: file discovered during execution. */
 interface FileDiscoveryStreamFileDiscovered extends FileDiscoveryStreamMessageBase {
-  file: { action: 'create' | 'delete' | 'modify' | 'reference'; filePath: string; priority: 'high' | 'low' | 'medium'; relevanceExplanation: string; role: string };
+  file: {
+    action: 'create' | 'delete' | 'modify' | 'reference';
+    filePath: string;
+    priority: 'high' | 'low' | 'medium';
+    relevanceExplanation: string;
+    role: string;
+  };
   type: 'file_discovered';
 }
 interface FileDiscoveryStreamMessageBase {
@@ -1052,21 +1323,89 @@ interface FileDiscoveryStreamMessageBase {
     | 'tool_start'
     | 'tool_update';
 }
-
-type FileDiscoveryStreamPhaseChange = FileDiscoveryStreamMessageBase & { phase: FileDiscoveryServicePhase; type: 'phase_change' };
+type FileDiscoveryStreamPhaseChange = FileDiscoveryStreamMessageBase & {
+  phase: FileDiscoveryServicePhase;
+  type: 'phase_change';
+};
 type FileDiscoveryStreamTextDelta = FileDiscoveryStreamMessageBase & { delta: string; type: 'text_delta' };
-type FileDiscoveryStreamThinkingDelta = FileDiscoveryStreamMessageBase & { blockIndex: number; delta: string; type: 'thinking_delta' };
+type FileDiscoveryStreamThinkingDelta = FileDiscoveryStreamMessageBase & {
+  blockIndex: number;
+  delta: string;
+  type: 'thinking_delta';
+};
 type FileDiscoveryStreamThinkingStart = FileDiscoveryStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
+
+// =============================================================================
+// File Discovery Stream Message Types
+// =============================================================================
+
 /** Step-specific: tool finished executing. */
-interface FileDiscoveryStreamToolFinish extends FileDiscoveryStreamMessageBase { toolOutput?: unknown; toolUseId: string; type: 'tool_finish' }
-type FileDiscoveryStreamToolStart = FileDiscoveryStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_start' };
-type FileDiscoveryStreamToolUpdate = FileDiscoveryStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_update' };
+interface FileDiscoveryStreamToolFinish extends FileDiscoveryStreamMessageBase {
+  toolOutput?: unknown;
+  toolUseId: string;
+  type: 'tool_finish';
+}
+
+type FileDiscoveryStreamToolStart = FileDiscoveryStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_start';
+};
+type FileDiscoveryStreamToolUpdate = FileDiscoveryStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
+};
+type PlanningStreamExtendedThinkingHeartbeat = PlanningStreamMessageBase & {
+  elapsedMs: number;
+  estimatedProgress: null | number;
+  maxThinkingTokens: number;
+  type: 'extended_thinking_heartbeat';
+};
+/**
+ * Planning stream message types (same structure as clarification).
+ */
+interface PlanningStreamMessageBase {
+  sessionId: string;
+  timestamp: number;
+  type: string;
+  workflowId: number;
+}
+
+type PlanningStreamPhaseChange = PlanningStreamMessageBase & { phase: PlanningServicePhase; type: 'phase_change' };
+type PlanningStreamTextDelta = PlanningStreamMessageBase & { delta: string; type: 'text_delta' };
+type PlanningStreamThinkingDelta = PlanningStreamMessageBase & {
+  blockIndex: number;
+  delta: string;
+  type: 'thinking_delta';
+};
+type PlanningStreamThinkingStart = PlanningStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
+type PlanningStreamToolStart = PlanningStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_start';
+};
+type PlanningStreamToolStop = PlanningStreamMessageBase & { toolUseId: string; type: 'tool_stop' };
+type PlanningStreamToolUpdate = PlanningStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
+};
 
 // =============================================================================
 // Refinement Stream Message Types
 // =============================================================================
 
-type RefinementStreamExtendedThinkingHeartbeat = RefinementStreamMessageBase & { elapsedMs: number; estimatedProgress: null | number; maxThinkingTokens: number; type: 'extended_thinking_heartbeat' };
+type RefinementStreamExtendedThinkingHeartbeat = RefinementStreamMessageBase & {
+  elapsedMs: number;
+  estimatedProgress: null | number;
+  maxThinkingTokens: number;
+  type: 'extended_thinking_heartbeat';
+};
 
 interface RefinementStreamMessageBase {
   sessionId: string;
@@ -1081,13 +1420,30 @@ interface RefinementStreamMessageBase {
     | 'tool_stop'
     | 'tool_update';
 }
-type RefinementStreamPhaseChange = RefinementStreamMessageBase & { phase: RefinementServicePhase; type: 'phase_change' };
+type RefinementStreamPhaseChange = RefinementStreamMessageBase & {
+  phase: RefinementServicePhase;
+  type: 'phase_change';
+};
 type RefinementStreamTextDelta = RefinementStreamMessageBase & { delta: string; type: 'text_delta' };
-type RefinementStreamThinkingDelta = RefinementStreamMessageBase & { blockIndex: number; delta: string; type: 'thinking_delta' };
+type RefinementStreamThinkingDelta = RefinementStreamMessageBase & {
+  blockIndex: number;
+  delta: string;
+  type: 'thinking_delta';
+};
 type RefinementStreamThinkingStart = RefinementStreamMessageBase & { blockIndex: number; type: 'thinking_start' };
-type RefinementStreamToolStart = RefinementStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_start' };
+type RefinementStreamToolStart = RefinementStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_start';
+};
 type RefinementStreamToolStop = RefinementStreamMessageBase & { toolUseId: string; type: 'tool_stop' };
-type RefinementStreamToolUpdate = RefinementStreamMessageBase & { toolInput: Record<string, unknown>; toolName: string; toolUseId: string; type: 'tool_update' };
+type RefinementStreamToolUpdate = RefinementStreamMessageBase & {
+  toolInput: Record<string, unknown>;
+  toolName: string;
+  toolUseId: string;
+  type: 'tool_update';
+};
 
 /**
  * Terminal workflow statuses that indicate a workflow has finished execution
@@ -1271,19 +1627,26 @@ const electronAPI: ElectronAPI = {
   },
   chat: {
     compactConversation: (request: { conversationId: number; upToMessageId?: number }) =>
-      ipcRenderer.invoke(IpcChannels.chat.compactConversation, request) as Promise<{ compactedCount: number; summaryMessageId: number }>,
+      ipcRenderer.invoke(IpcChannels.chat.compactConversation, request) as Promise<{
+        compactedCount: number;
+        summaryMessageId: number;
+      }>,
     copyMessages: (fromConversationId: number, toConversationId: number, upToMessageId?: number) =>
-      ipcRenderer.invoke(IpcChannels.chat.copyMessages, fromConversationId, toConversationId, upToMessageId) as Promise<Array<ConversationMessage>>,
+      ipcRenderer.invoke(IpcChannels.chat.copyMessages, fromConversationId, toConversationId, upToMessageId) as Promise<
+        Array<ConversationMessage>
+      >,
     createConversation: (data: NewConversation) =>
       ipcRenderer.invoke(IpcChannels.chat.createConversation, data) as Promise<Conversation>,
     createMessage: (data: NewConversationMessage) =>
       ipcRenderer.invoke(IpcChannels.chat.createMessage, data) as Promise<ConversationMessage>,
-    deleteConversation: (id: number) =>
-      ipcRenderer.invoke(IpcChannels.chat.deleteConversation, id) as Promise<boolean>,
+    deleteConversation: (id: number) => ipcRenderer.invoke(IpcChannels.chat.deleteConversation, id) as Promise<boolean>,
     exportToNewChat: (request: { messageIds: Array<number>; projectId: number; sourceConversationId: number }) =>
       ipcRenderer.invoke(IpcChannels.chat.exportToNewChat, request) as Promise<Conversation>,
-    forkConversation: (request: { forkPointMessageId: number; generateSummary?: boolean; sourceConversationId: number }) =>
-      ipcRenderer.invoke(IpcChannels.chat.forkConversation, request) as Promise<Conversation>,
+    forkConversation: (request: {
+      forkPointMessageId: number;
+      generateSummary?: boolean;
+      sourceConversationId: number;
+    }) => ipcRenderer.invoke(IpcChannels.chat.forkConversation, request) as Promise<Conversation>,
     generateTitle: (conversationId: number) =>
       ipcRenderer.invoke(IpcChannels.chat.generateTitle, conversationId) as Promise<Conversation | undefined>,
     getConversation: (id: number) =>
@@ -1299,7 +1662,9 @@ const electronAPI: ElectronAPI = {
     restoreMessage: (id: number) =>
       ipcRenderer.invoke(IpcChannels.chat.restoreMessage, id) as Promise<ConversationMessage | undefined>,
     revertToMessage: (conversationId: number, messageId: number) =>
-      ipcRenderer.invoke(IpcChannels.chat.revertToMessage, conversationId, messageId) as Promise<{ affectedCount: number }>,
+      ipcRenderer.invoke(IpcChannels.chat.revertToMessage, conversationId, messageId) as Promise<{
+        affectedCount: number;
+      }>,
     searchMessages: (conversationId: number, query: string) =>
       ipcRenderer.invoke(IpcChannels.chat.searchMessages, conversationId, query) as Promise<Array<ConversationMessage>>,
     softDeleteMessage: (id: number) =>
@@ -1384,8 +1749,7 @@ const electronAPI: ElectronAPI = {
     listByFile: (workflowId: number, filePath: string) =>
       ipcRenderer.invoke(IpcChannels.diffComment.listByFile, workflowId, filePath),
     toggleResolved: (id: number) => ipcRenderer.invoke(IpcChannels.diffComment.toggleResolved, id),
-    update: (id: number, data: { content: string }) =>
-      ipcRenderer.invoke(IpcChannels.diffComment.update, id, data),
+    update: (id: number, data: { content: string }) => ipcRenderer.invoke(IpcChannels.diffComment.update, id, data),
   },
   discovery: (() => {
     // Private state - callbacks registered via onStreamMessage() to receive stream events
@@ -1434,6 +1798,20 @@ const electronAPI: ElectronAPI = {
         ipcRenderer.invoke(IpcChannels.discovery.updatePriority, id, priority),
     };
   })(),
+  editor: {
+    detect: () => ipcRenderer.invoke(IpcChannels.editor.detect),
+    getPreferred: () => ipcRenderer.invoke(IpcChannels.editor.getPreferred),
+    getRegistry: () => ipcRenderer.invoke(IpcChannels.editor.getRegistry),
+    open: (input: import('../types/editor').OpenInEditorInput) => ipcRenderer.invoke(IpcChannels.editor.open, input),
+    setPreferred: (pref: import('../types/editor').EditorPreference) =>
+      ipcRenderer.invoke(IpcChannels.editor.setPreferred, pref),
+  },
+  fileExplorer: {
+    listDirectory: (repoPath: string, dirPath?: string) =>
+      ipcRenderer.invoke(IpcChannels.fileExplorer.listDirectory, repoPath, dirPath),
+    searchFiles: (repoPath: string, query: string, limit?: number) =>
+      ipcRenderer.invoke(IpcChannels.fileExplorer.searchFiles, repoPath, query, limit),
+  },
   fileViewState: {
     getStats: (workflowId: number, totalFiles: number) =>
       ipcRenderer.invoke(IpcChannels.fileViewState.getStats, workflowId, totalFiles),
@@ -1452,28 +1830,23 @@ const electronAPI: ElectronAPI = {
   },
   github: {
     checkAuth: () => ipcRenderer.invoke(IpcChannels.github.checkAuth),
-    closePr: (repoPath: string, prNumber: number) =>
-      ipcRenderer.invoke(IpcChannels.github.closePr, repoPath, prNumber),
+    closePr: (repoPath: string, prNumber: number) => ipcRenderer.invoke(IpcChannels.github.closePr, repoPath, prNumber),
     convertToReady: (repoPath: string, prNumber: number) =>
       ipcRenderer.invoke(IpcChannels.github.convertToReady, repoPath, prNumber),
     createPr: (repoPath: string, input: import('../types/github').CreatePrInput) =>
       ipcRenderer.invoke(IpcChannels.github.createPr, repoPath, input),
     createPrComment: (repoPath: string, prNumber: number, input: import('../types/github').CreatePrCommentInput) =>
       ipcRenderer.invoke(IpcChannels.github.createPrComment, repoPath, prNumber, input),
-    detectPrTemplate: (repoPath: string) =>
-      ipcRenderer.invoke(IpcChannels.github.detectPrTemplate, repoPath),
+    detectPrTemplate: (repoPath: string) => ipcRenderer.invoke(IpcChannels.github.detectPrTemplate, repoPath),
     getDeployments: (repoPath: string, prNumber: number) =>
       ipcRenderer.invoke(IpcChannels.github.getDeployments, repoPath, prNumber),
-    getPr: (repoPath: string, prNumber: number) =>
-      ipcRenderer.invoke(IpcChannels.github.getPr, repoPath, prNumber),
+    getPr: (repoPath: string, prNumber: number) => ipcRenderer.invoke(IpcChannels.github.getPr, repoPath, prNumber),
     getPrDiff: (repoPath: string, prNumber: number) =>
       ipcRenderer.invoke(IpcChannels.github.getPrDiff, repoPath, prNumber),
     getPrDiffParsed: (repoPath: string, prNumber: number) =>
       ipcRenderer.invoke(IpcChannels.github.getPrDiffParsed, repoPath, prNumber),
-    getRepoInfo: (repoPath: string) =>
-      ipcRenderer.invoke(IpcChannels.github.getRepoInfo, repoPath),
-    listChecks: (repoPath: string, ref: string) =>
-      ipcRenderer.invoke(IpcChannels.github.listChecks, repoPath, ref),
+    getRepoInfo: (repoPath: string) => ipcRenderer.invoke(IpcChannels.github.getRepoInfo, repoPath),
+    listChecks: (repoPath: string, ref: string) => ipcRenderer.invoke(IpcChannels.github.listChecks, repoPath, ref),
     listPrComments: (repoPath: string, prNumber: number) =>
       ipcRenderer.invoke(IpcChannels.github.listPrComments, repoPath, prNumber),
     listPrs: (repoPath: string, filters?: import('../types/github').PrListFilters) =>
@@ -1484,8 +1857,7 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke(IpcChannels.github.pushComment, repoPath, prNumber, localCommentId),
     replyToPrComment: (repoPath: string, prNumber: number, commentId: number, body: string) =>
       ipcRenderer.invoke(IpcChannels.github.replyToPrComment, repoPath, prNumber, commentId, body),
-    rerunCheck: (repoPath: string, runId: number) =>
-      ipcRenderer.invoke(IpcChannels.github.rerunCheck, repoPath, runId),
+    rerunCheck: (repoPath: string, runId: number) => ipcRenderer.invoke(IpcChannels.github.rerunCheck, repoPath, runId),
     rerunFailedChecks: (repoPath: string, runId: number) =>
       ipcRenderer.invoke(IpcChannels.github.rerunFailedChecks, repoPath, runId),
     syncComments: (repoPath: string, prNumber: number, workflowId: number) =>
@@ -1493,6 +1865,43 @@ const electronAPI: ElectronAPI = {
     updatePr: (repoPath: string, prNumber: number, input: import('../types/github').UpdatePrInput) =>
       ipcRenderer.invoke(IpcChannels.github.updatePr, repoPath, prNumber, input),
   },
+  mcpServer: {
+    delete: (name) => ipcRenderer.invoke(IpcChannels.mcpServer.delete, name),
+    detectProjectServers: (dirPath) => ipcRenderer.invoke(IpcChannels.mcpServer.detectProjectServers, dirPath),
+    list: () => ipcRenderer.invoke(IpcChannels.mcpServer.list),
+    save: (config) => ipcRenderer.invoke(IpcChannels.mcpServer.save, config),
+    toggle: (name, enabled) => ipcRenderer.invoke(IpcChannels.mcpServer.toggle, name, enabled),
+  },
+  planning: (() => {
+    const streamCallbacks = new Set<(message: PlanningStreamMessage) => void>();
+
+    ipcRenderer.on(IpcChannels.planning.stream, (_event, message: PlanningStreamMessage) => {
+      streamCallbacks.forEach((callback) => {
+        try {
+          callback(message);
+        } catch (error) {
+          console.error('[Planning] Error in stream callback:', error);
+        }
+      });
+    });
+
+    return {
+      approvePlan: (workflowId: number, stepId: number) =>
+        ipcRenderer.invoke(IpcChannels.planning.approvePlan, workflowId, stepId),
+      cancel: (workflowId: number) => ipcRenderer.invoke(IpcChannels.planning.cancel, workflowId),
+      editPlan: (input: PlanningEditInput) => ipcRenderer.invoke(IpcChannels.planning.editPlan, input),
+      getState: (workflowId: number) => ipcRenderer.invoke(IpcChannels.planning.getState, workflowId),
+      onStreamMessage: (callback: (message: PlanningStreamMessage) => void) => {
+        streamCallbacks.add(callback);
+        return () => {
+          streamCallbacks.delete(callback);
+        };
+      },
+      retry: (input: PlanningStartInput) => ipcRenderer.invoke(IpcChannels.planning.retry, input),
+      start: (input: PlanningStartInput) => ipcRenderer.invoke(IpcChannels.planning.start, input),
+      submitFeedback: (input: PlanningFeedbackInput) => ipcRenderer.invoke(IpcChannels.planning.submitFeedback, input),
+    };
+  })(),
   project: {
     addRepo: (projectId, repoData) => ipcRenderer.invoke(IpcChannels.project.addRepo, projectId, repoData),
     archive: (id) => ipcRenderer.invoke(IpcChannels.project.archive, id),
@@ -1505,6 +1914,14 @@ const electronAPI: ElectronAPI = {
     toggleFavorite: (id) => ipcRenderer.invoke(IpcChannels.project.toggleFavorite, id),
     unarchive: (id) => ipcRenderer.invoke(IpcChannels.project.unarchive, id),
     update: (id, data) => ipcRenderer.invoke(IpcChannels.project.update, id, data),
+  },
+  provider: {
+    deleteKey: (provider) => ipcRenderer.invoke(IpcChannels.provider.deleteKey, provider),
+    getKey: (provider) => ipcRenderer.invoke(IpcChannels.provider.getKey, provider),
+    list: () => ipcRenderer.invoke(IpcChannels.provider.list),
+    listConfigured: () => ipcRenderer.invoke(IpcChannels.provider.listConfigured),
+    setKey: (provider, apiKey) => ipcRenderer.invoke(IpcChannels.provider.setKey, provider, apiKey),
+    validate: (provider) => ipcRenderer.invoke(IpcChannels.provider.validate, provider),
   },
   refinement: (() => {
     // Private state - callbacks registered via onStreamMessage() to receive stream events
@@ -1550,15 +1967,13 @@ const electronAPI: ElectronAPI = {
     clearDefault: (id) => ipcRenderer.invoke(IpcChannels.repository.clearDefault, id),
     create: (data) => ipcRenderer.invoke(IpcChannels.repository.create, data),
     delete: (id) => ipcRenderer.invoke(IpcChannels.repository.delete, id),
-    deleteWithCleanup: (repositoryId) =>
-      ipcRenderer.invoke(IpcChannels.repository.deleteWithCleanup, repositoryId),
+    deleteWithCleanup: (repositoryId) => ipcRenderer.invoke(IpcChannels.repository.deleteWithCleanup, repositoryId),
     detectGitInfo: (path) => ipcRenderer.invoke(IpcChannels.repository.detectGitInfo, path),
     findByPath: (path) => ipcRenderer.invoke(IpcChannels.repository.findByPath, path),
     findByProject: (projectId) => ipcRenderer.invoke(IpcChannels.repository.findByProject, projectId),
     get: (id) => ipcRenderer.invoke(IpcChannels.repository.get, id),
     list: () => ipcRenderer.invoke(IpcChannels.repository.list),
-    preDeleteInfo: (repositoryId) =>
-      ipcRenderer.invoke(IpcChannels.repository.preDeleteInfo, repositoryId),
+    preDeleteInfo: (repositoryId) => ipcRenderer.invoke(IpcChannels.repository.preDeleteInfo, repositoryId),
     setDefault: (id) => ipcRenderer.invoke(IpcChannels.repository.setDefault, id),
     update: (id, data) => ipcRenderer.invoke(IpcChannels.repository.update, id, data),
   },
@@ -1653,10 +2068,8 @@ const electronAPI: ElectronAPI = {
       input: (terminalId: string, data: string) => {
         ipcRenderer.send(IpcChannels.terminal.input, terminalId, data);
       },
-      kill: (terminalId: string) =>
-        ipcRenderer.invoke(IpcChannels.terminal.kill, terminalId) as Promise<boolean>,
-      listActive: () =>
-        ipcRenderer.invoke(IpcChannels.terminal.listActive) as Promise<Array<string>>,
+      kill: (terminalId: string) => ipcRenderer.invoke(IpcChannels.terminal.kill, terminalId) as Promise<boolean>,
+      listActive: () => ipcRenderer.invoke(IpcChannels.terminal.listActive) as Promise<Array<string>>,
       onData: (terminalId: string, callback: (data: string) => void) => {
         if (!dataCallbacks.has(terminalId)) {
           dataCallbacks.set(terminalId, new Set());
@@ -1708,8 +2121,7 @@ const electronAPI: ElectronAPI = {
     update: (id, data) => ipcRenderer.invoke(IpcChannels.workflow.update, id, data),
   },
   workflowRepository: {
-    add: (workflowId, repositoryId) =>
-      ipcRenderer.invoke(IpcChannels.workflowRepository.add, workflowId, repositoryId),
+    add: (workflowId, repositoryId) => ipcRenderer.invoke(IpcChannels.workflowRepository.add, workflowId, repositoryId),
     addMultiple: (workflowId, repositoryIds) =>
       ipcRenderer.invoke(IpcChannels.workflowRepository.addMultiple, workflowId, repositoryIds),
     list: (workflowId) => ipcRenderer.invoke(IpcChannels.workflowRepository.list, workflowId),

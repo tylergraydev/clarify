@@ -231,6 +231,7 @@ export abstract class BaseAgentStepService<
       model: agent.model,
       name: agent.name,
       permissionMode: agent.permissionMode,
+      provider: agent.provider ?? 'claude',
       skills: skills.map((s) => ({
         isRequired: s.requiredAt !== null,
         skillName: s.skillName,
@@ -505,19 +506,13 @@ export abstract class BaseAgentStepService<
 
     // 3. Audit log exploring
     const auditLogger = this.getAuditLogger();
-    auditLogger.logStepExploring(
-      session.options.workflowId,
-      session.options.stepId,
-      agentConfig.id,
-      agentConfig.name,
-      {
-        model: agentConfig.model,
-        promptLength: prompt.length,
-        sessionId: session.sessionId,
-        toolsCount: agentConfig.tools.length,
-        ...this.getExploringAuditMetadata(session),
-      }
-    );
+    auditLogger.logStepExploring(session.options.workflowId, session.options.stepId, agentConfig.id, agentConfig.name, {
+      model: agentConfig.model,
+      promptLength: prompt.length,
+      sessionId: session.sessionId,
+      toolsCount: agentConfig.tools.length,
+      ...this.getExploringAuditMetadata(session),
+    });
 
     // Build stream event handlers
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -539,6 +534,9 @@ export abstract class BaseAgentStepService<
     // 4. Execute via SDK
     const sdkExecutor = this.getSdkExecutor();
     const activityRepository = this.getActivityRepository();
+    // Resolve provider ID from agent config
+    const resolvedProviderId = this.resolveProviderId(agentConfig);
+
     const resultMessage = await sdkExecutor.executeQuery(
       session,
       {
@@ -546,6 +544,7 @@ export abstract class BaseAgentStepService<
         activityRepository: activityRepository ?? undefined,
         agentConfig,
         outputFormatSchema: this.getOutputFormatSchema(),
+        providerId: resolvedProviderId,
         repositoryPath: session.options.repositoryPath,
         stepId: session.options.stepId,
       },
@@ -823,6 +822,21 @@ export abstract class BaseAgentStepService<
    * @returns The step-specific outcome
    */
   protected abstract processStructuredOutput(result: SDKResultMessage, sessionId: string): TOutcome;
+
+  /**
+   * Resolve the provider ID from an agent configuration.
+   *
+   * Maps agent provider strings to provider registry IDs.
+   * Defaults to 'anthropic-sdk' for Claude or unset providers.
+   *
+   * @param agentConfig - The loaded agent configuration
+   * @returns The resolved provider ID string
+   */
+  protected resolveProviderId(agentConfig: TAgentConfig): string {
+    const provider = agentConfig.provider;
+    if (!provider || provider === 'claude') return 'anthropic-sdk';
+    return provider;
+  }
 
   // ===========================================================================
   // Process Output Template Method

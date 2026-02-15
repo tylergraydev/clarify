@@ -28,7 +28,7 @@ const INITIAL_STATE: AgentStreamState = {
   messages: [],
   result: null,
   sessionId: null,
-  status: 'initializing',
+  status: 'idle',
   text: '',
   thinking: [],
   toolResults: [],
@@ -308,7 +308,7 @@ export const useAgentStream = (): UseAgentStreamReturn => {
     }
 
     setIsStarting(true);
-    setState(INITIAL_STATE);
+    setState({ ...INITIAL_STATE, status: 'initializing' });
 
     try {
       const { sessionId } = await api.start(options);

@@ -80,6 +80,7 @@
   "trustedDependencies": [
     "electron",
     "esbuild",
+    "node-pty",
     "sharp",
     "unrs-resolver",
   ],

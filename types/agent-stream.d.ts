@@ -192,6 +192,8 @@ export interface AgentStreamOptions {
   maxThinkingTokens?: number;
   /** Maximum turns before stopping */
   maxTurns?: number;
+  /** Model to use (e.g., 'sonnet', 'opus', 'gpt-4o') */
+  model?: string;
   /**
    * Permission mode controlling tool execution behavior.
    * @default 'default'
@@ -199,6 +201,10 @@ export interface AgentStreamOptions {
   permissionMode?: AgentStreamPermissionMode;
   /** The prompt/task for the agent */
   prompt: string;
+  /** Provider for the model (e.g., 'claude', 'openai') */
+  provider?: string;
+  /** Reasoning level for reasoning-capable models (e.g., o3, o4-mini) */
+  reasoningLevel?: string;
   /** System prompt override */
   systemPrompt?: string;
 }
@@ -303,7 +309,7 @@ export interface AgentStreamState {
   /** Unique session identifier */
   sessionId: null | string;
   /** Current session status */
-  status: AgentStreamSession['status'];
+  status: 'idle' | AgentStreamSession['status'];
   /** Accumulated text content */
   text: string;
   /** Thinking/reasoning blocks */

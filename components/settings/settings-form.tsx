@@ -19,7 +19,10 @@ import type { SettingsFormApi as WorktreeFormApi } from './worktree-settings-sec
 import { type AutoSaveState, AutoSaveStatus } from './auto-save-status';
 import { ChatSettingsSection } from './chat-settings-section';
 import { DebugSettingsSection } from './debug-settings-section';
+import { EditorSettingsSection } from './editor-settings-section';
 import { LoggingSettingsSection } from './logging-settings-section';
+import { McpSettingsSection } from './mcp-settings-section';
+import { ProviderSettingsSection } from './provider-settings-section';
 import { TerminalSettingsSection } from './terminal-settings-section';
 import { UISettingsSection } from './ui-settings-section';
 import { WorkflowSettingsSection } from './workflow-settings-section';
@@ -231,6 +234,15 @@ export const SettingsForm = ({ initialValues, onSuccess }: SettingsFormProps): R
 
         {/* UI Settings Section */}
         <UISettingsSection />
+
+        {/* AI Provider Settings Section */}
+        <ProviderSettingsSection />
+
+        {/* MCP Server Settings Section */}
+        <McpSettingsSection />
+
+        {/* External Editor Settings Section */}
+        <EditorSettingsSection />
 
         {/* Workflow Settings Section */}
         <WorkflowSettingsSection form={form as unknown as WorkflowFormApi} />

@@ -1,7 +1,13 @@
 import { z } from 'zod';
 
 import { agentHookEventTypes } from '../../db/schema/agent-hooks.schema';
-import { agentColors, agentModels, agentPermissionModes, agentTypes } from '../../db/schema/agents.schema';
+import {
+  agentColors,
+  agentModels,
+  agentPermissionModes,
+  agentProviders,
+  agentTypes,
+} from '../../db/schema/agents.schema';
 
 // Agent tool input schema for validating tool configuration
 export const agentToolInputSchema = z.object({
@@ -86,6 +92,7 @@ export const createAgentSchema = z.object({
   parentAgentId: z.number().int().positive('Invalid parent agent ID').nullable().optional(),
   permissionMode: z.enum(agentPermissionModes).nullable().optional(),
   projectId: z.number().int().positive('Invalid project ID').nullable().optional(),
+  provider: z.enum(agentProviders).nullable().optional(),
   systemPrompt: z.string().trim().min(1, 'System prompt is required').max(50000, 'System prompt is too long'),
   type: z.enum(agentTypes, {
     error: 'Please select a valid agent type',
@@ -126,6 +133,7 @@ export const createAgentFormSchema = z.object({
     ),
   permissionMode: z.union([z.enum(agentPermissionModes), z.literal('')]).optional(),
   projectId: z.string(),
+  provider: z.union([z.enum(agentProviders), z.literal('')]).optional(),
   systemPrompt: z.string().trim().min(1, 'System prompt is required').max(50000, 'System prompt is too long'),
   type: z.enum(agentTypes, {
     error: 'Please select an agent type',
@@ -164,6 +172,7 @@ export const updateAgentSchema = z.object({
     .optional(),
   permissionMode: z.union([z.enum(agentPermissionModes), z.literal('')]).optional(),
   projectId: z.string(),
+  provider: z.union([z.enum(agentProviders), z.literal('')]).optional(),
   systemPrompt: z.string().trim().min(1, 'System prompt is required').max(50000, 'System prompt is too long'),
 });
 
@@ -199,6 +208,7 @@ export const updateAgentRepositorySchema = z.object({
   parentAgentId: z.number().int().positive('Invalid parent agent ID').nullable().optional(),
   permissionMode: z.enum(agentPermissionModes).nullable().optional(),
   projectId: z.number().int().positive('Invalid project ID').nullable().optional(),
+  provider: z.enum(agentProviders).nullable().optional(),
   systemPrompt: z
     .string()
     .trim()

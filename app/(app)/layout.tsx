@@ -1,10 +1,13 @@
 'use client';
 
+import { CommandPalette, CommandPaletteDialogs } from '@/components/command-palette';
 import { ShellLayoutProvider } from '@/components/providers/shell-layout-provider';
 import { AppHeader, AppSidebar, StatusBar } from '@/components/shell';
 import { TerminalPanel } from '@/components/terminal';
 import { WorkflowAttentionNotifier } from '@/components/workflows/workflow-attention-notifier';
 import { useActiveWorkflows } from '@/hooks/queries/use-workflows';
+import { useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut';
+import { useCommandPaletteStore } from '@/lib/stores/command-palette-store';
 import { useShellStore } from '@/lib/stores/shell-store';
 import { cn } from '@/lib/utils';
 
@@ -24,9 +27,16 @@ type AppLayoutProps = RequiredChildren;
 export default function AppLayout({ children }: AppLayoutProps) {
   const { isSidebarCollapsed } = useShellStore();
   const { data: activeWorkflows } = useActiveWorkflows();
+  const { toggle: toggleCommandPalette } = useCommandPaletteStore();
+
+  useKeyboardShortcut(toggleCommandPalette, { key: 'k', modifiers: ['meta'] });
 
   return (
     <ShellLayoutProvider>
+      {/* Global command palette (Cmd+K) */}
+      <CommandPalette />
+      <CommandPaletteDialogs />
+
       {/* Global workflow attention toasts (renders nothing, fires toasts on status transitions) */}
       <WorkflowAttentionNotifier />
 

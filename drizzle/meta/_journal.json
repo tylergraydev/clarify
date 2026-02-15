@@ -57,6 +57,13 @@
       "when": 1771004361303,
       "tag": "0007_white_karen_page",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1771127169817,
+      "tag": "0008_lyrical_vertigo",
+      "breakpoints": true
     }
   ]
 }

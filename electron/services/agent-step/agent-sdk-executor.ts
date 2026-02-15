@@ -46,6 +46,7 @@ import type { AgentConfig } from '../../../types/agent-config';
 import type { ActiveToolInfo } from './step-types';
 
 import { debugLoggerService } from '../debug-logger.service';
+import { buildSdkMcpServers } from '../mcp-server.service';
 import { getQueryFunction, parseToolInputJson } from './agent-sdk';
 import { CLAUDE_CODE_TOOL_NAMES } from './agent-tools';
 import { startHeartbeat, stopHeartbeat } from './heartbeat';
@@ -83,6 +84,8 @@ export interface SdkExecutorConfig<TAgentConfig extends BaseAgentConfig> {
   agentConfig: TAgentConfig;
   /** JSON schema for structured output validation */
   outputFormatSchema: Record<string, unknown>;
+  /** Optional provider ID override (defaults to 'anthropic-sdk' for Claude) */
+  providerId?: string;
   /** Path to the repository being analyzed */
   repositoryPath: string;
   /** Workflow step ID for associating activity records */
@@ -187,6 +190,12 @@ export class AgentSdkExecutor<
     // Configure extended thinking
     this.configureExtendedThinking(sdkOptions, agentConfig);
 
+    // Configure MCP servers (global + project .mcp.json)
+    const mcpServers = buildSdkMcpServers(repositoryPath);
+    if (Object.keys(mcpServers).length > 0) {
+      sdkOptions.mcpServers = mcpServers;
+    }
+
     return sdkOptions;
   }
 
@@ -258,6 +267,12 @@ export class AgentSdkExecutor<
     prompt: string,
     handlers: StreamEventHandlers<TStreamMessage, TSession>
   ): Promise<null | SDKResultMessage> {
+    // Branch by provider: non-Claude providers use the provider abstraction layer
+    const resolvedProviderId = config.providerId ?? 'anthropic-sdk';
+    if (resolvedProviderId !== 'anthropic-sdk') {
+      return this.executeProviderQuery(session, config, prompt, handlers, resolvedProviderId);
+    }
+
     const query = await getQueryFunction();
     const sdkOptions = this.buildSdkOptions(config);
 
@@ -525,6 +540,88 @@ export class AgentSdkExecutor<
     }
   }
 
+  /**
+   * Execute a query via a non-Claude provider's executeWorkflow method.
+   *
+   * Delegates to the provider abstraction layer for non-Claude providers (e.g., OpenAI).
+   * Maps the provider result back to an SDKResultMessage shape for downstream compatibility.
+   *
+   * @param session - The active session for state tracking
+   * @param config - The SDK executor configuration
+   * @param prompt - The prompt text to send
+   * @param handlers - Stream event handlers for callbacks
+   * @param providerId - The provider ID to use
+   * @returns The result mapped to SDKResultMessage, or null
+   */
+  private async executeProviderQuery(
+    session: TSession,
+    config: SdkExecutorConfig<TAgentConfig>,
+    prompt: string,
+    handlers: StreamEventHandlers<TStreamMessage, TSession>,
+    providerId: string
+  ): Promise<null | SDKResultMessage> {
+    const { providerRegistry } = await import('../providers/provider-registry');
+    const provider = providerRegistry.get(providerId as import('../../../types/provider').ProviderId);
+
+    if (!provider) {
+      debugLoggerService.logSdkEvent(
+        session.sessionId,
+        `Provider '${providerId}' not found, falling back to Claude SDK`,
+        {}
+      );
+      // Fall back to Claude SDK if provider not found
+      const query = await getQueryFunction();
+      const sdkOptions = this.buildSdkOptions(config);
+      let resultMessage: null | SDKResultMessage = null;
+      for await (const message of query({ options: sdkOptions, prompt })) {
+        if (config.abortController.signal.aborted) return null;
+        if (message.type === 'result') {
+          resultMessage = message as SDKResultMessage;
+        }
+      }
+      return resultMessage;
+    }
+
+    debugLoggerService.logSdkEvent(session.sessionId, `Executing workflow via provider: ${providerId}`, {
+      model: config.agentConfig.model,
+      provider: providerId,
+    });
+
+    const result = await provider.executeWorkflow({
+      abortController: config.abortController,
+      cwd: config.repositoryPath,
+      model: config.agentConfig.model ?? 'gpt-4o',
+      outputFormatSchema: config.outputFormatSchema,
+      prompt,
+      systemPrompt: config.agentConfig.systemPrompt,
+    });
+
+    // Emit the result text as a text delta for UI streaming
+    if (result.result && handlers.onMessageEmit) {
+      handlers.onMessageEmit({
+        delta: result.result,
+        sessionId: session.sessionId,
+        timestamp: Date.now(),
+        type: 'text_delta',
+      } as unknown as TStreamMessage);
+    }
+
+    if (!result.success) {
+      debugLoggerService.logSdkEvent(session.sessionId, `Provider workflow failed`, {
+        errors: result.errors,
+        provider: providerId,
+      });
+    }
+
+    // Map result to SDKResultMessage shape for downstream compatibility
+    return {
+      result: result.result ?? '',
+      structured_output: result.structuredOutput,
+      type: 'result',
+      usage: result.usage ?? {},
+    } as unknown as SDKResultMessage;
+  }
+
   // =============================================================================
   // Private Activity Persistence Helpers
   // =============================================================================
@@ -655,10 +752,7 @@ export class AgentSdkExecutor<
    * @param resultMessage - The SDK result message
    * @param config - The SDK executor config with activity repository
    */
-  private persistUsageActivity(
-    resultMessage: SDKResultMessage,
-    config: SdkExecutorConfig<TAgentConfig>
-  ): void {
+  private persistUsageActivity(resultMessage: SDKResultMessage, config: SdkExecutorConfig<TAgentConfig>): void {
     if (!config.activityRepository || config.stepId === undefined) return;
 
     try {

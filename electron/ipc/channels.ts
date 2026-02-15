@@ -145,6 +145,17 @@ export const IpcChannels = {
     update: 'discovery:update',
     updatePriority: 'discovery:updatePriority',
   },
+  editor: {
+    detect: 'editor:detect',
+    getPreferred: 'editor:getPreferred',
+    getRegistry: 'editor:getRegistry',
+    open: 'editor:open',
+    setPreferred: 'editor:setPreferred',
+  },
+  fileExplorer: {
+    listDirectory: 'fileExplorer:listDirectory',
+    searchFiles: 'fileExplorer:searchFiles',
+  },
   fileViewState: {
     getStats: 'fileViewState:getStats',
     list: 'fileViewState:list',
@@ -181,6 +192,23 @@ export const IpcChannels = {
     syncComments: 'github:syncComments',
     updatePr: 'github:updatePr',
   },
+  mcpServer: {
+    delete: 'mcpServer:delete',
+    detectProjectServers: 'mcpServer:detectProjectServers',
+    list: 'mcpServer:list',
+    save: 'mcpServer:save',
+    toggle: 'mcpServer:toggle',
+  },
+  planning: {
+    approvePlan: 'planning:approvePlan',
+    cancel: 'planning:cancel',
+    editPlan: 'planning:editPlan',
+    getState: 'planning:getState',
+    retry: 'planning:retry',
+    start: 'planning:start',
+    stream: 'planning:stream',
+    submitFeedback: 'planning:submitFeedback',
+  },
   project: {
     addRepo: 'project:addRepo',
     archive: 'project:archive',
@@ -193,6 +221,14 @@ export const IpcChannels = {
     toggleFavorite: 'project:toggleFavorite',
     unarchive: 'project:unarchive',
     update: 'project:update',
+  },
+  provider: {
+    deleteKey: 'provider:deleteKey',
+    getKey: 'provider:getKey',
+    list: 'provider:list',
+    listConfigured: 'provider:listConfigured',
+    setKey: 'provider:setKey',
+    validate: 'provider:validate',
   },
   refinement: {
     cancel: 'refinement:cancel',
